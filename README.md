@@ -1,6 +1,6 @@
 # Elastos DID Java SDK
 
-[![Build Status](https://travis-ci.com/stiartsly/Elastos.DID.Java.SDK.svg?)](https://travis-ci.com/stiartsly/Elastos.DID.Java.SDK)
+[![Build Status](https://travis-ci.com/elastos/Elastos.DID.Java.SDK.svg?)](https://travis-ci.com/elastos/Elastos.DID.Java.SDK)
 
 ## About
 
