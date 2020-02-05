@@ -742,10 +742,6 @@ public class DIDDocument {
 		if (pk == null)
 			return false;
 
-		// Can not remove default public key
-		if (getDefaultPublicKey().equals(id))
-			return false;
-
 		pk.setAuthorizationKey(false);
 		return true;
 	}
