@@ -1083,4 +1083,28 @@ public class DIDDocumentTest {
 			assertArrayEquals(key.getPrivateKeyBytes(), sk);
 		}
 	}
+
+	@Test
+	public void testDeriveFromIdentifier() throws DIDException, IOException {
+		String identifier = "org.elastos.did.test";
+
+		TestData testData = new TestData();
+		testData.setup(true);
+		testData.initIdentity();
+
+		DIDDocument doc = testData.loadTestDocument();
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		for (int i = -100; i < 100; i++) {
+			String strKey = doc.derive(identifier, i, TestConfig.storePass);
+			HDKey key = HDKey.deserializeBase58(strKey);
+
+			byte[] binKey = Base58.decode(strKey);
+			byte[] sk = Arrays.copyOfRange(binKey, 46, 78);
+
+			assertEquals(key.getPrivateKeyBytes().length, sk.length);
+			assertArrayEquals(key.getPrivateKeyBytes(), sk);
+		}
+	}
 }
