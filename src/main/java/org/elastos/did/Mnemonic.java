@@ -29,6 +29,7 @@ import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.StringJoiner;
 
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
@@ -90,7 +91,12 @@ public class Mnemonic {
 			byte[] entropy = new byte[TWELVE_WORDS_ENTROPY];
 			new SecureRandom().nextBytes(entropy);
 			List<String> words = mc.toMnemonic(entropy);
-			return String.join(" ", words);
+
+			StringJoiner joiner = new StringJoiner(" ");
+	        for (String word: words)
+	            joiner.add(word);
+
+	        return joiner.toString();
 		} catch (MnemonicException e) {
 			throw new DIDException(e);
 		}
