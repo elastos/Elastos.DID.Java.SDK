@@ -491,6 +491,11 @@ public final class DIDStore {
 			throw new DIDStoreException("Can not find the document for " + did);
 		}
 
+		if (!doc.isGenuine()) {
+			log.error("{} is not genuine.", did.toString());
+			throw new DIDStoreException("DID document is not genuine.");
+		}
+
 		if (doc.isDeactivated()) {
 			log.error("{} already deactivated.", did.toString());
 			throw new DIDStoreException("DID already deactivated.");
