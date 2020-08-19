@@ -29,6 +29,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ import org.elastos.did.jwt.JwtParserBuilder;
 import org.elastos.did.jwt.KeyProvider;
 import org.elastos.did.metadata.DIDMetadataImpl;
 import org.elastos.did.util.JsonHelper;
+import org.spongycastle.crypto.digests.SHA256Digest;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -556,6 +558,49 @@ public class DIDDocument {
 				getSubject(), getDefaultPublicKey(), storepass));
 
 		return key.derive(index).serializeBase58();
+	}
+
+	private String mapToDerivePath(String identifier, int securityCode) {
+		byte digest[] = new byte[32];
+		SHA256Digest sha256 = new SHA256Digest();
+		byte[] in = identifier.getBytes();
+		sha256.update(in, 0, in.length);
+		sha256.doFinal(digest, 0);
+
+		StringBuffer path = new StringBuffer(128);
+		ByteBuffer bb = ByteBuffer.wrap(digest);
+		while (bb.hasRemaining()) {
+			int idx = bb.getInt();
+			if (idx >= 0)
+				path.append(idx);
+			else
+				path.append(idx & 0x7FFFFFFF).append('H');
+
+			path.append('/');
+		}
+
+		if (securityCode >= 0)
+			path.append(securityCode);
+		else
+			path.append(securityCode & 0x7FFFFFFF).append('H');
+
+		return path.toString();
+	}
+
+	public String derive(String identifier, int securityCode, String storepass)
+			throws DIDStoreException {
+		if (identifier == null || identifier.isEmpty() ||
+				storepass == null || storepass.isEmpty())
+			throw new IllegalArgumentException();
+
+		if (!getMetadataImpl().attachedStore())
+			throw new DIDStoreException("Not attached with a DID store.");
+
+		HDKey key = HDKey.deserialize(getMetadataImpl().getStore().loadPrivateKey(
+				getSubject(), getDefaultPublicKey(), storepass));
+
+		String path = mapToDerivePath(identifier, securityCode);
+		return key.derive(path).serializeBase58();
 	}
 
 	public KeyPair getKeyPair(String id) throws InvalidKeyException {
