@@ -429,8 +429,10 @@ class FileSystemStorage implements DIDStorage {
 			doc.toJson(new FileWriter(file), true);
 			if (doc.getMetadata().getLastModified() != null)
 				file.setLastModified(doc.getMetadata().getLastModified().getTime());
-			else
+			else {
 				doc.getMetadataImpl().setLastModified(new Date(file.lastModified()));
+				storeDidMetadata(doc.getSubject(), doc.getMetadataImpl());
+			}
 		} catch (IOException e) {
 			throw new DIDStorageException("Store DIDDocument error.", e);
 		}
@@ -558,8 +560,11 @@ class FileSystemStorage implements DIDStorage {
 
 			if (credential.getMetadata().getLastModified() != null)
 				file.setLastModified(credential.getMetadata().getLastModified().getTime());
-			else
+			else {
 				credential.getMetadataImpl().setLastModified(new Date(file.lastModified()));
+				storeCredentialMetadata(credential.getSubject().getId(),
+						credential.getId(), credential.getMetadataImpl());
+			}
 		} catch (IOException e) {
 			throw new DIDStorageException("Store credential error.", e);
 		}
