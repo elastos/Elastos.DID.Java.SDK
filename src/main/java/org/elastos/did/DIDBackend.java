@@ -74,6 +74,12 @@ public class DIDBackend {
 	private static final Logger log = LoggerFactory.getLogger(DIDBackend.class);
 
 	public interface ResolveHandle {
+		/**
+		 * Resolve DID content(DIDDocument).
+		 *
+		 * @param did the DID object
+		 * @return DIDDocument object
+		 */
 		public DIDDocument resolve(DID did);
 	}
 
@@ -82,6 +88,12 @@ public class DIDBackend {
 
 		private static final Logger log = LoggerFactory.getLogger(DefaultResolver.class);
 
+		/**
+		 * Set default resolver according to specified url.
+		 *
+		 * @param resolver the resolver url string
+		 * @throws DIDResolveException throw this exception if setting resolver url failed.
+		 */
 		public DefaultResolver(String resolver) throws DIDResolveException {
 			if (resolver == null || resolver.isEmpty())
 				throw new IllegalArgumentException();
@@ -138,16 +150,27 @@ public class DIDBackend {
 		}
 	}
 
+    /**
+     * Set DIDAdapter for DIDBackend.
+     *
+     * @param adapter the DIDAdapter object
+     */
 	private DIDBackend(DIDAdapter adapter) {
 		this.adapter = adapter;
 	}
 
-	/*
+	/**
+	 * Initialize DIDBackend to resolve by url and cache path stored the document in ttl time.
 	 * Recommendation for cache dir:
 	 * - Laptop/standard Java
 	 *   System.getProperty("user.home") + "/.cache.did.elastos"
 	 * - Android Java
 	 *   Context.getFilesDir() + "/.cache.did.elastos"
+	 *
+	 * @param resolverURL the url string to resolve did
+	 * @param cacheDir the cache path to store did document
+	 * @throws DIDResolveException throw this exception if initializing backend failed with
+	 *         creating DIDResolver error.
 	 */
 	public static void initialize(String resolverURL, File cacheDir)
 			throws DIDResolveException {
@@ -157,6 +180,19 @@ public class DIDBackend {
 		initialize(new DefaultResolver(resolverURL), cacheDir);
 	}
 
+	/**
+	 * Initialize DIDBackend to resolve by url string and cache path stored the document in ttl time.
+	 * Recommendation for cache dir:
+	 * - Laptop/standard Java
+	 *   System.getProperty("user.home") + "/.cache.did.elastos"
+	 * - Android Java
+	 *   Context.getFilesDir() + "/.cache.did.elastos"
+	 *
+	 * @param resolverURL the url string to resolve did
+	 * @param cacheDir the cache path to store did document
+	 * @throws DIDResolveException throw this exception if initializing backend failed with
+	 *         creating DIDResolver error.
+	 **/
 	public static void initialize(String resolverURL, String cacheDir)
 			throws DIDResolveException {
 		if (resolverURL == null || resolverURL.isEmpty() ||
@@ -166,6 +202,17 @@ public class DIDBackend {
 		initialize(resolverURL, new File(cacheDir));
 	}
 
+    /**
+	 * Initialize DIDBackend to resolve by url string and cache path stored the document in ttl time.
+	 * Recommendation for cache dir:
+	 * - Laptop/standard Java
+	 *   System.getProperty("user.home") + "/.cache.did.elastos"
+	 * - Android Java
+	 *   Context.getFilesDir() + "/.cache.did.elastos"
+     *
+     * @param resolver the DIDResolver object
+     * @param cacheDir the cache path name
+     */
 	public static void initialize(DIDResolver resolver, File cacheDir) {
 		if (resolver == null || cacheDir == null)
 			throw new IllegalArgumentException();
@@ -174,6 +221,17 @@ public class DIDBackend {
 		ResolverCache.setCacheDir(cacheDir);
 	}
 
+    /**
+	 * Initialize DIDBackend to resolve by url string and cache path stored the document in ttl time.
+	 * Recommendation for cache dir:
+	 * - Laptop/standard Java
+	 *   System.getProperty("user.home") + "/.cache.did.elastos"
+	 * - Android Java
+	 *   Context.getFilesDir() + "/.cache.did.elastos"
+     *
+     * @param resolver the DIDResolver object
+     * @param cacheDir the cache path name
+     */
 	public static void initialize(DIDResolver resolver, String cacheDir) {
 		if (resolver == null || cacheDir == null || cacheDir.isEmpty())
 			throw new IllegalArgumentException();
@@ -181,15 +239,30 @@ public class DIDBackend {
 		initialize(resolver, new File(cacheDir));
 	}
 
+	/**
+	 * Get DIDBackend instance according to specified DIDAdapter object.
+	 *
+	 * @param adapter the DIDAdapter object
+	 * @return the DIDBackend instance
+	 */
 	protected static DIDBackend getInstance(DIDAdapter adapter) {
 		return new DIDBackend(adapter);
 	}
 
-	// Time to live in minutes
+	/**
+	 * Set the cache time to live in minutes.
+	 *
+	 * @param ttl the validate time to store content
+	 */
 	public static void setTTL(long ttl) {
 		ttl = ttl > 0 ? (ttl * 60 * 1000) : 0;
 	}
 
+	/**
+	 * Get the cache time to live in minutes.
+	 *
+	 * @return the validate time to live
+	 */
 	public static long getTTL() {
 		return ttl != 0 ? (ttl / 60 / 1000) : 0;
 	}
@@ -203,6 +276,12 @@ public class DIDBackend {
 		return sb.toString();
 	}
 
+	/**
+     * Set DID Local Resolve handle in order to give the method handle which did document to verify.
+     * If handle != NULL, set DID Local Resolve Handle; If handle == NULL, clear this handle.
+     *
+	 * @param handle the ResolveHandle object
+	 */
 	public static void setResolveHandle(ResolveHandle handle) {
 		DIDBackend.resolveHandle = handle;
 	}
@@ -253,6 +332,13 @@ public class DIDBackend {
 		return rr;
 	}
 
+    /**
+     * Resolve all DID transactions.
+     *
+     * @param did the specified DID object
+     * @return the DIDHistory object
+     * @throws DIDResolveException throw this exception if resolving did transcations failed.
+     */
 	protected static DIDHistory resolveHistory(DID did) throws DIDResolveException {
 		log.info("Resolving {}...", did.toString());
 
@@ -263,6 +349,15 @@ public class DIDBackend {
 		return rr;
 	}
 
+	/**
+	 * Resolve DID content(DIDDocument).
+	 *
+	 * @param did the DID object
+	 * @param force force = true, DID content must be from chain.
+	 *              force = false, DID content could be from chain or local cache.
+	 * @return the DIDDocument object
+	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 */
 	protected static DIDDocument resolve(DID did, boolean force)
 			throws DIDResolveException {
 		log.info("Resolving {}...", did.toString());
@@ -313,10 +408,22 @@ public class DIDBackend {
 		}
 	}
 
+	/**
+	 * Resolve DID content(DIDDocument).
+	 *
+	 * @param did the DID object
+	 * @return the DIDDocument object
+	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 */
 	protected static DIDDocument resolve(DID did) throws DIDResolveException {
 		return resolve(did, false);
 	}
 
+	/**
+	 * Get DIDAdapter object.
+	 *
+	 * @return the DIDAdapter object from DIDBackend.
+	 */
 	protected DIDAdapter getAdapter() {
 		return adapter;
 	}
@@ -331,6 +438,16 @@ public class DIDBackend {
 		log.info("ID transaction complete.");
 	}
 
+	/**
+	 * Publish 'create' id transaction for the new did.
+	 *
+	 * @param doc the DIDDocument object
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @throws DIDTransactionException publishing did failed because of did transaction error.
+	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
+	 * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
+	 */
 	protected void create(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		IDChainRequest request = IDChainRequest.create(doc, signKey, storepass);
@@ -338,6 +455,17 @@ public class DIDBackend {
 		createTransaction(json, null);
 	}
 
+	/**
+	 * Publish 'Update' id transaction for the existed did.
+	 *
+	 * @param doc the DIDDocument object
+	 * @param previousTxid the previous transaction id string
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @throws DIDTransactionException publishing did failed because of did transaction error.
+	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
+	 * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
+	 */
 	protected void update(DIDDocument doc, String previousTxid,
 			DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
@@ -348,6 +476,16 @@ public class DIDBackend {
 		ResolverCache.invalidate(doc.getSubject());
 	}
 
+    /**
+     * Publish id transaction to deactivate the existed did.
+     *
+     * @param doc the DIDDocument object
+     * @param signKey the key to sign
+     * @param storepass the password for DIDStore
+     * @throws DIDTransactionException publishing did failed because of did transaction error.
+     * @throws DIDStoreException did document does not attach store or there is no sign key to get.
+     * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
+     */
 	protected void deactivate(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		IDChainRequest request = IDChainRequest.deactivate(doc, signKey, storepass);
@@ -356,6 +494,18 @@ public class DIDBackend {
 		ResolverCache.invalidate(doc.getSubject());
 	}
 
+	/**
+     * Publish id transaction to deactivate the existed did.
+	 *
+	 * @param target the DID to be deactivated
+	 * @param targetSignKey the key to sign of specified DID
+	 * @param doc the DIDDocument object
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+     * @throws DIDTransactionException publishing did failed because of did transaction error.
+     * @throws DIDStoreException did document does not attach store or there is no sign key to get.
+     * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
+	 */
 	protected void deactivate(DID target, DIDURL targetSignKey,
 			DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {

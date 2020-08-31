@@ -102,28 +102,64 @@ public class DIDDocument {
 		private boolean authenticationKey;
 		private boolean authorizationKey;
 
+		/**
+		 * Constructs Publickey with the given value.
+		 *
+		 * @param id the Id for PublicKey
+		 * @param type the type string of PublicKey, default type is "ECDSAsecp256r1"
+		 * @param controller the DID who holds private key
+		 * @param keyBase58 the string from encoded base58 of public key
+		 */
 		protected PublicKey(DIDURL id, String type, DID controller, String keyBase58) {
 			super(id, type);
 			this.controller = controller;
 			this.keyBase58 = keyBase58;
 		}
 
+		/**
+		 * Constructs Publickey with the given value(default type is "ECDSAsecp256r1".
+		 *
+		 * @param id the Id for PublicKey
+		 * @param controller the DID who holds private key
+		 * @param keyBase58 the string from encoded base58 of public key
+		 */
 		protected PublicKey(DIDURL id, DID controller, String keyBase58) {
 			this(id, DEFAULT_PUBLICKEY_TYPE, controller, keyBase58);
 		}
 
+		/**
+		 * Get the controller of Publickey.
+		 *
+		 * @return the controller
+		 */
 		public DID getController() {
 			return controller;
 		}
 
+		/**
+		 * Get public key base58 string.
+		 *
+		 * @return the key base58 string
+		 */
 		public String getPublicKeyBase58() {
 			return keyBase58;
 		}
 
+		/**
+		 * Get public key bytes.
+		 *
+		 * @return the key bytes
+		 */
 		public byte[] getPublicKeyBytes() {
 			return Base58.decode(keyBase58);
 		}
 
+		/**
+		 * Judge the key is an authentication key or not.
+		 *
+		 * @return the returned value is true if key is an authentication key;
+		 *         the returned value is false if key is not an authentication key.
+		 */
 		public boolean isAuthenticationKey() {
 			return authenticationKey;
 		}
@@ -132,6 +168,12 @@ public class DIDDocument {
 			this.authenticationKey = authenticationKey;
 		}
 
+		/**
+		 * Judge the key is an authorization key or not.
+		 *
+		 * @return the returned value is true if key is an authorization key;
+		 *         the returned value is false if key is not an authorization key.
+		 */
 		public boolean isAuthorizationKey() {
 			return authorizationKey;
 		}
@@ -158,6 +200,13 @@ public class DIDDocument {
 			return false;
 		}
 
+		/**
+		 * Get PublicKey object from parsing json string.
+		 * @param node json node about PublicKey content
+		 * @param ref the owner for PublicKey
+		 * @return the json string about PublicKey
+		 * @throws MalformedDocumentException get object with parsing json string error.
+		 */
 		protected static PublicKey fromJson(JsonNode node, DID ref)
 				throws MalformedDocumentException {
 			Class<MalformedDocumentException> clazz = MalformedDocumentException.class;
@@ -177,6 +226,14 @@ public class DIDDocument {
 			return new PublicKey(id, type, controller, keyBase58);
 		}
 
+		/**
+		 * Get PublicKey json string.
+		 *
+		 * @param generator the JsonGenerator handle
+		 * @param ref the owner for PublicKey
+		 * @param normalized json string is normalized or compact.
+		 * @throws IOException write field to json string failed.
+		 */
 		protected void toJson(JsonGenerator generator, DID ref, boolean normalized)
 				throws IOException {
 			String value;
@@ -214,6 +271,13 @@ public class DIDDocument {
 	public static class Service extends DIDObject {
 		private String endpoint;
 
+		/**
+		 * Constructs Service with the given value.
+		 *
+		 * @param id
+		 * @param type
+		 * @param endpoint
+		 */
 		protected Service(DIDURL id, String type, String endpoint) {
 			super(id, type);
 			this.endpoint = endpoint;

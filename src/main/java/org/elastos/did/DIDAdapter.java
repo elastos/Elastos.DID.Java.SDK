@@ -25,6 +25,14 @@ package org.elastos.did;
 import org.elastos.did.exception.DIDTransactionException;
 
 public interface DIDAdapter {
+	/**
+	 * User need to implement 'createIdTransaction' function.
+	 * An application-defined function that create id transaction to chain.
+	 *
+	 * @param payload the payload string to put into id transaction
+	 * @param memo the memorandum string
+	 * @throws DIDTransactionException throw this exception if publishing id transaction failed.
+	 */
 	public void createIdTransaction(String payload, String memo)
 		throws DIDTransactionException;
 }

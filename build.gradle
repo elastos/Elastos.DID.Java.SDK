@@ -48,6 +48,13 @@ dependencies {
     testRuntime 'org.junit.vintage:junit-vintage-engine:5.6.0'
 }
 
+javadoc {
+	exclude "org/bitcoinj/**"
+	exclude "org/elastos/did/crypto"
+	exclude "org/elastos/did/parser"
+	exclude "org/elastos/did/util"
+}
+	
 test {
     useJUnitPlatform()
     

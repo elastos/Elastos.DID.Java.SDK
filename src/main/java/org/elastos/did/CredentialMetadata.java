@@ -25,9 +25,41 @@ package org.elastos.did;
 import java.util.Date;
 
 public interface CredentialMetadata {
+	/**
+	 * Set alias for credential.
+	 *
+	 * @param alias
+	 * alias string
+	 */
 	public void setAlias(String alias);
+
+	/**
+	 * Get alias from credential.
+	 *
+	 * @return alias string
+	 */
 	public String getAlias();
+
+	/**
+	 * Get last modified time for credential.
+	 *
+	 * @return last modified time
+	 */
 	public Date getLastModified();
+
+	/**
+	 * Set Extra element for credential.
+	 *
+	 * @param key the key string
+	 * @param value the value string
+	 */
 	public void setExtra(String key, String value);
+
+	/**
+	 * Get Extra string according to the key string.
+	 *
+	 * @param key the key string
+	 * @return the extra string matched key string
+	 */
 	public String getExtra(String key);
 }

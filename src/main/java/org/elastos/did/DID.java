@@ -42,14 +42,29 @@ public class DID implements Comparable<DID> {
 
 	private DIDMetadataImpl metadata;
 
+	/**
+	 * Get DID object.
+	 */
 	protected DID() {
 	}
 
+	/**
+	 * Get DID object.
+	 *
+	 * @param method the method string. eg: "elastos:did:"
+	 * @param methodSpecificId the method specific id string. eg: "i*******"
+	 */
 	protected DID(String method, String methodSpecificId) {
 		this.method = method;
 		this.methodSpecificId = methodSpecificId;
 	}
 
+	/**
+	 * Get DID object.
+	 *
+	 * @param did the did string. eg: "elastos:did:i*******"
+	 * @throws MalformedDIDException if the given did string has wrong format.
+	 */
 	public DID(String did) throws MalformedDIDException {
 		if (did == null || did.isEmpty())
 			throw new IllegalArgumentException();
@@ -61,26 +76,56 @@ public class DID implements Comparable<DID> {
 		}
 	}
 
+	/**
+	 * Get the did method string.
+	 *
+	 * @return the did method string
+	 */
 	public String getMethod() {
 		return method;
 	}
 
+	/**
+	 * Set the did method string.
+	 *
+	 * @param method the did method string
+	 */
 	protected void setMethod(String method) {
 		this.method = method;
 	}
 
+	/**
+	 * Get the did method specific id string.
+	 *
+	 * @return the did method specific id string
+	 */
 	public String getMethodSpecificId() {
 		return methodSpecificId;
 	}
 
+	/**
+	 * Set the did method specific id string.
+	 *
+	 * @param methodSpecificId the did method specific id string
+	 */
 	protected void setMethodSpecificId(String methodSpecificId) {
 		this.methodSpecificId = methodSpecificId;
 	}
 
+	/**
+	 * Set the metadata implement object for DID.
+	 *
+	 * @param metadata the metadata implement object
+	 */
 	protected void setMetadata(DIDMetadataImpl metadata) {
 		this.metadata = metadata;
 	}
 
+	/**
+	 * Get DIDMetadata object from DID.
+	 *
+	 * @return the DIDMetadata object
+	 */
 	public DIDMetadata getMetadata() {
 		if (metadata == null)
 			metadata = new DIDMetadataImpl();
@@ -88,17 +133,35 @@ public class DID implements Comparable<DID> {
 		return metadata;
 	}
 
+	/**
+	 * Store the DIDMetadata content of DID.
+	 *
+	 * @throws DIDStoreException throw this exception if storing DIDMetadata content failed.
+	 */
 	public void saveMetadata() throws DIDStoreException {
 		if (metadata != null && metadata.attachedStore())
 			metadata.getStore().storeDidMetadata(this, metadata);
 	}
 
+	/**
+	 * Get the DID is deactivated or not.
+	 *
+	 * @return the DID deactivated status
+	 */
 	public boolean isDeactivated() {
 		return getMetadata().isDeactivated();
 	}
 
+	/**
+	 * Resolve DID content(DIDDocument).
+	 *
+	 * @param force force = true, DID content must be from chain.
+	 *              force = false, DID content could be from chain or local cache.
+	 * @return the DIDDocument object
+	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 */
 	public DIDDocument resolve(boolean force)
-			throws DIDBackendException, DIDResolveException {
+			throws DIDResolveException {
 		DIDDocument doc = DIDBackend.resolve(this, force);
 		if (doc != null)
 			setMetadata(doc.getMetadataImpl());
@@ -106,11 +169,25 @@ public class DID implements Comparable<DID> {
 		return doc;
 	}
 
+	/**
+	 * Resolve DID content(DIDDocument) without force method.
+	 *
+	 * @return the DIDDocument object
+	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 */
 	public DIDDocument resolve()
-			throws DIDBackendException, DIDResolveException {
+			throws DIDResolveException {
 		return resolve(false);
 	}
 
+	/**
+	 * Resolve DID Document in asynchronous model.
+	 *
+	 * @param force force = true, DID content must be from chain.
+	 *              force = false, DID content could be from chain or local cache.
+	 * @return the new CompletableStage, the result is the DIDDocument interface for
+	 *             resolved DIDDocument if success; null otherwise.
+	 */
 	public CompletableFuture<DIDDocument> resolveAsync(boolean force) {
 		CompletableFuture<DIDDocument> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -123,14 +200,32 @@ public class DID implements Comparable<DID> {
 		return future;
 	}
 
+	/**
+	 * Resolve DID Document without force method in asynchronous model.
+	 *
+	 * @return the new CompletableStage, the result is the DIDDocument interface for
+	 *             resolved DIDDocument if success; null otherwise.
+	 */
 	public CompletableFuture<DIDDocument> resolveAsync() {
 		return resolveAsync(false);
 	}
 
+	/**
+	 * Resolve all DID transactions.
+	 *
+	 * @return the DIDHistory object
+	 * @throws DIDResolveException throw this exception if resolving all did transactions failed.
+	 */
 	public DIDHistory resolveHistory() throws DIDResolveException {
 		return DIDBackend.resolveHistory(this);
 	}
 
+	/**
+	 * Resolve all DID transactions in asynchronous model.
+	 *
+	 * @return the new CompletableStage, the result is the DIDHistory interface for
+	 *             resolved transactions if success; null otherwise.
+	 */
 	public CompletableFuture<DIDHistory> resolveHistoryAsync() {
 		CompletableFuture<DIDHistory> future = CompletableFuture.supplyAsync(() -> {
 			try {
