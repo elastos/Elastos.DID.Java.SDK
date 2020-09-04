@@ -25,14 +25,76 @@ package org.elastos.did;
 import java.util.Date;
 
 public interface DIDMetadata {
+	/**
+	 * Set alias for DID.
+	 *
+	 * @param alias the alias string
+	 */
 	public void setAlias(String alias);
+
+	/**
+	 * Get alias from DID.
+	 *
+	 * @return the alias string
+	 */
 	public String getAlias();
+
+	/**
+	 * Get the last transaction id.
+	 *
+	 * @return the transaction string
+	 */
 	public String getTransactionId();
+
+	/**
+	 * Get the document signature from the previous transaction.
+	 *
+	 * @return the signature string
+	 */
 	public String getPreviousSignature();
+
+	/**
+	 * Get the document signature from the lastest transaction.
+	 *
+	 * @return the signature string
+	 */
 	public String getSignature();
+
+	/**
+	 * Get the time of the lastest published transaction.
+	 *
+	 * @return the published time
+	 */
 	public Date getPublished();
+
+	/**
+	 * Get the last modified time for local did document.
+	 *
+	 * @return the last modified time
+	 */
 	public Date getLastModified();
+
+	/**
+	 * the DID deactivated status.
+	 *
+	 * @return the returned value is true if the did is deactivated.
+	 *         the returned value is false if the did is activated.
+	 */
 	public boolean isDeactivated();
+
+	/**
+	 * Set extra element for user.
+	 *
+	 * @param key the key string
+	 * @param value the value string
+	 */
 	public void setExtra(String key, String value);
+
+	/**
+	 * Get the value according to the key.
+	 *
+	 * @param key the key string
+	 * @return the value string
+	 */
 	public String getExtra(String key);
 }

@@ -96,6 +96,14 @@ public final class DIDStore {
 	private static final Logger log = LoggerFactory.getLogger(DIDStore.class);
 
 	public interface ConflictHandle {
+		/**
+	     * The function indicate how to resolve the confict, if the local document is different
+         * with the one resolved from chain.
+		 *
+		 * @param chainCopy the document from chain
+		 * @param localCopy the document from local device
+		 * @return
+		 */
 		DIDDocument merge(DIDDocument chainCopy, DIDDocument localCopy);
 	}
 
@@ -110,6 +118,17 @@ public final class DIDStore {
 		this.storage = storage;
 	}
 
+	/**
+	 * Initialize or check the DIDStore.
+	 *
+	 * @param type the type for different file system
+	 * @param location the location of DIDStore
+	 * @param initialCacheCapacity the initial capacity for cache
+	 * @param maxCacheCapacity the max capacity for cache
+	 * @param adapter the DIDAdaper object
+	 * @return the DIDStore object
+	 * @throws DIDStoreException Unsupport the specified store type.
+	 */
 	public static DIDStore open(String type, String location,
 			int initialCacheCapacity, int maxCacheCapacity,
 			DIDAdapter adapter) throws DIDStoreException {
@@ -125,16 +144,40 @@ public final class DIDStore {
 				adapter, storage);
 	}
 
+	/**
+	 * Initialize or check the DIDStore.
+	 *
+	 * @param type the type for different file system
+	 * @param location the location of DIDStore
+	 * @param adapter the DIDAdaper object
+	 * @return the DIDStore object
+	 * @throws DIDStoreException Unsupport the specified store type.
+	 */
 	public static DIDStore open(String type, String location, DIDAdapter adapter)
 			throws DIDStoreException {
 		return open(type, location, CACHE_INITIAL_CAPACITY,
 				CACHE_MAX_CAPACITY, adapter);
 	}
 
+	/**
+	 * Judge whether private identity exists in DIDStore.
+	 *
+	 * @return the returned value is true if private identity exists;
+	 *         the returned value if false if private identity doesnot exist.
+	 * @throws DIDStoreException Unsupport the specified store type.
+	 */
 	public boolean containsPrivateIdentity() throws DIDStoreException {
 		return storage.containsPrivateIdentity();
 	}
 
+	/**
+	 * Encrypt by Base64 method.
+	 *
+	 * @param input the data be encrypted
+	 * @param passwd the password for encrypting
+	 * @return the encrypt result
+	 * @throws DIDStoreException Encrypt data error.
+	 */
 	protected static String encryptToBase64(byte[] input, String passwd)
 			throws DIDStoreException {
 		byte[] cipher;
@@ -148,18 +191,39 @@ public final class DIDStore {
 				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 	}
 
-	protected static byte[] decryptFromBase64(String input, String storepass)
+	/**
+	 * Decrypt data from Base64 method.
+	 *
+	 * @param input the data to decrypted
+	 * @param passwd the password for decrypting
+	 * @return the original data before encrpting
+	 * @throws DIDStoreException Decrypt private key error.
+	 */
+	protected static byte[] decryptFromBase64(String input, String passwd)
 			throws DIDStoreException {
 		byte[] cipher = Base64.decode(input,
 				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 		try {
-			return Aes256cbc.decrypt(cipher, storepass);
+			return Aes256cbc.decrypt(cipher, passwd);
 		} catch (CryptoException e) {
 			throw new WrongPasswordException("Decrypt private key error.", e);
 		}
 	}
 
-	// Initialize & create new private identity and save it to DIDStore.
+	/**
+	 * Initialize private identity by mnemonic.
+	 *
+	 * @param language the language string
+     *                support language string: "chinese_simplified",
+     *                "chinese_traditional", "czech", "english", "french",
+     *                "italian", "japanese", "korean", "spanish".
+	 * @param mnemonic the mnemonic string
+	 * @param passphrase the password for mnemonic to generate seed
+	 * @param storepass the password for DIDStore
+	 * @param force force = true, must create new private identity;
+	 *              force = false, must not create new private identity if there is private identity.
+	 * @throws DIDStoreException there is private identity if user need unforce mode.
+	 */
 	public void initPrivateIdentity(String language, String mnemonic,
 			String passphrase, String storepass, boolean force)
 			throws DIDStoreException {
@@ -178,7 +242,7 @@ public final class DIDStore {
 		}
 
 		if (containsPrivateIdentity() && !force)
-			throw new DIDStoreException("Already has private indentity.");
+			throw new DIDStoreException("Already has private identity.");
 
 		if (passphrase == null)
 			passphrase = "";
@@ -194,11 +258,32 @@ public final class DIDStore {
 
 	}
 
+	/**
+	 * Initialize new private identity by mnemonic with unforce mode.
+	 *
+	 * @param language the language string
+     *                support language string: "chinese_simplified",
+     *                "chinese_traditional", "czech", "english", "french",
+     *                "italian", "japanese", "korean", "spanish".
+	 * @param mnemonic the mnemonic string
+	 * @param passphrase the password for mnemonic to generate seed
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException there is private identity if user need unforce mode.
+	 */
 	public void initPrivateIdentity(String language, String mnemonic,
 			String passphrase, String storepass) throws DIDStoreException {
 		initPrivateIdentity(language, mnemonic, passphrase, storepass, false);
 	}
 
+	/**
+	 * Initialize private identity by extended private key.
+	 *
+	 * @param extentedPrivateKey the extented private key string
+	 * @param storepass the password for DIDStore
+	 * @param force force = true, must create new private identity;
+	 *              force = false, must not create new private identity if there is private identity.
+	 * @throws DIDStoreException there is private identity if user need unforce mode.
+	 */
 	public void initPrivateIdentity(String extentedPrivateKey, String storepass,
 			boolean force) throws DIDStoreException {
 		if (extentedPrivateKey == null || extentedPrivateKey.isEmpty())
@@ -214,11 +299,25 @@ public final class DIDStore {
 		initPrivateIdentity(privateIdentity, storepass);
 	}
 
+	/**
+	 * Initialize private identity by extended private key with unforce mode.
+	 *
+	 * @param extentedPrivateKey the extented private key string
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException there is private identity if user need unforce mode.
+	 */
 	public void initPrivateIdentity(String extentedPrivateKey, String storepass)
 			throws DIDStoreException {
 		initPrivateIdentity(extentedPrivateKey, storepass, false);
 	}
 
+	/**
+	 * Initialize private identity by HDKey content.
+	 *
+	 * @param privateIdentity the HDKey object
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException there is private identity if user need unforce mode.
+	 */
 	private void initPrivateIdentity(HDKey privateIdentity, String storepass)
 			throws DIDStoreException {
 		// Save extended root private key
@@ -237,6 +336,13 @@ public final class DIDStore {
 		privateIdentity.wipe();
 	}
 
+	/**
+	 * Export mnemonic from DIDStore
+	 *
+	 * @param storepass the password for DIDStore
+ 	 * @return the mnemonic string
+	 * @throws DIDStoreException there is no mnemonic in DID Store.
+	 */
 	public String exportMnemonic(String storepass) throws DIDStoreException {
 		if (storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException("Invalid password.");
@@ -249,7 +355,13 @@ public final class DIDStore {
 		}
 	}
 
-	// initialized from saved private identity from DIDStore.
+    /**
+     * Load private identity from DIDStore.
+     *
+     * @param storepass the password for DIDStore
+     * @return the HDKey object(private identity)
+     * @throws DIDStoreException there is invalid private identity in DIDStore.
+     */
 	protected HDKey loadPrivateIdentity(String storepass)
 			throws DIDStoreException {
 		if (!containsPrivateIdentity())
@@ -284,6 +396,13 @@ public final class DIDStore {
 		return privateIdentity;
 	}
 
+	/**
+	 * Load public identity from identity.
+	 * There is extended private key and extended public key in DIDStore.
+	 *
+	 * @return the HDKey object
+	 * @throws DIDStoreException
+	 */
 	protected HDKey loadPublicIdentity() throws DIDStoreException {
 		if (!containsPrivateIdentity())
 			return null;
@@ -294,6 +413,14 @@ public final class DIDStore {
 		return publicIdentity;
 	}
 
+	/**
+	 * Synchronize DIDStore.
+	 *
+	 * @param handle the handle to ConflictHandle
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException synchronize did faile with resolve error.
+	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 */
 	public void synchronize(ConflictHandle handle, String storepass)
 			throws DIDBackendException, DIDStoreException {
 		if (handle == null || storepass == null || storepass.isEmpty())
@@ -375,6 +502,14 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Synchronize DIDStore.
+	 * ConflictHandle uses default method.
+	 *
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException synchronize did faile with resolve error.
+	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 */
 	public void synchronize(String storepass)
 			throws DIDBackendException, DIDStoreException {
 		synchronize((c, l) -> {
@@ -384,6 +519,14 @@ public final class DIDStore {
 		}, storepass);
 	}
 
+    /**
+     * Synchronize DIDStore with asynchronous mode.
+     *
+	 * @param handle the handle to ConflictHandle
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, the result is the DIDDocument interface for
+	 *         resolved DIDDocument if success; null otherwise.
+     */
 	public CompletableFuture<Void> synchronizeAsync(
 			ConflictHandle handle, String storepass) {
 		if (handle == null || storepass == null || storepass.isEmpty())
@@ -400,6 +543,13 @@ public final class DIDStore {
 		return future;
 	}
 
+    /**
+     * Synchronize DIDStore with asynchronous mode.
+     * ConflictHandle uses default method.
+     *
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+     */
 	public CompletableFuture<Void> synchronizeAsync(String storepass) {
 		if (storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -415,6 +565,15 @@ public final class DIDStore {
 		return future;
 	}
 
+	/**
+	 * Create a new DID with specified index and get this DID's Document content.
+	 *
+	 * @param index the index to create new did.
+	 * @param alias the alias string
+	 * @param storepass the password for DIDStore
+	 * @return the DIDDocument content related to the new DID
+	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 */
 	public DIDDocument newDid(int index, String alias, String storepass)
 			throws DIDStoreException {
 		if (index < 0 || storepass == null || storepass.isEmpty())
@@ -448,10 +607,26 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Create a new DID with specified index and get this DID's Document content.
+	 *
+	 * @param index the index to create new did.
+	 * @param storepass the password for DIDStore
+	 * @return the DIDDocument content related to the new DID
+	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 */
 	public DIDDocument newDid(int index, String storepass) throws DIDStoreException {
 		return newDid(index, null, storepass);
 	}
 
+	/**
+	 * Create a new DID and get this DID's Document content.
+	 *
+	 * @param alias the alias string
+	 * @param storepass the password for DIDStore
+	 * @return the DIDDocument content related to the new DID
+	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 */
 	public DIDDocument newDid(String alias, String storepass)
 			throws DIDStoreException {
 		int nextIndex = storage.loadPrivateIdentityIndex();
@@ -460,10 +635,24 @@ public final class DIDStore {
 		return doc;
 	}
 
+	/**
+	 * Create a new DID without alias and get this DID's Document content.
+	 *
+	 * @param storepass the password for DIDStore
+	 * @return the DIDDocument content related to the new DID
+	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 */
 	public DIDDocument newDid(String storepass) throws DIDStoreException {
 		return newDid(null, storepass);
 	}
 
+	/**
+	 * Only get DID with specified index.
+	 *
+	 * @param index the index
+	 * @return the DID object
+	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 */
 	public DID getDid(int index) throws DIDStoreException {
 		if (index < 0)
 			throw new IllegalArgumentException();
@@ -477,6 +666,20 @@ public final class DIDStore {
 		return did;
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain.
+	 *
+	 * @param did the DID which to be published into chain
+	 * @param signKey the key to sign
+	 * @param force force = true, must be publish whether the local document is lastest one or not;
+	 *              force = false, must not be publish if the local document is not the lastest one,
+	 *              and must resolve at first.
+	 *
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException publish did failed because of DIDBackend error.
+	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void publishDid(DID did, DIDURL signKey, boolean force, String storepass)
 			throws DIDBackendException, DIDStoreException, InvalidKeyException {
 		if (did == null || storepass == null || storepass.isEmpty())
@@ -563,11 +766,35 @@ public final class DIDStore {
 		storage.storeDidMetadata(doc.getSubject(), doc.getMetadataImpl());
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain without force mode.
+	 *
+	 * @param did the DID which to be published into chain
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException publish did failed because of DIDBackend error.
+	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void publishDid(DID did, DIDURL signKey, String storepass)
 			throws DIDBackendException, DIDStoreException, InvalidKeyException {
 		publishDid(did, signKey, false, storepass);
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain.
+	 *
+	 * @param did the DID string which to be published into chain
+	 * @param signKey the key to sign
+	 * @param force force = true, must be publish whether the local document is lastest one or not;
+	 *              force = false, must not be publish if the local document is not the lastest one,
+	 *              and must resolve at first.
+	 *
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException publish did failed because of DIDBackend error.
+	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void publishDid(String did, String signKey, boolean force, String storepass)
 			throws DIDBackendException, DIDStoreException, InvalidKeyException {
 		DID _did = null;
@@ -583,11 +810,30 @@ public final class DIDStore {
 		publishDid(_did, _signKey, force, storepass);
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain without force mode.
+	 *
+	 * @param did the DID string which to be published into chain
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException publish did failed because of DIDBackend error.
+	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void publishDid(String did, String signKey, String storepass)
 			throws DIDBackendException, DIDStoreException, InvalidKeyException {
 		publishDid(did, signKey, false, storepass);
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain without force mode.
+	 * Specify the default key to sign.
+	 *
+	 * @param did the DID which to be published into chain
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException publish did failed because of DIDBackend error.
+	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
+	 */
 	public void publishDid(DID did, String storepass)
 			throws DIDBackendException, DIDStoreException {
 		try {
@@ -597,6 +843,15 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain without force mode.
+	 * Specify the default key to sign.
+	 *
+	 * @param did the DID string which to be published into chain
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException publish did failed because of DIDBackend error.
+	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
+	 */
 	public void publishDid(String did, String storepass)
 			throws DIDBackendException, DIDStoreException {
 		try {
@@ -606,6 +861,17 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 *
+	 * @param did the DID which to be published into chain
+	 * @param signKey the key to sign
+	 * @param force force = true, must be publish whether the local document is lastest one or not;
+	 *              force = false, must not be publish if the local document is not the lastest one,
+	 *              and must resolve at first.
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> publishDidAsync(DID did,
 			DIDURL signKey, boolean force, String storepass) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -619,6 +885,17 @@ public final class DIDStore {
 		return future;
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 *
+	 * @param did the DID string which to be published into chain
+	 * @param signKey the key to sign
+	 * @param force force = true, must be publish whether the local document is lastest one or not;
+	 *              force = false, must not be publish if the local document is not the lastest one,
+	 *              and must resolve at first.
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> publishDidAsync(String did,
 			String signKey, boolean force, String storepass) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -632,26 +909,69 @@ public final class DIDStore {
 		return future;
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 * Also this method is defined without force mode.
+	 *
+	 * @param did the DID string which to be published into chain
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> publishDidAsync(DID did,
 			DIDURL signKey, String storepass) {
 		return publishDidAsync(did, signKey, false, storepass);
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 * Also this method is defined without force mode.
+	 *
+	 * @param did the DID string which to be published into chain
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> publishDidAsync(String did,
 			String signKey, String storepass) {
 		return publishDidAsync(did, signKey, false, storepass);
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 * Also this method is defined without force mode and specify the default key to sign.
+	 *
+	 * @param did the DID which to be published into chain
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> publishDidAsync(DID did, String storepass) {
 		return publishDidAsync(did, null, storepass);
 	}
 
+	/**
+	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 * Also this method is defined without force mode and specify the default key to sign.
+	 *
+	 * @param did the DID string which to be published into chain
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> publishDidAsync(String did,
 			String storepass) {
 		return publishDidAsync(did, null, storepass);
 	}
 
-	// Deactivate self use authentication keys
+	/**
+	 * Deactivate self use authentication key.
+	 *
+	 * @param did the DID to be activated
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @throws DIDStoreException deactivate did failed because of did store error.
+	 * @throws InvalidKeyException there is no an authenication key.
+	 */
 	public void deactivateDid(DID did, DIDURL signKey, String storepass)
 			throws DIDBackendException, DIDStoreException, InvalidKeyException {
 		if (did == null || storepass == null || storepass.isEmpty())
@@ -687,6 +1007,16 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Deactivate self use authentication key.
+	 *
+	 * @param did the DID string to be activated
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @throws DIDStoreException deactivate did failed because of did store error.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void deactivateDid(String did, String signKey, String storepass)
 			throws DIDBackendException, DIDStoreException, InvalidKeyException {
 		DID _did = null;
@@ -701,6 +1031,16 @@ public final class DIDStore {
 		deactivateDid(_did, _signKey, storepass);
 	}
 
+	/**
+	 * Deactivate self use authentication key.
+	 * Specify the default key to sign.
+	 *
+	 * @param did the DID to be activated
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @throws DIDStoreException deactivate did failed because of did store error.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void deactivateDid(DID did, String storepass)
 			throws DIDBackendException, DIDStoreException {
 		try {
@@ -710,6 +1050,16 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Deactivate self use authentication key.
+	 * Specify the default key to sign.
+	 *
+	 * @param did the DID string to be activated
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @throws DIDStoreException deactivate did failed because of did store error.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void deactivateDid(String did, String storepass)
 			throws DIDBackendException, DIDStoreException {
 		try {
@@ -719,6 +1069,14 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Deactivate self use authentication key with asynchronous mode.
+	 *
+	 * @param did the DID to be activated
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> deactivateDidAsync(DID did,
 			DIDURL signKey, String storepass) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -732,6 +1090,14 @@ public final class DIDStore {
 		return future;
 	}
 
+	/**
+	 * Deactivate self use authentication key with asynchronous mode.
+	 *
+	 * @param did the DID string to be activated
+	 * @param signKey the key to sign
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> deactivateDidAsync(String did,
 			String signKey, String storepass) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -745,15 +1111,41 @@ public final class DIDStore {
 		return future;
 	}
 
+	/**
+	 * Deactivate self use authentication key with asynchronous mode.
+	 * Specify the default key to sign.
+	 *
+	 * @param did the DID to be activated
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> deactivateDidAsync(DID did, String storepass) {
 		return deactivateDidAsync(did, (DIDURL)null, storepass);
 	}
 
+	/**
+	 * Deactivate self use authentication key with asynchronous mode.
+	 * Specify the default key to sign.
+	 *
+	 * @param did the DID to be activated
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> deactivateDidAsync(String did, String storepass) {
 		return deactivateDidAsync(did, null, storepass);
 	}
 
-	// Deactivate target DID with authorization
+	/**
+	 * Deactivate target DID by authorizor's DID.
+	 *
+	 * @param target the target DID
+	 * @param did the authorizor's DID
+	 * @param signKey the authorizor's key to sign
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @throws DIDStoreException deactivate did failed because of did store error.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void deactivateDid(DID target, DID did, DIDURL signKey, String storepass)
 			throws DIDBackendException, DIDStoreException, InvalidKeyException {
 		if (target == null || did == null ||
@@ -818,6 +1210,17 @@ public final class DIDStore {
 		backend.deactivate(target, targetSignKey, doc, signKey, storepass);
 	}
 
+	/**
+	 * Deactivate target DID by authorizor's DID.
+	 *
+	 * @param target the target DID string
+	 * @param did the authorizor's DID
+	 * @param signKey the authorizor's key to sign
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @throws DIDStoreException deactivate did failed because of did store error.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void deactivateDid(String target, String did,
 			String signKey, String storepass)
 			throws DIDBackendException, DIDStoreException, InvalidKeyException {
@@ -835,6 +1238,16 @@ public final class DIDStore {
 		deactivateDid(_target, _did, _signKey, storepass);
 	}
 
+	/**
+	 * Deactivate target DID by authorizor's DID.
+	 *
+	 * @param target the target DID string
+	 * @param did the authorizor's DID, use the default key to sign.
+	 * @param storepass the password for DIDStore
+	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @throws DIDStoreException deactivate did failed because of did store error.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public void deactivateDid(DID target, DID did, String storepass)
 			throws DIDBackendException, DIDStoreException, InvalidKeyException {
 		deactivateDid(target, did, null, storepass);
@@ -847,6 +1260,15 @@ public final class DIDStore {
 	}
 	*/
 
+	/**
+	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 *
+	 * @param target the target DID
+	 * @param did the authorizor's DID.
+	 * @param signKey the authorizor's key to sign
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> deactivateDidAsync(DID target, DID did,
 			DIDURL signKey, String storepass) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -860,6 +1282,16 @@ public final class DIDStore {
 		return future;
 	}
 
+	/**
+	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 *
+	 * @param target the target DID
+	 * @param did the authorizor's DID.
+	 * @param confirms
+	 * @param signKey the authorizor's key to sign
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> deactivateDidAsync(String target,
 			String did, int confirms, String signKey, String storepass) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -873,11 +1305,29 @@ public final class DIDStore {
 		return future;
 	}
 
+	/**
+	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 *
+	 * @param target the target DID
+	 * @param did the authorizor's DID.
+	 * @param confirms
+	 * @param signKey the authorizor's key to sign
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> deactivateDidAsync(String target,
 			String did, String signKey, String storepass) {
 		return deactivateDidAsync(target, did, signKey, storepass);
 	}
 
+	/**
+	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 *
+	 * @param target the target DID
+	 * @param did the authorizor's DID, use the default key to sign.
+	 * @param storepass the password for DIDStore
+	 * @return the new CompletableStage, no result.
+	 */
 	public CompletableFuture<Void> deactivateDidAsync(DID target, DID did,
 			String storepass) {
 		return deactivateDidAsync(target, did, null, storepass);
@@ -890,6 +1340,12 @@ public final class DIDStore {
 	}
 	*/
 
+    /**
+     * Store DID Document in the DIDStore.
+     *
+     * @param doc the DIDDocument object
+     * @throws DIDStoreException DIDStore error.
+     */
 	public void storeDid(DIDDocument doc) throws DIDStoreException {
 		if (doc == null)
 			throw new IllegalArgumentException();
@@ -909,6 +1365,13 @@ public final class DIDStore {
 			didCache.put(doc.getSubject(), doc);
 	}
 
+	/**
+	 * Store DID Metadata.
+	 *
+	 * @param did the owner of Metadata
+	 * @param metadata the meta data
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	protected void storeDidMetadata(DID did, DIDMetadataImpl metadata)
 			throws DIDStoreException {
 		storage.storeDidMetadata(did, metadata);
@@ -920,6 +1383,13 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Store DID Metadata.
+	 *
+	 * @param did the owner of Metadata
+	 * @param metadata the meta data
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	protected void storeDidMetadata(String did, DIDMetadataImpl metadata)
 			throws DIDStoreException{
 		DID _did = null;
@@ -932,6 +1402,13 @@ public final class DIDStore {
 		storeDidMetadata(_did, metadata);
 	}
 
+	/**
+	 * Load Meta data for the specified DID.
+	 *
+	 * @param did the specified DID
+	 * @return the Meta data
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	protected DIDMetadataImpl loadDidMetadata(DID did) throws DIDStoreException {
 		if (did == null)
 			throw new IllegalArgumentException();
@@ -955,6 +1432,13 @@ public final class DIDStore {
 		return metadata;
 	}
 
+	/**
+	 * Load Meta data about DID.
+	 *
+	 * @param did the specified DID string
+	 * @return the Meta data
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	protected DIDMetadataImpl loadDidMetadata(String did) throws DIDStoreException {
 		DID _did = null;
 		try {
@@ -966,6 +1450,13 @@ public final class DIDStore {
 		return loadDidMetadata(_did);
 	}
 
+	/**
+	 * Load the specified DID content(DIDDocument).
+	 *
+	 * @param did the specified DID
+	 * @return the DIDDocument object
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public DIDDocument loadDid(DID did) throws DIDStoreException {
 		if (did == null)
 			throw new IllegalArgumentException();
@@ -991,6 +1482,13 @@ public final class DIDStore {
 		return doc;
 	}
 
+	/**
+	 * Load the specified DID content(DIDDocument).
+	 *
+	 * @param did the specified DID string
+	 * @return the DIDDocument object
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public DIDDocument loadDid(String did) throws DIDStoreException {
 		DID _did = null;
 		try {
@@ -1002,6 +1500,14 @@ public final class DIDStore {
 		return loadDid(_did);
 	}
 
+    /**
+     * Judge whether containing the specified DID or not.
+     *
+     * @param did the specified DID
+     * @return the returned value is true if the specified DID is in the DIDStore;
+     *         the returned value is false if the specified DID is not in the DIDStore.
+     * @throws DIDStoreException DIDStore error.
+     */
 	public boolean containsDid(DID did) throws DIDStoreException {
 		if (did == null)
 			throw new IllegalArgumentException();
@@ -1009,6 +1515,14 @@ public final class DIDStore {
 		return storage.containsDid(did);
 	}
 
+    /**
+     * Judge whether containing the specified DID or not.
+     *
+     * @param did the specified DID string
+     * @return the returned value is true if the specified DID is in the DIDStore;
+     *         the returned value is false if the specified DID is not in the DIDStore.
+     * @throws DIDStoreException DIDStore error.
+     */
 	public boolean containsDid(String did) throws DIDStoreException {
 		DID _did = null;
 		try {
@@ -1020,6 +1534,14 @@ public final class DIDStore {
 		return containsDid(_did);
 	}
 
+    /**
+     * Delete the specified DID.
+     *
+     * @param did the specified DID
+     * @return the returned value is true if deleting is successful;
+     *         the returned value is false if deleting is failed.
+     * @throws DIDStoreException DIDStore error.
+     */
 	public boolean deleteDid(DID did) throws DIDStoreException {
 		if (did == null)
 			throw new IllegalArgumentException();
@@ -1028,6 +1550,14 @@ public final class DIDStore {
 		return storage.deleteDid(did);
 	}
 
+    /**
+     * Delete the specified DID.
+     *
+     * @param did the specified DID string
+     * @return the returned value is true if deleting is successful;
+     *         the returned value is false if deleting is failed.
+     * @throws DIDStoreException DIDStore error.
+     */
 	public boolean deleteDid(String did) throws DIDStoreException {
 		DID _did = null;
 		try {
@@ -1039,6 +1569,15 @@ public final class DIDStore {
 		return deleteDid(_did);
 	}
 
+	/**
+	 * List all DIDs according to the specified condition.
+	 *
+	 * @param filter the specified condition.
+	 *               0: all did; 1: did has privatekeys;
+     *               2: did has no privatekeys.
+	 * @return the DID array.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public List<DID> listDids(int filter) throws DIDStoreException {
 		List<DID> dids = storage.listDids(filter);
 
@@ -1051,6 +1590,12 @@ public final class DIDStore {
 		return dids;
 	}
 
+	/**
+	 * Store the specified Credential.
+	 *
+	 * @param credential the Credential object
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public void storeCredential(VerifiableCredential credential)
 			throws DIDStoreException {
 		if (credential == null)
@@ -1070,6 +1615,14 @@ public final class DIDStore {
 			vcCache.put(credential.getId(), credential);
 	}
 
+    /**
+     * Store meta data for the specified Credential.
+     *
+     * @param did the owner of the specified Credential
+     * @param id the identifier of Credential
+     * @param metadata the meta data for Credential
+     * @throws DIDStoreException DIDStore error.
+     */
 	protected void storeCredentialMetadata(DID did, DIDURL id,
 			CredentialMetadataImpl metadata) throws DIDStoreException {
 		if (did == null || id == null)
@@ -1085,6 +1638,14 @@ public final class DIDStore {
 		}
 	}
 
+    /**
+     * Store meta data for the specified Credential.
+     *
+     * @param did the owner of the specified Credential
+     * @param id the identifier of Credential
+     * @param metadata the meta data for Credential
+     * @throws DIDStoreException DIDStore error.
+     */
 	protected void storeCredentialMetadata(String did, String id,
 			CredentialMetadataImpl metadata) throws DIDStoreException {
 		DID _did = null;
@@ -1099,6 +1660,14 @@ public final class DIDStore {
 		storeCredentialMetadata(_did, _id, metadata);
 	}
 
+	/**
+	 * Load the meta data about the specified Credential.
+	 *
+	 * @param did the owner of Credential
+     * @param id the identifier of Credential
+	 * @return the meta data for Credential
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	protected CredentialMetadataImpl loadCredentialMetadata(DID did, DIDURL id)
 			throws DIDStoreException {
 		if (did == null || id == null)
@@ -1123,6 +1692,14 @@ public final class DIDStore {
 		return metadata;
 	}
 
+	/**
+	 * Load the meta data about the specified Credential.
+	 *
+	 * @param did the owner of Credential
+     * @param id the identifier of Credential
+	 * @return the meta data for Credential
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	protected CredentialMetadataImpl loadCredentialMetadata(String did, String id)
 			throws DIDStoreException {
 		DID _did = null;
@@ -1137,6 +1714,14 @@ public final class DIDStore {
 		return loadCredentialMetadata(_did, _id);
 	}
 
+	/**
+	 * Load the specified Credential.
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @return the Credential object
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public VerifiableCredential loadCredential(DID did, DIDURL id)
 			throws DIDStoreException {
 		if (did == null || id == null)
@@ -1163,6 +1748,14 @@ public final class DIDStore {
 		return vc;
 	}
 
+	/**
+	 * Load the specified Credential.
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @return the Credential object
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public VerifiableCredential loadCredential(String did, String id)
 			throws DIDStoreException {
 		DID _did = null;
@@ -1177,6 +1770,13 @@ public final class DIDStore {
 		return loadCredential(_did, _id);
 	}
 
+	/**
+	 * Judge whether does DIDStore contain any credential owned the specific DID.
+	 *
+	 * @param did the owner of Credential
+	 * @return the returned value is true if there is no credential owned the specific DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean containsCredentials(DID did) throws DIDStoreException {
 		if (did == null)
 			throw new IllegalArgumentException();
@@ -1184,6 +1784,13 @@ public final class DIDStore {
 		return storage.containsCredentials(did);
 	}
 
+	/**
+	 * Judge whether does DIDStore contain any credential owned the specific DID.
+	 *
+	 * @param did the owner of Credential
+	 * @return the returned value is true if there is no credential owned the specific DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean containsCredentials(String did) throws DIDStoreException {
 		DID _did = null;
 		try {
@@ -1195,6 +1802,15 @@ public final class DIDStore {
 		return containsCredentials(_did);
 	}
 
+	/**
+	 * Judge whether does DIDStore contain the specified credential.
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @return the returned value is true if there is no credential owned the specific DID;
+	 *         the returned value is false if there is credentials owned the specific DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean containsCredential(DID did, DIDURL id)
 			throws DIDStoreException {
 		if (did == null || id == null)
@@ -1203,6 +1819,15 @@ public final class DIDStore {
 		return storage.containsCredential(did, id);
 	}
 
+	/**
+	 * Judge whether does DIDStore contain the specified credential.
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @return the returned value is true if there is no credential owned the specific DID;
+	 *         the returned value is false if there is credentials owned the specific DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean containsCredential(String did, String id)
 			throws DIDStoreException {
 		DID _did = null;
@@ -1217,6 +1842,15 @@ public final class DIDStore {
 		return containsCredential(_did, _id);
 	}
 
+	/**
+	 * Delete the specified Credential
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @return the returned value is true if there is no credential owned the specific DID;
+	 *         the returned value is false if there is credentials owned the specific DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean deleteCredential(DID did, DIDURL id) throws DIDStoreException {
 		if (did == null || id == null)
 			throw new IllegalArgumentException();
@@ -1225,6 +1859,15 @@ public final class DIDStore {
 		return storage.deleteCredential(did, id);
 	}
 
+	/**
+	 * Delete the specified Credential
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @return the returned value is true if there is no credential owned the specific DID;
+	 *         the returned value is false if there is credentials owned the specific DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean deleteCredential(String did, String id)
 			throws DIDStoreException {
 		DID _did = null;
@@ -1239,6 +1882,13 @@ public final class DIDStore {
 		return deleteCredential(_did, _id);
 	}
 
+	/**
+	 * List the Credentials owned the specified DID.
+	 *
+	 * @param did the owner of Credential
+	 * @return the Credential array owned the specified DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public List<DIDURL> listCredentials(DID did) throws DIDStoreException {
 		if (did == null)
 			throw new IllegalArgumentException();
@@ -1254,6 +1904,13 @@ public final class DIDStore {
 		return ids;
 	}
 
+	/**
+	 * List the Credentials owned the specified DID.
+	 *
+	 * @param did the owner of Credential
+	 * @return the Credential array owned the specified DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public List<DIDURL> listCredentials(String did) throws DIDStoreException {
 		DID _did = null;
 		try {
@@ -1265,6 +1922,15 @@ public final class DIDStore {
 		return listCredentials(_did);
 	}
 
+	/**
+	 * Select the Credentials according to the specified condition.
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @param type the Credential type
+	 * @return the Credential array
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public List<DIDURL> selectCredentials(DID did, DIDURL id, String[] type)
 			throws DIDStoreException {
 		if (did == null)
@@ -1276,6 +1942,15 @@ public final class DIDStore {
 		return storage.selectCredentials(did, id, type);
 	}
 
+	/**
+	 * Select the Credentials according to the specified condition.
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @param type the Credential type
+	 * @return the Credential array
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public List<DIDURL> selectCredentials(String did, String id, String[] type)
 			throws DIDStoreException {
 		if (did == null || did.isEmpty())
@@ -1295,6 +1970,15 @@ public final class DIDStore {
 		return selectCredentials(_did, _id, type);
 	}
 
+	/**
+	 * Store private key. Encrypt and encode private key with base64url method.
+	 *
+	 * @param did the owner of key
+	 * @param id the identifier of key
+	 * @param privateKey the original private key(32 bytes)
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public void storePrivateKey(DID did, DIDURL id, byte[] privateKey,
 			String storepass) throws DIDStoreException {
 		if (did == null || id == null ||
@@ -1306,6 +1990,15 @@ public final class DIDStore {
 		storage.storePrivateKey(did, id, encryptedKey);
 	}
 
+	/**
+	 * Store private key. Encrypt and encode private key with base64url method.
+	 *
+	 * @param did the owner of key
+	 * @param id the identifier of key
+	 * @param privateKey the original private key(32 bytes)
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public void storePrivateKey(String did, String id, byte[] privateKey,
 			String storepass) throws DIDStoreException {
 		DID _did = null;
@@ -1320,6 +2013,15 @@ public final class DIDStore {
 		storePrivateKey(_did, _id, privateKey, storepass);
 	}
 
+	/**
+	 * Load private key.
+	 *
+	 * @param did the owner of key
+	 * @param id the identifier of key
+	 * @param storepass the password for DIDStore
+	 * @return the original private key
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	protected byte[] loadPrivateKey(DID did, DIDURL id, String storepass)
 			throws DIDStoreException {
 		String encryptedKey = storage.loadPrivateKey(did, id);
@@ -1353,6 +2055,14 @@ public final class DIDStore {
 		return extendedKeyBytes;
 	}
 
+	/**
+	 * Judge whether there is private key owned the specified DID in DIDStore.
+	 *
+	 * @param did the specified DID
+	 * @return the returned value is true if there is private keys owned the specified DID;
+	 *         the returned value is false if there is no private keys owned the specified DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean containsPrivateKeys(DID did) throws DIDStoreException {
 		if (did == null)
 			throw new IllegalArgumentException();
@@ -1360,6 +2070,14 @@ public final class DIDStore {
 		return storage.containsPrivateKeys(did);
 	}
 
+	/**
+	 * Judge whether there is private key owned the specified DID in DIDStore.
+	 *
+	 * @param did the specified DID string
+	 * @return the returned value is true if there is private keys owned the specified DID;
+	 *         the returned value is false if there is no private keys owned the specified DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean containsPrivateKeys(String did) throws DIDStoreException {
 		DID _did = null;
 		try {
@@ -1371,6 +2089,15 @@ public final class DIDStore {
 		return containsPrivateKeys(_did);
 	}
 
+	/**
+	 * Judge that the specified key has private key in DIDStore.
+	 *
+	 * @param did the owner of key
+	 * @param id the identifier of key
+	 * @return the returned value is true if there is private keys owned the specified key;
+	 *         the returned value is false if there is no private keys owned the specified key.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean containsPrivateKey(DID did, DIDURL id)
 			throws DIDStoreException {
 		if (did == null || id == null)
@@ -1379,6 +2106,15 @@ public final class DIDStore {
 		return storage.containsPrivateKey(did, id);
 	}
 
+	/**
+	 * Judge that the specified key has private key in DIDStore.
+	 *
+	 * @param did the owner of key
+	 * @param id the identifier of key
+	 * @return the returned value is true if there is private keys owned the specified key;
+	 *         the returned value is false if there is no private keys owned the specified key.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean containsPrivateKey(String did, String id)
 			throws DIDStoreException {
 		DID _did = null;
@@ -1393,6 +2129,15 @@ public final class DIDStore {
 		return containsPrivateKey(_did, _id);
 	}
 
+	/**
+	 * Delete the private key owned to the specified key.
+	 *
+	 * @param did the owner of key
+	 * @param id the identifier of key
+	 * @return the returned value is true if deleting private keys successfully;
+	 *         the returned value is false if deleting private keys failed.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean deletePrivateKey(DID did, DIDURL id) throws DIDStoreException {
 		if (did == null || id == null)
 			throw new IllegalArgumentException();
@@ -1400,6 +2145,15 @@ public final class DIDStore {
 		return storage.deletePrivateKey(did, id);
 	}
 
+	/**
+	 * Delete the private key owned to the specified key.
+	 *
+	 * @param did the owner of key
+	 * @param id the identifier of key
+	 * @return the returned value is true if deleting private keys successfully;
+	 *         the returned value is false if deleting private keys failed.
+	 * @throws DIDStoreException DIDStore error.
+	 */
 	public boolean deletePrivateKey(String did, String id)
 			throws DIDStoreException {
 		DID _did = null;
@@ -1414,6 +2168,16 @@ public final class DIDStore {
 		return deletePrivateKey(_did, _id);
 	}
 
+	/**
+	 * Sign the digest data by the specified key.
+	 *
+	 * @param did the owner of sign key
+	 * @param id the identifier of sign key
+	 * @param storepass the password for DIDStore
+	 * @param digest the digest data
+	 * @return the signature string
+	 * @throws DIDStoreException can not get DID Document if no specified sign key.
+	 */
 	protected String sign(DID did, DIDURL id, String storepass, byte[] digest)
 			throws DIDStoreException {
 		if (did == null || storepass == null || storepass.isEmpty() || digest == null)
@@ -1435,11 +2199,28 @@ public final class DIDStore {
 				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 	}
 
+	/**
+	 * Sign the digest data by the specified key.
+	 *
+	 * @param did the owner of sign key
+	 * @param id the identifier of sign key
+	 * @param storepass the password for DIDStore
+	 * @param digest the digest data
+	 * @return the signature string
+	 * @throws DIDStoreException can not get DID Document if no specified sign key.
+	 */
 	protected String sign(DID did, String storepass, byte[] digest)
 			throws DIDStoreException {
 		return sign(did, null, storepass, digest);
 	}
 
+    /**
+     * Change password for DIDStore.
+     *
+     * @param oldPassword the old password
+     * @param newPassword the new password
+     * @throws DIDStoreException DIDStore error.
+     */
 	public void changePassword(String oldPassword, String newPassword)
 			throws DIDStoreException {
 		ReEncryptor ree = new ReEncryptor() {
@@ -1591,6 +2372,17 @@ public final class DIDStore {
 		generator.writeEndObject();
 	}
 
+	/**
+     * Export DID information into file with json format. The json content include document,
+     * credentials, private keys and meta.
+	 *
+	 * @param did the specified DID
+	 * @param out the export output
+	 * @param password the password to encrypt the private key in output.
+	 * @param storepass the password for DIDStore.
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportDid(DID did, OutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (did == null || out == null || password == null ||
@@ -1604,6 +2396,17 @@ public final class DIDStore {
 		generator.close();
 	}
 
+	/**
+     * Export DID information into file with json format. The json content include document,
+     * credentials, private keys and meta.
+	 *
+	 * @param did the specified DID
+	 * @param out the export output
+	 * @param password the password to encrypt the private key in output.
+	 * @param storepass the password for DIDStore.
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportDid(String did, OutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
 		DID _did = null;
@@ -1616,6 +2419,17 @@ public final class DIDStore {
 		exportDid(_did, out, password, storepass);
 	}
 
+	/**
+     * Export DID information into file with json format. The json content include document,
+     * credentials, private keys and meta.
+	 *
+	 * @param did the specified DID
+	 * @param out the export output
+	 * @param password the password to encrypt the private key in output.
+	 * @param storepass the password for DIDStore.
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportDid(DID did, Writer out, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (did == null || out == null || password == null ||
@@ -1629,6 +2443,17 @@ public final class DIDStore {
 		generator.close();
 	}
 
+	/**
+     * Export DID information into file with json format. The json content include document,
+     * credentials, private keys and meta.
+	 *
+	 * @param did the specified DID string
+	 * @param out the export output
+	 * @param password the password to encrypt the private key in output.
+	 * @param storepass the password for DIDStore.
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportDid(String did, Writer out, String password,
 			String storepass) throws DIDStoreException, IOException {
 		DID _did = null;
@@ -1641,6 +2466,17 @@ public final class DIDStore {
 		exportDid(_did, out, password, storepass);
 	}
 
+	/**
+     * Export DID information into file with json format. The json content include document,
+     * credentials, private keys and meta.
+	 *
+	 * @param did the specified DID
+	 * @param file the export output
+	 * @param password the password to encrypt the private key in output.
+	 * @param storepass the password for DIDStore.
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportDid(DID did, File file, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (did == null || file == null || password == null ||
@@ -1650,6 +2486,17 @@ public final class DIDStore {
 		exportDid(did, new FileWriter(file), password, storepass);
 	}
 
+	/**
+     * Export DID information into file with json format. The json content include document,
+     * credentials, private keys and meta.
+	 *
+	 * @param did the specified DID string
+	 * @param file the export output
+	 * @param password the password to encrypt the private key in output.
+	 * @param storepass the password for DIDStore.
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportDid(String did, File file, String password,
 			String storepass) throws DIDStoreException, IOException {
 		DID _did = null;
@@ -1662,6 +2509,17 @@ public final class DIDStore {
 		exportDid(_did, file, password, storepass);
 	}
 
+	/**
+     * Export DID information into file with json format. The json content include document,
+     * credentials, private keys and meta.
+	 *
+	 * @param did the specified DID
+	 * @param file the export output
+	 * @param password the password to encrypt the private key in output.
+	 * @param storepass the password for DIDStore.
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportDid(DID did, String file, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (did == null || file == null || file.isEmpty() || password == null ||
@@ -1671,6 +2529,17 @@ public final class DIDStore {
 		exportDid(did, new File(file), password, storepass);
 	}
 
+	/**
+     * Export DID information into file with json format. The json content include document,
+     * credentials, private keys and meta.
+	 *
+	 * @param did the specified DID string
+	 * @param out the export output
+	 * @param password the password to encrypt the private key in output.
+	 * @param storepass the password for DIDStore.
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportDid(String did, String file, String password,
 			String storepass) throws DIDStoreException, IOException {
 		DID _did = null;
@@ -1872,6 +2741,15 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Import DID information by input.
+	 *
+	 * @param in the import input
+	 * @param password the password to decrypt private key in input
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importDid(InputStream in, String password, String storepass)
 			throws DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty() ||
@@ -1884,6 +2762,15 @@ public final class DIDStore {
 		importDid(root, password, storepass);
 	}
 
+	/**
+	 * Import DID information by input.
+	 *
+	 * @param in the import input
+	 * @param password the password to decrypt private key in input
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importDid(Reader in, String password, String storepass)
 			throws DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty() ||
@@ -1896,6 +2783,15 @@ public final class DIDStore {
 		importDid(root, password, storepass);
 	}
 
+	/**
+	 * Import DID information by input.
+	 *
+	 * @param file the import input
+	 * @param password the password to decrypt private key in input
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importDid(File file, String password, String storepass)
 			throws DIDStoreException, IOException {
 		if (file == null || password == null || password.isEmpty() ||
@@ -1908,6 +2804,15 @@ public final class DIDStore {
 		importDid(root, password, storepass);
 	}
 
+	/**
+	 * Import DID information by input.
+	 *
+	 * @param file the import input
+	 * @param password the password to decrypt private key in input
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importDid(String file, String password, String storepass)
 			throws DIDStoreException, IOException {
 		if (file == null || file.isEmpty() || password == null ||
@@ -1982,6 +2887,17 @@ public final class DIDStore {
 		generator.writeEndObject();
 	}
 
+	/**
+     * Export private identity information into file with json format.
+     * The json content include mnemonic(encrypted), extended private key(encrypted),
+     * extended public key(if has it, dont't encrypted) and index.
+	 *
+	 * @param out the export output
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportPrivateIdentity(OutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (out == null || password == null || password.isEmpty() ||
@@ -1995,6 +2911,17 @@ public final class DIDStore {
 		generator.close();
 	}
 
+	/**
+     * Export private identity information into file with json format.
+     * The json content include mnemonic(encrypted), extended private key(encrypted),
+     * extended public key(if has it, dont't encrypted) and index.
+	 *
+	 * @param out the export output
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportPrivateIdentity(Writer out, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (out == null || password == null || password.isEmpty()
@@ -2008,6 +2935,17 @@ public final class DIDStore {
 		generator.close();
 	}
 
+	/**
+     * Export private identity information into file with json format.
+     * The json content include mnemonic(encrypted), extended private key(encrypted),
+     * extended public key(if has it, dont't encrypted) and index.
+	 *
+	 * @param file the export output
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportPrivateIdentity(File file, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (file == null || password == null || password.isEmpty()
@@ -2017,6 +2955,17 @@ public final class DIDStore {
 		exportPrivateIdentity(new FileWriter(file), password, storepass);
 	}
 
+	/**
+     * Export private identity information into file with json format.
+     * The json content include mnemonic(encrypted), extended private key(encrypted),
+     * extended public key(if has it, dont't encrypted) and index.
+	 *
+	 * @param file the export output
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportPrivateIdentity(String file, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (file == null || file.isEmpty() || password == null ||
@@ -2106,6 +3055,16 @@ public final class DIDStore {
 		storage.storePrivateIdentityIndex(index);
 	}
 
+
+	/**
+     * Import private identity by input.
+	 *
+	 * @param in the import input
+	 * @param password the password to decrypt private key in input
+	 * @param storepass the password to DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importPrivateIdentity(InputStream in, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty() ||
@@ -2118,6 +3077,15 @@ public final class DIDStore {
 		importPrivateIdentity(root, password, storepass);
 	}
 
+	/**
+     * Import private identity by input.
+	 *
+	 * @param in the import input
+	 * @param password the password to decrypt private key in input
+	 * @param storepass the password to DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importPrivateIdentity(Reader in, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty() ||
@@ -2130,6 +3098,15 @@ public final class DIDStore {
 		importPrivateIdentity(root, password, storepass);
 	}
 
+	/**
+     * Import private identity by input.
+	 *
+	 * @param in the import input
+	 * @param password the password to decrypt private key in input
+	 * @param storepass the password to DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importPrivateIdentity(File file, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (file == null || password == null || password.isEmpty() ||
@@ -2142,6 +3119,15 @@ public final class DIDStore {
 		importPrivateIdentity(root, password, storepass);
 	}
 
+	/**
+     * Import private identity by input.
+	 *
+	 * @param in the import input
+	 * @param password the password to decrypt private key in input
+	 * @param storepass the password to DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importPrivateIdentity(String file, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (file == null || file.isEmpty() || password == null ||
@@ -2150,6 +3136,15 @@ public final class DIDStore {
 		importPrivateIdentity(new File(file), password, storepass);
 	}
 
+	/**
+	 * Export all store information.
+	 *
+	 * @param out the export output
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportStore(ZipOutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
 		if (out == null || password == null || password.isEmpty()
@@ -2174,6 +3169,15 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Export all store information to zip file.
+	 *
+	 * @param zipFile the export zip file
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportStore(File zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
 		if (zipFile == null || password == null || password.isEmpty()
@@ -2185,6 +3189,15 @@ public final class DIDStore {
 		out.close();
 	}
 
+	/**
+	 * Export all store information to zip file.
+	 *
+	 * @param zipFile the export zip file
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void exportStore(String zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
 		if (zipFile == null || zipFile.isEmpty() || password == null
@@ -2194,6 +3207,15 @@ public final class DIDStore {
 		exportStore(new File(zipFile), password, storepass);
 	}
 
+	/**
+	 * Import Store information from input.
+	 *
+	 * @param in the import input
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importStore(ZipInputStream in, String password, String storepass)
 			throws DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty()
@@ -2210,6 +3232,15 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Import Store information from zip file.
+	 *
+	 * @param file the import zip file
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importStore(File zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
 		if (zipFile == null || password == null || password.isEmpty()
@@ -2221,6 +3252,15 @@ public final class DIDStore {
 		in.close();
 	}
 
+	/**
+	 * Import Store information from zip file.
+	 *
+	 * @param file the import zip file
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws IOException write json string failed.
+	 */
 	public void importStore(String zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
 		if (zipFile == null || zipFile.isEmpty() || password == null

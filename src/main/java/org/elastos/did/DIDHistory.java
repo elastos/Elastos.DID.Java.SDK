@@ -30,11 +30,31 @@ public interface DIDHistory {
 	public static final int STATUS_DEACTIVATED = 2;
 	public static final int STATUS_NOT_FOUND = 3;
 
+	/**
+	 * Get owner of DID resolved history.
+	 *
+	 * @return the owner object
+	 */
 	public DID getDid();
 
+	/**
+	 * Get DID status.
+	 *
+	 * @return the status code
+	 */
 	public int getStatus();
 
+	/**
+	 * Get all Id transactions about the specified DID.
+	 *
+	 * @return the did transaction array
+	 */
 	public List<DIDTransaction> getAllTransactions();
 
+	/**
+	 * Get the count of transactions.
+	 *
+	 * @return the count
+	 */
 	public int getTransactionCount();
 }
