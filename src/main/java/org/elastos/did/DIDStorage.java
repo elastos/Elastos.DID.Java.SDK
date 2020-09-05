@@ -93,13 +93,19 @@ public interface DIDStorage {
 	public String loadPublicIdentity() throws DIDStorageException;
 
 	/**
-	 * Store
+	 * Store index.
 	 *
-	 * @param index
-	 * @throws DIDStorageException
+	 * @param index the index
+	 * @throws DIDStorageException DIDStorage error.
 	 */
 	public void storePrivateIdentityIndex(int index) throws DIDStorageException;
 
+	/**
+	 * Load index.
+	 *
+	 * @return the index
+	 * @throws DIDStorageException DIDStorage error.
+	 */
 	public int loadPrivateIdentityIndex() throws DIDStorageException;
 
 	/**

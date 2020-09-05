@@ -25,13 +25,38 @@ package org.elastos.did;
 import java.util.Date;
 
 public interface DIDTransaction {
+	/**
+	 * Get owner of DID transaction.
+	 *
+	 * @return the owner DID
+	 */
 	public DID getDid();
 
+	/**
+	 * Get id of DID transaction.
+	 *
+	 * @return the transaction id string
+	 */
 	public String getTransactionId();
 
+	/**
+	 * Get published time of DID transaction.
+	 *
+	 * @return the time
+	 */
 	public Date getTimestamp();
 
+	/**
+	 * Get operation string of DID transaction.
+	 *
+	 * @return the operation string
+	 */
 	public String getOperation();
 
+	/**
+	 * Get DID Document from DID transaction.
+	 *
+	 * @return the DID Document object
+	 */
 	public DIDDocument getDocument();
 }
