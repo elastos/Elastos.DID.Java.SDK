@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -230,7 +231,7 @@ public class VerifiablePresentation {
 	/**
 	 * Set the type of Presentation.
 	 *
-	 * @return the type string
+	 * @param type the type string
 	 */
 	protected void setType(String type) {
 		this.type = type;
@@ -248,7 +249,7 @@ public class VerifiablePresentation {
 	/**
 	 * Set the time created Presentation.
 	 *
-	 * @return the time created
+	 * @param created the time created
 	 */
 	protected void setCreated(Date created) {
 		this.created = created;
@@ -534,7 +535,7 @@ public class VerifiablePresentation {
 	 *
 	 * @param reader the Reader content
 	 * @return the Presentation object
-	 * @throws MalformedCredentialException the Presentation is malfromed.
+	 * @throws MalformedPresentationException the Presentation is malfromed.
 	 */
 	public static VerifiablePresentation fromJson(Reader reader)
 			throws MalformedPresentationException {
@@ -552,7 +553,7 @@ public class VerifiablePresentation {
 	 *
 	 * @param in the InputStream content
 	 * @return the Presentation object
-	 * @throws MalformedCredentialException the Presentation is malfromed.
+	 * @throws MalformedPresentationException the Presentation is malfromed.
 	 */
 	public static VerifiablePresentation fromJson(InputStream in)
 			throws MalformedPresentationException {
@@ -570,7 +571,7 @@ public class VerifiablePresentation {
 	 *
 	 * @param json the json string content
 	 * @return the Presentation object
-	 * @throws MalformedCredentialException the Presentation is malfromed.
+	 * @throws MalformedPresentationException the Presentation is malfromed.
 	 */
 	public static VerifiablePresentation fromJson(String json)
 			throws MalformedPresentationException {
@@ -694,7 +695,7 @@ public class VerifiablePresentation {
 	 *
 	 * @param forSign = true, only generate json string without proof;
 	 *        forSign = false, getnerate json string the whole Presentation.
-	 * @throws IOException write field to json string failed.
+	 * @return the Presentation's json string
 	 */
 	protected String toJson(boolean forSign) {
 		Writer out = new StringWriter(4096);

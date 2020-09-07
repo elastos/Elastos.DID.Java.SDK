@@ -34,13 +34,12 @@ public interface DIDStorage {
 		/**
 		 * Reencrypt in the changing password.
 		 *
-		 * @param data
-		 * @return
-		 * @throws DIDStoreException
+		 * @param data the data need to reencrypted
+		 * @return the reencrypted data
+		 * @throws DIDStoreException DIDStore error.
 		 */
 		public String reEncrypt(String data) throws DIDStoreException;
 	};
-
 
 	/**
 	 * Judge whether private identity exists in DIDStorage.
@@ -279,7 +278,7 @@ public interface DIDStorage {
 	 *
 	 * @param did the owner of Credential
 	 * @return the Credential array owned the specified DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @throws DIDStorageException DIDStorage error.
 	 */
 	public List<DIDURL> listCredentials(DID did) throws DIDStorageException;
 
@@ -301,7 +300,6 @@ public interface DIDStorage {
 	 * @param did the owner of key
 	 * @param id the identifier of key
 	 * @param privateKey the original private key(32 bytes)
-	 * @param storepass the password for DIDStore
 	 * @throws DIDStorageException DIDStorage error.
 	 */
 	public void storePrivateKey(DID did, DIDURL id, String privateKey)
@@ -312,7 +310,6 @@ public interface DIDStorage {
 	 *
 	 * @param did the owner of key
 	 * @param id the identifier of key
-	 * @param storepass the password for DIDStore
 	 * @return the encrypted private key
 	 * @throws DIDStorageException DIDStorage error.
 	 */
@@ -356,7 +353,7 @@ public interface DIDStorage {
     /**
      * Change password for DIDStore.
      *
-     * @param reEncryptor
+     * @param reEncryptor the ReEncryptor handle
      * @throws DIDStorageException DIDStorage error.
      */
 	public void changePassword(ReEncryptor reEncryptor)

@@ -170,7 +170,8 @@ public class IDChainRequest {
 	}
 
 	/**
-	 * Get operatation String.
+	 * Get operation string.
+	 * @return the operation string
 	 */
 	public Operation getOperation() {
 		return operation;
@@ -178,6 +179,8 @@ public class IDChainRequest {
 
 	/**
 	 * Get previous transaction id string.
+	 *
+	 * @return the transaction id string
 	 */
 	public String getPreviousTxid() {
 		return previousTxid;
@@ -189,6 +192,8 @@ public class IDChainRequest {
 
 	/**
 	 * Get payload of IDChain Request.
+	 *
+	 * @return the payload string
 	 */
 	public String getPayload() {
 		return payload;
@@ -197,7 +202,7 @@ public class IDChainRequest {
 	/**
 	 * Get DID of IDChain Request.
 	 *
-	 * @return
+	 * @return the DID object
 	 */
 	public DID getDid() {
 		return did;
@@ -206,7 +211,7 @@ public class IDChainRequest {
 	/**
 	 * Get DID Document of IDChain Request.
 	 *
-	 * @return
+	 * @return the DIDDocument object
 	 */
 	public DIDDocument getDocument() {
 		return doc;
@@ -407,6 +412,7 @@ public class IDChainRequest {
 	 * Get json content of IDChain Request.
 	 *
 	 * @param normalized json string is normalized or compact
+	 * @return the IDChain Request json string
 	 */
 	public String toJson(boolean normalized) {
 		Writer out = new StringWriter(2048);

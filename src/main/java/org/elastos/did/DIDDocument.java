@@ -26,17 +26,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import org.elastos.did.crypto.Base58;
+import org.elastos.did.crypto.Base64;
 import org.elastos.did.crypto.EcdsaSigner;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDBackendException;
@@ -699,6 +705,7 @@ public class DIDDocument {
 	 * @param id the key id
 	 * @return returned value is true if there is the matched key;
 	 *         returned value is false if there is no matched key.
+	 * @throws DIDStoreException there is no store.
 	 */
 	public boolean hasPrivateKey(DIDURL id) throws DIDStoreException {
 		if (id == null)
@@ -719,6 +726,7 @@ public class DIDDocument {
 	 * @param id the key id string
 	 * @return returned value is true if there is the matched key;
 	 *         returned value is false if there is no matched key.
+	 * @throws DIDStoreException there is no store.
 	 */
 	public boolean hasPrivateKey(String id) throws DIDStoreException {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
@@ -1469,7 +1477,7 @@ public class DIDDocument {
 	}
 
 	/**
-	 * Get DID Metadata object from did document.
+	 * Get DID MetadataImpl object from did document.
 	 *
 	 * @return the DIDMetadataImpl object
 	 */
@@ -1483,9 +1491,9 @@ public class DIDDocument {
 	}
 
 	/**
+	 * Get DID Metadata object from did document.
 	 *
-	 *
-	 * @return
+	 * @return the DIDMetadata object
 	 */
 	public DIDMetadata getMetadata() {
 		return getMetadataImpl();
@@ -1617,7 +1625,7 @@ public class DIDDocument {
 	 *
 	 * @param id the key id
 	 * @param storepass the password for DIDStore
-	 * @param data the digest data to be signed
+	 * @param digest the digest data to be signed
 	 * @return the signature string
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
@@ -1637,7 +1645,7 @@ public class DIDDocument {
 	 *
 	 * @param id the key id string
 	 * @param storepass the password for DIDStore
-	 * @param data the digest data to be signed
+	 * @param digest the digest data to be signed
 	 * @return the signature string
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
@@ -1650,9 +1658,8 @@ public class DIDDocument {
 	/**
 	 * Sign the digest data by the default key.
 	 *
-	 * @param id the key id string
 	 * @param storepass the password for DIDStore
-	 * @param data the digest data to be signed
+	 * @param digest the digest data to be signed
 	 * @return the signature string
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
@@ -2196,7 +2203,7 @@ public class DIDDocument {
 	 * @param normalized json string is normalized or compact
 	 * @param forSign = true, only generate json string without proof
 	 *        forSign = false, getnerate json string the whole did document
-	 * @throws IOException write field to json string failed.
+	 * @return the document json string
 	 */
 	protected String toJson(boolean normalized, boolean forSign) {
 		Writer out = new StringWriter(2048);
@@ -2213,7 +2220,7 @@ public class DIDDocument {
 	 * Get json formatted context from DID Document
 	 *
 	 * @param normalized json string is normalized or compact
-	 * @throws IOException write field to json string failed.
+	 * @return the document json string
 	 */
 	public String toString(boolean normalized) {
 		return toJson(normalized, false);
@@ -2356,7 +2363,6 @@ public class DIDDocument {
 		 *
 		 * @param id the key id
 		 * @param force the owner of public key
-		 * @param pk the public key base58 string
 		 * @return the DID Document Builder object
 		 */
 		public Builder removePublicKey(DIDURL id, boolean force) {
@@ -2505,7 +2511,6 @@ public class DIDDocument {
 		 * Add the exist Public Key matched the key id to be Authorization key.
 		 *
 		 * @param id the key id
-		 * @param pk the public key base58 string
 		 * @return the DID Document Builder
 		 */
 		public Builder addAuthorizationKey(DIDURL id) {
@@ -2524,7 +2529,6 @@ public class DIDDocument {
 		 * Add the exist Public Key matched the key id to be Authorization Key.
 		 *
 		 * @param id the key id string
-		 * @param pk the public key base58 string
 		 * @return the DID Document Builder
 		 */
 		public Builder addAuthorizationKey(String id) {
@@ -2681,7 +2685,6 @@ public class DIDDocument {
 		 *
 		 * @param id the key id string
 		 * @param controller the owner of public key
-		 * @param key the key of controller to be an Authorization key.
 		 * @return the DID Document Builder
 		 * @throws DIDResolveException resolve controller failed.
 		 * @throws InvalidKeyException the key is not an authentication key.
@@ -2878,7 +2881,6 @@ public class DIDDocument {
 		 * The Credential expires time is the document expires time of Credential subject id.
 		 *
 		 * @param id the Credential id
-		 * @param types the Credential id
 		 * @param subject the Credential subject(key/value)
 		 * @param storepass the password for DIDStore
 		 * @return the DID Document Builder
@@ -3090,7 +3092,9 @@ public class DIDDocument {
 		 * Credential subject supports JsonNode format.
 		 *
 		 * @param id the Credential id
+		 * @param types the types for Credential
 		 * @param node the Credential subject
+		 * @param expirationDate the Credential expires time
 		 * @param storepass the password for DIDStore
 		 * @return the DID Document Builder
 		 * @throws DIDStoreException there is no DID store to attach.
@@ -3133,6 +3137,7 @@ public class DIDDocument {
 		 * Credential subject supports JsonNode format.
 		 *
 		 * @param id the Credential id string
+		 * @param types the types for Credential
 		 * @param node the Credential subject
 		 * @param expirationDate the Credential expires time
 		 * @param storepass the password for DIDStore

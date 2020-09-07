@@ -102,7 +102,7 @@ public final class DIDStore {
 		 *
 		 * @param chainCopy the document from chain
 		 * @param localCopy the document from local device
-		 * @return
+		 * @return the merged DIDDocument object
 		 */
 		DIDDocument merge(DIDDocument chainCopy, DIDDocument localCopy);
 	}
@@ -401,7 +401,7 @@ public final class DIDStore {
 	 * There is extended private key and extended public key in DIDStore.
 	 *
 	 * @return the HDKey object
-	 * @throws DIDStoreException
+	 * @throws DIDStoreException load root public identity failed.
 	 */
 	protected HDKey loadPublicIdentity() throws DIDStoreException {
 		if (!containsPrivateIdentity())
@@ -1039,7 +1039,6 @@ public final class DIDStore {
 	 * @param storepass the password for DIDStore
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 * @throws DIDStoreException deactivate did failed because of did store error.
-	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public void deactivateDid(DID did, String storepass)
 			throws DIDBackendException, DIDStoreException {
@@ -1058,7 +1057,6 @@ public final class DIDStore {
 	 * @param storepass the password for DIDStore
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 * @throws DIDStoreException deactivate did failed because of did store error.
-	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public void deactivateDid(String did, String storepass)
 			throws DIDBackendException, DIDStoreException {
@@ -1287,7 +1285,7 @@ public final class DIDStore {
 	 *
 	 * @param target the target DID
 	 * @param did the authorizor's DID.
-	 * @param confirms
+	 * @param confirms the count of confirms
 	 * @param signKey the authorizor's key to sign
 	 * @param storepass the password for DIDStore
 	 * @return the new CompletableStage, no result.
@@ -1310,7 +1308,6 @@ public final class DIDStore {
 	 *
 	 * @param target the target DID
 	 * @param did the authorizor's DID.
-	 * @param confirms
 	 * @param signKey the authorizor's key to sign
 	 * @param storepass the password for DIDStore
 	 * @return the new CompletableStage, no result.
@@ -2203,7 +2200,6 @@ public final class DIDStore {
 	 * Sign the digest data by the specified key.
 	 *
 	 * @param did the owner of sign key
-	 * @param id the identifier of sign key
 	 * @param storepass the password for DIDStore
 	 * @param digest the digest data
 	 * @return the signature string
@@ -2534,7 +2530,7 @@ public final class DIDStore {
      * credentials, private keys and meta.
 	 *
 	 * @param did the specified DID string
-	 * @param out the export output
+	 * @param file the export output
 	 * @param password the password to encrypt the private key in output.
 	 * @param storepass the password for DIDStore.
 	 * @throws DIDStoreException DIDStore error.
@@ -3101,7 +3097,7 @@ public final class DIDStore {
 	/**
      * Import private identity by input.
 	 *
-	 * @param in the import input
+	 * @param file the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password to DIDStore
 	 * @throws DIDStoreException DIDStore error.
@@ -3122,7 +3118,7 @@ public final class DIDStore {
 	/**
      * Import private identity by input.
 	 *
-	 * @param in the import input
+	 * @param file the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password to DIDStore
 	 * @throws DIDStoreException DIDStore error.
@@ -3235,7 +3231,7 @@ public final class DIDStore {
 	/**
 	 * Import Store information from zip file.
 	 *
-	 * @param file the import zip file
+	 * @param zipFile the import zip file
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
 	 * @throws DIDStoreException DIDStore error.
@@ -3255,7 +3251,7 @@ public final class DIDStore {
 	/**
 	 * Import Store information from zip file.
 	 *
-	 * @param file the import zip file
+	 * @param zipFile the import zip file
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
 	 * @throws DIDStoreException DIDStore error.

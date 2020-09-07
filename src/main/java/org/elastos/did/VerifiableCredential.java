@@ -30,7 +30,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Calendar;f
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -317,7 +317,7 @@ public class VerifiableCredential extends DIDObject {
 	/**
 	 * Constructs a new Credentila object with the given object.
 	 *
-	 * @param vc
+	 * @param vc the Credential object
 	 */
 	protected VerifiableCredential(VerifiableCredential vc) {
 		setId(vc.getId());
@@ -361,7 +361,7 @@ public class VerifiableCredential extends DIDObject {
 	/**
 	 * Get the types of Credential Proof.
 	 *
-	 * @return
+	 * @return the type array
 	 */
 	public String[] getTypes() {
 		return types == null ? null : types.toArray(new String[0]);
@@ -677,10 +677,8 @@ public class VerifiableCredential extends DIDObject {
 	/**
 	 * Check whether the Credential is valid or not.
 	 *
-	 * @return the returned value is true if the Credential is valid;
-	 *         the returned value is false if the Credential is not valid.
-	 * @throws DIDResolveException get the lastest document from chain failed.
-	 * @throws DIDBackendException get content from net failed.
+	 * @return the new CompletableStage, the result is the boolean interface for
+	 *         valid judgement if success; null otherwise.
 	 */
 	public CompletableFuture<Boolean> isValidAsync() {
 		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
@@ -715,7 +713,7 @@ public class VerifiableCredential extends DIDObject {
 	/**
 	 * Set Credential subject content.
 	 *
-	 * @return the Credential Subject object
+	 * @param subject the CredentialSubject object
 	 */
 	protected void setSubject(CredentialSubject subject) {
 		this.subject = subject;
@@ -733,7 +731,7 @@ public class VerifiableCredential extends DIDObject {
 	/**
 	 * Set Credential proof content.
 	 *
-	 * @return the Credential Proof object
+	 * @param proof the Credential Proof object
 	 */
 	protected void setProof(Proof proof) {
 		this.proof = proof;
@@ -1086,11 +1084,10 @@ public class VerifiableCredential extends DIDObject {
 	/**
 	 * Get json content of Credential.
 	 *
-	 * @param out the OutputStream handle
 	 * @param normalized json string is normalized or compact.
 	 * @param forSign = true, only generate json string without proof;
 	 *        forSign = false, getnerate json string the whole credential.
-	 * @throws IOException write field to json string failed.
+	 * @return the Credential's json string
 	 */
 	protected String toJson(boolean normalized, boolean forSign) {
 		Writer out = new StringWriter(2048);

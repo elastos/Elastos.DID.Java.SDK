@@ -308,7 +308,7 @@ public class Issuer {
 		/**
 		 * Set Credential's subject.
 		 *
-		 * @param properties the subject subject with json format
+		 * @param json the subject subject with json format
 		 * @return the CredentialBuilder object
 		 */
 		public CredentialBuilder properties(String json) {
@@ -332,7 +332,7 @@ public class Issuer {
 		/**
 		 * Set Credential's subject.
 		 *
-		 * @param properties the subject subject with JsonNode format
+		 * @param node the subject subject with JsonNode format
 		 * @return the CredentialBuilder object
 		 */
 		public CredentialBuilder properties(JsonNode node) {

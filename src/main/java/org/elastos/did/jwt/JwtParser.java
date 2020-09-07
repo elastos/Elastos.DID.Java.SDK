@@ -32,12 +32,10 @@ public class JwtParser {
 	/**
 	 * Returns {@code true} if the specified JWT compact string represents a
 	 * signed JWT (aka a 'JWS'), {@code false} otherwise.
-	 * <p>
-	 * <p>
+	 *
 	 * Note that if you are reasonably sure that the token is signed, it is more
 	 * efficient to attempt to parse the token (and catching exceptions if
 	 * necessary) instead of calling this method first before parsing.
-	 * </p>
 	 *
 	 * @param jwt the compact serialized JWT to check
 	 * @return {@code true} if the specified JWT compact string represents a
@@ -51,8 +49,7 @@ public class JwtParser {
 	 * Parses the specified compact serialized JWT string based on the builder's
 	 * current configuration state and returns the resulting JWT or JWS
 	 * instance.
-	 * <p>
-	 * <p>
+	 *
 	 * This method returns a JWT or JWS based on the parsed string.
 	 *
 	 * @param jwt the compact serialized JWT to parse
@@ -93,19 +90,15 @@ public class JwtParser {
 	 * Parses the specified compact serialized JWT string based on the builder's
 	 * current configuration state and returns the resulting unsigned plaintext
 	 * JWT instance.
-	 * <p>
-	 * <p>
+	 *
 	 * This is a convenience method that is usable if you are confident that the
 	 * compact string argument reflects an unsigned plaintext JWT. An unsigned
 	 * plaintext JWT has a String (non-JSON) body payload and it is not
 	 * cryptographically signed.
-	 * </p>
-	 * <p>
-	 * <p>
+	 *
 	 * <b>If the compact string presented does not reflect an unsigned plaintext
 	 * JWT with non-JSON string body, an {@link UnsupportedJwtException} will be
 	 * thrown.</b>
-	 * </p>
 	 *
 	 * @param plaintextJwt a compact serialized unsigned plaintext JWT string.
 	 * @return the {@link Jwt Jwt} instance that reflects the specified compact
@@ -144,18 +137,14 @@ public class JwtParser {
 	 * Parses the specified compact serialized JWT string based on the builder's
 	 * current configuration state and returns the resulting unsigned plaintext
 	 * JWT instance.
-	 * <p>
-	 * <p>
+	 *
 	 * This is a convenience method that is usable if you are confident that the
 	 * compact string argument reflects an unsigned Claims JWT. An unsigned
 	 * Claims JWT has a {@link Claims} body and it is not cryptographically
 	 * signed.
-	 * </p>
-	 * <p>
-	 * <p>
+     *
 	 * <b>If the compact string presented does not reflect an unsigned Claims
 	 * JWT, an {@link UnsupportedJwtException} will be thrown.</b>
-	 * </p>
 	 *
 	 * @param claimsJwt a compact serialized unsigned Claims JWT string.
 	 * @return the {@link Jwt Jwt} instance that reflects the specified compact
@@ -198,18 +187,14 @@ public class JwtParser {
 	 * Parses the specified compact serialized JWS string based on the builder's
 	 * current configuration state and returns the resulting plaintext JWS
 	 * instance.
-	 * <p>
-	 * <p>
+	 *
 	 * This is a convenience method that is usable if you are confident that the
 	 * compact string argument reflects a plaintext JWS. A plaintext JWS is a
 	 * JWT with a String (non-JSON) body (payload) that has been
 	 * cryptographically signed.
-	 * </p>
-	 * <p>
-	 * <p>
+	 *
 	 * <b>If the compact string presented does not reflect a plaintext JWS, an
 	 * {@link UnsupportedJwtException} will be thrown.</b>
-	 * </p>
 	 *
 	 * @param plaintextJws a compact serialized JWS string.
 	 * @return the {@link Jws Jws} instance that reflects the specified compact
@@ -246,17 +231,13 @@ public class JwtParser {
 	 * Parses the specified compact serialized JWS string based on the builder's
 	 * current configuration state and returns the resulting Claims JWS
 	 * instance.
-	 * <p>
-	 * <p>
+	 *
 	 * This is a convenience method that is usable if you are confident that the
 	 * compact string argument reflects a Claims JWS. A Claims JWS is a JWT with
 	 * a {@link Claims} body that has been cryptographically signed.
-	 * </p>
-	 * <p>
-	 * <p>
+	 *
 	 * <b>If the compact string presented does not reflect a Claims JWS, an
 	 * {@link UnsupportedJwtException} will be thrown.</b>
-	 * </p>
 	 *
 	 * @param claimsJws a compact serialized Claims JWS string.
 	 * @return the {@link Jws Jws} instance that reflects the specified compact

@@ -148,6 +148,9 @@ public class ResolveResult implements DIDHistory {
 
 	/**
 	 * Get json string from Resolve Result content.
+	 *
+	 * @return the json string
+	 * @throws IOException write field to json string failed.
 	 */
 	public String toJson() throws IOException {
 		Writer out = new StringWriter(4096);

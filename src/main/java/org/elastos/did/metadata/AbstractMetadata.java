@@ -271,8 +271,8 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 	/**
 	 * Get json string from Abstract Metadata.
 	 *
-	 * @return
-	 * @throws IOException
+	 * @return the Abstract Metadata's json string
+	 * @throws IOException write field to json string failed.
 	 */
 	public String toJson() throws IOException {
 		Writer out = new StringWriter(1024);

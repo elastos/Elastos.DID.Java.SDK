@@ -62,6 +62,7 @@ public class JwtBuilder {
 	 * Returns a new {@link JwsHeader} instance suitable for digitally signed
 	 * JWTs (aka 'JWS's), populated with the specified name/value pairs.
 	 *
+	 * @param header the specified name/value pairs
 	 * @return a new {@link JwsHeader} instance suitable for digitally signed
 	 *         JWTs (aka 'JWS's), populated with the specified name/value pairs.
 	 * @see JwtBuilder#setHeader(Header)
@@ -86,6 +87,7 @@ public class JwtBuilder {
 	 * Returns a new {@link JwsHeader} instance suitable for digitally signed
 	 * JWTs (aka 'JWS's), populated with the specified name/value pairs.
 	 *
+	 * @param header the specified name/value pairs
 	 * @return a new {@link JwsHeader} instance suitable for digitally signed
 	 *         JWTs (aka 'JWS's), populated with the specified name/value pairs.
 	 * @see JwtBuilder#setHeader(Header)
@@ -629,8 +631,8 @@ public class JwtBuilder {
 	 * @param key       the key id to use for signing
 	 * @param password  the password for DID store
 	 * @return the builder instance for method chaining.
-	 * @throws DIDStoreException
-	 * @throws InvalidKeyException
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws InvalidKeyException there is no an authenication key.
 	 */
 	public JwtBuilder signWith(String key, String password)
 			throws InvalidKeyException, DIDStoreException {
@@ -646,7 +648,7 @@ public class JwtBuilder {
 	 *
 	 * @param password the password for DID store
 	 * @return the builder instance for method chaining.
-	 * @throws DIDStoreException
+	 * @throws DIDStoreException DIDStore error.
 	 */
 	public JwtBuilder sign(String password) throws DIDStoreException {
 		try {
