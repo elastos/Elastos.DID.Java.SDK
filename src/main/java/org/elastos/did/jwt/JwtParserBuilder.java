@@ -42,6 +42,11 @@ public class JwtParserBuilder {
 		this(null);
 	}
 
+	/**
+	 * Constructs the JwtParserBuilder with the specified KeyProvider.
+	 *
+	 * @param keyProvider the KeyProvider object
+	 */
 	public JwtParserBuilder(KeyProvider keyProvider) {
 		this.keyProvider = keyProvider;
 		this.impl = Jwts.parserBuilder();

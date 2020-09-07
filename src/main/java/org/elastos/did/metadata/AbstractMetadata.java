@@ -51,26 +51,56 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 
 	private DIDStore store;
 
+	/**
+	 * Constructs the AbstractMetadata with the given value.
+	 *
+	 * @param store the DIDStore
+	 */
 	protected AbstractMetadata(DIDStore store) {
 		this.store = store;
 	}
 
+	/**
+	 * Set store for Abstract Metadata.
+	 * @param store the DIDStore
+	 */
 	public void setStore(DIDStore store) {
 		this.store = store;
 	}
 
+	/**
+	 * Get store from Abstract Metadata.
+	 *
+	 * @return the DIDStore object
+	 */
 	public DIDStore getStore() {
 		return store;
 	}
 
+	/**
+	 * Judge whether the Abstract Metadata attach the store or not.
+	 *
+	 * @return the returned value is true if there is store attached meta data;
+	 *         the returned value is false if there is no store attached meta data.
+	 */
 	public boolean attachedStore() {
 		return store != null;
 	}
 
+	/**
+	 * Set last modified time for DID content.
+	 *
+	 * @param timestamp the last modified time
+	 */
 	public void setLastModified(Date timestamp) {
 		put(LAST_MODIFIED, JsonHelper.formatDate(timestamp));
 	}
 
+	/**
+	 * Get last modified time from DID content.
+	 *
+	 * @return the last modified time
+	 */
 	public Date getLastModified() {
 		try {
 			String lastModified = (String)get(LAST_MODIFIED);
@@ -80,10 +110,19 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 		}
 	}
 
+	/**
+	 * Clear the last modified time.
+	 */
 	public void clearLastModified() {
 		remove(LAST_MODIFIED);
 	}
 
+	/**
+	 * Set Extra element.
+	 *
+	 * @param key the key string
+	 * @param value the value string
+	 */
 	public void setExtra(String key, String value) {
 		if (key == null || key.isEmpty())
 			throw new IllegalArgumentException();
@@ -91,6 +130,12 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 		put(key, value);
 	}
 
+	/**
+	 * Get Extra element.
+	 *
+	 * @param key the key string
+	 * @return the value string
+	 */
 	public String getExtra(String key) {
 		if (key == null || key.isEmpty())
 			throw new IllegalArgumentException();
@@ -98,6 +143,11 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 		return (String)get(key);
 	}
 
+	/**
+	 * Merge two meta datas.
+	 *
+	 * @param metadata the metadata to be merged.
+	 */
 	public void merge(AbstractMetadata metadata) {
 		if (metadata == this)
 			return;
@@ -113,6 +163,12 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 		});
 	}
 
+	/**
+	 * Get Abstract Metadata from input content.
+	 *
+	 * @param reader the Reader input
+	 * @throws MalformedMetaException the Abstract Metadata is malformed.
+	 */
 	public void load(Reader reader) throws MalformedMetaException {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
@@ -123,6 +179,12 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 		}
 	}
 
+	/**
+	 * Get Abstract Metadata from input content.
+	 *
+	 * @param node the JsonNode input
+	 * @throws MalformedMetaException the Abstract Metadata is malformed.
+	 */
 	public void load(JsonNode node) throws MalformedMetaException {
 		for (Iterator<Map.Entry<String, JsonNode>> i = node.fields(); i.hasNext(); ) {
 			Map.Entry<String, JsonNode> field = i.next();
@@ -177,6 +239,12 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 		generator.writeEndObject();
 	}
 
+	/**
+	 * Store input content about meta data.
+	 *
+	 * @param out the Writer handle
+	 * @throws IOException write field to json string failed.
+	 */
 	public void save(Writer out) throws IOException {
 		if (out == null)
 			throw new IllegalArgumentException();
@@ -187,6 +255,12 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 		generator.close();
 	}
 
+	/**
+	 * Store input content about meta data.
+	 *
+	 * @param out the Writer handle
+	 * @throws IOException write field to json string failed.
+	 */
 	public void save(OutputStream out) throws IOException {
 		if (out == null)
 			throw new IllegalArgumentException();
@@ -194,6 +268,12 @@ public abstract class AbstractMetadata extends TreeMap<String, Object> {
 		save(new OutputStreamWriter(out, "UTF-8"));
 	}
 
+	/**
+	 * Get json string from Abstract Metadata.
+	 *
+	 * @return
+	 * @throws IOException
+	 */
 	public String toJson() throws IOException {
 		Writer out = new StringWriter(1024);
 		save(out);

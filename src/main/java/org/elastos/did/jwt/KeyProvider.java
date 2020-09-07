@@ -29,8 +29,24 @@ import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 
 public interface KeyProvider {
+	/**
+	 * Get public key from KeyProvider
+	 *
+	 * @param id the owner of key
+	 * @return the PublicKey object
+	 * @throws InvalidKeyException the PublicKey is invalid.
+	 */
 	public PublicKey getPublicKey(String id) throws InvalidKeyException;
 
+	/**
+	 * Get private key from KeyProvider
+	 *
+	 * @param id the owner of key
+	 * @param storepass the password for DIDStore
+	 * @return the Privatekey object
+	 * @throws InvalidKeyException the PrivateKey is invalid.
+	 * @throws DIDStoreException there is no store to load private key.
+	 */
 	public PrivateKey getPrivateKey(String id, String storepass)
 			throws InvalidKeyException, DIDStoreException;
 }

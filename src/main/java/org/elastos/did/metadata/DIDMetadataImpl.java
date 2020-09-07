@@ -39,10 +39,18 @@ public class DIDMetadataImpl extends AbstractMetadata implements DIDMetadata {
 	private final static String ALIAS = RESERVED_PREFIX + "alias";
 	private final static String DEACTIVATED = RESERVED_PREFIX + "deactivated";
 
+	/**
+	 * Constructs the empty DIDMetadataImpl.
+	 */
 	public DIDMetadataImpl() {
 		this(null);
 	}
 
+	/**
+	 * Constructs the empty DIDMetadataImpl with the given store.
+	 *
+	 * @param store the specified DIDStore
+	 */
 	public DIDMetadataImpl(DIDStore store) {
 		super(store);
 	}
@@ -57,6 +65,11 @@ public class DIDMetadataImpl extends AbstractMetadata implements DIDMetadata {
 		return (String)get(ALIAS);
 	}
 
+	/**
+	 * Set transaction id into DIDMetadata.
+	 *
+	 * @param txid the transaction id string
+	 */
 	public void setTransactionId(String txid) {
 		put(TXID, txid);
 	}
@@ -66,8 +79,13 @@ public class DIDMetadataImpl extends AbstractMetadata implements DIDMetadata {
 		return (String)get(TXID);
 	}
 
-	public void setPreviousSignature(String txid) {
-		put(PREV_SIGNATURE, txid);
+	/**
+	 * Set previous signature into DIDMetadata.
+	 *
+	 * @param signature the signature string
+	 */
+	public void setPreviousSignature(String signature) {
+		put(PREV_SIGNATURE, signature);
 	}
 
 	@Override
@@ -75,6 +93,11 @@ public class DIDMetadataImpl extends AbstractMetadata implements DIDMetadata {
 		return (String)get(PREV_SIGNATURE);
 	}
 
+	/**
+	 * Set signature into DIDMetadata.
+	 *
+	 * @param signature the signature string
+	 */
 	public void setSignature(String signature) {
 		put(SIGNATURE, signature);
 	}
@@ -84,6 +107,11 @@ public class DIDMetadataImpl extends AbstractMetadata implements DIDMetadata {
 		return (String)get(SIGNATURE);
 	}
 
+	/**
+	 * Set published time into DIDMetadata.
+	 *
+	 * @param timestamp the time published
+	 */
 	public void setPublished(Date timestamp) {
 		put(PUBLISHED, JsonHelper.formatDate(timestamp));
 	}
@@ -98,6 +126,11 @@ public class DIDMetadataImpl extends AbstractMetadata implements DIDMetadata {
 		}
 	}
 
+	/**
+	 * Set deactivate status into DIDMetadata.
+	 *
+	 * @param deactivated the deactivate status
+	 */
 	public void setDeactivated(boolean deactivated) {
 		put(DEACTIVATED, deactivated);
 	}

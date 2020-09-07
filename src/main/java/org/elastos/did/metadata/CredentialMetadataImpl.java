@@ -30,10 +30,18 @@ public class CredentialMetadataImpl extends AbstractMetadata implements Credenti
 
 	private final static String ALIAS = RESERVED_PREFIX + "alias";
 
+	/**
+	 * Construct the empty CredentialMetadataImpl.
+	 */
 	public CredentialMetadataImpl() {
 		this(null);
 	}
 
+	/**
+	 * Construct the CredentialMetadataImpl with the given store.
+	 *
+	 * @param store the specified DIDStore
+	 */
 	public CredentialMetadataImpl(DIDStore store) {
 		super(store);
 	}

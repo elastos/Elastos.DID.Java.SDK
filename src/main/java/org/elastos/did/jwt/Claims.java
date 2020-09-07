@@ -334,6 +334,13 @@ public class Claims implements Map<String, Object> {
 		return impl.get(key);
 	}
 
+	/**
+	 * Returns the value string to which the specified key is mapped,
+	 * or null if this map contains no mapping for the key.
+	 *
+	 * @param key the key whose associated value is to be returned
+	 * @return the value string to which the specified key is mapped
+	 */
 	public String getAsJson(Object key) {
 		Object v = impl.get(key);
 
@@ -354,6 +361,15 @@ public class Claims implements Map<String, Object> {
 		return impl.put(key, value);
 	}
 
+	/**
+	 * Associates the specified value with the specified key in this map (optional operation).
+	 *
+	 * @param key the key string
+	 * @param json the json string
+	 * @return the previous value associated with key, or null if there was no mapping for key.
+	 *         (A null return can also indicate that the map previously associated null with key,
+	 *         if the implementation supports null values.)
+	 */
 	public Object putWithJson(String key, String json) {
 		return impl.put(key, json2Map(json));
 	}
@@ -368,10 +384,20 @@ public class Claims implements Map<String, Object> {
 		impl.putAll(m);
 	}
 
+	/**
+	 * Copies all of the mappings from the specified map to this map (optional operation).
+	 *
+	 * @param node the JsonNode handle
+	 */
 	public void putAll(JsonNode node) {
 		impl.putAll(jsonNode2Map(node));
 	}
 
+	/**
+	 * Copies all of the mappings from the specified map to this map (optional operation).
+	 *
+	 * @param json the json string
+	 */
 	public void putAllWithJson(String json) {
 		impl.putAll(json2Map(json));
 	}

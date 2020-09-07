@@ -23,6 +23,11 @@
 package org.elastos.did.jwt;
 
 public class Jws<B> extends Jwt<B> {
+	/**
+	 * Constructs the Jws with the given value.
+	 *
+	 * @param impl An expanded (not compact/serialized) Signed JSON Web Token
+	 */
 	protected Jws(io.jsonwebtoken.Jws<?> impl) {
 		super(impl);
 	}
@@ -36,6 +41,10 @@ public class Jws<B> extends Jwt<B> {
 		return new JwsHeader(getImplAsJws().getHeader());
 	}
 
+	/**
+	 * Get signature string from Jws.
+	 * @return the signature string
+	 */
 	public String getSignature() {
 		return getImplAsJws().getSignature();
 	}

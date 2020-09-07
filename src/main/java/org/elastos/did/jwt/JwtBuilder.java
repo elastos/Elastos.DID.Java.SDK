@@ -232,10 +232,24 @@ public class JwtBuilder {
 		return this;
 	}
 
+	/**
+	 * Sets the JWT payload to be a JSON Claims instance populated by the
+	 * specified JsonNode object.
+	 *
+	 * @param claims the JWT claims to be set as the JWT body.
+	 * @return the builder for method chaining.
+	 */
 	JwtBuilder setClaims(JsonNode claims) {
 		return setClaims(Claims.jsonNode2Map(claims));
 	}
 
+	/**
+	 * Sets the JWT payload to be a JSON Claims instance populated by the
+	 * specified json string.
+	 *
+	 * @param claims the JWT claims to be set as the JWT body.
+	 * @return the builder for method chaining.
+	 */
 	JwtBuilder setClaimsWithJson(String jsonClaims) {
 		return setClaims(Claims.json2Map(jsonClaims));
 	}
@@ -258,10 +272,26 @@ public class JwtBuilder {
 		return this;
 	}
 
+	/**
+	 * Adds JsonNode to the JSON Claims in the payload. If a
+	 * Claims instance does not yet exist at the time this method is called, one
+	 * will be created automatically before applying the JsonNode.
+	 *
+	 * @param claims the JWT claims to be added to the JWT body.
+	 * @return the builder for method chaining.
+	 */
 	JwtBuilder addClaims(JsonNode claims) {
 		return addClaims(Claims.jsonNode2Map(claims));
 	}
 
+	/**
+	 * Adds json string to the JSON Claims in the payload. If a
+	 * Claims instance does not yet exist at the time this method is called, one
+	 * will be created automatically before applying the JsonNode.
+	 *
+	 * @param claims the JWT claims to be added to the JWT body.
+	 * @return the builder for method chaining.
+	 */
 	JwtBuilder addClaimsWithJson(String jsonClaims) {
 		return addClaims(Claims.json2Map(jsonClaims));
 	}
