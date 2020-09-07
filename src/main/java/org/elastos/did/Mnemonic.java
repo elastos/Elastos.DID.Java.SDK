@@ -57,6 +57,11 @@ public class Mnemonic {
 		this.mc = mc;
 	}
 
+	/**
+	 * Get empty Mnemonic's instance.
+	 *
+	 * @return the Mnemonic object
+	 */
 	public static Mnemonic getInstance() {
 		String language = "";
 
@@ -68,6 +73,13 @@ public class Mnemonic {
 		return m;
 	}
 
+	/**
+	 * Get the Mnemonic's instance with the given language.
+	 *
+	 * @param language the language string
+	 * @return the Mnemonic object
+	 * @throws DIDException generate Mnemonic into table failed.
+	 */
 	public static Mnemonic getInstance(String language) throws DIDException {
 		if (language == null || language.isEmpty())
 			return getInstance();
@@ -86,6 +98,12 @@ public class Mnemonic {
 		}
 	}
 
+	/**
+	 * Generate mnemonic.
+	 *
+	 * @return the mnemonic string
+	 * @throws DIDException generate Mnemonic into table failed.
+	 */
 	public String generate() throws DIDException {
 		try {
 			byte[] entropy = new byte[TWELVE_WORDS_ENTROPY];
@@ -102,6 +120,13 @@ public class Mnemonic {
 		}
 	}
 
+	/**
+	 * Check that mnemonic string is valid or not.
+	 *
+	 * @param mnemonic the mnemonic string
+	 * @return the returned value is true if mnemonic is valid;
+	 *         the returned value is false if mnemonic is not valid.
+	 */
 	public boolean isValid(String mnemonic) {
     	if (mnemonic == null || mnemonic.isEmpty())
     		throw new IllegalArgumentException();
@@ -117,6 +142,13 @@ public class Mnemonic {
 		}
 	}
 
+	/**
+	 * Get seed from mnemonic and password.
+	 *
+	 * @param mnemonic the mnemonic string
+	 * @param passphrase the password combine with mnemonic
+	 * @return the original seed
+	 */
 	public static byte[] toSeed(String mnemonic, String passphrase) {
     	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
     	passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);

@@ -87,6 +87,16 @@ public class IDChainRequest {
 		this.operation = op;
 	}
 
+	/**
+	 * Constructs the 'create' IDChain Request.
+	 *
+	 * @param doc the DID Document be packed into Request
+	 * @param signKey the key to sign Request
+	 * @param storepass the password for DIDStore
+	 * @return the IDChainRequest object
+	 * @throws DIDStoreException there is no store to attach.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public static IDChainRequest create(DIDDocument doc, DIDURL signKey,
 			String storepass) throws DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.CREATE);
@@ -96,6 +106,17 @@ public class IDChainRequest {
 		return request;
 	}
 
+	/**
+	 * Constructs the 'update' IDChain Request.
+	 *
+	 * @param doc the DID Document be packed into Request
+	 * @param previousTxid the previous transaction id string
+	 * @param signKey the key to sign Request
+	 * @param storepass the password for DIDStore
+	 * @return the IDChainRequest object
+	 * @throws DIDStoreException there is no store to attach.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public static IDChainRequest update(DIDDocument doc, String previousTxid,
 			DIDURL signKey, String storepass)
 			throws DIDStoreException, InvalidKeyException {
@@ -107,6 +128,16 @@ public class IDChainRequest {
 		return request;
 	}
 
+	/**
+	 * Constructs the 'deactivate' IDChain Request.
+	 *
+	 * @param doc the DID Document be packed into Request
+	 * @param signKey the key to sign Request
+	 * @param storepass the password for DIDStore
+	 * @return the IDChainRequest object
+	 * @throws DIDStoreException there is no store to attach.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public static IDChainRequest deactivate(DIDDocument doc, DIDURL signKey,
 			String storepass) throws DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.DEACTIVATE);
@@ -116,6 +147,18 @@ public class IDChainRequest {
 		return request;
 	}
 
+	/**
+	 * Constructs the 'deactivate' IDChain Request.
+	 *
+	 * @param target the DID to be deactivated
+	 * @param targetSignKey the target DID's key to sign
+	 * @param doc the authorizer's document
+	 * @param signKey the key to sign Request
+	 * @param storepass the password for DIDStore
+	 * @return the IDChainRequest object
+	 * @throws DIDStoreException there is no store to attach.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
 	public static IDChainRequest deactivate(DID target, DIDURL targetSignKey,
 			DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDStoreException, InvalidKeyException {
@@ -126,10 +169,16 @@ public class IDChainRequest {
 		return request;
 	}
 
+	/**
+	 * Get operatation String.
+	 */
 	public Operation getOperation() {
 		return operation;
 	}
 
+	/**
+	 * Get previous transaction id string.
+	 */
 	public String getPreviousTxid() {
 		return previousTxid;
 	}
@@ -138,14 +187,27 @@ public class IDChainRequest {
 		this.previousTxid = previousTxid != null ? previousTxid : "";
 	}
 
+	/**
+	 * Get payload of IDChain Request.
+	 */
 	public String getPayload() {
 		return payload;
 	}
 
+	/**
+	 * Get DID of IDChain Request.
+	 *
+	 * @return
+	 */
 	public DID getDid() {
 		return did;
 	}
 
+	/**
+	 * Get DID Document of IDChain Request.
+	 *
+	 * @return
+	 */
 	public DIDDocument getDocument() {
 		return doc;
 	}
@@ -234,6 +296,13 @@ public class IDChainRequest {
 		this.keyType = DEFAULT_PUBLICKEY_TYPE;
 	}
 
+	/**
+	 * Judge whether the IDChain Request is valid or not.
+	 *
+	 * @return the returned value is true if IDChain Request is valid;
+	 *         the returned value is false if IDChain Request is not valid.
+	 * @throws DIDTransactionException there is no invalid key.
+	 */
 	public boolean isValid() throws DIDTransactionException {
 		DIDDocument doc = null;
 		if (operation != Operation.DEACTIVATE) {
@@ -263,6 +332,13 @@ public class IDChainRequest {
 		return doc.verify(signKey, signature, inputs);
 	}
 
+	/**
+	 * Get json content of IDChain Request.
+	 *
+	 * @param generator the JsonGenerator handle
+	 * @param normalized json string is normalized or compact
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(JsonGenerator generator, boolean normalized) throws IOException {
 		generator.writeStartObject();
 
@@ -313,6 +389,13 @@ public class IDChainRequest {
 		generator.writeEndObject();
 	}
 
+	/**
+	 * Get json content of IDChain Request.
+	 *
+	 * @param out the Writer handle
+	 * @param normalized json string is normalized or compact
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(Writer out, boolean normalized) throws IOException {
 		JsonFactory factory = new JsonFactory();
 		JsonGenerator generator = factory.createGenerator(out);
@@ -320,6 +403,11 @@ public class IDChainRequest {
 		generator.close();
 	}
 
+	/**
+	 * Get json content of IDChain Request.
+	 *
+	 * @param normalized json string is normalized or compact
+	 */
 	public String toJson(boolean normalized) {
 		Writer out = new StringWriter(2048);
 
@@ -331,6 +419,13 @@ public class IDChainRequest {
 		return out.toString();
 	}
 
+	/**
+	 * Get IDChain Request from json.
+	 *
+	 * @param node the JsonNode content
+	 * @return the IDChainRequest object
+	 * @throws DIDTransactionException DIDTransaction error.
+	 */
 	public static IDChainRequest fromJson(JsonNode node)
 			throws DIDTransactionException {
 		Class<DIDTransactionException> clazz = DIDTransactionException.class;
@@ -381,6 +476,13 @@ public class IDChainRequest {
 		return request;
 	}
 
+	/**
+	 * Get IDChain Request from json.
+	 *
+	 * @param json the json string
+	 * @return the IDChainRequest object
+	 * @throws DIDTransactionException DIDTransaction error.
+	 */
 	public static IDChainRequest fromJson(String json)
 			throws DIDTransactionException {
 		if (json == null || json.isEmpty())

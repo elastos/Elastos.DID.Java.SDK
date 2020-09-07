@@ -43,6 +43,13 @@ public class IDChainTransaction implements DIDTransaction {
 	private Date timestamp;
 	private IDChainRequest request;
 
+	/**
+	 * Constructs the IDChainTransaction with the given value.
+	 *
+	 * @param txid the transaction id string
+	 * @param timestamp the time stamp
+	 * @param request the IDChainRequest content
+	 */
 	public IDChainTransaction(String txid, Date timestamp,
 			IDChainRequest request) {
 		this.txId = txid;
@@ -87,6 +94,12 @@ public class IDChainTransaction implements DIDTransaction {
 		return request.getDocument();
 	}
 
+	/**
+	 * Get json string with input content.
+	 *
+	 * @param generator the JsonGenerator handle
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(JsonGenerator generator) throws IOException {
 		generator.writeStartObject();
 		generator.writeStringField(TXID, getTransactionId());
@@ -96,6 +109,13 @@ public class IDChainTransaction implements DIDTransaction {
 		generator.writeEndObject();
 	}
 
+	/**
+	 * Get IDChainTransaction from json content.
+	 *
+	 * @param node the JsonNode content
+	 * @return the IDChainTransaction object
+	 * @throws DIDTransactionException DIDTransaction error.
+	 */
 	public static IDChainTransaction fromJson(JsonNode node)
 			throws DIDTransactionException {
 		Class<DIDTransactionException> exceptionClass = DIDTransactionException.class;
