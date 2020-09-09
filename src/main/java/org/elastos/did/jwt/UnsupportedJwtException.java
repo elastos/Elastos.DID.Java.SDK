@@ -22,21 +22,43 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * Thrown to indicate that jwt is not supported.
+ */
 public class UnsupportedJwtException extends JwtException {
 	private static final long serialVersionUID = 1633081027095276716L;
 
+	/**
+	 * Constructs the UnsupportedJwtException.
+	 */
 	public UnsupportedJwtException() {
 		super();
 	}
 
+	/**
+	 * Constructs the UnsupportedJwtException with the given message.
+	 *
+	 * @param message the message string
+	 */
 	public UnsupportedJwtException(String message) {
 		super(message);
 	}
 
+    /**
+     * Constructs the UnsupportedJwtException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
 	public UnsupportedJwtException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+    /**
+     * Constructs the UnsupportedJwtException with the given reason.
+     *
+     * @param cause the reason
+     */
 	public UnsupportedJwtException(Throwable cause) {
 		super(cause);
 	}

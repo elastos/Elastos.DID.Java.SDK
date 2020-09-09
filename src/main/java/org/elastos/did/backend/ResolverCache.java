@@ -52,6 +52,10 @@ public class ResolverCache {
 	private static Map<DID, ResolveResult> cache = LRUCache.createInstance(
 			CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 
+	private ResolverCache() {
+
+	}
+
 	/**
 	 * Set cache dir to store the DID content.
 	 *

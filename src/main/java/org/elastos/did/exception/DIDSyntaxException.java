@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the DID syntax has error.
+ */
 public class DIDSyntaxException extends DIDException {
 	private static final long serialVersionUID = 554093083783734303L;
 
+	/**
+	 * Constructs the DIDSyntaxException.
+	 */
 	public DIDSyntaxException() {
         super();
     }
 
+	/**
+	 * Constructs the DIDSyntaxException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public DIDSyntaxException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the DIDSyntaxException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public DIDSyntaxException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the DIDSyntaxException with the given reason.
+     *
+     * @param cause the reason
+     */
     public DIDSyntaxException(Throwable cause) {
         super(cause);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2020 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,45 +20,13 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.exception;
-
 /**
- * Thrown to indicate that the meta data is malformed.
- */
-public class MalformedMetaException extends DIDStoreException {
-	private static final long serialVersionUID = 3633945564100769501L;
+ * <p>
+ * Defines the API for DID error.
+ * </p>
+ *
+ * @since 1.0
+ * @version 1.0
+ **/
 
-	/**
-	 * Constructs the MalformedMetaException.
-	 */
-	public MalformedMetaException() {
-        super();
-    }
-
-	/**
-	 * Constructs the MalformedMetaException with the given message.
-	 *
-	 * @param message the message string
-	 */
-    public MalformedMetaException(String message) {
-        super(message);
-    }
-    /**
-     * Constructs the MalformedMetaException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public MalformedMetaException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    /**
-     * Constructs the MalformedMetaException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public MalformedMetaException(Throwable cause) {
-        super(cause);
-    }
-}
+package org.elastos.did.exception;

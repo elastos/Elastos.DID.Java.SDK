@@ -25,6 +25,9 @@ package org.elastos.did.metadata;
 import org.elastos.did.CredentialMetadata;
 import org.elastos.did.DIDStore;
 
+/**
+ * The class defines the implement of Credential Meta data.
+ */
 public class CredentialMetadataImpl extends AbstractMetadata implements CredentialMetadata {
 	private static final long serialVersionUID = 725815452175234592L;
 

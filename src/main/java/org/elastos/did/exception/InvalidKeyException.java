@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the key is invalid.
+ */
 public class InvalidKeyException extends DIDException {
 	private static final long serialVersionUID = 830761196969735364L;
 
+	/**
+	 * Constructs the InvalidKeyException.
+	 */
 	public InvalidKeyException() {
         super();
     }
 
+	/**
+	 * Constructs the InvalidKeyException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public InvalidKeyException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the InvalidKeyException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public InvalidKeyException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the InvalidKeyException with the given reason.
+     *
+     * @param cause the reason
+     */
     public InvalidKeyException(Throwable cause) {
         super(cause);
     }

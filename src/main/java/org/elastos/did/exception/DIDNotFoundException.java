@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the DID is not found.
+ */
 public class DIDNotFoundException extends DIDResolveException {
 	private static final long serialVersionUID = -5041281250210822765L;
 
+	/**
+	 * Constructs the DIDNotFoundException.
+	 */
 	public DIDNotFoundException() {
         super();
     }
 
+	/**
+	 * Constructs the DIDNotFoundException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public DIDNotFoundException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the DIDNotFoundException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public DIDNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the DIDNotFoundException with the given reason.
+     *
+     * @param cause the reason
+     */
     public DIDNotFoundException(Throwable cause) {
         super(cause);
     }

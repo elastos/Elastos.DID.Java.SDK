@@ -28,6 +28,9 @@ import java.security.PublicKey;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 
+/**
+ * The API contains the public key and private key.
+ */
 public interface KeyProvider {
 	/**
 	 * Get public key from KeyProvider

@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the DIDStore has error.
+ */
 public class DIDStoreException extends DIDException {
 	private static final long serialVersionUID = 7633316874572320014L;
 
+	/**
+	 * Constructs the DIDStoreException.
+	 */
 	public DIDStoreException() {
         super();
     }
 
+	/**
+	 * Constructs the DIDStoreException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public DIDStoreException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the DIDStoreException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public DIDStoreException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the DIDStoreException with the given reason.
+     *
+     * @param cause the reason
+     */
     public DIDStoreException(Throwable cause) {
         super(cause);
     }

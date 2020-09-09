@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the DID is malformed.
+ */
 public class MalformedDIDException extends DIDSyntaxException {
 	private static final long serialVersionUID = -5320577254261002967L;
 
+	/**
+	 * Constructs the MalformedDIDException.
+	 */
 	public MalformedDIDException() {
         super();
     }
 
+	/**
+	 * Constructs the MalformedDIDException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public MalformedDIDException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the MalformedDIDException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public MalformedDIDException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the MalformedDIDException with the given reason.
+     *
+     * @param cause the reason
+     */
     public MalformedDIDException(Throwable cause) {
         super(cause);
     }

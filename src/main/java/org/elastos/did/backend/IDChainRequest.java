@@ -68,7 +68,18 @@ public class IDChainRequest {
      * The IDChain Request Operation
 	 */
 	public enum Operation {
-		CREATE, UPDATE, DEACTIVATE;
+		/**
+		 * the new did operation
+		 */
+		CREATE,
+		/**
+		 * the update did operation
+		 */
+		UPDATE,
+		/**
+		 * the deactivate did operation
+		 */
+		DEACTIVATE;
 
 		@Override
 		public String toString() {

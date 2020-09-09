@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the version of DIDStore is not matched.
+ */
 public class DIDStoreVersionMismatch extends DIDStorageException {
 	private static final long serialVersionUID = -6055663490187295587L;
 
+	/**
+	 * Constructs the DIDStoreVersionMismatch.
+	 */
 	public DIDStoreVersionMismatch() {
         super();
     }
 
+	/**
+	 * Constructs the DIDStoreVersionMismatch with the given message.
+	 *
+	 * @param message the message string
+	 */
     public DIDStoreVersionMismatch(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the DIDStoreVersionMismatch with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public DIDStoreVersionMismatch(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the DIDStoreVersionMismatch with the given reason.
+     *
+     * @param cause the reason
+     */
     public DIDStoreVersionMismatch(Throwable cause) {
         super(cause);
     }

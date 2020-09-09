@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the Credential is malformed.
+ */
 public class MalformedCredentialException extends DIDSyntaxException {
 	private static final long serialVersionUID = -1775184934700973122L;
 
+	/**
+	 * Constructs the MalformedCredentialException.
+	 */
 	public MalformedCredentialException() {
         super();
     }
 
+	/**
+	 * Constructs the MalformedCredentialException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public MalformedCredentialException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the MalformedCredentialException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public MalformedCredentialException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the MalformedCredentialException with the given reason.
+     *
+     * @param cause the reason
+     */
     public MalformedCredentialException(Throwable cause) {
         super(cause);
     }

@@ -34,10 +34,16 @@ import org.elastos.did.exception.InvalidKeyException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SigningKeyResolver;
 
+/**
+ * A builder for parsing JWT.
+ */
 public class JwtParserBuilder {
 	private io.jsonwebtoken.JwtParserBuilder impl;
 	private KeyProvider keyProvider;
 
+	/**
+	 * Constructs the empty JwtParserBuilder.
+	 */
 	public JwtParserBuilder() {
 		this(null);
 	}

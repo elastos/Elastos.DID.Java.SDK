@@ -43,6 +43,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * The class defines the base interface of Meta data.
+ *
+ */
 public abstract class AbstractMetadata extends TreeMap<String, Object> {
 	private static final long serialVersionUID = -3700036981800046481L;
 

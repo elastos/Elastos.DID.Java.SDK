@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the error occurs when resolving DID happen .
+ */
 public class DIDResolveException extends DIDBackendException {
 	private static final long serialVersionUID = 8679582737929676981L;
 
+	/**
+	 * Constructs the DIDResolveException.
+	 */
 	public DIDResolveException() {
         super();
     }
 
+	/**
+	 * Constructs the DIDResolveException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public DIDResolveException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the DIDResolveException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public DIDResolveException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the DIDResolveException with the given reason.
+     *
+     * @param cause the reason
+     */
     public DIDResolveException(Throwable cause) {
         super(cause);
     }

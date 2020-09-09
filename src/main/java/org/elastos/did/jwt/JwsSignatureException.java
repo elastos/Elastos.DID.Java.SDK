@@ -22,21 +22,43 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * Thrown to indicate that sign or verify failed.
+ */
 public class JwsSignatureException extends JwtException {
 	private static final long serialVersionUID = -4937907083671862158L;
 
+	/**
+	 * Constructs the JwsSignatureException.
+	 */
 	public JwsSignatureException() {
 		super();
 	}
 
+	/**
+	 * Constructs the JwsSignatureException with the given message.
+	 *
+	 * @param message the message string
+	 */
 	public JwsSignatureException(String message) {
 		super(message);
 	}
 
+    /**
+     * Constructs the JwsSignatureException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
 	public JwsSignatureException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+    /**
+     * Constructs the JwsSignatureException with the given reason.
+     *
+     * @param cause the reason
+     */
 	public JwsSignatureException(Throwable cause) {
 		super(cause);
 	}

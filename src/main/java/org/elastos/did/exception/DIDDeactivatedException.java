@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the DIDBackend has error.
+ */
 public class DIDDeactivatedException extends DIDResolveException {
 	private static final long serialVersionUID = -3106736642975911944L;
 
+	/**
+	 * Constructs the DIDDeactivatedException.
+	 */
 	public DIDDeactivatedException() {
         super();
     }
 
+	/**
+	 * Constructs the DIDDeactivatedException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public DIDDeactivatedException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the DIDDeactivatedException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public DIDDeactivatedException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the DIDDeactivatedException with the given reason.
+     *
+     * @param cause the reason
+     */
     public DIDDeactivatedException(Throwable cause) {
         super(cause);
     }

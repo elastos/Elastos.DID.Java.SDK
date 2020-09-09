@@ -29,6 +29,9 @@ import org.elastos.did.DIDMetadata;
 import org.elastos.did.DIDStore;
 import org.elastos.did.util.JsonHelper;
 
+/**
+ * The class defines the implement of DID Meta data.
+ */
 public class DIDMetadataImpl extends AbstractMetadata implements DIDMetadata {
 	private static final long serialVersionUID = -6074640560591492115L;
 

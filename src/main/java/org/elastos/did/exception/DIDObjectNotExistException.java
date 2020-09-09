@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the DIDObject does not exist.
+ */
 public class DIDObjectNotExistException extends IllegalArgumentException {
 	private static final long serialVersionUID = -5384668345105187783L;
 
+	/**
+	 * Constructs the DIDObjectNotExistException.
+	 */
 	public DIDObjectNotExistException() {
         super();
     }
 
+	/**
+	 * Constructs the DIDObjectNotExistException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public DIDObjectNotExistException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the DIDObjectNotExistException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public DIDObjectNotExistException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the DIDObjectNotExistException with the given reason.
+     *
+     * @param cause the reason
+     */
     public DIDObjectNotExistException(Throwable cause) {
         super(cause);
     }
