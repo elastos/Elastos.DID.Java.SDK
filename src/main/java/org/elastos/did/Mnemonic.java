@@ -35,16 +35,58 @@ import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
 import org.elastos.did.exception.DIDException;
 
+/**
+ * The class represents the mnemonic content.
+ */
 public class Mnemonic {
+	/**
+	 * The default language is English.
+	 */
 	public static final String DEFAULT = null;
+
+	/**
+	 * language: "chinese_simplified"
+	 */
 	public static final String CHINESE_SIMPLIFIED = "chinese_simplified";
+
+	/**
+	 * language: "chinese_traditional"
+	 */
 	public static final String CHINESE_TRADITIONAL = "chinese_traditional";
+
+	/**
+	 * language: "czech"
+	 */
 	public static final String CZECH = "czech";
+
+	/**
+	 * language: "english"
+	 */
 	public static final String ENGLISH = "english";
+
+	/**
+	 * language: "french"
+	 */
 	public static final String FRENCH = "french";
+
+	/**
+	 * language: "italian"
+	 */
 	public static final String ITALIAN = "italian";
+
+	/**
+	 * language: "japanese"
+	 */
 	public static final String JAPANESE = "japanese";
+
+	/**
+	 * language: "korean"
+	 */
 	public static final String KOREAN = "korean";
+
+	/**
+	 * language: "spanish"
+	 */
 	public static final String SPANISH = "spanish";
 
 	private static final int TWELVE_WORDS_ENTROPY = 16;

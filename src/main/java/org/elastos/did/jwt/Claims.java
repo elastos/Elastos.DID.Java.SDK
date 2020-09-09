@@ -32,6 +32,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * The class records the body content of JWT(like map format).
+ */
 public class Claims implements Map<String, Object> {
 	/** JWT {@code Issuer} claims parameter name: <code>"iss"</code> */
 	public static final String ISSUER = "iss";
@@ -422,6 +425,12 @@ public class Claims implements Map<String, Object> {
 		return impl.entrySet();
 	}
 
+	/**
+	 * Change JsonNode format into Map format.
+	 *
+	 * @param node the JsonNode data
+	 * @return the Map data
+	 */
 	protected static Map<String, Object> jsonNode2Map(JsonNode node) {
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> map = mapper.convertValue(node,
@@ -430,6 +439,12 @@ public class Claims implements Map<String, Object> {
 		return map;
 	}
 
+	/**
+	 * Change json string into Map format.
+	 *
+	 * @param json the data's json string
+	 * @return the Map data
+	 */
 	protected static Map<String, Object> json2Map(String json) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
@@ -443,6 +458,12 @@ public class Claims implements Map<String, Object> {
 		}
 	}
 
+	/**
+	 * Change Map format into JsonNode format.
+	 *
+	 * @param map the Map data
+	 * @return the JsonNode data
+	 */
 	protected static JsonNode map2JsonNode(Map<String, Object> map) {
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.convertValue(map, JsonNode.class);

@@ -26,6 +26,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * The class records the Header content from JWT(like map format).
+ */
 public class Header implements Map<String, Object> {
 	/** JWT {@code Type} (typ) value: <code>"JWT"</code> */
 	public static final String JWT_TYPE = "JWT";
@@ -44,6 +47,11 @@ public class Header implements Map<String, Object> {
 
 	private io.jsonwebtoken.Header<?> impl;
 
+	/**
+	 * Constructs the Header with the given value.
+	 *
+	 * @param impl the io.jsonwebtoken.Header object
+	 */
 	protected Header(io.jsonwebtoken.Header<?> impl) {
 		this.impl = impl;
 	}

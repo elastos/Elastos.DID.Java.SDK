@@ -42,6 +42,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * The class records the resolved content.
+ */
 public class ResolveResult implements DIDHistory {
 	private final static String DID = "did";
 	private final static String STATUS = "status";

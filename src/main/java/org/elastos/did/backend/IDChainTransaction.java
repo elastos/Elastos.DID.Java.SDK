@@ -34,6 +34,9 @@ import org.elastos.did.util.JsonHelper;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * The class records the information of the specified DID's transaction.
+ */
 public class IDChainTransaction implements DIDTransaction {
 	private final static String TXID = "txid";
 	private final static String TIMESTAMP = "timestamp";
@@ -72,14 +75,29 @@ public class IDChainTransaction implements DIDTransaction {
 		return request.getDid();
 	}
 
+	/**
+	 * Get IDChain Operation.
+	 *
+	 * @return the operation string
+	 */
 	public IDChainRequest.Operation getOperationCode() {
 		return request.getOperation();
 	}
 
+	/**
+	 * Get payload from IDChain Request.
+	 *
+	 * @return the payload string
+	 */
 	public String getPayload() {
 		return request.toJson(false);
 	}
 
+	/**
+	 * Get request of IDChainRequest.
+	 *
+	 * @return the IDChainRequest object
+	 */
 	public IDChainRequest getRequest() {
 		return request;
 	}

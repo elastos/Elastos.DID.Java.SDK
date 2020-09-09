@@ -67,6 +67,16 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * The DIDDocument represents the DID information.
+ * <p>
+ * This is the concrete serialization of the data model,
+ * according to a particular syntax.
+ * DIDDocument is a set of data that describes the subject of a DID,
+ * including public key, authentication(optional), authorization(optional),
+ * credential and services. One document must be have only subject,
+ * and at least one public key.
+ */
 public class DIDDocument {
 	private final static String ID = "id";
 	private final static String PUBLICKEY = "publicKey";
@@ -96,6 +106,11 @@ public class DIDDocument {
 
 	private DIDMetadataImpl metadata;
 
+	/**
+     * Publickey is used for digital signatures, encryption and
+     * other cryptographic operations, which are the basis for purposes such as
+     * authentication or establishing secure communication with service endpoints.
+	 */
 	public static class PublicKey extends DIDObject {
 		private DID controller;
 		private String keyBase58;
@@ -269,6 +284,11 @@ public class DIDDocument {
 		}
 	}
 
+	/**
+     * A Service may represent any type of service the subject
+     * wishes to advertise, including decentralized identity management services
+     * for further discovery, authentication, authorization, or interaction.
+	 */
 	public static class Service extends DIDObject {
 		private String endpoint;
 
@@ -351,6 +371,9 @@ public class DIDDocument {
 		}
 	}
 
+	/**
+	 * The Proof represents the proof content of DID Document.
+	 */
 	public static class Proof {
 		private String type;
 		private Date created;
@@ -2278,6 +2301,9 @@ public class DIDDocument {
 		return jpb;
 	}
 
+	/**
+     * A DIDDocument Builder to modify DIDDocument elements.
+	 */
 	public static class Builder {
 		private DIDDocument document;
 

@@ -51,7 +51,17 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * A Presentation can be targeted to a specific verifier by using a Linked Data
+ * Proof that includes a nonce and realm.
+ * <p>
+ * This also helps prevent a verifier from reusing a verifiable presentation as
+ * their own.
+ */
 public class VerifiablePresentation {
+	/**
+	 * The Presentation type string
+	 */
 	public final static String DEFAULT_PRESENTATION_TYPE = "VerifiablePresentation";
 
 	private final static String TYPE = "type";
@@ -70,6 +80,9 @@ public class VerifiablePresentation {
 	private Map<DIDURL, VerifiableCredential> credentials;
 	private Proof proof;
 
+	/**
+	 * The class records the Proof content of Presentation.
+	 */
 	static public class Proof {
 		private String type;
 		private DIDURL verificationMethod;
@@ -77,6 +90,15 @@ public class VerifiablePresentation {
 		private String nonce;
 		private String signature;
 
+		/**
+		 * Constructs the Presentation Proof with the given value.
+		 *
+		 * @param type the type string
+		 * @param method the sign key
+		 * @param realm where is Presentation use
+		 * @param nonce the nonce string
+		 * @param signature the signature string
+		 */
 		protected Proof(String type, DIDURL method, String realm,
 				String nonce, String signature) {
 			this.type = type;
@@ -759,6 +781,9 @@ public class VerifiablePresentation {
 		return createFor(did, null, store);
 	}
 
+	/**
+     * A Presentation Builder to modify Presentation elements.
+	 */
 	public static class Builder {
 		private DIDDocument signer;
 		private DIDURL signKey;

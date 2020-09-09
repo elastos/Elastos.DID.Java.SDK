@@ -54,6 +54,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * The class is to provide the backend for resolving DID.
+ */
 public class DIDBackend {
 	private final static String ID = "id";
 	private final static String RESULT = "result";
@@ -73,6 +76,9 @@ public class DIDBackend {
 
 	private static final Logger log = LoggerFactory.getLogger(DIDBackend.class);
 
+	/**
+	 * The interface to indicate how to get local did document, if this did is not published to chain.
+	 */
 	public interface ResolveHandle {
 		/**
 		 * Resolve DID content(DIDDocument).

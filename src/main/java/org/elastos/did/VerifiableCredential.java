@@ -50,7 +50,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * Credential is a set of one or more claims made by the same entity.
+ * <p>
+ * Credential might also include an identifier and metadata to
+ * describe properties of the credential.
+ */
 public class VerifiableCredential extends DIDObject {
+	/**
+	 * The 'id' filed name of subject
+	 */
 	protected final static String ID = "id";
 	private final static String TYPE = "type";
 	private final static String ISSUER = "issuer";
@@ -72,6 +81,9 @@ public class VerifiableCredential extends DIDObject {
 
 	private CredentialMetadataImpl metadata;
 
+	/**
+     * The class records the subject content of Credential.
+	 */
 	static public class CredentialSubject {
 		private DID id;
 		private ObjectNode properties;
@@ -203,6 +215,9 @@ public class VerifiableCredential extends DIDObject {
 
 	}
 
+	/**
+	 * The class records the Proof content of Credential.
+	 */
 	static public class Proof {
 		private String type;
 		private DIDURL verificationMethod;

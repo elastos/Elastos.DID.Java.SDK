@@ -22,6 +22,9 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * A parser for reading JWT strings.
+ */
 public class JwtParser {
 	private io.jsonwebtoken.JwtParser impl;
 

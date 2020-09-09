@@ -24,6 +24,9 @@ package org.elastos.did;
 
 import org.elastos.did.exception.DIDTransactionException;
 
+/**
+ * The interface to provide DID Adapter method to publish DID Document.
+ */
 public interface DIDAdapter {
 	/**
 	 * User need to implement 'createIdTransaction' function.

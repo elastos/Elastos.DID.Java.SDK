@@ -43,7 +43,13 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * The class records the information of IDChain Request.
+ */
 public class IDChainRequest {
+	/**
+	 * The specification string of IDChain Request
+	 */
 	public static final String CURRENT_SPECIFICATION = "elastos/did/1.0";
 
 	private static final String HEADER = "header";
@@ -58,6 +64,9 @@ public class IDChainRequest {
 
 	private static final String DEFAULT_PUBLICKEY_TYPE = Constants.DEFAULT_PUBLICKEY_TYPE;
 
+	/**
+     * The IDChain Request Operation
+	 */
 	public enum Operation {
 		CREATE, UPDATE, DEACTIVATE;
 

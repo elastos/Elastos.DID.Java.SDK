@@ -39,6 +39,9 @@ import org.elastos.did.DID;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.util.LRUCache;
 
+/**
+ * The class to store resolved did document in the temporary directory.
+ */
 public class ResolverCache {
 	private static final Charset utf8 = Charset.forName("UTF-8");
 

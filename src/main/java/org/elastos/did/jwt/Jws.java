@@ -22,6 +22,11 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * An expanded (not compact/serialized) Signed JSON Web Token.
+ *
+ * @param <B> the type of the JWS body contents, either a String or a Claim instance.
+ */
 public class Jws<B> extends Jwt<B> {
 	/**
 	 * Constructs the Jws with the given value.
@@ -32,6 +37,11 @@ public class Jws<B> extends Jwt<B> {
 		super(impl);
 	}
 
+	/**
+	 * Get implement for Jws.
+	 *
+	 * @return the io.jsonwebtoken.Jws object
+	 */
 	protected io.jsonwebtoken.Jws<?> getImplAsJws() {
 		return (io.jsonwebtoken.Jws<?>) getImpl();
 	}

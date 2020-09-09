@@ -24,6 +24,9 @@ package org.elastos.did;
 
 import java.util.Date;
 
+/**
+ * The interface for DIDMetaData to store for other information about DID except DIDDocument information.
+ */
 public interface DIDMetadata {
 	/**
 	 * Set alias for DID.

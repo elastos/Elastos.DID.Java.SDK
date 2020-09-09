@@ -22,6 +22,11 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * An expanded (not compact/serialized) JSON Web Token.
+ *
+ * @param <B> the type of the JWT body contents, either a String or a Claims instance.
+ */
 public class Jwt<B> {
 	private io.jsonwebtoken.Jwt<?, ?> impl;
 

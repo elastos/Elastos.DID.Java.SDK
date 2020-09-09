@@ -32,6 +32,13 @@ import org.elastos.did.parser.DIDURLBaseListener;
 import org.elastos.did.parser.DIDURLParser;
 import org.elastos.did.parser.ParserHelper;
 
+/**
+ * DID URL defines by the did-url rule, refers to a URL that begins with a DID
+ * followed by one or more additional components.
+ * <p>
+ * A DID URL always identifies the resource to be located.
+ * DIDURL includes DID and Url fragment by user defined.
+ */
 public class DIDURL implements Comparable<DIDURL> {
 	private DID did;
 	private Map<String, String> parameters;

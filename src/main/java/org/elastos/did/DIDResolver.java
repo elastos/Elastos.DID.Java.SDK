@@ -26,6 +26,9 @@ import java.io.InputStream;
 
 import org.elastos.did.exception.DIDResolveException;
 
+/**
+ * The interface for DIDResolver to support method to resolve did document from chain.
+ */
 public interface DIDResolver {
 	/**
 	 * Get the newest DID Document from chain.

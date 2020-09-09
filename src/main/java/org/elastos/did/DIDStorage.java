@@ -29,7 +29,13 @@ import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.metadata.CredentialMetadataImpl;
 import org.elastos.did.metadata.DIDMetadataImpl;
 
+/**
+ * The interface for DIDStorage to support different file system.
+ */
 public interface DIDStorage {
+	/**
+	 * The inferface to change password.
+	 */
 	public interface ReEncryptor {
 		/**
 		 * Reencrypt in the changing password.

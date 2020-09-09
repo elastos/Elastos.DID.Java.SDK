@@ -77,12 +77,26 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * DIDStore is local store for all DIDs.
+ */
 public final class DIDStore {
 	private static final int CACHE_INITIAL_CAPACITY = 16;
 	private static final int CACHE_MAX_CAPACITY = 32;
 
+	/**
+	 * List DIDs that contains private key in DIDStore
+	 */
 	public static final int DID_HAS_PRIVATEKEY = 0;
+
+	/**
+	 * List DIDs that does not contain private key in DIDStore
+	 */
 	public static final int DID_NO_PRIVATEKEY = 1;
+
+	/**
+	 * List all DIDs
+	 */
 	public static final int DID_ALL	= 2;
 
 	private static final String DID_EXPORT = "did.elastos.export/1.0";
@@ -95,10 +109,13 @@ public final class DIDStore {
 
 	private static final Logger log = LoggerFactory.getLogger(DIDStore.class);
 
+	/**
+	 * The interface for ConflictHandle to indicate how to resolve the conflict,
+	 * if the local document is different with the one resolved from chain.
+	 */
 	public interface ConflictHandle {
 		/**
-	     * The function indicate how to resolve the confict, if the local document is different
-         * with the one resolved from chain.
+	     * The method to merge two did document.
 		 *
 		 * @param chainCopy the document from chain
 		 * @param localCopy the document from local device

@@ -22,6 +22,9 @@
 
 package org.elastos.did;
 
+/**
+ * The class is the base object for PublicKey and Credential.
+ */
 public class DIDObject {
 	private DIDURL id;
 	private String type;

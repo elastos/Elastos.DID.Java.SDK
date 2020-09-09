@@ -36,6 +36,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * A issuer is the DID to issue Credential. Issuer includes issuer's did and
+ * issuer's sign key.
+ */
 public class Issuer {
 	private static final String DEFAULT_PUBLICKEY_TYPE = Constants.DEFAULT_PUBLICKEY_TYPE;
 	private static final int MAX_VALID_YEARS = Constants.MAX_VALID_YEARS;
@@ -44,7 +48,7 @@ public class Issuer {
 	private DIDURL signKey;
 
 	/**
-	 * Contructs Issuer object with the given value.
+	 * Constructs Issuer object with the given value.
 	 *
 	 * @param doc the Issuer's document
 	 * @param signKey the specified issuer's key to sign
@@ -60,7 +64,7 @@ public class Issuer {
 	}
 
 	/**
-	 * Contructs Issuer object with the given value.
+	 * Constructs Issuer object with the given value.
 	 *
 	 * @param doc the Issuer's document
 	 * @throws DIDStoreException there is no store to attatch.
@@ -72,7 +76,7 @@ public class Issuer {
 	}
 
 	/**
-	 * Contructs Issuer object with the given value.
+	 * Constructs Issuer object with the given value.
 	 *
 	 * @param did the Issuer's DID
 	 * @param signKey the specified issuer's key to sign
@@ -93,7 +97,7 @@ public class Issuer {
 	}
 
 	/**
-	 * Contructs Issuer object with the given value.
+	 * Constructs Issuer object with the given value.
 	 *
 	 * @param did the Issuer's DID
 	 * @param store the DIDStore object
@@ -171,6 +175,9 @@ public class Issuer {
 		return issueFor(_did);
 	}
 
+	/**
+	 * The class is to edit Credential by builder.
+	 */
 	public class CredentialBuilder {
 		private DID target;
 		private VerifiableCredential credential;

@@ -34,7 +34,14 @@ import org.elastos.did.parser.DIDURLBaseListener;
 import org.elastos.did.parser.DIDURLParser;
 import org.elastos.did.parser.ParserHelper;
 
+/**
+ * DID is a globally unique identifier that does not require
+ * a centralized registration authority.
+ */
 public class DID implements Comparable<DID> {
+	/**
+	 * The default DID method filed
+	 */
 	public final static String METHOD = "elastos";
 
 	private String method;
@@ -272,6 +279,7 @@ public class DID implements Comparable<DID> {
 
 		return false;
 	}
+
 
 	@Override
 	public int compareTo(DID did) {

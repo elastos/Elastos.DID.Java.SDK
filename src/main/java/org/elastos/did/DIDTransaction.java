@@ -24,6 +24,9 @@ package org.elastos.did;
 
 import java.util.Date;
 
+/**
+ * The interface for DIDTransaction to store ID transaction content.
+ */
 public interface DIDTransaction {
 	/**
 	 * Get owner of DID transaction.

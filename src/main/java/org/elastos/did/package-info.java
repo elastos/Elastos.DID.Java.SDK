@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2020 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,50 +20,17 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
-
-import java.util.Date;
-
 /**
- * The interface for Credential's meta data(include alias name, last modified time for Credential
- * and user's extra element).
- */
-public interface CredentialMetadata {
-	/**
-	 * Set alias for credential.
-	 *
-	 * @param alias
-	 * alias string
-	 */
-	public void setAlias(String alias);
+ * <p>
+ * Defines the API for the main DID's framework.
+ * </p>
+ * <p>
+ * DID has several main modules：DID, DIDDocument(DID detail information), DIDStore,
+ * Verifiable Credential and Verifiable Presentation.
+ * </p>
+ *
+ * @since 1.0
+ * @version 1.0
+ **/
 
-	/**
-	 * Get alias from credential.
-	 *
-	 * @return alias string
-	 */
-	public String getAlias();
-
-	/**
-	 * Get last modified time for credential.
-	 *
-	 * @return last modified time
-	 */
-	public Date getLastModified();
-
-	/**
-	 * Set Extra element for credential.
-	 *
-	 * @param key the key string
-	 * @param value the value string
-	 */
-	public void setExtra(String key, String value);
-
-	/**
-	 * Get Extra string according to the key string.
-	 *
-	 * @param key the key string
-	 * @return the extra string matched key string
-	 */
-	public String getExtra(String key);
-}
+package org.elastos.did;
