@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the DID Document is malformed.
+ */
 public class MalformedDocumentException extends DIDSyntaxException {
 	private static final long serialVersionUID = -3025679208429246910L;
 
+	/**
+	 * Constructs the MalformedDocumentException.
+	 */
 	public MalformedDocumentException() {
         super();
     }
 
+	/**
+	 * Constructs the MalformedDocumentException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public MalformedDocumentException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the MalformedDocumentException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public MalformedDocumentException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the MalformedDocumentException with the given reason.
+     *
+     * @param cause the reason
+     */
     public MalformedDocumentException(Throwable cause) {
         super(cause);
     }

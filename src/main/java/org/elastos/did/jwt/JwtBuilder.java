@@ -35,11 +35,20 @@ import io.jsonwebtoken.CompressionCodec;
 import io.jsonwebtoken.CompressionCodecs;
 import io.jsonwebtoken.Jwts;
 
+/**
+ * A builder for constructing JWTs.
+ */
 public class JwtBuilder {
 	private String issuer;
 	private KeyProvider keyProvider;
 	private io.jsonwebtoken.JwtBuilder impl;
 
+	/**
+	 * Constructs the JwtBuilder with the given value.
+	 *
+	 * @param issuer the issuer's DID string
+	 * @param keyProvider the KeyProvider object
+	 */
 	public JwtBuilder(String issuer, KeyProvider keyProvider) {
 		this.issuer = issuer;
 		this.keyProvider = keyProvider;
@@ -62,6 +71,7 @@ public class JwtBuilder {
 	 * Returns a new {@link JwsHeader} instance suitable for digitally signed
 	 * JWTs (aka 'JWS's), populated with the specified name/value pairs.
 	 *
+	 * @param header the specified name/value pairs
 	 * @return a new {@link JwsHeader} instance suitable for digitally signed
 	 *         JWTs (aka 'JWS's), populated with the specified name/value pairs.
 	 * @see JwtBuilder#setHeader(Header)
@@ -86,6 +96,7 @@ public class JwtBuilder {
 	 * Returns a new {@link JwsHeader} instance suitable for digitally signed
 	 * JWTs (aka 'JWS's), populated with the specified name/value pairs.
 	 *
+	 * @param header the specified name/value pairs
 	 * @return a new {@link JwsHeader} instance suitable for digitally signed
 	 *         JWTs (aka 'JWS's), populated with the specified name/value pairs.
 	 * @see JwtBuilder#setHeader(Header)
@@ -232,10 +243,24 @@ public class JwtBuilder {
 		return this;
 	}
 
+	/**
+	 * Sets the JWT payload to be a JSON Claims instance populated by the
+	 * specified JsonNode object.
+	 *
+	 * @param claims the JWT claims to be set as the JWT body.
+	 * @return the builder for method chaining.
+	 */
 	JwtBuilder setClaims(JsonNode claims) {
 		return setClaims(Claims.jsonNode2Map(claims));
 	}
 
+	/**
+	 * Sets the JWT payload to be a JSON Claims instance populated by the
+	 * specified json string.
+	 *
+	 * @param claims the JWT claims to be set as the JWT body.
+	 * @return the builder for method chaining.
+	 */
 	JwtBuilder setClaimsWithJson(String jsonClaims) {
 		return setClaims(Claims.json2Map(jsonClaims));
 	}
@@ -258,10 +283,26 @@ public class JwtBuilder {
 		return this;
 	}
 
+	/**
+	 * Adds JsonNode to the JSON Claims in the payload. If a
+	 * Claims instance does not yet exist at the time this method is called, one
+	 * will be created automatically before applying the JsonNode.
+	 *
+	 * @param claims the JWT claims to be added to the JWT body.
+	 * @return the builder for method chaining.
+	 */
 	JwtBuilder addClaims(JsonNode claims) {
 		return addClaims(Claims.jsonNode2Map(claims));
 	}
 
+	/**
+	 * Adds json string to the JSON Claims in the payload. If a
+	 * Claims instance does not yet exist at the time this method is called, one
+	 * will be created automatically before applying the JsonNode.
+	 *
+	 * @param claims the JWT claims to be added to the JWT body.
+	 * @return the builder for method chaining.
+	 */
 	JwtBuilder addClaimsWithJson(String jsonClaims) {
 		return addClaims(Claims.json2Map(jsonClaims));
 	}
@@ -584,10 +625,70 @@ public class JwtBuilder {
 		return this;
 	}
 
+	/**
+	 * Sets a custom JWT Claims parameter value. A {@code null} value will
+	 * remove the property from the Claims.
+	 *
+	 * <p>
+	 * This is a convenience method. It will first ensure a Claims instance
+	 * exists as the JWT body and then set the named property on the Claims
+	 * instance. This allows you to write code like this:
+	 * </p>
+	 *
+	 * <pre>
+	 * String jwt = Jwts.builder().claim("aName", "aValue").compact();
+	 * </pre>
+	 *
+	 * <p>
+	 * instead of this:
+	 * </p>
+	 *
+	 * <pre>
+	 * Claims claims = Jwts.claims().put("aName", "aValue");
+	 * String jwt = Jwts.builder().setClaims(claims).compact();
+	 * </pre>
+	 * <p>
+	 * if desired.
+	 * </p>
+	 *
+	 * @param name  the JWT Claims property name
+	 * @param value the value to set for the specified Claims property name
+	 * @return the builder instance for method chaining.
+	 */
 	public JwtBuilder claim(String name, JsonNode value) {
 		return claim(name, Claims.jsonNode2Map(value));
 	}
 
+	/**
+	 * Sets a custom JWT Claims parameter value. A {@code null} value will
+	 * remove the property from the Claims.
+	 *
+	 * <p>
+	 * This is a convenience method. It will first ensure a Claims instance
+	 * exists as the JWT body and then set the named property on the Claims
+	 * instance. This allows you to write code like this:
+	 * </p>
+	 *
+	 * <pre>
+	 * String jwt = Jwts.builder().claim("aName", "aValue").compact();
+	 * </pre>
+	 *
+	 * <p>
+	 * instead of this:
+	 * </p>
+	 *
+	 * <pre>
+	 * Claims claims = Jwts.claims().put("aName", "aValue");
+	 * String jwt = Jwts.builder().setClaims(claims).compact();
+	 * </pre>
+	 * <p>
+	 * if desired.
+	 * </p>
+	 *
+	 * @param name  the JWT Claims property name
+	 * @param jsonValue the value to set for the specified Claims property name
+	 * @return the builder instance for method chaining.
+	 */
 	public JwtBuilder claimWithJson(String name, String jsonValue) {
 		return claim(name, Claims.json2Map(jsonValue));
 	}
@@ -599,8 +700,8 @@ public class JwtBuilder {
 	 * @param key       the key id to use for signing
 	 * @param password  the password for DID store
 	 * @return the builder instance for method chaining.
-	 * @throws DIDStoreException
-	 * @throws InvalidKeyException
+	 * @throws DIDStoreException DIDStore error.
+	 * @throws InvalidKeyException there is no an authenication key.
 	 */
 	public JwtBuilder signWith(String key, String password)
 			throws InvalidKeyException, DIDStoreException {
@@ -616,7 +717,7 @@ public class JwtBuilder {
 	 *
 	 * @param password the password for DID store
 	 * @return the builder instance for method chaining.
-	 * @throws DIDStoreException
+	 * @throws DIDStoreException DIDStore error.
 	 */
 	public JwtBuilder sign(String password) throws DIDStoreException {
 		try {

@@ -22,21 +22,43 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * Thrown to indicate that the error occurs when resolving DID happen .
+ */
 public class JwtException extends Exception {
 	private static final long serialVersionUID = 1836831555187953998L;
 
+	/**
+	 * Constructs the JwtException.
+	 */
 	public JwtException() {
 		super();
 	}
 
+	/**
+	 * Constructs the JwtException with the given message.
+	 *
+	 * @param message the message string
+	 */
 	public JwtException(String message) {
 		super(message);
 	}
 
+    /**
+     * Constructs the JwtException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
 	public JwtException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+    /**
+     * Constructs the JwtException with the given reason.
+     *
+     * @param cause the reason
+     */
 	public JwtException(Throwable cause) {
 		super(cause);
 	}

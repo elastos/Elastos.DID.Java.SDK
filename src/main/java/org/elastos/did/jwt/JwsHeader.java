@@ -22,6 +22,10 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * The class defines JwsHeader object.
+ *
+ */
 public class JwsHeader extends Header {
 	/** JWS {@code Algorithm} header parameter name: <code>"alg"</code> */
 	public static final String ALGORITHM = "alg";
@@ -59,10 +63,20 @@ public class JwsHeader extends Header {
 	/** JWS {@code Critical} header parameter name: <code>"crit"</code> */
 	public static final String CRITICAL = "crit";
 
+	/**
+	 * Constructs the JwsHeader with the given value.
+	 *
+	 * @param impl the io.jsonwebtoken.JwsHeader object
+	 */
 	protected JwsHeader(io.jsonwebtoken.JwsHeader<?> impl) {
 		super(impl);
 	}
 
+	/**
+	 * Get implement of JwsHeader.
+	 *
+	 * @return the io.jsonwebtoken.JwsHeader object
+	 */
 	protected io.jsonwebtoken.JwsHeader<?> getImplAsJwsHeader() {
 		return (io.jsonwebtoken.JwsHeader<?>) getImpl();
 	}

@@ -34,6 +34,9 @@ import org.elastos.did.util.JsonHelper;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * The class records the information of the specified DID's transaction.
+ */
 public class IDChainTransaction implements DIDTransaction {
 	private final static String TXID = "txid";
 	private final static String TIMESTAMP = "timestamp";
@@ -43,6 +46,13 @@ public class IDChainTransaction implements DIDTransaction {
 	private Date timestamp;
 	private IDChainRequest request;
 
+	/**
+	 * Constructs the IDChainTransaction with the given value.
+	 *
+	 * @param txid the transaction id string
+	 * @param timestamp the time stamp
+	 * @param request the IDChainRequest content
+	 */
 	public IDChainTransaction(String txid, Date timestamp,
 			IDChainRequest request) {
 		this.txId = txid;
@@ -65,14 +75,29 @@ public class IDChainTransaction implements DIDTransaction {
 		return request.getDid();
 	}
 
+	/**
+	 * Get IDChain Operation.
+	 *
+	 * @return the operation string
+	 */
 	public IDChainRequest.Operation getOperationCode() {
 		return request.getOperation();
 	}
 
+	/**
+	 * Get payload from IDChain Request.
+	 *
+	 * @return the payload string
+	 */
 	public String getPayload() {
 		return request.toJson(false);
 	}
 
+	/**
+	 * Get request of IDChainRequest.
+	 *
+	 * @return the IDChainRequest object
+	 */
 	public IDChainRequest getRequest() {
 		return request;
 	}
@@ -87,6 +112,12 @@ public class IDChainTransaction implements DIDTransaction {
 		return request.getDocument();
 	}
 
+	/**
+	 * Get json string with input content.
+	 *
+	 * @param generator the JsonGenerator handle
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(JsonGenerator generator) throws IOException {
 		generator.writeStartObject();
 		generator.writeStringField(TXID, getTransactionId());
@@ -96,6 +127,13 @@ public class IDChainTransaction implements DIDTransaction {
 		generator.writeEndObject();
 	}
 
+	/**
+	 * Get IDChainTransaction from json content.
+	 *
+	 * @param node the JsonNode content
+	 * @return the IDChainTransaction object
+	 * @throws DIDTransactionException DIDTransaction error.
+	 */
 	public static IDChainTransaction fromJson(JsonNode node)
 			throws DIDTransactionException {
 		Class<DIDTransactionException> exceptionClass = DIDTransactionException.class;

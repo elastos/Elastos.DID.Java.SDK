@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the Resolve Result is malformed.
+ */
 public class MalformedResolveResultException extends DIDResolveException {
 	private static final long serialVersionUID = -6564279904659655505L;
 
+	/**
+	 * Constructs the MalformedResolveResultException.
+	 */
 	public MalformedResolveResultException() {
         super();
     }
 
+	/**
+	 * Constructs the MalformedResolveResultException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public MalformedResolveResultException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the MalformedResolveResultException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public MalformedResolveResultException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the MalformedResolveResultException with the given reason.
+     *
+     * @param cause the reason
+     */
     public MalformedResolveResultException(Throwable cause) {
         super(cause);
     }

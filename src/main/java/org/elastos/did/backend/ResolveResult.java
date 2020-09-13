@@ -42,6 +42,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * The class records the resolved content.
+ */
 public class ResolveResult implements DIDHistory {
 	private final static String DID = "did";
 	private final static String STATUS = "status";
@@ -51,6 +54,12 @@ public class ResolveResult implements DIDHistory {
 	private int status;
 	private List<IDChainTransaction> idtxs;
 
+	/**
+	 * Constructs the Resolve Result with the given value.
+	 *
+	 * @param did the specified DID
+	 * @param status the DID's status
+	 */
 	protected ResolveResult(DID did, int status) {
 		this.did = did;
 		this.status = status;
@@ -74,6 +83,13 @@ public class ResolveResult implements DIDHistory {
 		return idtxs.size();
 	}
 
+	/**
+	 * Get the index transaction content.
+	 *
+	 * @param index the index
+	 * @return the index IDChainTransaction content
+	 * @throws DIDTransactionException Invalid ID transaction, can not verify the signature.
+	 */
 	public IDChainTransaction getTransactionInfo(int index)
 			throws DIDTransactionException {
 		if (idtxs == null)
@@ -93,6 +109,10 @@ public class ResolveResult implements DIDHistory {
 		return txs;
 	}
 
+	/**
+	 * Add transaction infomation into IDChain Transaction.
+	 * @param ti the IDChainTransaction object
+	 */
 	protected synchronized void addTransactionInfo(IDChainTransaction ti) {
 		if (idtxs == null)
 			idtxs = new LinkedList<IDChainTransaction>();
@@ -100,6 +120,12 @@ public class ResolveResult implements DIDHistory {
 		idtxs.add(ti);
 	}
 
+    /**
+     * Get json string from Resolve Result content.
+     *
+     * @param out the Writer handle
+     * @throws IOException write field to json string failed.
+     */
 	public void toJson(Writer out) throws IOException {
 		JsonFactory factory = new JsonFactory();
 		JsonGenerator generator = factory.createGenerator(out);
@@ -123,12 +149,25 @@ public class ResolveResult implements DIDHistory {
 		generator.close();
 	}
 
+	/**
+	 * Get json string from Resolve Result content.
+	 *
+	 * @return the json string
+	 * @throws IOException write field to json string failed.
+	 */
 	public String toJson() throws IOException {
 		Writer out = new StringWriter(4096);
 		toJson(out);
 		return out.toString();
 	}
 
+	/**
+	 * Get Resolve Result object from input content.
+	 *
+	 * @param result the JsonNode input
+	 * @return the ResolveResult object
+	 * @throws MalformedResolveResultException the Resolve Result is malformed.
+	 */
 	public static ResolveResult fromJson(JsonNode result)
 			throws MalformedResolveResultException {
 		Class<MalformedResolveResultException> exceptionClass = MalformedResolveResultException.class;
@@ -162,6 +201,13 @@ public class ResolveResult implements DIDHistory {
 		return rr;
 	}
 
+	/**
+	 * Get Resolve Result object from input content.
+	 *
+	 * @param json the json input
+	 * @return the ResolveResult object
+	 * @throws MalformedResolveResultException the Resolve Result is malformed.
+	 */
 	public static ResolveResult fromJson(String json)
 			throws MalformedResolveResultException {
 		if (json == null || json.isEmpty())
@@ -176,6 +222,13 @@ public class ResolveResult implements DIDHistory {
 		}
 	}
 
+	/**
+	 * Get Resolve Result object from input content.
+	 *
+	 * @param in the Reader input
+	 * @return the ResolveResult object
+	 * @throws MalformedResolveResultException the Resolve Result is malformed.
+	 */
 	public static ResolveResult fromJson(Reader in)
 			throws MalformedResolveResultException {
 		if (in == null)

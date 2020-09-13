@@ -34,14 +34,25 @@ import org.elastos.did.exception.InvalidKeyException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SigningKeyResolver;
 
+/**
+ * A builder for parsing JWT.
+ */
 public class JwtParserBuilder {
 	private io.jsonwebtoken.JwtParserBuilder impl;
 	private KeyProvider keyProvider;
 
+	/**
+	 * Constructs the empty JwtParserBuilder.
+	 */
 	public JwtParserBuilder() {
 		this(null);
 	}
 
+	/**
+	 * Constructs the JwtParserBuilder with the specified KeyProvider.
+	 *
+	 * @param keyProvider the KeyProvider object
+	 */
 	public JwtParserBuilder(KeyProvider keyProvider) {
 		this.keyProvider = keyProvider;
 		this.impl = Jwts.parserBuilder();
@@ -90,7 +101,7 @@ public class JwtParserBuilder {
 	 * exception will be thrown indicating that the JWT is invalid and may not
 	 * be used.
 	 *
-	 * @param id
+	 * @param id the required id string
 	 * @return the parser builder for method chaining.
 	 */
 	public JwtParserBuilder requireId(String id) {
@@ -104,7 +115,7 @@ public class JwtParserBuilder {
 	 * exception will be thrown indicating that the JWT is invalid and may not
 	 * be used.
 	 *
-	 * @param subject
+	 * @param subject the require subject string
 	 * @return the parser builder for method chaining.
 	 */
 	public JwtParserBuilder requireSubject(String subject) {
@@ -118,7 +129,7 @@ public class JwtParserBuilder {
 	 * exception will be thrown indicating that the JWT is invalid and may not
 	 * be used.
 	 *
-	 * @param audience
+	 * @param audience the audience string
 	 * @return the parser builder for method chaining.
 	 */
 	public JwtParserBuilder requireAudience(String audience) {
@@ -132,7 +143,7 @@ public class JwtParserBuilder {
 	 * exception will be thrown indicating that the JWT is invalid and may not
 	 * be used.
 	 *
-	 * @param issuer
+	 * @param issuer the issuer string
 	 * @return the parser builder for method chaining.
 	 */
 	public JwtParserBuilder requireIssuer(String issuer) {
@@ -146,7 +157,7 @@ public class JwtParserBuilder {
 	 * exception will be thrown indicating that the JWT is invalid and may not
 	 * be used.
 	 *
-	 * @param issuedAt
+	 * @param issuedAt the issued place string
 	 * @return the parser builder for method chaining.
 	 */
 	public JwtParserBuilder requireIssuedAt(Date issuedAt) {
@@ -160,7 +171,7 @@ public class JwtParserBuilder {
 	 * exception will be thrown indicating that the JWT is invalid and may not
 	 * be used.
 	 *
-	 * @param expiration
+	 * @param expiration the expires time
 	 * @return the parser builder for method chaining.
 	 */
 	public JwtParserBuilder requireExpiration(Date expiration) {
@@ -174,7 +185,7 @@ public class JwtParserBuilder {
 	 * exception will be thrown indicating that the JWT is invalid and may not
 	 * be used.
 	 *
-	 * @param notBefore
+	 * @param notBefore the time not before
 	 * @return the parser builder for method chaining
 	 */
 	public JwtParserBuilder requireNotBefore(Date notBefore) {
@@ -188,8 +199,8 @@ public class JwtParserBuilder {
 	 * exception will be thrown indicating that the JWT is invalid and may not
 	 * be used.
 	 *
-	 * @param claimName
-	 * @param value
+	 * @param claimName the claim name string
+	 * @param value the claim value string
 	 * @return the parser builder for method chaining.
 	 */
 	public JwtParserBuilder require(String claimName, Object value) {
@@ -214,20 +225,16 @@ public class JwtParserBuilder {
 	 * Sets the signing key id used to verify any discovered JWS digital
 	 * signature. If the specified JWT string is not a JWS (no signature), this
 	 * key is not used.
-	 * <p>
-	 * <p>
+     *
 	 * Note that this key <em>MUST</em> be a valid key for the signature
 	 * algorithm found in the JWT header (as the {@code alg} header parameter).
-	 * </p>
-	 * <p>
-	 * <p>
+     *
 	 * This method overwrites any previously set key.
-	 * </p>
 	 *
 	 * @param key the algorithm-specific signature verification key id to use to
 	 *            validate any discovered JWS digital signature.
 	 * @return the parser builder for method chaining.
-	 * @throws InvalidKeyException
+	 * @throws InvalidKeyException the key is invalid.
 	 */
 	public JwtParserBuilder setSigningKey(String key)
 			throws InvalidKeyException {

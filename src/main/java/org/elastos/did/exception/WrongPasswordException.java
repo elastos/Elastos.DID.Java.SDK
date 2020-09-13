@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the password is wrong.
+ */
 public class WrongPasswordException extends DIDStoreException {
 	private static final long serialVersionUID = 4562505118762225407L;
 
+	/**
+	 * Constructs the WrongPasswordException.
+	 */
 	public WrongPasswordException() {
         super();
     }
 
+	/**
+	 * Constructs the WrongPasswordException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public WrongPasswordException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the WrongPasswordException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public WrongPasswordException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the WrongPasswordException with the given reason.
+     *
+     * @param cause the reason
+     */
     public WrongPasswordException(Throwable cause) {
         super(cause);
     }

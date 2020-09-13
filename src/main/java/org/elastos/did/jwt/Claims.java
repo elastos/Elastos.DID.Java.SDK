@@ -32,6 +32,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * The class records the body content of JWT(like map format).
+ */
 public class Claims implements Map<String, Object> {
 	/** JWT {@code Issuer} claims parameter name: <code>"iss"</code> */
 	public static final String ISSUER = "iss";
@@ -334,6 +337,13 @@ public class Claims implements Map<String, Object> {
 		return impl.get(key);
 	}
 
+	/**
+	 * Returns the value string to which the specified key is mapped,
+	 * or null if this map contains no mapping for the key.
+	 *
+	 * @param key the key whose associated value is to be returned
+	 * @return the value string to which the specified key is mapped
+	 */
 	public String getAsJson(Object key) {
 		Object v = impl.get(key);
 
@@ -354,6 +364,15 @@ public class Claims implements Map<String, Object> {
 		return impl.put(key, value);
 	}
 
+	/**
+	 * Associates the specified value with the specified key in this map (optional operation).
+	 *
+	 * @param key the key string
+	 * @param json the json string
+	 * @return the previous value associated with key, or null if there was no mapping for key.
+	 *         (A null return can also indicate that the map previously associated null with key,
+	 *         if the implementation supports null values.)
+	 */
 	public Object putWithJson(String key, String json) {
 		return impl.put(key, json2Map(json));
 	}
@@ -368,10 +387,20 @@ public class Claims implements Map<String, Object> {
 		impl.putAll(m);
 	}
 
+	/**
+	 * Copies all of the mappings from the specified map to this map (optional operation).
+	 *
+	 * @param node the JsonNode handle
+	 */
 	public void putAll(JsonNode node) {
 		impl.putAll(jsonNode2Map(node));
 	}
 
+	/**
+	 * Copies all of the mappings from the specified map to this map (optional operation).
+	 *
+	 * @param json the json string
+	 */
 	public void putAllWithJson(String json) {
 		impl.putAll(json2Map(json));
 	}
@@ -396,6 +425,12 @@ public class Claims implements Map<String, Object> {
 		return impl.entrySet();
 	}
 
+	/**
+	 * Change JsonNode format into Map format.
+	 *
+	 * @param node the JsonNode data
+	 * @return the Map data
+	 */
 	protected static Map<String, Object> jsonNode2Map(JsonNode node) {
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> map = mapper.convertValue(node,
@@ -404,6 +439,12 @@ public class Claims implements Map<String, Object> {
 		return map;
 	}
 
+	/**
+	 * Change json string into Map format.
+	 *
+	 * @param json the data's json string
+	 * @return the Map data
+	 */
 	protected static Map<String, Object> json2Map(String json) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
@@ -417,6 +458,12 @@ public class Claims implements Map<String, Object> {
 		}
 	}
 
+	/**
+	 * Change Map format into JsonNode format.
+	 *
+	 * @param map the Map data
+	 * @return the JsonNode data
+	 */
 	protected static JsonNode map2JsonNode(Map<String, Object> map) {
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.convertValue(map, JsonNode.class);

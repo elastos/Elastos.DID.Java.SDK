@@ -24,17 +24,52 @@ package org.elastos.did;
 
 import java.util.List;
 
+/**
+ * The interface for DIDHistroy to store all did transactions from chain.
+ */
 public interface DIDHistory {
+	/**
+	 * The DID is valid.
+	 */
 	public static final int STATUS_VALID = 0;
+	/**
+	 * The DID is expired.
+	 */
 	public static final int STATUS_EXPIRED = 1;
+	/**
+	 * The DID is deactivated.
+	 */
 	public static final int STATUS_DEACTIVATED = 2;
+	/**
+	 * The DID is not published.
+	 */
 	public static final int STATUS_NOT_FOUND = 3;
 
+	/**
+	 * Get owner of DID resolved history.
+	 *
+	 * @return the owner object
+	 */
 	public DID getDid();
 
+	/**
+	 * Get DID status.
+	 *
+	 * @return the status code
+	 */
 	public int getStatus();
 
+	/**
+	 * Get all Id transactions about the specified DID.
+	 *
+	 * @return the did transaction array
+	 */
 	public List<DIDTransaction> getAllTransactions();
 
+	/**
+	 * Get the count of transactions.
+	 *
+	 * @return the count
+	 */
 	public int getTransactionCount();
 }

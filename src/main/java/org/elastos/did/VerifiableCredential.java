@@ -50,7 +50,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * Credential is a set of one or more claims made by the same entity.
+ * <p>
+ * Credential might also include an identifier and metadata to
+ * describe properties of the credential.
+ */
 public class VerifiableCredential extends DIDObject {
+	/**
+	 * The 'id' filed name of subject
+	 */
 	protected final static String ID = "id";
 	private final static String TYPE = "type";
 	private final static String ISSUER = "issuer";
@@ -72,44 +81,97 @@ public class VerifiableCredential extends DIDObject {
 
 	private CredentialMetadataImpl metadata;
 
+	/**
+     * The class records the subject content of Credential.
+	 */
 	static public class CredentialSubject {
 		private DID id;
 		private ObjectNode properties;
 
+		/**
+		 * Constructs the CredentialSubject object with given value.
+		 *
+		 * @param id the owner of Credential Subject
+		 */
 		protected CredentialSubject(DID id) {
 			this.id = id;
 		}
 
+		/**
+		 * Get the owner of Credential Subject
+		 *
+		 * @return the owner
+		 */
 		public DID getId() {
 			return id;
 		}
 
+		/**
+		 * Get the count of Credential Subject.
+		 *
+		 * @return the count
+		 */
 		public int getPropertyCount() {
 			return properties.size();
 		}
 
+		/**
+		 * Get Credential Subject with string format.
+		 *
+		 * @return the properties string
+		 */
 		public String getPropertiesAsString() {
 			return properties.toString();
 		}
 
+		/**
+		 * Get Credential Subject with JsonNode format.
+		 *
+		 * @return the properties json node
+		 */
 		public JsonNode getProperties() {
 			return properties.deepCopy();
 		}
 
+		/**
+		 * Get the specified property of Credential Subject.
+		 *
+		 * @param name the 'name' property
+		 * @return the property value string
+		 */
 		public String getPropertyAsString(String name) {
 			return properties.get(name).asText();
 		}
 
+		/**
+		 * Get the specified property of Credential Subject.
+		 *
+		 * @param name the 'name' property
+		 * @return the property value json node
+		 */
 		public JsonNode getProperty(String name) {
 			return properties.get(name).deepCopy();
 		}
 
+		/**
+		 * Set Credential Subject with the given value.
+		 *
+		 * @param props the properties json node
+		 */
 		protected void setProperties(JsonNode props) {
 			properties = props.deepCopy();
 			// remote ID field, avoid conflict with subject's id property.
 			properties.remove(ID);
 		}
 
+		/**
+		 * Get Credential Subject from json.
+		 *
+		 * @param node the Credential json node
+		 * @param ref the owner of Credential
+		 * @return the CredentialSubject object
+		 * @throws MalformedCredentialException Credential is malformed.
+		 */
 		protected static CredentialSubject fromJson(JsonNode node, DID ref)
 				throws MalformedCredentialException {
 			Class<MalformedCredentialException> clazz = MalformedCredentialException.class;
@@ -126,6 +188,14 @@ public class VerifiableCredential extends DIDObject {
 			return cs;
 		}
 
+		/**
+		 * Get Credential json string
+		 *
+		 * @param generator the JsonGenerator handle
+		 * @param ref the owner of Credential
+		 * @param normalized json string is normalized or compact
+		 * @throws IOException write credential json failed.
+		 */
 		protected void toJson(JsonGenerator generator, DID ref, boolean normalized)
 				throws IOException {
 			generator.writeStartObject();
@@ -145,29 +215,62 @@ public class VerifiableCredential extends DIDObject {
 
 	}
 
+	/**
+	 * The class records the Proof content of Credential.
+	 */
 	static public class Proof {
 		private String type;
 		private DIDURL verificationMethod;
 		private String signature;
 
+		/**
+		 * Constructs the Credential Proof with the given value.
+		 *
+		 * @param type the Proof tye
+		 * @param method the sign key
+		 * @param signature the signature string
+		 */
 		protected Proof(String type, DIDURL method, String signature) {
 			this.type = type;
 			this.verificationMethod = method;
 			this.signature = signature;
 		}
 
+		/**
+		 * Get the type of Credential Proof.
+		 *
+		 * @return the type string
+		 */
 	    public String getType() {
 	    	return type;
 	    }
 
+	    /**
+	     * Get the key to sign Credential Proof.
+	     *
+	     * @return the sign key
+	     */
 	    public DIDURL getVerificationMethod() {
 	    	return verificationMethod;
 	    }
 
+	    /**
+	     * Get the signature string.
+	     *
+	     * @return the signature string
+	     */
 	    public String getSignature() {
 	    	return signature;
 	    }
 
+	    /**
+	     * Get Credential Proof from json string
+	     *
+	     * @param node the json node content
+	     * @param ref the owner of Credential
+	     * @return the Credential Proof object
+	     * @throws MalformedCredentialException Credential is malformed.
+	     */
 		protected static Proof fromJson(JsonNode node, DID ref)
 				throws MalformedCredentialException {
 			Class<MalformedCredentialException> clazz = MalformedCredentialException.class;
@@ -184,6 +287,14 @@ public class VerifiableCredential extends DIDObject {
 			return new Proof(type, method, signature);
 		}
 
+		/**
+		 * Get Credential Subject's json string.
+		 *
+		 * @param generator the JsonGenerator handle
+		 * @param ref the owner of Credential
+		 * @param normalized json string is normalized or compact
+		 * @throws IOException write json string failed.
+		 */
 		protected void toJson(JsonGenerator generator, DID ref, boolean normalized)
 				throws IOException {
 			generator.writeStartObject();
@@ -211,10 +322,18 @@ public class VerifiableCredential extends DIDObject {
 		}
 	}
 
+	/**
+	 * Constructs the empty Credentila object.
+	 */
 	protected VerifiableCredential() {
 		super(null, null);
 	}
 
+	/**
+	 * Constructs a new Credentila object with the given object.
+	 *
+	 * @param vc the Credential object
+	 */
 	protected VerifiableCredential(VerifiableCredential vc) {
 		setId(vc.getId());
 
@@ -254,10 +373,20 @@ public class VerifiableCredential extends DIDObject {
 		return builder.toString();
 	}
 
+	/**
+	 * Get the types of Credential Proof.
+	 *
+	 * @return the type array
+	 */
 	public String[] getTypes() {
 		return types == null ? null : types.toArray(new String[0]);
 	}
 
+	/**
+	 * Add type to Credential Proof.
+	 *
+	 * @param type the type string
+	 */
 	protected void addType(String type) {
 		if (types == null)
 			types = new ArrayList<String>(4);
@@ -265,6 +394,11 @@ public class VerifiableCredential extends DIDObject {
 		types.add(type);
 	}
 
+	/**
+	 * Set types to Credential Proof.
+	 *
+	 * @param type the type array
+	 */
 	protected void setType(String[] type) {
 		if (types == null)
 			types = new ArrayList<String>(type.length);
@@ -273,26 +407,57 @@ public class VerifiableCredential extends DIDObject {
 			types.add(t);
 	}
 
+	/**
+	 * Get issuer of Credential.
+	 *
+	 * @return the issuer's DID
+	 */
 	public DID getIssuer() {
 		return issuer;
 	}
 
+	/**
+	 * Set Issuer of Credential.
+	 *
+	 * @param issuer the issuer's DID
+	 */
 	protected void setIssuer(DID issuer) {
 		this.issuer = issuer;
 	}
 
+	/**
+	 * Get the time issued Credential.
+	 *
+	 * @return the time to issue Credential
+	 */
 	public Date getIssuanceDate() {
 		return issuanceDate;
 	}
 
+	/**
+	 * Set the time issued Credential.
+	 *
+	 * @param issuanceDate the time to issue Credential
+	 */
 	protected void setIssuanceDate(Date issuanceDate) {
 		this.issuanceDate = issuanceDate;
 	}
 
+	/**
+	 * Judge that there is expires time or not.
+	 *
+	 * @return the returned value is true if there is expires time;
+	 *         the returned value is false if there is no expires time.
+	 */
 	protected boolean hasExpirationDate() {
 		return expirationDate != null;
 	}
 
+	/**
+	 * Get the expires time.
+	 *
+	 * @return the expires time
+	 */
 	public Date getExpirationDate() {
 		if (expirationDate != null)
 			return expirationDate;
@@ -309,11 +474,21 @@ public class VerifiableCredential extends DIDObject {
 		}
 	}
 
+	/**
+	 * Set meta data for Credential.
+	 *
+	 * @param metadata the meta data object
+	 */
 	protected void setMetadata(CredentialMetadataImpl metadata) {
 		this.metadata = metadata;
 		this.getId().setMetadata(metadata);
 	}
 
+	/**
+	 * Get meta data implemention object from Credential.
+	 *
+	 * @return the Credential Meta data object
+	 */
 	protected CredentialMetadataImpl getMetadataImpl() {
 		if (metadata == null) {
 			metadata = new CredentialMetadataImpl();
@@ -323,16 +498,32 @@ public class VerifiableCredential extends DIDObject {
 		return metadata;
 	}
 
+	/**
+	 * Get Meta data from Credential.
+	 *
+	 * @return the Credential Meta data object
+	 */
 	public CredentialMetadata getMetadata() {
 		return getMetadataImpl();
 	}
 
+	/**
+	 * Store Meta data of Credential.
+	 *
+	 * @throws DIDStoreException store meta data failed.
+	 */
 	public void saveMetadata() throws DIDStoreException {
 		if (metadata != null && metadata.attachedStore())
 			metadata.getStore().storeCredentialMetadata(getSubject().getId(),
 					getId(), metadata);
 	}
 
+	/**
+	 * Judge whether the Credential is self proclaimed one or not.
+	 *
+	 * @return the returned value is true if the Credential is self proclaimed;
+	 *         the returned value is false if the Credential is not self proclaimed.
+	 */
 	public boolean isSelfProclaimed() {
 		return issuer.equals(subject.id);
 	}
@@ -400,6 +591,14 @@ public class VerifiableCredential extends DIDObject {
 		return false;
 	}
 
+	/**
+	 * Judge whether the Credential is expired or not.
+	 *
+	 * @return the returned value is true if the Credential is expired;
+	 *         the returned value is false if the Credential is not expired.
+	 * @throws DIDResolveException get the lastest document from chain failed.
+	 * @throws DIDBackendException get content from net failed.
+	 */
 	public boolean isExpired() throws DIDResolveException, DIDBackendException {
 		if (traceCheck(RULE_EXPIRE))
 			return true;
@@ -407,6 +606,12 @@ public class VerifiableCredential extends DIDObject {
 		return checkExpired();
 	}
 
+	/**
+	 * Judge whether the Credential is expired or not with asynchronous mode.
+	 *
+	 * @return the new CompletableStage, the result is the boolean interface for
+	 *         expires judgement if success; null otherwise.
+	 */
 	public CompletableFuture<Boolean> isExpiredAsync() {
 		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -436,6 +641,14 @@ public class VerifiableCredential extends DIDObject {
 				proof.getSignature(), json.getBytes());
 	}
 
+	/**
+	 * Check whether the Credential is genuine or not.
+	 *
+	 * @return the returned value is true if the Credential is genuine;
+	 *         the returned value is false if the Credential is not genuine.
+	 * @throws DIDResolveException get the lastest document from chain failed.
+	 * @throws DIDBackendException get content from net failed.
+	 */
 	public boolean isGenuine() throws DIDResolveException, DIDBackendException {
 		if (!traceCheck(RULE_GENUINE))
 			return false;
@@ -443,6 +656,12 @@ public class VerifiableCredential extends DIDObject {
 		return checkGenuine();
 	}
 
+	/**
+	 * Check whether the Credential is genuine or not with asynchronous mode.
+	 *
+	 * @return the new CompletableStage, the result is the boolean interface for
+	 *         genuine judgement if success; null otherwise.
+	 */
 	public CompletableFuture<Boolean> isGenuineAsync() {
 		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -455,6 +674,14 @@ public class VerifiableCredential extends DIDObject {
 		return future;
 	}
 
+	/**
+	 * Check whether the Credential is valid or not.
+	 *
+	 * @return the returned value is true if the Credential is valid;
+	 *         the returned value is false if the Credential is not valid.
+	 * @throws DIDResolveException get the lastest document from chain failed.
+	 * @throws DIDBackendException get content from net failed.
+	 */
 	public boolean isValid() throws DIDResolveException, DIDBackendException {
 		if (!traceCheck(RULE_VALID))
 			return false;
@@ -462,6 +689,12 @@ public class VerifiableCredential extends DIDObject {
 		return !checkExpired() && checkGenuine();
 	}
 
+	/**
+	 * Check whether the Credential is valid or not.
+	 *
+	 * @return the new CompletableStage, the result is the boolean interface for
+	 *         valid judgement if success; null otherwise.
+	 */
 	public CompletableFuture<Boolean> isValidAsync() {
 		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -474,26 +707,56 @@ public class VerifiableCredential extends DIDObject {
 		return future;
 	}
 
+	/**
+	 * Set expires time for Credential.
+	 *
+	 * @param expirationDate the expires time
+	 */
 	protected void setExpirationDate(Date expirationDate) {
 		this.expirationDate = expirationDate;
 	}
 
+	/**
+	 * Get Credential subject content.
+	 *
+	 * @return the Credential Subject object
+	 */
 	public CredentialSubject getSubject() {
 		return subject;
 	}
 
+	/**
+	 * Set Credential subject content.
+	 *
+	 * @param subject the CredentialSubject object
+	 */
 	protected void setSubject(CredentialSubject subject) {
 		this.subject = subject;
 	}
 
+	/**
+	 * Get Credential proof content.
+	 *
+	 * @return the Credential Proof object
+	 */
 	public Proof getProof() {
 		return proof;
 	}
 
+	/**
+	 * Set Credential proof content.
+	 *
+	 * @param proof the Credential Proof object
+	 */
 	protected void setProof(Proof proof) {
 		this.proof = proof;
 	}
 
+	/**
+	 * Check the basic element for Credential.
+	 *
+	 * @throws MalformedCredentialException the Credential is malformed.
+	 */
 	protected void completeCheck() throws MalformedCredentialException {
 		if (getId() == null) // TODO:
 			throw new MalformedCredentialException("Missing id.");
@@ -587,6 +850,13 @@ public class VerifiableCredential extends DIDObject {
 		proof = Proof.fromJson(valueNode, issuer);
 	}
 
+	/**
+	 * Get Credential from input content.
+	 *
+	 * @param reader the Reader content
+	 * @return the Credential object
+	 * @throws MalformedCredentialException the Credential is malfromed.
+	 */
 	public static VerifiableCredential fromJson(Reader reader)
 			throws MalformedCredentialException {
 		if (reader == null)
@@ -598,6 +868,13 @@ public class VerifiableCredential extends DIDObject {
 		return vc;
 	}
 
+	/**
+	 * Get Credential from input content.
+	 *
+	 * @param in the InputStream content
+	 * @return the Credential object
+	 * @throws MalformedCredentialException the Credential is malfromed.
+	 */
 	public static VerifiableCredential fromJson(InputStream in)
 			throws MalformedCredentialException {
 		if (in == null)
@@ -609,6 +886,13 @@ public class VerifiableCredential extends DIDObject {
 		return vc;
 	}
 
+	/**
+	 * Get Credential from input content.
+	 *
+	 * @param json the json string content
+	 * @return the Credential object
+	 * @throws MalformedCredentialException the Credential is malfromed.
+	 */
 	public static VerifiableCredential fromJson(String json)
 			throws MalformedCredentialException {
 		if (json == null || json.isEmpty())
@@ -620,6 +904,14 @@ public class VerifiableCredential extends DIDObject {
 		return vc;
 	}
 
+	/**
+	 * Get Credential from input content.
+	 *
+	 * @param node the JsonNode content
+	 * @param ref the owner of Credential
+	 * @return the Credential object
+	 * @throws MalformedCredentialException the Credential is malfromed.
+	 */
 	protected static VerifiableCredential fromJson(JsonNode node, DID ref)
 			throws MalformedCredentialException {
 		VerifiableCredential vc = new VerifiableCredential();
@@ -627,24 +919,47 @@ public class VerifiableCredential extends DIDObject {
 		return vc;
 	}
 
+	/**
+	 * Get Credential from input content.
+	 *
+	 * @param node the JsonNode content
+	 * @return the Credential object
+	 * @throws MalformedCredentialException the Credential is malfromed.
+	 */
 	protected static VerifiableCredential fromJson(JsonNode node)
 			throws MalformedCredentialException {
 		return fromJson(node, null);
 	}
 
+	/**
+	 * Get json content of Credential.
+	 *
+	 * @param generator the JsonGenerator handle
+	 * @param ref the owner of Credential
+	 * @param normalized json string is normalized or compact.
+	 * @throws IOException  write field to json string failed.
+	 */
 	protected void toJson(JsonGenerator generator, DID ref, boolean normalized)
 			throws IOException {
 		toJson(generator, ref, normalized, false);
 	}
 
+	/**
+	 * Get json content of Credential.
+	 *
+	 * @param generator the JsonGenerator handle
+	 * @param normalized json string is normalized or compact.
+	 * @throws IOException  write field to json string failed.
+	 */
 	protected void toJson(JsonGenerator generator, boolean normalized)
 			throws IOException {
 		toJson(generator, null, normalized);
 	}
 
-	/*
-	 * Normalized serialization order:
+	/**
+	 * Get json content of Credential.
 	 *
+	 * Normalized serialization order:
 	 * - id
 	 * - type ordered names array(case insensitive/ascending)
 	 * - issuer
@@ -657,6 +972,13 @@ public class VerifiableCredential extends DIDObject {
 	 *   - type
 	 *   - method
 	 *   - signature
+     *
+	 * @param generator the JsonGenerator handle
+	 * @param ref the owner of Credential
+	 * @param normalized json string is normalized or compact.
+	 * @param forSign = true, only generate json string without proof;
+	 *        forSign = false, getnerate json string the whole credential.
+	 * @throws IOException write field to json string failed.
 	 */
 	protected void toJson(JsonGenerator generator, DID ref, boolean normalized,
 			boolean forSign) throws IOException {
@@ -711,10 +1033,26 @@ public class VerifiableCredential extends DIDObject {
 		generator.writeEndObject();
 	}
 
+	/**
+	 * Get json content of Credential.
+	 *
+	 * @param out the Writer handle
+	 * @param normalized json string is normalized or compact.
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(Writer out, boolean normalized) throws IOException {
 		toJson(out, normalized, false);
 	}
 
+	/**
+	 * Get json content of Credential.
+	 *
+	 * @param out the Writer handle
+	 * @param normalized json string is normalized or compact.
+	 * @param forSign = true, only generate json string without proof;
+	 *        forSign = false, getnerate json string the whole credential.
+	 * @throws IOException write field to json string failed.
+	 */
 	protected void toJson(Writer out, boolean normalized, boolean forSign)
 			throws IOException {
 		if (out == null)
@@ -728,6 +1066,14 @@ public class VerifiableCredential extends DIDObject {
 		generator.close();
 	}
 
+	/**
+	 * Get json content of Credential.
+	 *
+	 * @param out the OutputStream handle
+	 * @param charsetName encode using this charset
+	 * @param normalized json string is normalized or compact.
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(OutputStream out, String charsetName, boolean normalized)
 			throws IOException {
 		if (out == null)
@@ -736,6 +1082,13 @@ public class VerifiableCredential extends DIDObject {
 		toJson(new OutputStreamWriter(out, charsetName), normalized);
 	}
 
+	/**
+	 * Get json content of Credential.
+	 *
+	 * @param out the OutputStream handle
+	 * @param normalized json string is normalized or compact.
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(OutputStream out, boolean normalized) throws IOException {
 		if (out == null)
 			throw new IllegalArgumentException();
@@ -743,6 +1096,14 @@ public class VerifiableCredential extends DIDObject {
 		toJson(new OutputStreamWriter(out), normalized);
 	}
 
+	/**
+	 * Get json content of Credential.
+	 *
+	 * @param normalized json string is normalized or compact.
+	 * @param forSign = true, only generate json string without proof;
+	 *        forSign = false, getnerate json string the whole credential.
+	 * @return the Credential's json string
+	 */
 	protected String toJson(boolean normalized, boolean forSign) {
 		Writer out = new StringWriter(2048);
 
@@ -755,6 +1116,12 @@ public class VerifiableCredential extends DIDObject {
 		return out.toString();
 	}
 
+	/**
+	 * Get json string of Credential .
+	 *
+	 * @param normalized json string is normalized or compact.
+	 * @return the json string
+	 */
 	public String toString(boolean normalized) {
 		return toJson(normalized, false);
 	}

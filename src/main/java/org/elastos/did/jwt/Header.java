@@ -26,6 +26,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * The class records the Header content from JWT(like map format).
+ */
 public class Header implements Map<String, Object> {
 	/** JWT {@code Type} (typ) value: <code>"JWT"</code> */
 	public static final String JWT_TYPE = "JWT";
@@ -44,6 +47,11 @@ public class Header implements Map<String, Object> {
 
 	private io.jsonwebtoken.Header<?> impl;
 
+	/**
+	 * Constructs the Header with the given value.
+	 *
+	 * @param impl the io.jsonwebtoken.Header object
+	 */
 	protected Header(io.jsonwebtoken.Header<?> impl) {
 		this.impl = impl;
 	}
@@ -125,6 +133,7 @@ public class Header implements Map<String, Object> {
 	 *
 	 * @param cty the JWT JOSE {@code cty} header value or {@code null} to
 	 *            remove the property from the JSON map.
+	 * @return the Header object
 	 */
 	public Header setContentType(String cty) {
 		getImpl().setContentType(cty);
@@ -146,7 +155,7 @@ public class Header implements Map<String, Object> {
 	/**
 	 * Sets the JWT <code>zip</code> (Compression Algorithm) header parameter
 	 * value. A {@code null} value will remove the property from the JSON map.
-	 * <p>
+	 *
 	 * <p>
 	 * The compression algorithm is NOT part of the <a href=
 	 * "https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-25">JWT
@@ -157,6 +166,7 @@ public class Header implements Map<String, Object> {
 	 *
 	 * @param zip the JWT compression algorithm {@code zip} value or
 	 *            {@code null} to remove the property from the JSON map.
+	 * @return the Header object
 	 * @since 0.6.0
 	 */
 	public Header setCompressionAlgorithm(String zip) {

@@ -24,13 +24,32 @@ package org.elastos.did;
 
 import java.util.TimeZone;
 
+/**
+ * The class to provide the main constant.
+ */
 public final class Constants {
+    /**
+     * The default PublicKey type
+     */
 	public final static String DEFAULT_PUBLICKEY_TYPE = "ECDSAsecp256r1";
 
+	/**
+	 * The date format
+	 */
 	public final static String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+
+	/**
+	 * The iso8601 date format
+	 */
 	public final static String DATE_FORMAT_ISO_8601 = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
+	/**
+	 * The max valid year
+	 */
 	public final static int MAX_VALID_YEARS = 5;
 
+	/**
+	 * The UTC timezone
+	 */
 	public final static TimeZone UTC = TimeZone.getTimeZone("UTC");
 }

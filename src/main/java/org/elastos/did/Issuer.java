@@ -36,6 +36,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * A issuer is the DID to issue Credential. Issuer includes issuer's did and
+ * issuer's sign key.
+ */
 public class Issuer {
 	private static final String DEFAULT_PUBLICKEY_TYPE = Constants.DEFAULT_PUBLICKEY_TYPE;
 	private static final int MAX_VALID_YEARS = Constants.MAX_VALID_YEARS;
@@ -43,6 +47,14 @@ public class Issuer {
 	private DIDDocument self;
 	private DIDURL signKey;
 
+	/**
+	 * Constructs Issuer object with the given value.
+	 *
+	 * @param doc the Issuer's document
+	 * @param signKey the specified issuer's key to sign
+	 * @throws DIDStoreException there is no store to attatch
+	 * @throws InvalidKeyException the sign key is not an authenication key.
+	 */
 	public Issuer(DIDDocument doc, DIDURL signKey)
 			throws DIDStoreException, InvalidKeyException {
 		if (doc == null)
@@ -51,11 +63,27 @@ public class Issuer {
 		init(doc, signKey);
 	}
 
+	/**
+	 * Constructs Issuer object with the given value.
+	 *
+	 * @param doc the Issuer's document
+	 * @throws DIDStoreException there is no store to attatch.
+	 * @throws InvalidKeyException the sign key is not an authenication key.
+	 */
 	public Issuer(DIDDocument doc)
 			throws DIDStoreException, InvalidKeyException {
 		this(doc, null);
 	}
 
+	/**
+	 * Constructs Issuer object with the given value.
+	 *
+	 * @param did the Issuer's DID
+	 * @param signKey the specified issuer's key to sign
+	 * @param store the DIDStore object
+	 * @throws DIDStoreException there is no store to attatch.
+	 * @throws InvalidKeyException the sign key is not an authenication key.
+	 */
 	public Issuer(DID did, DIDURL signKey, DIDStore store)
 			throws DIDStoreException, InvalidKeyException {
 		if (did == null || store == null)
@@ -68,6 +96,14 @@ public class Issuer {
 		init(doc, signKey);
 	}
 
+	/**
+	 * Constructs Issuer object with the given value.
+	 *
+	 * @param did the Issuer's DID
+	 * @param store the DIDStore object
+	 * @throws DIDStoreException there is no store to attatch.
+	 * @throws InvalidKeyException the sign key is not an authenication key.
+	 */
 	public Issuer(DID did, DIDStore store)
 			throws DIDStoreException, InvalidKeyException {
 		this(did, null, store);
@@ -91,14 +127,30 @@ public class Issuer {
 
 	}
 
+	/**
+	 * Get Issuer's DID.
+	 *
+	 * @return the DID object
+	 */
 	public DID getDid() {
 		return self.getSubject();
 	}
 
+	/**
+	 * Get Issuer's sign key.
+	 *
+	 * @return the sign key
+	 */
 	public DIDURL getSignKey() {
 		return signKey;
 	}
 
+	/**
+	 * Issue Credential to the specified DID.
+	 *
+	 * @param did the owner of Credential
+	 * @return the builder to edit Credential
+	 */
 	public CredentialBuilder issueFor(DID did) {
 		if (did == null)
 			throw new IllegalArgumentException();
@@ -106,6 +158,12 @@ public class Issuer {
 		return new CredentialBuilder(did);
 	}
 
+	/**
+	 * Issue Credential to the specified DID.
+	 *
+	 * @param did the owner of Credential
+	 * @return the builder to edit Credential
+	 */
 	public CredentialBuilder issueFor(String did) {
 		DID _did = null;
 		try {
@@ -117,10 +175,18 @@ public class Issuer {
 		return issueFor(_did);
 	}
 
+	/**
+	 * The class is to edit Credential by builder.
+	 */
 	public class CredentialBuilder {
 		private DID target;
 		private VerifiableCredential credential;
 
+		/**
+		 * Contructs the Builder for Credential to edit.
+		 *
+		 * @param target the owner of Credential
+		 */
 		protected CredentialBuilder(DID target) {
 			this.target = target;
 
@@ -128,6 +194,12 @@ public class Issuer {
 			credential.setIssuer(self.getSubject());
 		}
 
+		/**
+		 * Set Credential id.
+		 *
+		 * @param id the Credential id
+		 * @return the CredentialBuilder object
+		 */
 		public CredentialBuilder id(DIDURL id) {
 			if (credential == null)
 				throw new IllegalStateException("Credential already sealed.");
@@ -139,6 +211,12 @@ public class Issuer {
 			return this;
 		}
 
+		/**
+		 * Set Credential id.
+		 *
+		 * @param id the Credential id
+		 * @return the CredentialBuilder object
+		 */
 		public CredentialBuilder id(String id) {
 			if (credential == null)
 				throw new IllegalStateException("Credential already sealed.");
@@ -147,6 +225,12 @@ public class Issuer {
 			return id(_id);
 		}
 
+		/**
+		 * Set Credential types.
+		 *
+		 * @param types the set of types
+		 * @return the CredentialBuilder object
+		 */
 		public CredentialBuilder type(String ... types) {
 			if (credential == null)
 				throw new IllegalStateException("Credential already sealed.");
@@ -167,6 +251,11 @@ public class Issuer {
 			return cal;
 		}
 
+        /**
+         * Set expires time for Credential with max expires time.
+         *
+         * @return the CredentialBuilder object
+         */
 		public CredentialBuilder defaultExpirationDate() {
 			if (credential == null)
 				throw new IllegalStateException("Credential already sealed.");
@@ -176,6 +265,12 @@ public class Issuer {
 			return this;
 		}
 
+		/**
+		 * Set expires time for Credential.
+		 *
+		 * @param expirationDate the expires time
+		 * @return the CredentialBuilder object
+		 */
 		public CredentialBuilder expirationDate(Date expirationDate) {
 			if (credential == null)
 				throw new IllegalStateException("Credential already sealed.");
@@ -195,6 +290,12 @@ public class Issuer {
 			return this;
 		}
 
+		/**
+		 * Set Credential's subject.
+		 *
+		 * @param properties the subject content
+		 * @return the CredentialBuilder object
+		 */
 		public CredentialBuilder properties(Map<String, String> properties) {
 			if (credential == null)
 				throw new IllegalStateException("Credential already sealed.");
@@ -211,6 +312,12 @@ public class Issuer {
 			return properties(node);
 		}
 
+		/**
+		 * Set Credential's subject.
+		 *
+		 * @param json the subject subject with json format
+		 * @return the CredentialBuilder object
+		 */
 		public CredentialBuilder properties(String json) {
 			if (credential == null)
 				throw new IllegalStateException("Credential already sealed.");
@@ -229,6 +336,12 @@ public class Issuer {
 			return properties(node);
 		}
 
+		/**
+		 * Set Credential's subject.
+		 *
+		 * @param node the subject subject with JsonNode format
+		 * @return the CredentialBuilder object
+		 */
 		public CredentialBuilder properties(JsonNode node) {
 			if (credential == null)
 				throw new IllegalStateException("Credential already sealed.");
@@ -244,6 +357,14 @@ public class Issuer {
 			return this;
 		}
 
+		/**
+		 * Finish the Credential editting.
+		 *
+		 * @param storepass the password for DIDStore
+		 * @return the Credential object
+		 * @throws MalformedCredentialException the Credential malformed.
+		 * @throws DIDStoreException there is no store to attach
+		 */
 		public VerifiableCredential seal(String storepass)
 				throws MalformedCredentialException, DIDStoreException {
 			if (credential == null)

@@ -22,21 +22,43 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * Thrown to indicate that jwt is malformed.
+ */
 public class MalformedJwtException extends JwtException {
 	private static final long serialVersionUID = 7015809550444503794L;
 
+	/**
+	 * Constructs the MalformedJwtException.
+	 */
 	public MalformedJwtException() {
 		super();
 	}
 
+	/**
+	 * Constructs the MalformedJwtException with the given message.
+	 *
+	 * @param message the message string
+	 */
 	public MalformedJwtException(String message) {
 		super(message);
 	}
 
+    /**
+     * Constructs the MalformedJwtException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
 	public MalformedJwtException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+    /**
+     * Constructs the MalformedJwtException with the given reason.
+     *
+     * @param cause the reason
+     */
 	public MalformedJwtException(Throwable cause) {
 		super(cause);
 	}

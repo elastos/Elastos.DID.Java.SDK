@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that the Presentation is malformed.
+ */
 public class MalformedPresentationException extends DIDSyntaxException {
 	private static final long serialVersionUID = 8453912647945382207L;
 
+	/**
+	 * Constructs the MalformedPresentationException.
+	 */
 	public MalformedPresentationException() {
         super();
     }
 
+	/**
+	 * Constructs the MalformedPresentationException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public MalformedPresentationException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the MalformedPresentationException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public MalformedPresentationException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the MalformedPresentationException with the given reason.
+     *
+     * @param cause the reason
+     */
     public MalformedPresentationException(Throwable cause) {
         super(cause);
     }

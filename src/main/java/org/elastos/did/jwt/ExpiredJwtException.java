@@ -22,21 +22,43 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * Thrown to indicate that jwt is expired.
+ */
 public class ExpiredJwtException extends JwtException {
 	private static final long serialVersionUID = 1614188754800377048L;
 
+	/**
+	 * Constructs the ExpiredJwtException.
+	 */
 	public ExpiredJwtException() {
 		super();
 	}
 
+	/**
+	 * Constructs the ExpiredJwtException with the given message.
+	 *
+	 * @param message the message string
+	 */
 	public ExpiredJwtException(String message) {
 		super(message);
 	}
 
+    /**
+     * Constructs the ExpiredJwtException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
 	public ExpiredJwtException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+    /**
+     * Constructs the ExpiredJwtException with the given reason.
+     *
+     * @param cause the reason
+     */
 	public ExpiredJwtException(Throwable cause) {
 		super(cause);
 	}

@@ -22,30 +22,62 @@
 
 package org.elastos.did;
 
+/**
+ * The class is the base object for PublicKey and Credential.
+ */
 public class DIDObject {
 	private DIDURL id;
 	private String type;
 
+	/**
+	 * Constructs the empty DIDObject.
+	 */
 	protected DIDObject() {
 	}
 
+	/**
+	 * Constructs the DIDObject with the given value.
+	 *
+	 * @param id  the identifier of DIDObject
+	 * @param type the DIDObject type
+	 */
 	protected DIDObject(DIDURL id, String type) {
 		this.id = id;
 		this.type = type;
 	}
 
+	/**
+	 * Get the identifier of DIDObject.
+	 *
+	 * @return the identifier object
+	 */
 	public DIDURL getId() {
 		return id;
 	}
 
+	/**
+	 * Set the identifier of DIDObject.
+	 *
+	 * @param id the identifier object
+	 */
 	protected void setId(DIDURL id) {
 		this.id = id;
 	}
 
+	/**
+	 * Get the type of DIDObject.
+	 *
+	 * @return the type string
+	 */
 	public String getType() {
 		return type;
 	}
 
+	/**
+	 * Set the type of DIDObject.
+	 *
+	 * @param type the type string
+	 */
 	protected void setType(String type) {
 		this.type = type;
 	}

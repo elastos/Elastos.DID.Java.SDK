@@ -22,21 +22,43 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Thrown to indicate that network has error.
+ */
 public class NetworkException extends DIDResolveException {
 	private static final long serialVersionUID = 5138182503100085191L;
 
+	/**
+	 * Constructs the NetworkException.
+	 */
 	public NetworkException() {
         super();
     }
 
+	/**
+	 * Constructs the NetworkException with the given message.
+	 *
+	 * @param message the message string
+	 */
     public NetworkException(String message) {
         super(message);
     }
 
+    /**
+     * Constructs the NetworkException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
     public NetworkException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructs the NetworkException with the given reason.
+     *
+     * @param cause the reason
+     */
     public NetworkException(Throwable cause) {
         super(cause);
     }

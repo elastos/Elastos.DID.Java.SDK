@@ -67,6 +67,16 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * The DIDDocument represents the DID information.
+ * <p>
+ * This is the concrete serialization of the data model,
+ * according to a particular syntax.
+ * DIDDocument is a set of data that describes the subject of a DID,
+ * including public key, authentication(optional), authorization(optional),
+ * credential and services. One document must be have only subject,
+ * and at least one public key.
+ */
 public class DIDDocument {
 	private final static String ID = "id";
 	private final static String PUBLICKEY = "publicKey";
@@ -96,34 +106,75 @@ public class DIDDocument {
 
 	private DIDMetadataImpl metadata;
 
+	/**
+     * Publickey is used for digital signatures, encryption and
+     * other cryptographic operations, which are the basis for purposes such as
+     * authentication or establishing secure communication with service endpoints.
+	 */
 	public static class PublicKey extends DIDObject {
 		private DID controller;
 		private String keyBase58;
 		private boolean authenticationKey;
 		private boolean authorizationKey;
 
+		/**
+		 * Constructs Publickey with the given value.
+		 *
+		 * @param id the Id for PublicKey
+		 * @param type the type string of PublicKey, default type is "ECDSAsecp256r1"
+		 * @param controller the DID who holds private key
+		 * @param keyBase58 the string from encoded base58 of public key
+		 */
 		protected PublicKey(DIDURL id, String type, DID controller, String keyBase58) {
 			super(id, type);
 			this.controller = controller;
 			this.keyBase58 = keyBase58;
 		}
 
+		/**
+		 * Constructs Publickey with the given value(default type is "ECDSAsecp256r1".
+		 *
+		 * @param id the Id for PublicKey
+		 * @param controller the DID who holds private key
+		 * @param keyBase58 the string from encoded base58 of public key
+		 */
 		protected PublicKey(DIDURL id, DID controller, String keyBase58) {
 			this(id, DEFAULT_PUBLICKEY_TYPE, controller, keyBase58);
 		}
 
+		/**
+		 * Get the controller of Publickey.
+		 *
+		 * @return the controller
+		 */
 		public DID getController() {
 			return controller;
 		}
 
+		/**
+		 * Get public key base58 string.
+		 *
+		 * @return the key base58 string
+		 */
 		public String getPublicKeyBase58() {
 			return keyBase58;
 		}
 
+		/**
+		 * Get public key bytes.
+		 *
+		 * @return the key bytes
+		 */
 		public byte[] getPublicKeyBytes() {
 			return Base58.decode(keyBase58);
 		}
 
+		/**
+		 * Judge the key is an authentication key or not.
+		 *
+		 * @return the returned value is true if key is an authentication key;
+		 *         the returned value is false if key is not an authentication key.
+		 */
 		public boolean isAuthenticationKey() {
 			return authenticationKey;
 		}
@@ -132,6 +183,12 @@ public class DIDDocument {
 			this.authenticationKey = authenticationKey;
 		}
 
+		/**
+		 * Judge the key is an authorization key or not.
+		 *
+		 * @return the returned value is true if key is an authorization key;
+		 *         the returned value is false if key is not an authorization key.
+		 */
 		public boolean isAuthorizationKey() {
 			return authorizationKey;
 		}
@@ -158,6 +215,14 @@ public class DIDDocument {
 			return false;
 		}
 
+		/**
+		 * Get PublicKey object from parsing json string.
+		 *
+		 * @param node json node about PublicKey content
+		 * @param ref the owner for PublicKey
+		 * @return the json string about PublicKey
+		 * @throws MalformedDocumentException get object with parsing json string error.
+		 */
 		protected static PublicKey fromJson(JsonNode node, DID ref)
 				throws MalformedDocumentException {
 			Class<MalformedDocumentException> clazz = MalformedDocumentException.class;
@@ -177,6 +242,14 @@ public class DIDDocument {
 			return new PublicKey(id, type, controller, keyBase58);
 		}
 
+		/**
+		 * Get PublicKey json string.
+		 *
+		 * @param generator the JsonGenerator handle
+		 * @param ref the owner for PublicKey
+		 * @param normalized json string is normalized or compact.
+		 * @throws IOException write field to json string failed.
+		 */
 		protected void toJson(JsonGenerator generator, DID ref, boolean normalized)
 				throws IOException {
 			String value;
@@ -211,18 +284,43 @@ public class DIDDocument {
 		}
 	}
 
+	/**
+     * A Service may represent any type of service the subject
+     * wishes to advertise, including decentralized identity management services
+     * for further discovery, authentication, authorization, or interaction.
+	 */
 	public static class Service extends DIDObject {
 		private String endpoint;
 
+		/**
+		 * Constructs Service with the given value.
+		 *
+		 * @param id the id for Service
+		 * @param type the type of Service
+		 * @param endpoint the address of service point
+		 */
 		protected Service(DIDURL id, String type, String endpoint) {
 			super(id, type);
 			this.endpoint = endpoint;
 		}
 
+		/**
+		 * Get service point string.
+		 *
+		 * @return the service point string
+		 */
 		public String getServiceEndpoint() {
 			return endpoint;
 		}
 
+		/**
+		 * Get Service object from parsing json string
+		 *
+		 * @param node json node about Service content
+		 * @param ref the owner for Service
+		 * @return the json string about Service
+		 * @throws MalformedDocumentException get object with parsing json string error.
+		 */
 		protected static Service fromJson(JsonNode node, DID ref)
 				throws MalformedDocumentException {
 			Class<MalformedDocumentException> clazz = MalformedDocumentException.class;
@@ -239,6 +337,14 @@ public class DIDDocument {
 			return new Service(id, type, endpoint);
 		}
 
+		/**
+		 * Get Service json string.
+		 *
+		 * @param generator the JsonGenerator handle
+		 * @param ref the owner for Service
+		 * @param normalized json string is normalized or compact.
+		 * @throws IOException write field to json string failed.
+		 */
 		public void toJson(JsonGenerator generator, DID ref, boolean normalized)
 				throws IOException {
 			String value;
@@ -265,12 +371,23 @@ public class DIDDocument {
 		}
 	}
 
+	/**
+	 * The Proof represents the proof content of DID Document.
+	 */
 	public static class Proof {
 		private String type;
 		private Date created;
 		private DIDURL creator;
 		private String signature;
 
+		/**
+		 * Constructs the proof of DIDDocument with the given value.
+		 *
+		 * @param type the type of Proof
+		 * @param created the time to create DIDDocument
+		 * @param creator the key to sign
+		 * @param signature the signature string
+		 */
 		protected Proof(String type, Date created, DIDURL creator, String signature) {
 			this.type = type;
 			this.created = created;
@@ -278,28 +395,62 @@ public class DIDDocument {
 			this.signature = signature;
 		}
 
+		/**
+		 * Constructs the proof of DIDDocument with the key id and signature string.
+		 *
+		 * @param creator the key to sign
+		 * @param signature the signature string
+		 */
 		protected Proof(DIDURL creator, String signature) {
 			this(DEFAULT_PUBLICKEY_TYPE,
 					Calendar.getInstance(Constants.UTC).getTime(),
 					creator, signature);
 		}
 
+		/**
+		 * Get Proof type.
+		 *
+		 * @return the type string
+		 */
 	    public String getType() {
 	    	return type;
 	    }
 
+	    /**
+	     * Get the time to create DIDDocument.
+	     *
+	     * @return the time
+	     */
 	    public Date getCreated() {
 	    	return created;
 	    }
 
+	    /**
+	     * Get the key id to sign.
+	     *
+	     * @return the key id
+	     */
 	    public DIDURL getCreator() {
 	    	return creator;
 	    }
 
+	    /**
+	     * Get signature string.
+	     *
+	     * @return the signature string
+	     */
 	    public String getSignature() {
 	    	return signature;
 	    }
 
+	    /**
+	     * Get Proof object from parsing json string.
+	     *
+	     * @param node json node about Proof content
+	     * @param refSignKey the default key
+	     * @return the json string about Proof
+	     * @throws MalformedDocumentException  get object with parsing json string error.
+	     */
 		protected static Proof fromJson(JsonNode node, DIDURL refSignKey)
 				throws MalformedDocumentException {
 			Class<MalformedDocumentException> clazz = MalformedDocumentException.class;
@@ -321,6 +472,13 @@ public class DIDDocument {
 			return new Proof(type, created, creator, signature);
 		}
 
+		/**
+		 * Get Proof json string.
+		 *
+		 * @param generator the JsonGenerator handle
+		 * @param normalized json string is normalized or compact
+		 * @throws IOException write field to json string failed
+		 */
 		protected void toJson(JsonGenerator generator, boolean normalized)
 				throws IOException {
 			generator.writeStartObject();
@@ -354,11 +512,21 @@ public class DIDDocument {
 	private DIDDocument() {
 	}
 
+	/**
+	 * Set the DIDDocument subject.
+	 *
+	 * @param subject the owner of DIDDocument
+	 */
 	protected DIDDocument(DID subject) {
 		this();
 		this.subject = subject;
 	}
 
+	/**
+	 * Copy the did document.
+	 *
+	 * @param doc the document be copied
+	 */
 	protected DIDDocument(DIDDocument doc) {
 		this();
 
@@ -439,6 +607,11 @@ public class DIDDocument {
 		entries.remove(id);
 	}
 
+	/**
+	 * Get subject of DIDDocument.
+	 *
+	 * @return the DID object
+	 */
 	public DID getSubject() {
 		return subject;
 	}
@@ -447,14 +620,31 @@ public class DIDDocument {
 		this.subject = subject;
 	}
 
+	/**
+	 * Get the count of publickey array.
+	 *
+	 * @return the count
+	 */
 	public int getPublicKeyCount() {
 		return getEntryCount(publicKeys);
 	}
 
+	/**
+	 * Get the publickey array.
+	 *
+	 * @return the Publickey array
+	 */
 	public List<PublicKey> getPublicKeys() {
 		return getEntries(publicKeys);
 	}
 
+	/**
+	 * Select publickeys with the specified key id or key type.
+	 *
+	 * @param id the key id
+	 * @param type the type string
+	 * @return the publickey array matched requirement
+	 */
 	public List<PublicKey> selectPublicKeys(DIDURL id, String type) {
 		if (id == null && type == null)
 			throw new IllegalArgumentException();
@@ -470,16 +660,35 @@ public class DIDDocument {
 		});
 	}
 
+	/**
+	 * Select publickeys with the specified key id or key type.
+	 *
+	 * @param id the key id string
+	 * @param type the type string
+	 * @return the publickey array matched requirement
+	 */
 	public List<PublicKey> selectPublicKeys(String id, String type) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return selectPublicKeys(_id, type);
 	}
 
+	/**
+	 * Get public key matched specified key id.
+	 *
+	 * @param id the key id string
+	 * @return the PublicKey object
+	 */
 	public PublicKey getPublicKey(String id) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return getPublicKey(_id);
 	}
 
+	/**
+	 * Get public key matched specified key id.
+	 *
+	 * @param id the key id
+	 * @return the PublicKey object
+	 */
 	public PublicKey getPublicKey(DIDURL id) {
 		if (id == null)
 			throw new IllegalArgumentException();
@@ -487,6 +696,13 @@ public class DIDDocument {
 		return getEntry(publicKeys, id);
 	}
 
+	/**
+	 * Judge whether the matched public key exists or not.
+	 *
+	 * @param id the key id
+	 * @return returned value is true if there is the matched key;
+	 *         returned value is false if there is no matched key.
+	 */
 	public boolean hasPublicKey(DIDURL id) {
 		if (id == null)
 			throw new IllegalArgumentException();
@@ -494,11 +710,26 @@ public class DIDDocument {
 		return getEntry(publicKeys, id) != null;
 	}
 
+	/**
+	 * Judge whether the matched public key exists or not.
+	 *
+	 * @param id the key id string
+	 * @return returned value is true if there is the matched key;
+	 *         returned value is false if there is no matched key.
+	 */
 	public boolean hasPublicKey(String id) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return hasPublicKey(_id);
 	}
 
+	/**
+	 * Judge whether the matched private key exists or not.
+	 *
+	 * @param id the key id
+	 * @return returned value is true if there is the matched key;
+	 *         returned value is false if there is no matched key.
+	 * @throws DIDStoreException there is no store.
+	 */
 	public boolean hasPrivateKey(DIDURL id) throws DIDStoreException {
 		if (id == null)
 			throw new IllegalArgumentException();
@@ -512,11 +743,24 @@ public class DIDDocument {
 		return getMetadataImpl().getStore().containsPrivateKey(getSubject(), id);
 	}
 
+	/**
+	 * Judge whether the matched private key exists or not.
+	 *
+	 * @param id the key id string
+	 * @return returned value is true if there is the matched key;
+	 *         returned value is false if there is no matched key.
+	 * @throws DIDStoreException there is no store.
+	 */
 	public boolean hasPrivateKey(String id) throws DIDStoreException {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return hasPrivateKey(_id);
 	}
 
+	/**
+	 * Get default key of did document.
+	 *
+	 * @return the default key id
+	 */
 	public DIDURL getDefaultPublicKey() {
 		DID self = getSubject();
 
@@ -532,6 +776,13 @@ public class DIDDocument {
 		throw new IllegalStateException("DID Document internal error.");
 	}
 
+	/**
+	 * Get KeyPair object according to the given key id.
+	 *
+	 * @param id the given key id
+	 * @return the KeyPair object
+	 * @throws InvalidKeyException there is no the matched key.
+	 */
 	public KeyPair getKeyPair(DIDURL id) throws InvalidKeyException {
 		if (id == null)
 			throw new IllegalArgumentException();
@@ -545,8 +796,15 @@ public class DIDDocument {
 		return key.getJCEKeyPair();
 	}
 
-	// The result is extended private key format, the real private key is
-	// 32 bytes long start from position 46.
+	/**
+	 * Derive the index private key.
+	 *
+	 * @param index the index
+	 * @param storepass the password for DIDStore
+	 * @return the extended private key format. (the real private key is
+	 *          32 bytes long start from position 46)
+	 * @throws DIDStoreException there is no DID store to get root private key.
+	 */
 	public String derive(int index, String storepass) throws DIDStoreException {
 		if (storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -587,6 +845,15 @@ public class DIDDocument {
 		return path.toString();
 	}
 
+	/**
+	 * Derive the extended private key according to identifier string and security code.
+	 *
+	 * @param identifier the identifier string
+	 * @param securityCode the security code
+	 * @param storepass the password for DID store
+	 * @return the extended derived private key
+	 * @throws DIDStoreException there is no DID store to get root private key.
+	 */
 	public String derive(String identifier, int securityCode, String storepass)
 			throws DIDStoreException {
 		if (identifier == null || identifier.isEmpty() ||
@@ -603,6 +870,13 @@ public class DIDDocument {
 		return key.derive(path).serializeBase58();
 	}
 
+	/**
+	 * Get KeyPair object according to the given key id.
+	 *
+	 * @param id the key id string
+	 * @return the KeyPair object
+	 * @throws InvalidKeyException there is no matched key.
+	 */
 	public KeyPair getKeyPair(String id) throws InvalidKeyException {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return getKeyPair(_id);
@@ -634,6 +908,11 @@ public class DIDDocument {
 		return getKeyPair(_id, storepass);
 	}
 
+	/**
+	 * Add public key to DID Document.
+	 *
+	 * @param pk the Publickey object
+	 */
 	protected void addPublicKey(PublicKey pk) {
 		if (publicKeys == null) {
 			publicKeys = new TreeMap<DIDURL, PublicKey>();
@@ -653,6 +932,14 @@ public class DIDDocument {
 		publicKeys.put(pk.getId(), pk);
 	}
 
+	/**
+	 * Remove the matched public key.
+	 *
+	 * @param id the key id
+	 * @param force force = true, the matched key must be removed.
+	 *              force = false, the matched key must not be removed if this key is authentiacation
+	 *              or authorization key.
+	 */
 	protected void removePublicKey(DIDURL id, boolean force) {
 		PublicKey pk = getEntry(publicKeys, id);
 		if (pk == null)
@@ -678,16 +965,33 @@ public class DIDDocument {
 		}
 	}
 
+	/**
+	 * Get the count of authentication keys.
+	 *
+	 * @return the count of authentication key array
+	 */
 	public int getAuthenticationKeyCount() {
 		return getEntryCount(publicKeys,
 				(v) -> ((PublicKey)v).isAuthenticationKey());
 	}
 
+	/**
+	 * Get the authentication key array.
+	 *
+	 * @return the matched authentication key array
+	 */
 	public List<PublicKey> getAuthenticationKeys() {
 		return getEntries(publicKeys,
 				(v) -> ((PublicKey)v).isAuthenticationKey());
 	}
 
+	/**
+	 * Select the authentication key matched the key id or the type.
+	 *
+	 * @param id the key id
+	 * @param type the type of key
+	 * @return the matched authentication key array
+	 */
 	public List<PublicKey> selectAuthenticationKeys(DIDURL id, String type) {
 		if (id == null && type == null)
 			throw new IllegalArgumentException();
@@ -706,11 +1010,24 @@ public class DIDDocument {
 		});
 	}
 
+	/**
+	 * Select authentication key array matched the key id or the type
+	 *
+	 * @param id the key id string
+	 * @param type the type of key
+	 * @return the matched authentication key array
+	 */
 	public List<PublicKey> selectAuthenticationKeys(String id, String type) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return selectAuthenticationKeys(_id, type);
 	}
 
+	/**
+	 * Get authentication key with specified key id.
+	 *
+	 * @param id the key id
+	 * @return the matched authentication key object
+	 */
 	public PublicKey getAuthenticationKey(DIDURL id) {
 		if (id == null)
 			throw new IllegalArgumentException();
@@ -722,19 +1039,44 @@ public class DIDDocument {
 			return null;
 	}
 
+	/**
+	 * Get authentication key with specified key id.
+	 *
+	 * @param id the key id string
+	 * @return the matched authentication key object
+	 */
 	public PublicKey getAuthenticationKey(String id) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return getAuthenticationKey(_id);
 	}
 
+    /**
+     * Judge whether the given key is authentication key or not.
+     *
+     * @param id the key id
+     * @return the returned value is true if the key is an authentication key;
+     *         the returned value is false if the key is not an authentication key.
+     */
 	public boolean isAuthenticationKey(DIDURL id) {
 		return getAuthenticationKey(id) != null;
 	}
 
+    /**
+     * Judge whether the given key is authentication key or not.
+     *
+     * @param id the key id string
+     * @return the returned value is true if the key is an authentication key;
+     *         the returned value is false if the key is not an authentication key.
+     */
 	public boolean isAuthenticationKey(String id) {
 		return getAuthenticationKey(id) != null;
 	}
 
+	/**
+	 * Add the public key matched the given key id to be authentication key.
+	 *
+	 * @param id the key id
+	 */
 	protected void addAuthenticationKey(DIDURL id) {
 		PublicKey key = getPublicKey(id);
 		if (key == null)
@@ -747,6 +1089,11 @@ public class DIDDocument {
 		key.setAuthenticationKey(true);
 	}
 
+	/**
+	 * Remove the authentication key matched the given key id.
+	 *
+	 * @param id the key id
+	 */
 	protected void removeAuthenticationKey(DIDURL id) {
 		PublicKey pk = getEntry(publicKeys, id);
 		if (pk == null)
@@ -761,16 +1108,33 @@ public class DIDDocument {
 		pk.setAuthenticationKey(false);
 	}
 
+	/**
+	 * Get the count of authorization key.
+	 *
+	 * @return the count
+	 */
 	public int getAuthorizationKeyCount() {
 		return getEntryCount(publicKeys,
 				(v) -> ((PublicKey)v).isAuthorizationKey());
 	}
 
+	/**
+	 * Get the authorization key array.
+	 *
+	 * @return the  array
+	 */
 	public List<PublicKey> getAuthorizationKeys() {
 		return getEntries(publicKeys,
 				(v) -> ((PublicKey)v).isAuthorizationKey());
 	}
 
+	/**
+	 * Select the authorization key array matched the key id or the type.
+	 *
+	 * @param id the key id
+	 * @param type the type of key
+	 * @return the matched authorization key array
+	 */
 	public List<PublicKey> selectAuthorizationKeys(DIDURL id, String type) {
 		if (id == null && type == null)
 			throw new IllegalArgumentException();
@@ -789,11 +1153,24 @@ public class DIDDocument {
 		});
 	}
 
+	/**
+	 * Select the authorization key array matched the key id or the type.
+	 *
+	 * @param id the key id string
+	 * @param type the type of key
+	 * @return the matched authorization key array
+	 */
 	public List<PublicKey> selectAuthorizationKeys(String id, String type) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return selectAuthorizationKeys(_id, type);
 	}
 
+	/**
+	 * Get authorization key matched the given key id.
+	 *
+	 * @param id the key id
+	 * @return the authorization key object
+	 */
 	public PublicKey getAuthorizationKey(DIDURL id) {
 		if (id == null)
 			throw new IllegalArgumentException();
@@ -805,19 +1182,44 @@ public class DIDDocument {
 			return null;
 	}
 
+	/**
+	 * Get authorization key matched the given key id.
+	 *
+	 * @param id the key id string
+	 * @return the authorization key object
+	 */
 	public PublicKey getAuthorizationKey(String id) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return getAuthorizationKey(_id);
 	}
 
+	/**
+	 * Judge whether the public key matched the given key id is an authorization key.
+	 *
+	 * @param id the key id
+	 * @return the returned value is true if the matched key is an authorization key;
+	 *         the returned value is false if the matched key is not an authorization key.
+	 */
 	public boolean isAuthorizationKey(DIDURL id) {
 		return getAuthorizationKey(id) != null;
 	}
 
+	/**
+	 * Judge whether the public key matched the given key id is an authorization key.
+	 *
+	 * @param id the key id string
+	 * @return the returned value is true if the matched key is an authorization key;
+	 *         the returned value is false if the matched key is not an authorization key.
+	 */
 	public boolean isAuthorizationKey(String id) {
 		return getAuthorizationKey(id) != null;
 	}
 
+	/**
+	 * Add the public key matched the given key id to be authorization key.
+	 *
+	 * @param id the key id
+	 */
 	protected void addAuthorizationKey(DIDURL id) {
 		PublicKey key = getPublicKey(id);
 		if (key == null)
@@ -830,6 +1232,11 @@ public class DIDDocument {
 		key.setAuthorizationKey(true);
 	}
 
+	/**
+	 * Remove the authorization key matched the given key id.
+	 *
+	 * @param id the key id
+	 */
 	protected void removeAuthorizationKey(DIDURL id) {
 		PublicKey pk = getEntry(publicKeys, id);
 		if (pk == null)
@@ -839,14 +1246,31 @@ public class DIDDocument {
 		pk.setAuthorizationKey(false);
 	}
 
+	/**
+	 * Get the count of Credential array.
+	 *
+	 * @return the count
+	 */
 	public int getCredentialCount() {
 		return getEntryCount(credentials);
 	}
 
+	/**
+	 * Get the Credential array.
+	 *
+	 * @return the Credential array
+	 */
 	public List<VerifiableCredential> getCredentials() {
 		return getEntries(credentials);
 	}
 
+	/**
+	 * Select the Credential array matched the given credential id or the type.
+	 *
+	 * @param id the credential id
+	 * @param type the type of credential
+	 * @return the matched Credential array
+	 */
 	public List<VerifiableCredential> selectCredentials(DIDURL id, String type) {
 		if (id == null && type == null)
 			throw new IllegalArgumentException();
@@ -866,11 +1290,24 @@ public class DIDDocument {
 		});
 	}
 
+	/**
+	 * Select the Credential array matched the given credential id or the type.
+	 *
+	 * @param id the credential id string
+	 * @param type the type of credential
+	 * @return the matched Credential array
+	 */
 	public List<VerifiableCredential> selectCredentials(String id, String type) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return selectCredentials(_id, type);
 	}
 
+	/**
+	 * Get the Credential matched the given credential id.
+	 *
+	 * @param id the credential id
+	 * @return the matched Credential object
+	 */
 	public VerifiableCredential getCredential(DIDURL id) {
 		if (id == null)
 			throw new IllegalArgumentException();
@@ -878,11 +1315,22 @@ public class DIDDocument {
 		return getEntry(credentials, id);
 	}
 
+	/**
+	 * Get the Credential matched the given credential id.
+	 *
+	 * @param id the credential id string
+	 * @return the matched Credential object
+	 */
 	public VerifiableCredential getCredential(String id) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return getCredential(_id);
 	}
 
+	/**
+	 * Add the Credential into did document.
+	 *
+	 * @param vc the Credential object
+	 */
 	protected void addCredential(VerifiableCredential vc) {
 		// Check the credential belongs to current DID.
 		if (!vc.getSubject().getId().equals(getSubject()))
@@ -899,18 +1347,40 @@ public class DIDDocument {
 		credentials.put(vc.getId(), vc);
 	}
 
+	/**
+	 * Remove the Credential matched the given credential id.
+	 *
+	 * @param id the credential id
+	 */
 	protected void removeCredential(DIDURL id) {
 		removeEntry(credentials, id);
 	}
 
+	/**
+	 * Get the count of Service array.
+	 *
+	 * @return the count
+	 */
 	public int getServiceCount() {
 		return getEntryCount(services);
 	}
 
+	/**
+	 * Get the Service array.
+	 *
+	 * @return the Service array
+	 */
 	public List<Service> getServices() {
 		return getEntries(services);
 	}
 
+	/**
+	 * Select Service array matched the given service id or the type.
+	 *
+	 * @param id the service id
+	 * @param type the type of service
+	 * @return the matched Service array
+	 */
 	public List<Service> selectServices(DIDURL id, String type) {
 		if (id == null && type == null)
 			throw new IllegalArgumentException();
@@ -926,11 +1396,24 @@ public class DIDDocument {
 		});
 	}
 
+	/**
+	 * Select the Service array matched the given service id or the type.
+	 *
+	 * @param id the service id string
+	 * @param type the type of service
+	 * @return the matched Service array
+	 */
 	public List<Service> selectServices(String id, String type) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return selectServices(_id, type);
 	}
 
+	/**
+	 * Get the Service matched the given service id.
+	 *
+	 * @param id the service id
+	 * @return the matched Service object
+	 */
 	public Service getService(DIDURL id) {
 		if (id == null)
 			throw new IllegalArgumentException();
@@ -938,11 +1421,22 @@ public class DIDDocument {
 		return getEntry(services, id);
 	}
 
+	/**
+	 * Get the Service matched the given service id.
+	 *
+	 * @param id the service id string
+	 * @return the matched Service object
+	 */
 	public Service getService(String id) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return getService(_id);
 	}
 
+	/**
+	 * Add the given Service.
+	 *
+	 * @param svc the Service object
+	 */
 	protected void addService(Service svc) {
 		if (services == null)
 			services = new TreeMap<DIDURL, Service>();
@@ -955,18 +1449,38 @@ public class DIDDocument {
 		services.put(svc.getId(), svc);
 	}
 
+	/**
+	 * Remove the Service matched the given service id.
+	 *
+	 * @param id the Service id
+	 */
 	protected void removeService(DIDURL id) {
 		removeEntry(services, id);
 	}
 
+    /**
+     * Get expires time of did document.
+     *
+     * @return the expires time
+     */
 	public Date getExpires() {
 		return expires;
 	}
 
+	/**
+	 * Set the expires time for did document.
+	 *
+	 * @param expires the expires time
+	 */
 	protected void setExpires(Date expires) {
 		this.expires = expires;
 	}
 
+	/**
+	 * Get Proof object from did document.
+	 *
+	 * @return the Proof object
+	 */
 	public Proof getProof() {
 		return proof;
 	}
@@ -975,11 +1489,21 @@ public class DIDDocument {
 		this.proof = proof;
 	}
 
+	/**
+	 * Set DID Metadata object for did document.
+	 *
+	 * @param metadata the DIDMetadataImpl object
+	 */
 	protected void setMetadata(DIDMetadataImpl metadata) {
 		this.metadata = metadata;
 		subject.setMetadata(metadata);
 	}
 
+	/**
+	 * Get DID MetadataImpl object from did document.
+	 *
+	 * @return the DIDMetadataImpl object
+	 */
 	protected DIDMetadataImpl getMetadataImpl() {
 		if (metadata == null) {
 			metadata = new DIDMetadataImpl();
@@ -989,15 +1513,31 @@ public class DIDDocument {
 		return metadata;
 	}
 
+	/**
+	 * Get DID Metadata object from did document.
+	 *
+	 * @return the DIDMetadata object
+	 */
 	public DIDMetadata getMetadata() {
 		return getMetadataImpl();
 	}
 
+	/**
+	 * Store DID Metadata.
+	 *
+	 * @throws DIDStoreException store DID Metadata failed.
+	 */
 	public void saveMetadata() throws DIDStoreException {
 		if (metadata != null && metadata.attachedStore())
 			metadata.getStore().storeDidMetadata(getSubject(), metadata);
 	}
 
+	/**
+	 * Judge whether the did document is expired or not.
+	 *
+	 * @return the returned value is true if the did document is expired;
+	 *         the returned value is false if the did document is not expired.
+	 */
 	public boolean isExpired() {
 		Calendar now = Calendar.getInstance(Constants.UTC);
 
@@ -1007,6 +1547,12 @@ public class DIDDocument {
 		return now.after(expireDate);
 	}
 
+	/**
+	 * Judge whether the did document is tampered or not.
+	 *
+	 * @return the returned value is true if the did document is genuine;
+	 *         the returned value is false if the did document is not genuine.
+	 */
 	public boolean isGenuine() {
 		// Document should signed(only) by default public key.
 		if (!proof.getCreator().equals(getDefaultPublicKey()))
@@ -1020,18 +1566,44 @@ public class DIDDocument {
 		return verify(proof.getCreator(), proof.getSignature(), json.getBytes());
 	}
 
+	/**
+	 * Judge whether the did doucment is deactivated or not.
+	 *
+	 * @return the returned value is true if the did document is genuine;
+	 *         the returned value is false if the did document is not genuine.
+	 */
 	public boolean isDeactivated() {
 		return getMetadata().isDeactivated();
 	}
 
+	/**
+	 * Judge whether the did document is valid or not.
+	 *
+	 * @return the returned value is true if the did document is valid;
+	 *         the returned value is false if the did document is not valid.
+	 */
 	public boolean isValid() {
 		return !isDeactivated() && !isExpired() && isGenuine();
 	}
 
+	/**
+	 * Get DID Document Builder object.
+	 *
+	 * @return the Builder object
+	 */
 	public Builder edit() {
 		return new Builder(this);
 	}
 
+	/**
+	 * Sign the data by the specified key.
+	 *
+	 * @param id the key id
+	 * @param storepass the password for DIDStore
+	 * @param data the data be signed
+	 * @return the signature string
+	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 */
 	public String sign(DIDURL id, String storepass, byte[] ... data)
 			throws DIDStoreException {
 		if (id == null || data == null || data.length == 0 ||
@@ -1042,18 +1614,44 @@ public class DIDDocument {
 		return signDigest(id, storepass, digest);
 	}
 
+	/**
+	 * Sign the data by the specified key.
+	 *
+	 * @param id the key id string
+	 * @param storepass the password for DIDStore
+	 * @param data the data be signed
+	 * @return the signature string
+	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 */
 	public String sign(String id, String storepass, byte[] ... data)
 			throws DIDStoreException {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return sign(_id, storepass, data);
 	}
 
+	/**
+	 * Sign the data by the default key.
+	 *
+	 * @param storepass the password for DIDStore
+	 * @param data the data be signed
+	 * @return the signature string
+	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 */
 	public String sign(String storepass, byte[] ... data)
 			throws DIDStoreException {
 		DIDURL key = getDefaultPublicKey();
 		return sign(key, storepass, data);
 	}
 
+	/**
+	 * Sign the digest data by the specified key.
+	 *
+	 * @param id the key id
+	 * @param storepass the password for DIDStore
+	 * @param digest the digest data to be signed
+	 * @return the signature string
+	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 */
 	public String signDigest(DIDURL id, String storepass, byte[] digest)
 			throws DIDStoreException {
 		if (id == null || digest == null || storepass == null || storepass.isEmpty())
@@ -1065,18 +1663,44 @@ public class DIDDocument {
 		return getMetadataImpl().getStore().sign(getSubject(), id, storepass, digest);
 	}
 
+	/**
+	 * Sign the digest data by the specified key.
+	 *
+	 * @param id the key id string
+	 * @param storepass the password for DIDStore
+	 * @param digest the digest data to be signed
+	 * @return the signature string
+	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 */
 	public String signDigest(String id, String storepass, byte[] digest)
 			throws DIDStoreException {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return signDigest(_id, storepass, digest);
 	}
 
+	/**
+	 * Sign the digest data by the default key.
+	 *
+	 * @param storepass the password for DIDStore
+	 * @param digest the digest data to be signed
+	 * @return the signature string
+	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 */
 	public String signDigest(String storepass, byte[] digest)
 			throws DIDStoreException {
 		DIDURL key = getDefaultPublicKey();
 		return signDigest(key, storepass, digest);
 	}
 
+	/**
+	 * Verify the signature string by data and the sign key.
+	 *
+	 * @param id the key id
+	 * @param signature the signature string
+	 * @param data the data to be signed
+	 * @return the returned value is true if verifing data is successfully;
+	 *         the returned value is false if verifing data is not successfully.
+	 */
 	public boolean verify(DIDURL id, String signature, byte[] ... data) {
 		if (id == null || signature == null || signature.isEmpty() ||
 				data == null || data.length == 0)
@@ -1086,16 +1710,42 @@ public class DIDDocument {
 		return verifyDigest(id, signature, digest);
 	}
 
+	/**
+	 * Verify the signature string by data and the sign key.
+	 *
+	 * @param id the key id string
+	 * @param signature the signature string
+	 * @param data the data to be signed
+	 * @return the returned value is true if verifing data is successfully;
+	 *         the returned value is false if verifing data is not successfully.
+	 */
 	public boolean verify(String id, String signature, byte[] ... data) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return verify(_id, signature, data);
 	}
 
+	/**
+	 * Verify the signature string by data and the default key.
+	 *
+	 * @param signature the signature string
+	 * @param data the data to be signed
+	 * @return the returned value is true if verifing data is successfully;
+	 *         the returned value is false if verifing data is not successfully.
+	 */
 	public boolean verify(String signature, byte[] ... data) {
 		DIDURL key = getDefaultPublicKey();
 		return verify(key, signature, data);
 	}
 
+	/**
+	 * Verify the digest by the specified key.
+	 *
+	 * @param id the key id
+	 * @param signature the signature string
+	 * @param digest the digest data be signed
+	 * @return the returned value is true if verifing digest is successfully;
+	 *         the returned value is false if verifing digest is not successfully.
+	 */
 	public boolean verifyDigest(DIDURL id, String signature, byte[] digest) {
 		if (id == null || signature == null || signature.isEmpty() || digest == null)
 			throw new IllegalArgumentException();
@@ -1108,11 +1758,28 @@ public class DIDDocument {
 		return EcdsaSigner.verify(binkey, sig, digest);
 	}
 
+	/**
+	 * Verify the digest by the specified key.
+	 *
+	 * @param id the key id string
+	 * @param signature the signature string
+	 * @param digest the digest data be signed
+	 * @return the returned value is true if verifing digest is successfully;
+	 *         the returned value is false if verifing digest is not successfully.
+	 */
 	public boolean verifyDigest(String id, String signature, byte[] digest) {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return verifyDigest(_id, signature, digest);
 	}
 
+	/**
+	 * Verify the digest by the default key.
+	 *
+	 * @param signature the signature string
+	 * @param digest the digest data be signed
+	 * @return the returned value is true if verifing digest is successfully;
+	 *         the returned value is false if verifing digest is not successfully.
+	 */
 	public boolean verifyDigest(String signature, byte[] digest) {
 		DIDURL key = getDefaultPublicKey();
 		return verifyDigest(key, signature, digest);
@@ -1276,6 +1943,13 @@ public class DIDDocument {
 		}
 	}
 
+	/**
+	 * Get DIDDocument object from parsing json data.
+	 *
+	 * @param reader the Reader object
+	 * @return the DIDDocument object
+	 * @throws MalformedDocumentException parse json data failed.
+	 */
 	public static DIDDocument fromJson(Reader reader)
 			throws MalformedDocumentException {
 		if (reader == null)
@@ -1293,6 +1967,13 @@ public class DIDDocument {
 		return doc;
 	}
 
+	/**
+	 * Get DIDDocument object from parsing InputStream data.
+	 *
+	 * @param in the InputStream object
+	 * @return the DIDDocument object
+	 * @throws MalformedDocumentException parse json data failed.
+	 */
 	public static DIDDocument fromJson(InputStream in)
 			throws MalformedDocumentException {
 		if (in == null)
@@ -1310,6 +1991,13 @@ public class DIDDocument {
 		return doc;
 	}
 
+	/**
+	 * Get DIDDocument object from parsing json data.
+	 *
+	 * @param json the Reader object
+	 * @return the DIDDocument object
+	 * @throws MalformedDocumentException parse json data failed.
+	 */
 	public static DIDDocument fromJson(String json)
 			throws MalformedDocumentException {
 		if (json == null || json.isEmpty())
@@ -1327,6 +2015,13 @@ public class DIDDocument {
 		return doc;
 	}
 
+	/**
+	 * Get DIDDocument object from parsing node data.
+	 *
+	 * @param node the Reader object
+	 * @return the DIDDocument object
+	 * @throws MalformedDocumentException parse json data failed.
+	 */
 	protected static DIDDocument fromJson(JsonNode node)
 			throws MalformedDocumentException {
 		DIDDocument doc = new DIDDocument();
@@ -1448,11 +2143,27 @@ public class DIDDocument {
 		generator.writeEndObject();
 	}
 
+	/**
+	 * Get DIDDocument json string.
+	 *
+	 * @param generator the JsonGenerator handle
+	 * @param normalized json string is normalized or compact
+	 * @throws IOException write field to json string failed.
+	 */
 	protected void toJson(JsonGenerator generator, boolean normalized)
 			throws IOException {
 		toJson(generator, normalized, false);
 	}
 
+	/**
+	 * Get DIDDocument json string.
+	 *
+	 * @param out the Writer handle
+	 * @param normalized json string is normalized or compact
+	 * @param forSign = true, only generate json string without proof
+	 *        forSign = false, getnerate json string the whole did document
+	 * @throws IOException write field to json string failed.
+	 */
 	private void toJson(Writer out, boolean normalized, boolean forSign)
 			throws IOException {
 		JsonFactory factory = new JsonFactory();
@@ -1461,6 +2172,13 @@ public class DIDDocument {
 		generator.close();
 	}
 
+	/**
+	 * Get DIDDocument json string.
+	 *
+	 * @param out the Writer handle
+	 * @param normalized json string is normalized or compact
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(Writer out, boolean normalized)
 			throws IOException {
 		if (out == null)
@@ -1469,6 +2187,14 @@ public class DIDDocument {
 		toJson(out, normalized, false);
 	}
 
+	/**
+	 * Get DIDDocument json string.
+	 *
+	 * @param out the Writer handle
+	 * @param charsetName the name of charset
+	 * @param normalized json string is normalized or compact
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(OutputStream out, String charsetName, boolean normalized)
 			throws IOException {
 		if (out == null)
@@ -1480,6 +2206,13 @@ public class DIDDocument {
 		toJson(new OutputStreamWriter(out, charsetName), normalized);
 	}
 
+	/**
+	 * Get DIDDocument json string.
+	 *
+	 * @param out the OutputStream handle
+	 * @param normalized json string is normalized or compact
+	 * @throws IOException write field to json string failed.
+	 */
 	public void toJson(OutputStream out, boolean normalized) throws IOException {
 		if (out == null)
 			throw new IllegalArgumentException();
@@ -1487,6 +2220,14 @@ public class DIDDocument {
 		toJson(new OutputStreamWriter(out), normalized);
 	}
 
+	/**
+	 * Get DIDDocument json string.
+	 *
+	 * @param normalized json string is normalized or compact
+	 * @param forSign = true, only generate json string without proof
+	 *        forSign = false, getnerate json string the whole did document
+	 * @return the document json string
+	 */
 	protected String toJson(boolean normalized, boolean forSign) {
 		Writer out = new StringWriter(2048);
 
@@ -1498,6 +2239,12 @@ public class DIDDocument {
 		return out.toString();
 	}
 
+	/**
+	 * Get json formatted context from DID Document
+	 *
+	 * @param normalized json string is normalized or compact
+	 * @return the document json string
+	 */
 	public String toString(boolean normalized) {
 		return toJson(normalized, false);
 	}
@@ -1554,19 +2301,38 @@ public class DIDDocument {
 		return jpb;
 	}
 
+	/**
+     * A DIDDocument Builder to modify DIDDocument elements.
+	 */
 	public static class Builder {
 		private DIDDocument document;
 
+		/**
+		 * Constructs DID Document Builder with given DID and DIDStore.
+		 *
+		 * @param did the specified DID
+		 * @param store the DIDStore object
+		 */
 		protected Builder(DID did, DIDStore store) {
 			this.document = new DIDDocument(did);
 			this.document.getMetadataImpl().setStore(store);
 		}
 
+		/**
+		 * Constructs DID Document Builder with given DID Document.
+		 *
+		 * @param doc the DID Document object
+		 */
 		protected Builder(DIDDocument doc) {
 			// Make a copy.
 			this.document = new DIDDocument(doc);
 		}
 
+		/**
+		 * Get document subject from did document builder.
+		 *
+		 * @return the owner of did document builder
+		 */
 		public DID getSubject() {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1574,6 +2340,14 @@ public class DIDDocument {
 			return document.getSubject();
 		}
 
+		/**
+		 * Add PublicKey to did document builder.
+		 *
+		 * @param id the key id
+		 * @param controller the owner of public key
+		 * @param pk the public key base58 string
+		 * @return the DID Document Builder object
+		 */
 		public Builder addPublicKey(DIDURL id, DID controller, String pk) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1590,6 +2364,14 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add PublicKey to did document builder.
+		 *
+		 * @param id the key id string
+		 * @param controller the owner of public key
+		 * @param pk the public key base58 string
+		 * @return the DID Document Builder object
+		 */
 		public Builder addPublicKey(String id, String controller, String pk) {
 			DID _controller = null;
 			try {
@@ -1602,6 +2384,13 @@ public class DIDDocument {
 			return addPublicKey(_id, _controller, pk);
 		}
 
+		/**
+		 * Remove PublicKey with the specified key id.
+		 *
+		 * @param id the key id
+		 * @param force the owner of public key
+		 * @return the DID Document Builder object
+		 */
 		public Builder removePublicKey(DIDURL id, boolean force) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1614,19 +2403,46 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Remove PublicKey matched the specified key id.
+		 *
+		 * @param id the key id
+	     * @param force force = true, the matched key must be removed.
+	     *              force = false, the matched key must not be removed if this key is authentiacation
+	     *              or authorization key.
+		 * @return the DID Document Builder object
+		 */
 		public Builder removePublicKey(String id, boolean force) {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return removePublicKey(_id, force);
 		}
 
+		/**
+		 * Remove PublicKey matched the specified key id without force module.
+		 *
+		 * @param id the key id
+		 * @return the DID Document Builder object
+		 */
 		public Builder removePublicKey(DIDURL id) {
 			return removePublicKey(id, false);
 		}
 
+		/**
+		 * Remove PublicKey matched the specified key id without force module.
+		 *
+		 * @param id the key id
+		 * @return the DID Document Builder object
+		 */
 		public Builder removePublicKey(String id) {
 			return removePublicKey(id, false);
 		}
 
+		/**
+		 * Add the exist Public Key matched the key id to be Authentication key.
+		 *
+		 * @param id the key id
+		 * @return the DID Document Builder object
+		 */
 		public Builder addAuthenticationKey(DIDURL id) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1639,11 +2455,25 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add the exist Public Key matched the key id to be Authentication key.
+		 *
+		 * @param id the key id string
+		 * @return the DID Document Builder object
+		 */
 		public Builder addAuthenticationKey(String id) {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return addAuthenticationKey(_id);
 		}
 
+		/**
+		 * Add the PublicKey named the key id to be an authentication key.
+		 * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+		 *
+		 * @param id the key id
+		 * @param pk the public key base58 string
+		 * @return the DID Document Builder
+		 */
 		public Builder addAuthenticationKey(DIDURL id, String pk) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1661,11 +2491,25 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add the PublicKey named the key id to be an authentication key.
+		 * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+		 *
+		 * @param id the key id string
+		 * @param pk the public key base58 string
+		 * @return the DID Document Builder
+		 */
 		public Builder addAuthenticationKey(String id, String pk) {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return addAuthenticationKey(_id, pk);
 		}
 
+		/**
+		 * Remove Authentication Key matched the given id.
+		 *
+		 * @param id the key id
+		 * @return the DID Document Builder
+		 */
 		public Builder removeAuthenticationKey(DIDURL id) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1678,11 +2522,23 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Remove Authentication Key matched the given id.
+		 *
+		 * @param id the key id string
+		 * @return the DID Document Builder
+		 */
 		public Builder removeAuthenticationKey(String id) {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return removeAuthenticationKey(_id);
 		}
 
+		/**
+		 * Add the exist Public Key matched the key id to be Authorization key.
+		 *
+		 * @param id the key id
+		 * @return the DID Document Builder
+		 */
 		public Builder addAuthorizationKey(DIDURL id) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1695,11 +2551,26 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add the exist Public Key matched the key id to be Authorization Key.
+		 *
+		 * @param id the key id string
+		 * @return the DID Document Builder
+		 */
 		public Builder addAuthorizationKey(String id) {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return addAuthorizationKey(_id);
 		}
 
+		/**
+		 * Add the PublicKey named key id to be Authorization Key.
+		 * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+		 *
+		 * @param id the key id
+		 * @param controller the owner of public key
+		 * @param pk the public key base58 string
+		 * @return the DID Document Builder
+		 */
 		public Builder addAuthorizationKey(DIDURL id, DID controller, String pk) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1721,6 +2592,15 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add the PublicKey named key id to be Authorization Key.
+		 * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+		 *
+		 * @param id the key id string
+		 * @param controller the owner of public key
+		 * @param pk the public key base58 string
+		 * @return the DID Document Builder
+		 */
 		public Builder addAuthorizationKey(String id, String controller, String pk) {
 			DID _controller = null;
 			try {
@@ -1733,8 +2613,22 @@ public class DIDDocument {
 			return addAuthorizationKey(_id, _controller, pk);
 		}
 
+		/**
+         * Add the specified key to be an Authorization key.
+         * This specified key is the key of specified controller.
+         * Authentication is the mechanism by which the controller(s) of a DID can
+         * cryptographically prove that they are associated with that DID.
+         * A DID Document must include authentication key.
+		 *
+		 * @param id the key id
+		 * @param controller the owner of 'key'
+		 * @param key the key of controller to be an Authorization key.
+		 * @return the DID Document Builder
+		 * @throws DIDResolveException resolve controller failed.
+		 * @throws InvalidKeyException the key is not an authentication key.
+		 */
 		public Builder authorizationDid(DIDURL id, DID controller, DIDURL key)
-				throws DIDResolveException, DIDBackendException, InvalidKeyException {
+				throws DIDResolveException, InvalidKeyException {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
 
@@ -1765,11 +2659,36 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+         * Add Authorization key to Authentication array according to DID.
+         * Authentication is the mechanism by which the controller(s) of a DID can
+         * cryptographically prove that they are associated with that DID.
+         * A DID Document must include authentication key.
+		 *
+		 * @param id the key id string
+		 * @param controller the owner of public key
+		 * @return the DID Document Builder
+		 * @throws DIDResolveException resolve controller failed.
+		 * @throws InvalidKeyException the key is not an authentication key.
+		 */
 		public Builder authorizationDid(DIDURL id, DID controller)
-				throws DIDResolveException, DIDBackendException, InvalidKeyException {
+				throws DIDResolveException, InvalidKeyException {
 			return authorizationDid(id, controller, null);
 		}
 
+		/**
+         * Add Authorization key to Authentication array according to DID.
+         * Authentication is the mechanism by which the controller(s) of a DID can
+         * cryptographically prove that they are associated with that DID.
+         * A DID Document must include authentication key.
+		 *
+		 * @param id the key id string
+		 * @param controller the owner of public key
+		 * @param key the key of controller to be an Authorization key.
+		 * @return the DID Document Builder
+		 * @throws DIDResolveException resolve controller failed.
+		 * @throws InvalidKeyException the key is not an authentication key.
+		 */
 		public Builder authorizationDid(String id, String controller, String key)
 				throws DIDResolveException, DIDBackendException, InvalidKeyException {
 			DID controllerId = null;
@@ -1784,11 +2703,29 @@ public class DIDDocument {
 			return authorizationDid(_id, controllerId, _key);
 		}
 
+		/**
+         * Add Authorization key to Authentication array according to DID.
+         * Authentication is the mechanism by which the controller(s) of a DID can
+         * cryptographically prove that they are associated with that DID.
+         * A DID Document must include authentication key.
+		 *
+		 * @param id the key id string
+		 * @param controller the owner of public key
+		 * @return the DID Document Builder
+		 * @throws DIDResolveException resolve controller failed.
+		 * @throws InvalidKeyException the key is not an authentication key.
+		 */
 		public Builder authorizationDid(String id, String controller)
 				throws DIDResolveException, DIDBackendException, InvalidKeyException {
 			return authorizationDid(id, controller, null);
 		}
 
+		/**
+		 * Remove the Authorization Key matched the given id.
+		 *
+		 * @param id the key id
+		 * @return the DID Document Builder
+		 */
 		public Builder removeAuthorizationKey(DIDURL id) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1801,11 +2738,23 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Remove the Authorization Key matched the given id.
+		 *
+		 * @param id the key id string
+		 * @return the DID Document Builder
+		 */
 		public Builder removeAuthorizationKey(String id) {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return removeAuthorizationKey(_id);
 		}
 
+		/**
+		 * Add Credentail to DID Document Builder.
+		 *
+		 * @param vc the Verifiable Credential object
+		 * @return the DID Document Builder
+		 */
 		public Builder addCredential(VerifiableCredential vc) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -1818,6 +2767,18 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 *
+		 * @param id the Credential id
+		 * @param types the Credential types set
+		 * @param subject the Credential subject(key/value)
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, String[] types,
 				Map<String, String> subject, Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -1850,6 +2811,18 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 *
+		 * @param id the Credential id string
+		 * @param types the Credential types set
+		 * @param subject the Credential subject(key/value)
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, String[] types,
 				Map<String, String> subject, Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -1857,12 +2830,34 @@ public class DIDDocument {
 			return addCredential(_id, types, subject, expirationDate, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 *
+		 * @param id the Credential id
+		 * @param subject the Credential subject(key/value)
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, Map<String, String> subject,
 				Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			return addCredential(id, null, subject, expirationDate, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 *
+		 * @param id the Credential id string
+		 * @param subject the Credential subject(key/value)
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, Map<String, String> subject,
 				Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -1870,12 +2865,36 @@ public class DIDDocument {
 			return addCredential(_id, subject, expirationDate, storepass);
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id
+		 * @param types the Credential id
+		 * @param subject the Credential subject(key/value)
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, String[] types,
 				Map<String,String> subject, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			return addCredential(id, types, subject, null, storepass);
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id string
+		 * @param types the Credential id
+		 * @param subject the Credential subject(key/value)
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, String[] types,
 				Map<String, String> subject, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -1883,12 +2902,34 @@ public class DIDDocument {
 			return addCredential(_id, types, subject, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id
+		 * @param subject the Credential subject(key/value)
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, Map<String, String> subject,
 				String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			return addCredential(id, null, subject, null, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id string
+		 * @param subject the Credential subject(key/value)
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, Map<String, String> subject,
 				String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -1896,6 +2937,19 @@ public class DIDDocument {
 			return addCredential(_id, subject, storepass);
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * Credential subject supports json string.
+		 *
+		 * @param id the Credential id
+		 * @param types the Credential types
+		 * @param json the Credential subject(json string)
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, String[] types,
 				String json, Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -1928,6 +2982,19 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * Credential subject supports json string.
+		 *
+		 * @param id the Credential id string
+		 * @param types the Credential types
+		 * @param json the Credential subject(json string)
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, String[] types,
 				String json, Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -1935,12 +3002,36 @@ public class DIDDocument {
 			return addCredential(_id, types, json, expirationDate, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * Credential subject supports json string.
+		 *
+		 * @param id the Credential id
+		 * @param json the Credential subject(json string)
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, String json,
 				Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			return addCredential(id, null, json, expirationDate, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * Credential subject supports json string.
+		 *
+		 * @param id the Credential id string
+		 * @param json the Credential subject(json string)
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, String json,
 				Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -1948,12 +3039,38 @@ public class DIDDocument {
 			return addCredential(_id, json, expirationDate, storepass);
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * Credential subject supports json string.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id
+		 * @param types the Credential types
+		 * @param json the Credential subject(json string)
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, String[] types,
 				String json, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			return addCredential(id, types, json, null, storepass);
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * Credential subject supports json string.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id
+		 * @param types the Credential types
+		 * @param json the Credential subject(json string)
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, String[] types,
 				String json, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -1961,17 +3078,54 @@ public class DIDDocument {
 			return addCredential(_id, types, json, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * Credential subject supports json string.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id
+		 * @param json the Credential subject(json string)
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, String json, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			return addCredential(id, null, json, null, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * Credential subject supports json string.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id string
+		 * @param json the Credential subject(json string)
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, String json, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return addCredential(_id, json, storepass);
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * Credential subject supports JsonNode format.
+		 *
+		 * @param id the Credential id
+		 * @param types the types for Credential
+		 * @param node the Credential subject
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, String[] types,
 				JsonNode node, Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -2004,6 +3158,19 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * Credential subject supports JsonNode format.
+		 *
+		 * @param id the Credential id string
+		 * @param types the types for Credential
+		 * @param node the Credential subject
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, String[] types,
 				JsonNode node, Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -2011,12 +3178,36 @@ public class DIDDocument {
 			return addCredential(_id, types, node, expirationDate, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * Credential subject supports JsonNode format.
+		 *
+		 * @param id the Credential id
+		 * @param node the Credential subject
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, JsonNode node,
 				Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			return addCredential(id, null, node, expirationDate, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * Credential subject supports JsonNode format.
+		 *
+		 * @param id the Credential id string
+		 * @param node the Credential subject
+		 * @param expirationDate the Credential expires time
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, JsonNode node,
 				Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -2024,12 +3215,38 @@ public class DIDDocument {
 			return addCredential(_id, node, expirationDate, storepass);
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * Credential subject supports JsonNode format.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id
+		 * @param types the Credential types
+		 * @param node the Credential subject
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, String[] types,
 				JsonNode node, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			return addCredential(id, types, node, null, storepass);
 		}
 
+		/**
+		 * Add Credential with the given values.
+		 * Credential subject supports JsonNode format.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id string
+		 * @param types the Credential types
+		 * @param node the Credential subject
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, String[] types,
 				JsonNode node, String storepass)
 				throws DIDStoreException, InvalidKeyException {
@@ -2037,17 +3254,47 @@ public class DIDDocument {
 			return addCredential(_id, types, node, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * Credential subject supports JsonNode format.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id
+		 * @param node the Credential subject
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(DIDURL id, JsonNode node, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			return addCredential(id, null, node, null, storepass);
 		}
 
+		/**
+		 * Add SelfProclaimed Credential with the given values.
+		 * Credential subject supports JsonNode format.
+		 * The Credential expires time is the document expires time of Credential subject id.
+		 *
+		 * @param id the Credential id string
+		 * @param node the Credential subject
+		 * @param storepass the password for DIDStore
+		 * @return the DID Document Builder
+		 * @throws DIDStoreException there is no DID store to attach.
+		 * @throws InvalidKeyException there is no authentication key.
+		 */
 		public Builder addCredential(String id, JsonNode node, String storepass)
 				throws DIDStoreException, InvalidKeyException {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return addCredential(_id, node, storepass);
 		}
 
+		/**
+		 * Remove Credential with the specified id.
+		 *
+		 * @param id the Credential id
+		 * @return the DID Document Builder
+		 */
 		public Builder removeCredential(DIDURL id) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -2060,11 +3307,25 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Remove Credential with the specified id.
+		 *
+		 * @param id the Credential id string
+		 * @return the DID Document Builder
+		 */
 		public Builder removeCredential(String id) {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return removeCredential(_id);
 		}
 
+		/**
+		 * Add Service.
+		 *
+		 * @param id the specified Service id
+		 * @param type the Service type
+		 * @param endpoint the service point's adderss
+		 * @return the DID Document Builder
+		 */
 		public Builder addService(DIDURL id, String type, String endpoint) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -2079,11 +3340,25 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Add Service.
+		 *
+		 * @param id the specified Service id string
+		 * @param type the Service type
+		 * @param endpoint the service point's adderss
+		 * @return the DID Document Builder
+		 */
 		public Builder addService(String id, String type, String endpoint) {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return addService(_id, type, endpoint);
 		}
 
+        /**
+         * Remove the Service with the specified id.
+         *
+         * @param id the Service id
+         * @return the DID Document Builder
+         */
 		public Builder removeService(DIDURL id) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -2096,6 +3371,12 @@ public class DIDDocument {
 			return this;
 		}
 
+        /**
+         * Remove the Service with the specified id.
+         *
+         * @param id the Service id string
+         * @return the DID Document Builder
+         */
 		public Builder removeService(String id) {
 			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 			return removeService(_id);
@@ -2107,6 +3388,11 @@ public class DIDDocument {
 			return cal;
 		}
 
+		/**
+		 * Set the current time to be expires time for DID Document Builder.
+		 *
+		 * @return the DID Document Builder
+		 */
 		public Builder setDefaultExpires() {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -2115,6 +3401,12 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+		 * Set the specified time to be expires time for DID Document Builder.
+		 *
+		 * @param expires the specified time
+		 * @return the DID Document Builder
+		 */
 		public Builder setExpires(Date expires) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
@@ -2132,6 +3424,13 @@ public class DIDDocument {
 			return this;
 		}
 
+		/**
+         * Finish modiy document.
+		 *
+		 * @param storepass the password for DIDStore
+		 * @return the DIDDocument object
+		 * @throws DIDStoreException there is no store to attach.
+		 */
 		public DIDDocument seal(String storepass) throws DIDStoreException {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");

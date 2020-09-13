@@ -32,6 +32,13 @@ import org.elastos.did.parser.DIDURLBaseListener;
 import org.elastos.did.parser.DIDURLParser;
 import org.elastos.did.parser.ParserHelper;
 
+/**
+ * DID URL defines by the did-url rule, refers to a URL that begins with a DID
+ * followed by one or more additional components.
+ * <p>
+ * A DID URL always identifies the resource to be located.
+ * DIDURL includes DID and Url fragment by user defined.
+ */
 public class DIDURL implements Comparable<DIDURL> {
 	private DID did;
 	private Map<String, String> parameters;
@@ -41,6 +48,12 @@ public class DIDURL implements Comparable<DIDURL> {
 
 	private CredentialMetadataImpl metadata;
 
+	/**
+	 * Constructs the DIDURl with the given value.
+	 *
+	 * @param base the owner of DIDURL
+	 * @param url the DIDURl string
+	 */
 	public DIDURL(DID base, String url) {
 		if (base == null || url == null || url.isEmpty())
 			throw new IllegalArgumentException();
@@ -62,6 +75,12 @@ public class DIDURL implements Comparable<DIDURL> {
 		this.fragment = url;
 	}
 
+	/**
+	 * Constructs the DIDURl with the given value.
+	 *
+	 * @param url the DIDURl string
+	 * @throws MalformedDIDURLException DIDURL is malformed.
+	 */
 	public DIDURL(String url) throws MalformedDIDURLException {
 		if (url == null || url.isEmpty())
 			throw new IllegalArgumentException();
@@ -73,10 +92,20 @@ public class DIDURL implements Comparable<DIDURL> {
 		}
 	}
 
+	/**
+	 * Get owner of DIDURL.
+	 *
+	 * @return the DID object
+	 */
 	public DID getDid() {
 		return did;
 	}
 
+	/**
+	 * Set DID to DIDURL.
+	 *
+	 * @param did the DID Object
+	 */
 	public void setDid(DID did) {
 		if (did == null)
 			throw new IllegalArgumentException();
@@ -104,10 +133,21 @@ public class DIDURL implements Comparable<DIDURL> {
 		return builder.toString();
 	}
 
+	/**
+	 * Get all parameters.
+	 *
+	 * @return the parameters string
+	 */
 	public String getParameters() {
 		return mapToString(parameters, ";");
 	}
 
+	/**
+	 * Get the parameter according to the given name.
+	 *
+	 * @param name the name string
+ 	 * @return the parameter string
+	 */
 	public String getParameter(String name) {
 		if (parameters == null)
 			return null;
@@ -115,6 +155,13 @@ public class DIDURL implements Comparable<DIDURL> {
 		return parameters.get(name);
 	}
 
+	/**
+	 * Judge whether there is 'name' parameter in DIDStorage.
+	 *
+	 * @param name the key of parameter
+	 * @return the returned value is true if there is 'name' parameter;
+	 *         the returned value is true if there is no 'name' parameter.
+	 */
 	public boolean hasParameter(String name) {
 		if (parameters == null)
 			return false;
@@ -122,22 +169,49 @@ public class DIDURL implements Comparable<DIDURL> {
 		return parameters.containsKey(name);
 	}
 
+	/**
+	 * Add parameter.
+	 *
+	 * @param name the parameter's name
+	 * @param value the parameter's value
+	 */
 	protected void addParameter(String name, String value) {
 		parameters.put(name, value);
 	}
 
+	/**
+	 * Get the path of DIDURL.
+	 *
+	 * @return the path string
+	 */
 	public String getPath() {
 		return path;
 	}
 
+	/**
+	 * Set path to DIDURL.
+	 *
+	 * @param path the path string
+	 */
 	protected void setPath(String path) {
 		this.path = path;
 	}
 
+	/**
+	 * Get query of DIDURL.
+	 *
+	 * @return the query string
+	 */
 	public String getQuery() {
 		return mapToString(query, "&");
 	}
 
+	/**
+	 * Get 'name' query parameter.
+	 *
+	 * @param name the name string
+	 * @return the value string
+	 */
 	public String getQueryParameter(String name) {
 		if (query == null)
 			return null;
@@ -145,6 +219,13 @@ public class DIDURL implements Comparable<DIDURL> {
 		return query.get(name);
 	}
 
+	/**
+	 * Judge whether there is 'name' parameter
+	 *
+	 * @param name the name string
+	 * @return the returned value is true if there is 'name' parameter;
+	 *         the returned value is true if there is no 'name' parameter.
+	 */
 	public boolean hasQueryParameter(String name) {
 		if (query == null)
 			return false;
@@ -152,22 +233,48 @@ public class DIDURL implements Comparable<DIDURL> {
 		return query.containsKey(name);
 	}
 
+	/**
+	 * Add query parameter.
+	 *
+	 * @param name the name string of parameter
+	 * @param value the value string of parameter
+	 */
 	protected void addQueryParameter(String name, String value) {
 		query.put(name, value);
 	}
 
+	/**
+	 * Get fragmengt string of DIDURL.
+	 *
+	 * @return the fragment string
+	 */
 	public String getFragment() {
 		return fragment;
 	}
 
+	/**
+	 * Set fragment string of DIDURL.
+	 *
+	 * @param fragment the fragment string
+	 */
 	protected void setFragment(String fragment) {
 		this.fragment = fragment;
 	}
 
+	/**
+	 * Set meta data for Credential.
+	 *
+	 * @param metadata the meta data
+	 */
 	protected void setMetadata(CredentialMetadataImpl metadata) {
 		this.metadata = metadata;
 	}
 
+	/**
+	 * Get meta data from Credential.
+	 *
+	 * @return the meta data
+	 */
 	public CredentialMetadata getMetadata() {
 		if (metadata == null)
 			metadata = new CredentialMetadataImpl();
@@ -175,6 +282,11 @@ public class DIDURL implements Comparable<DIDURL> {
 		return metadata;
 	}
 
+	/**
+	 * Store meta data in DIDStore.
+	 *
+	 * @throws DIDStoreException there is no store to attatch.
+	 */
 	public void saveMetadata() throws DIDStoreException {
 		if (metadata != null && metadata.attachedStore())
 			metadata.getStore().storeCredentialMetadata(this.getDid(), this, metadata);

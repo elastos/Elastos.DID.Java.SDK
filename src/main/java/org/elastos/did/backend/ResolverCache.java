@@ -39,6 +39,9 @@ import org.elastos.did.DID;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.util.LRUCache;
 
+/**
+ * The class to store resolved did document in the temporary directory.
+ */
 public class ResolverCache {
 	private static final Charset utf8 = Charset.forName("UTF-8");
 
@@ -49,6 +52,15 @@ public class ResolverCache {
 	private static Map<DID, ResolveResult> cache = LRUCache.createInstance(
 			CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 
+	private ResolverCache() {
+
+	}
+
+	/**
+	 * Set cache dir to store the DID content.
+	 *
+	 * @param rootDir the path of cache
+	 */
 	public static void setCacheDir(File rootDir) {
 		ResolverCache.rootDir = rootDir;
 
@@ -68,6 +80,9 @@ public class ResolverCache {
 		return new File(filename);
 	}
 
+	/**
+	 * Reset the cache.
+	 */
 	public static void reset() {
 		cache.clear();
 
@@ -76,6 +91,12 @@ public class ResolverCache {
 			child.delete();
 	}
 
+	/**
+	 * Store the resolve result(mainly DID Document) in cache.
+	 *
+	 * @param rr the ResolveResult content
+	 * @throws IOException write the resolve result to output failed.
+	 */
 	public static void store(ResolveResult rr) throws IOException {
 		OutputStream os = null;
 		Writer out = null;
@@ -103,6 +124,14 @@ public class ResolverCache {
 		}
 	}
 
+	/**
+	 * Load the specified DID content from cache.
+	 *
+	 * @param did the specified DID
+	 * @param ttl the time for cache
+	 * @return the ResolveResult object
+	 * @throws DIDResolveException resolve did failed.
+	 */
 	public static ResolveResult load(DID did, long ttl)
 			throws DIDResolveException {
 		File file = getFile(did.getMethodSpecificId());
@@ -144,6 +173,11 @@ public class ResolverCache {
 		}
 	}
 
+	/**
+	 * Clean the cache data for the specified DID.
+	 *
+	 * @param did the specified DID
+	 */
 	static public void invalidate(DID did) {
 		File file = getFile(did.getMethodSpecificId());
 		file.delete();

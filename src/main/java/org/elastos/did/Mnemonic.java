@@ -35,16 +35,58 @@ import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
 import org.elastos.did.exception.DIDException;
 
+/**
+ * The class represents the mnemonic content.
+ */
 public class Mnemonic {
+	/**
+	 * The default language is English.
+	 */
 	public static final String DEFAULT = null;
+
+	/**
+	 * language: "chinese_simplified"
+	 */
 	public static final String CHINESE_SIMPLIFIED = "chinese_simplified";
+
+	/**
+	 * language: "chinese_traditional"
+	 */
 	public static final String CHINESE_TRADITIONAL = "chinese_traditional";
+
+	/**
+	 * language: "czech"
+	 */
 	public static final String CZECH = "czech";
+
+	/**
+	 * language: "english"
+	 */
 	public static final String ENGLISH = "english";
+
+	/**
+	 * language: "french"
+	 */
 	public static final String FRENCH = "french";
+
+	/**
+	 * language: "italian"
+	 */
 	public static final String ITALIAN = "italian";
+
+	/**
+	 * language: "japanese"
+	 */
 	public static final String JAPANESE = "japanese";
+
+	/**
+	 * language: "korean"
+	 */
 	public static final String KOREAN = "korean";
+
+	/**
+	 * language: "spanish"
+	 */
 	public static final String SPANISH = "spanish";
 
 	private static final int TWELVE_WORDS_ENTROPY = 16;
@@ -57,6 +99,11 @@ public class Mnemonic {
 		this.mc = mc;
 	}
 
+	/**
+	 * Get empty Mnemonic's instance.
+	 *
+	 * @return the Mnemonic object
+	 */
 	public static Mnemonic getInstance() {
 		String language = "";
 
@@ -68,6 +115,13 @@ public class Mnemonic {
 		return m;
 	}
 
+	/**
+	 * Get the Mnemonic's instance with the given language.
+	 *
+	 * @param language the language string
+	 * @return the Mnemonic object
+	 * @throws DIDException generate Mnemonic into table failed.
+	 */
 	public static Mnemonic getInstance(String language) throws DIDException {
 		if (language == null || language.isEmpty())
 			return getInstance();
@@ -86,6 +140,12 @@ public class Mnemonic {
 		}
 	}
 
+	/**
+	 * Generate mnemonic.
+	 *
+	 * @return the mnemonic string
+	 * @throws DIDException generate Mnemonic into table failed.
+	 */
 	public String generate() throws DIDException {
 		try {
 			byte[] entropy = new byte[TWELVE_WORDS_ENTROPY];
@@ -102,6 +162,13 @@ public class Mnemonic {
 		}
 	}
 
+	/**
+	 * Check that mnemonic string is valid or not.
+	 *
+	 * @param mnemonic the mnemonic string
+	 * @return the returned value is true if mnemonic is valid;
+	 *         the returned value is false if mnemonic is not valid.
+	 */
 	public boolean isValid(String mnemonic) {
     	if (mnemonic == null || mnemonic.isEmpty())
     		throw new IllegalArgumentException();
@@ -117,6 +184,13 @@ public class Mnemonic {
 		}
 	}
 
+	/**
+	 * Get seed from mnemonic and password.
+	 *
+	 * @param mnemonic the mnemonic string
+	 * @param passphrase the password combine with mnemonic
+	 * @return the original seed
+	 */
 	public static byte[] toSeed(String mnemonic, String passphrase) {
     	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
     	passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
