@@ -79,7 +79,7 @@ public final class TestData {
 
 	private DIDStore store;
 
-	protected static File getResolverCacheDir() {
+	public static File getResolverCacheDir() {
 		return new File(System.getProperty("user.home") +
 				File.separator + ".cache.did.elastos");
 	}

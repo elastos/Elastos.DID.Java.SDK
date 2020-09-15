@@ -24,6 +24,7 @@ package org.elastos.did.jwt;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -849,6 +850,51 @@ public class JwtTest {
 		assertNotNull(s);
 	}
 
+	@Test
+	public void jwsTestExpiration() throws Exception {
+		TestData testData = new TestData();
+		testData.setup(true);
+		testData.initIdentity();
+
+		DIDDocument doc = testData.loadTestDocument();
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		Calendar cal = Calendar.getInstance();
+		cal.set(Calendar.MILLISECOND, 0);
+		Date iat = cal.getTime();
+		cal.add(Calendar.MONTH, -1);
+		Date nbf = cal.getTime();
+		cal.add(Calendar.MONTH, 1);
+		Date exp = cal.getTime();
+
+		String token = doc.jwtBuilder()
+				.addHeader(Header.TYPE, Header.JWT_TYPE)
+				.addHeader(Header.CONTENT_TYPE, "json")
+				.addHeader("library", "Elastos DID")
+				.addHeader("version", "1.0")
+				.setSubject("JwtTest")
+				.setId("0")
+				.setAudience("Test cases")
+				.setIssuedAt(iat)
+				.setExpiration(exp)
+				.setNotBefore(nbf)
+				.claim("foo", "bar")
+				.signWith("#key2", TestConfig.storePass)
+				.compact();
+
+		assertNotNull(token);
+		printJwt(token);
+
+		Thread.sleep(1000);
+
+		// The JWT token is expired
+		JwtParser jp = new JwtParserBuilder().build();
+		assertThrows(ExpiredJwtException.class, () -> {
+			jp.parseClaimsJws(token);
+		});
+	}
+
 	private JsonNode loadJson(String json) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
@@ -863,28 +909,4 @@ public class JwtTest {
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.convertValue(map, JsonNode.class);
 	}
-
-	@Test
-	public void jwsTest1()
-			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		String token = "eyJhbGciOiAiRVMyNTYiLCAia2lkIjogImRpZDplbGFzdG9zOmlXRkFVWWhUYTM1YzFmUGUzaUNKdmloWkh4NnF1dW1ueW0ja2V5MiIsICJ0eXAiOiAianNvbiIsICJsaWJyYXJ5IjogIkVsYXN0b3MgRElEIiwgInZlcnNpb24iOiAiMS4wIn0.eyJpc3MiOiAiZGlkOmVsYXN0b3M6aVdGQVVZaFRhMzVjMWZQZTNpQ0p2aWhaSHg2cXV1bW55bSIsICJzdWIiOiAiSnd0VGVzdCIsICJqdGkiOiAiMCIsICJhdWQiOiAiVGVzdCBjYXNlcyIsICJpYXQiOiAxNTg5NDQwODY4LCAiZXhwIjogMTY1MjQ4NDA2OCwgIm5iZiI6IDE1NTc3ODk2NjgsICJmb28iOiAiYmFyIn0.di6Un28nCwkmQs3Rsl9jS4UNVy8ySpT36ODVA6NilRLO224txnLyma6h6WY5CMqZx2ikGa82bPtaGySetDnaLw";
-		printJwt(token);
-
-		// The JWT parser not related with a DID document
-		JwtParser jp = new JwtParserBuilder().build();
-		Jws<Claims> jwt = jp.parseClaimsJws(token);
-		assertNotNull(jwt);
-
-		String s = jwt.getSignature();
-		assertNotNull(s);
-	}
-
 }
