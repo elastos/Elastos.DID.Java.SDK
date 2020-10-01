@@ -56,7 +56,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * Credential might also include an identifier and metadata to
  * describe properties of the credential.
  */
-public class VerifiableCredential extends DIDObject {
+public class VerifiableCredential implements DIDEntry {
 	/**
 	 * The 'id' filed name of subject
 	 */
@@ -72,6 +72,7 @@ public class VerifiableCredential extends DIDObject {
 
 	private final static String DEFAULT_PUBLICKEY_TYPE = Constants.DEFAULT_PUBLICKEY_TYPE;
 
+	private DIDURL id;
 	private List<String> types;
 	private DID issuer;
 	private Date issuanceDate;
@@ -326,7 +327,6 @@ public class VerifiableCredential extends DIDObject {
 	 * Constructs the empty Credentila object.
 	 */
 	protected VerifiableCredential() {
-		super(null, null);
 	}
 
 	/**
@@ -345,40 +345,33 @@ public class VerifiableCredential extends DIDObject {
 		this.proof = vc.proof;
 	}
 
-	@Override
-	protected void setId(DIDURL id) {
-		super.setId(id);
-	}
+	/**
+	 * Get the credential id.
+	 *
+	 * @return the identifier
+	 */
 
 	@Override
-	public String getType() {
-		StringBuilder builder = new StringBuilder(512);
-		boolean initial = true;
-
-		builder.append("[");
-
-		if (types != null) {
-			for (String t : types) {
-				if (initial)
-					initial = false;
-				else
-					builder.append(", ");
-
-				builder.append(t);
-			}
-		}
-
-		builder.append("]");
-
-		return builder.toString();
+	public DIDURL getId() {
+		return id;
 	}
 
 	/**
-	 * Get the types of Credential Proof.
+	 * Set the credential id.
+	 *
+	 * @param id the identifier.
+	 */
+	protected void setId(DIDURL id) {
+		this.id = id;
+	}
+
+	/**
+	 * Get the credential type.
 	 *
 	 * @return the type array
 	 */
-	public String[] getTypes() {
+	@Override
+	public String[] getType() {
 		return types == null ? null : types.toArray(new String[0]);
 	}
 
@@ -761,7 +754,7 @@ public class VerifiableCredential extends DIDObject {
 		if (getId() == null) // TODO:
 			throw new MalformedCredentialException("Missing id.");
 
-		if (getTypes() == null) // TODO:
+		if (getType() == null) // TODO:
 			throw new MalformedCredentialException("Missing types.");
 
 		if (subject == null || subject.id == null)

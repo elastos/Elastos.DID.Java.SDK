@@ -111,7 +111,9 @@ public class DIDDocument {
      * other cryptographic operations, which are the basis for purposes such as
      * authentication or establishing secure communication with service endpoints.
 	 */
-	public static class PublicKey extends DIDObject {
+	public static class PublicKey implements DIDEntry {
+		private DIDURL id;
+		private String type;
 		private DID controller;
 		private String keyBase58;
 		private boolean authenticationKey;
@@ -126,7 +128,8 @@ public class DIDDocument {
 		 * @param keyBase58 the string from encoded base58 of public key
 		 */
 		protected PublicKey(DIDURL id, String type, DID controller, String keyBase58) {
-			super(id, type);
+			this.id = id;
+			this.type = type;
 			this.controller = controller;
 			this.keyBase58 = keyBase58;
 		}
@@ -140,6 +143,26 @@ public class DIDDocument {
 		 */
 		protected PublicKey(DIDURL id, DID controller, String keyBase58) {
 			this(id, DEFAULT_PUBLICKEY_TYPE, controller, keyBase58);
+		}
+
+		/**
+		 * Get the PublicKey id.
+		 *
+		 * @return the identifier
+		 */
+		@Override
+		public DIDURL getId() {
+			return id;
+		}
+
+		/**
+		 * Get the PublicKey type.
+		 *
+		 * @return the type string
+		 */
+		@Override
+		public String getType() {
+			return type;
 		}
 
 		/**
@@ -289,7 +312,9 @@ public class DIDDocument {
      * wishes to advertise, including decentralized identity management services
      * for further discovery, authentication, authorization, or interaction.
 	 */
-	public static class Service extends DIDObject {
+	public static class Service implements DIDEntry {
+		private DIDURL id;
+		private String type;
 		private String endpoint;
 
 		/**
@@ -300,8 +325,29 @@ public class DIDDocument {
 		 * @param endpoint the address of service point
 		 */
 		protected Service(DIDURL id, String type, String endpoint) {
-			super(id, type);
+			this.id = id;
+			this.type = type;
 			this.endpoint = endpoint;
+		}
+
+		/**
+		 * Get the service id.
+		 *
+		 * @return the identifier
+		 */
+		@Override
+		public DIDURL getId() {
+			return id;
+		}
+
+		/**
+		 * Get the service type.
+		 *
+		 * @return the type string
+		 */
+		@Override
+		public String getType() {
+			return type;
 		}
 
 		/**
@@ -549,8 +595,8 @@ public class DIDDocument {
 		this.setMetadata(metadata);
 	}
 
-	private <K, V extends DIDObject> int getEntryCount(Map<K, V> entries,
-			Function<DIDObject, Boolean> filter) {
+	private <K, V extends DIDEntry> int getEntryCount(Map<K, V> entries,
+			Function<DIDEntry, Boolean> filter) {
 		if (entries == null || entries.isEmpty())
 			return 0;
 
@@ -567,12 +613,12 @@ public class DIDDocument {
 		}
 	}
 
-	private <K, V extends DIDObject> int getEntryCount(Map<K, V> entries) {
+	private <K, V extends DIDEntry> int getEntryCount(Map<K, V> entries) {
 		return getEntryCount(entries, null);
 	}
 
-	private <K, V extends DIDObject> List<V> getEntries(Map<K, V> entries,
-			Function<DIDObject, Boolean> filter) {
+	private <K, V extends DIDEntry> List<V> getEntries(Map<K, V> entries,
+			Function<DIDEntry, Boolean> filter) {
 		List<V> lst = new ArrayList<V>(entries == null ? 0 : entries.size());
 
 		if (entries != null && !entries.isEmpty()) {
@@ -589,18 +635,18 @@ public class DIDDocument {
 		return lst;
 	}
 
-	private <K, V extends DIDObject> List<V> getEntries(Map<K, V> entries) {
+	private <K, V extends DIDEntry> List<V> getEntries(Map<K, V> entries) {
 		return getEntries(entries, null);
 	}
 
-	private <K, V extends DIDObject> V getEntry(Map<K, V> entries, K id) {
+	private <K, V extends DIDEntry> V getEntry(Map<K, V> entries, K id) {
 		if (entries == null || entries.isEmpty())
 			return null;
 
 		return entries.get(id);
 	}
 
-	private <K, V extends DIDObject> void removeEntry(Map<K, V> entries, K id) {
+	private <K, V extends DIDEntry> void removeEntry(Map<K, V> entries, K id) {
 		if (entries == null || entries.isEmpty() || !entries.containsKey(id))
 			throw new DIDObjectNotExistException(id.toString() + " not exists.");
 
@@ -1282,7 +1328,7 @@ public class DIDDocument {
 			if (type != null) {
 				// Credential's type is a list.
 				VerifiableCredential vc = (VerifiableCredential)v;
-				if (!Arrays.asList(vc.getTypes()).contains(type))
+				if (!Arrays.asList(vc.getType()).contains(type))
 					return false;
 			}
 
