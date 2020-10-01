@@ -47,9 +47,9 @@ public class VerifiableCredentialTest {
 
 		assertEquals(new DIDURL(test.getSubject(), "email"), vc.getId());
 
-		assertTrue(Arrays.asList(vc.getTypes()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getTypes()).contains("InternetAccountCredential"));
-		assertTrue(Arrays.asList(vc.getTypes()).contains("EmailCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("EmailCredential"));
 
 		assertEquals(issuer.getSubject(), vc.getIssuer());
 		assertEquals(test.getSubject(), vc.getSubject().getId());
@@ -76,8 +76,8 @@ public class VerifiableCredentialTest {
 
 		assertEquals(new DIDURL(test.getSubject(), "profile"), vc.getId());
 
-		assertTrue(Arrays.asList(vc.getTypes()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getTypes()).contains("SelfProclaimedCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
 
 		assertEquals(test.getSubject(), vc.getIssuer());
 		assertEquals(test.getSubject(), vc.getSubject().getId());

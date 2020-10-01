@@ -132,9 +132,9 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(Arrays.asList(vc.getTypes()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getTypes()).contains("InternetAccountCredential"));
-		assertFalse(Arrays.asList(vc.getTypes()).contains("SelfProclaimedCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
+		assertFalse(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(testDoc.getSubject(), vc.getSubject().getId());
@@ -176,9 +176,9 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(Arrays.asList(vc.getTypes()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getTypes()).contains("SelfProclaimedCredential"));
-		assertFalse(Arrays.asList(vc.getTypes()).contains("InternetAccountCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
+		assertFalse(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());
@@ -215,9 +215,9 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(Arrays.asList(vc.getTypes()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getTypes()).contains("SelfProclaimedCredential"));
-		assertFalse(Arrays.asList(vc.getTypes()).contains("InternetAccountCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
+		assertFalse(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());
