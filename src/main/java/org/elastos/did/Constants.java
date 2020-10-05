@@ -29,6 +29,11 @@ import java.util.TimeZone;
  */
 public final class Constants {
     /**
+     * The deprecated default PublicKey type
+     */
+	public final static String _DEFAULT_PUBLICKEY_TYPE = "secp256r1";
+
+    /**
      * The default PublicKey type
      */
 	public final static String DEFAULT_PUBLICKEY_TYPE = "ECDSAsecp256r1";

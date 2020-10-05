@@ -22,6 +22,12 @@
 
 package org.elastos.did.exception;
 
+import org.elastos.did.CredentialMetadata;
+import org.elastos.did.DIDDocument;
+import org.elastos.did.DIDMetadata;
+import org.elastos.did.VerifiableCredential;
+import org.elastos.did.VerifiablePresentation;
+
 /**
  * Thrown to indicate that the DID syntax has error.
  */
@@ -61,5 +67,27 @@ public class DIDSyntaxException extends DIDException {
      */
     public DIDSyntaxException(Throwable cause) {
         super(cause);
+    }
+
+    public static DIDSyntaxException instantiateFor(
+    		Class<?> clazz, String message, Throwable cause) {
+    	DIDSyntaxException ex;
+
+    	String fqn = clazz.getCanonicalName();
+    	if (fqn.equals(DIDDocument.class.getCanonicalName()))
+    		ex = new MalformedDocumentException(message, cause);
+    	else if (fqn.equals(VerifiableCredential.class.getCanonicalName()))
+    		ex = new MalformedCredentialException(message, cause);
+    	else if (fqn.equals(VerifiablePresentation.class.getCanonicalName()))
+    		ex = new MalformedPresentationException(message, cause);
+    	else if (fqn.equals(DIDMetadata.class.getCanonicalName()) ||
+    			fqn.equals(CredentialMetadata.class.getCanonicalName()))
+    		ex = new MalformedMetadataException(message, cause);
+    	else if (fqn.endsWith("Export"))
+    		ex = new MalformedExportDataException(message, cause);
+    	else
+    		ex = new DIDSyntaxException(message, cause);
+
+    	return ex;
     }
 }

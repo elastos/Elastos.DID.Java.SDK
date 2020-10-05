@@ -22,13 +22,10 @@
 
 package org.elastos.did;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -38,70 +35,95 @@ import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
+import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.InvalidKeyException;
-import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedPresentationException;
-import org.elastos.did.util.JsonHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * A Presentation can be targeted to a specific verifier by using a Linked Data
  * Proof that includes a nonce and realm.
- * <p>
+ *
  * This also helps prevent a verifier from reusing a verifiable presentation as
  * their own.
  */
-public class VerifiablePresentation {
+@JsonPropertyOrder({ VerifiablePresentation.TYPE,
+	VerifiablePresentation.CREATED,
+	VerifiablePresentation.VERIFIABLE_CREDENTIAL,
+	VerifiablePresentation.PROOF })
+public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 	/**
-	 * The Presentation type string
+	 * Default presentation type
 	 */
 	public final static String DEFAULT_PRESENTATION_TYPE = "VerifiablePresentation";
 
-	private final static String TYPE = "type";
-	private final static String VERIFIABLE_CREDENTIAL = "verifiableCredential";
-	private final static String CREATED = "created";
-	private final static String PROOF = "proof";
-	private final static String NONCE = "nonce";
-	private final static String REALM = "realm";
-	private final static String VERIFICATION_METHOD = "verificationMethod";
-	private final static String SIGNATURE = "signature";
+	protected final static String TYPE = "type";
+	protected final static String VERIFIABLE_CREDENTIAL = "verifiableCredential";
+	protected final static String CREATED = "created";
+	protected final static String PROOF = "proof";
+	protected final static String NONCE = "nonce";
+	protected final static String REALM = "realm";
+	protected final static String VERIFICATION_METHOD = "verificationMethod";
+	protected final static String SIGNATURE = "signature";
 
-	private final static String DEFAULT_PUBLICKEY_TYPE = Constants.DEFAULT_PUBLICKEY_TYPE;
+	private static final Logger log = LoggerFactory.getLogger(VerifiablePresentation.class);
 
+	@JsonProperty(TYPE)
 	private String type;
+	@JsonProperty(CREATED)
 	private Date created;
 	private Map<DIDURL, VerifiableCredential> credentials;
+	@JsonProperty(VERIFIABLE_CREDENTIAL)
+	private List<VerifiableCredential> _credential;
+	@JsonProperty(PROOF)
+	@JsonInclude(Include.NON_NULL)
 	private Proof proof;
 
 	/**
-	 * The class records the Proof content of Presentation.
+	 * The proof information for verifiable presentation.
+	 *
+	 * The default proof type is ECDSAsecp256r1.
 	 */
+	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, REALM, NONCE, SIGNATURE })
 	static public class Proof {
+		@JsonProperty(TYPE)
 		private String type;
+		@JsonProperty(VERIFICATION_METHOD)
+		@JsonSerialize(using = DIDURL.NormalizedSerializer.class)
 		private DIDURL verificationMethod;
+		@JsonProperty(REALM)
 		private String realm;
+		@JsonProperty(NONCE)
 		private String nonce;
+		@JsonProperty(SIGNATURE)
 		private String signature;
 
 		/**
-		 * Constructs the Presentation Proof with the given value.
+		 * Create the proof object with the given values.
 		 *
 		 * @param type the type string
 		 * @param method the sign key
-		 * @param realm where is Presentation use
+		 * @param realm where is presentation use
 		 * @param nonce the nonce string
 		 * @param signature the signature string
 		 */
-		protected Proof(String type, DIDURL method, String realm,
-				String nonce, String signature) {
-			this.type = type;
+		@JsonCreator
+		protected Proof(@JsonProperty(value = TYPE) String type,
+				@JsonProperty(value = VERIFICATION_METHOD, required = true) DIDURL method,
+				@JsonProperty(value = REALM, required = true) String realm,
+				@JsonProperty(value = NONCE, required = true) String nonce,
+				@JsonProperty(value = SIGNATURE, required = true) String signature) {
+			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
 			this.verificationMethod = method;
 			this.realm = realm;
 			this.nonce = nonce;
@@ -109,7 +131,7 @@ public class VerifiablePresentation {
 		}
 
 		/**
-		 * Constructs the Presentation Proof with the given value.
+		 * Create the proof object with the given values.
 		 *
 		 * @param method the sign key
 		 * @param realm where is Presentation use
@@ -118,11 +140,11 @@ public class VerifiablePresentation {
 		 */
 		protected Proof(DIDURL method, String realm,
 				String nonce, String signature) {
-			this(DEFAULT_PUBLICKEY_TYPE, method, realm, nonce, signature);
+			this(Constants.DEFAULT_PUBLICKEY_TYPE, method, realm, nonce, signature);
 		}
 
 		/**
-		 * Get type of Presentation.
+		 * Get presentation type.
 		 *
 		 * @return the type string
 		 */
@@ -165,68 +187,6 @@ public class VerifiablePresentation {
 	    public String getSignature() {
 	    	return signature;
 	    }
-
-	    /**
-	     * Get Presentation Proof from input content.
-	     *
-	     * @param node the JsonNode content
-	     * @param ref the owner of Presentation
-	     * @return the Credential Proof object
-	     * @throws MalformedPresentationException the presentation is malformed.
-	     */
-		protected static Proof fromJson(JsonNode node, DID ref)
-				throws MalformedPresentationException {
-			Class<MalformedPresentationException> clazz = MalformedPresentationException.class;
-
-			String type = JsonHelper.getString(node, TYPE, true,
-					DEFAULT_PUBLICKEY_TYPE, "presentation proof type", clazz);
-
-			DIDURL method = JsonHelper.getDidUrl(node, VERIFICATION_METHOD, ref,
-					"presentation proof verificationMethod", clazz);
-
-			String realm = JsonHelper.getString(node, REALM,
-					false, null, "presentation proof realm", clazz);
-
-			String nonce = JsonHelper.getString(node, NONCE,
-					false, null, "presentation proof nonce", clazz);
-
-			String signature = JsonHelper.getString(node, SIGNATURE,
-					false, null, "presentation proof signature", clazz);
-
-			return new Proof(type, method, realm, nonce, signature);
-		}
-
-		/**
-		 * Get json content of Presentation.
-		 *
-		 * @param generator the JsonGenerator handle
-		 * @throws IOException write field to json string failed.
-		 */
-		protected void toJson(JsonGenerator generator) throws IOException {
-			generator.writeStartObject();
-
-			// type
-			generator.writeFieldName(TYPE);
-			generator.writeString(type);
-
-			// method
-			generator.writeFieldName(VERIFICATION_METHOD);
-			generator.writeString(verificationMethod.toString());
-
-			// realm
-			generator.writeFieldName(REALM);
-			generator.writeString(realm);
-
-			// nonce
-			generator.writeFieldName(NONCE);
-			generator.writeString(nonce);
-
-			// signature
-			generator.writeFieldName(SIGNATURE);
-			generator.writeString(signature);
-
-			generator.writeEndObject();
-		}
 	}
 
 	/**
@@ -235,10 +195,20 @@ public class VerifiablePresentation {
 	protected VerifiablePresentation() {
 		type = DEFAULT_PRESENTATION_TYPE;
 
-		Calendar cal = Calendar.getInstance(Constants.UTC);
-		created = cal.getTime();
-
 		credentials = new TreeMap<DIDURL, VerifiableCredential>();
+	}
+
+	/**
+	 * Copy constructor.
+	 *
+	 * @param vp the source VerifiablePresentation object.
+	 */
+	protected VerifiablePresentation(VerifiablePresentation vp) {
+		this.type = vp.type;
+		this.created = vp.created;
+		this.credentials = vp.credentials;
+		this._credential = vp._credential;
+		this.proof = vp.proof;
 	}
 
 	/**
@@ -251,30 +221,12 @@ public class VerifiablePresentation {
 	}
 
 	/**
-	 * Set the type of Presentation.
-	 *
-	 * @param type the type string
-	 */
-	protected void setType(String type) {
-		this.type = type;
-	}
-
-	/**
 	 * Get the time created Presentation.
 	 *
 	 * @return the time created
 	 */
 	public Date getCreated() {
 		return created;
-	}
-
-	/**
-	 * Set the time created Presentation.
-	 *
-	 * @param created the time created
-	 */
-	protected void setCreated(Date created) {
-		this.created = created;
 	}
 
 	/**
@@ -292,20 +244,7 @@ public class VerifiablePresentation {
 	 * @return the Credential array
 	 */
 	public List<VerifiableCredential> getCredentials() {
-		List<VerifiableCredential> lst = new ArrayList<VerifiableCredential>(
-				credentials.size());
-
-		lst.addAll(credentials.values());
-		return lst;
-	}
-
-	/**
-	 * Add the Credential to Presentation.
-	 *
-	 * @param credential the Credential object
-	 */
-	protected void addCredential(VerifiableCredential credential) {
-		credentials.put(credential.getId(), credential);
+		return new ArrayList<VerifiableCredential>(credentials.values());
 	}
 
 	/**
@@ -333,6 +272,15 @@ public class VerifiablePresentation {
 	}
 
 	/**
+	 * Get Presentation Proof object.
+	 *
+	 * @return the Presentation Proof object
+	 */
+	public Proof getProof() {
+		return proof;
+	}
+
+	/**
 	 * Get signer of Presentation.
 	 *
 	 * @return the signer's DID
@@ -342,15 +290,52 @@ public class VerifiablePresentation {
 	}
 
 	/**
+	 * Sanitize routine before sealing or after deserialization.
+	 *
+	 * @param withProof check the proof object or not
+	 * @throws MalformedPresentationException if the presentation object is invalid
+	 */
+	@Override
+	protected void sanitize(boolean withProof) throws MalformedPresentationException {
+		if (type == null || type.length() == 0)
+			throw new MalformedPresentationException("Missing presentation type");
+
+		if (created == null)
+			throw new MalformedPresentationException("Missing presentation create timestamp");
+
+		if (withProof && _credential != null && _credential.size() > 0) {
+			for (VerifiableCredential vc : _credential) {
+				try {
+					vc.sanitize();
+				} catch (DIDSyntaxException e) {
+					throw new MalformedPresentationException(e.getMessage(), e);
+				}
+
+				if (credentials.containsKey(vc.getId()))
+					throw new MalformedPresentationException("Duplicated credential id: " + vc.getId());
+
+				credentials.put(vc.getId(), vc);
+			}
+		}
+
+		this._credential = new ArrayList<VerifiableCredential>(credentials.values());
+
+		if (withProof) {
+			if (proof == null)
+				throw new MalformedPresentationException("Missing presentation proof");
+
+			if (proof.getVerificationMethod().getDid() == null)
+				throw new MalformedPresentationException("Incomplete presentation verification method");
+		}
+	}
+
+	/**
 	 * Check whether the Presentation is genuine or not.
 	 *
-	 * @return the returned value is true if the Presentation is genuine;
-	 *         the returned value is false if the Presentation is not genuine.
-	 * @throws DIDResolveException get the lastest document from chain failed.
-	 * @throws DIDBackendException get content from net failed.
+	 * @return whether the Credential object is genuine
+	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public boolean isGenuine()
-			throws DIDResolveException, DIDBackendException {
+	public boolean isGenuine() throws DIDResolveException {
 		DID signer = getSigner();
 		DIDDocument signerDoc = signer.resolve();
 		if (signerDoc == null)
@@ -361,7 +346,7 @@ public class VerifiablePresentation {
 			return false;
 
 		// Unsupported public key type;
-		if (!proof.getType().equals(DEFAULT_PUBLICKEY_TYPE))
+		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 			return false;
 
 		// Credential should signed by authentication key.
@@ -377,23 +362,32 @@ public class VerifiablePresentation {
 				return false;
 		}
 
-		String json = toJson(true);
+		VerifiablePresentation vp = new VerifiablePresentation(this);
+		vp.proof = null;
+		String json;
+		try {
+			json = vp.serialize(true);
+		} catch (DIDSyntaxException ignore) {
+			log.error("INTERAL - serialize presentation", ignore);
+			return false;
+		}
+
 		return signerDoc.verify(proof.getVerificationMethod(),
 				proof.getSignature(), json.getBytes(),
 				proof.getRealm().getBytes(), proof.getNonce().getBytes());
 	}
 
 	/**
-	 * Check whether the Presentation is genuine or not with asynchronous mode.
+	 * Check whether the presentation is genuine or not in asynchronous mode.
 	 *
-	 * @return the new CompletableStage, the result is the boolean interface for
-	 *         genuine judgement if success; null otherwise.
+	 * @return the new CompletableStage if success; null otherwise.
+	 *         The boolean result is genuine or not
 	 */
 	public CompletableFuture<Boolean> isGenuineAsync() {
 		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
 			try {
 				return isGenuine();
-			} catch (DIDBackendException e) {
+			} catch (DIDResolveException e) {
 				throw new CompletionException(e);
 			}
 		});
@@ -402,14 +396,12 @@ public class VerifiablePresentation {
 	}
 
 	/**
-	 * Check whether the Presentation is valid or not.
+	 * Check whether the presentation is valid or not.
 	 *
-	 * @return the returned value is true if the Presentation is valid;
-	 *         the returned value is false if the Presentation is not valid.
-	 * @throws DIDResolveException get the lastest document from chain failed.
-	 * @throws DIDBackendException get content from net failed.
+	 * @return whether the Credential object is valid
+	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public boolean isValid() throws DIDResolveException, DIDBackendException {
+	public boolean isValid() throws DIDResolveException {
 		DID signer = getSigner();
 		DIDDocument signerDoc = signer.resolve();
 
@@ -418,7 +410,7 @@ public class VerifiablePresentation {
 			return false;
 
 		// Unsupported public key type;
-		if (!proof.getType().equals(DEFAULT_PUBLICKEY_TYPE))
+		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 			return false;
 
 		// Credential should signed by authentication key.
@@ -434,23 +426,32 @@ public class VerifiablePresentation {
 				return false;
 		}
 
-		String json = toJson(true);
+		VerifiablePresentation vp = new VerifiablePresentation(this);
+		vp.proof = null;
+		String json;
+		try {
+			json = vp.serialize(true);
+		} catch (DIDSyntaxException ignore) {
+			log.error("INTERAL - serialize presentation", ignore);
+			return false;
+		}
+
 		return signerDoc.verify(proof.getVerificationMethod(),
 				proof.getSignature(), json.getBytes(),
 				proof.getRealm().getBytes(), proof.getNonce().getBytes());
 	}
 
 	/**
-	 * Check whether the Presentation is valid or not with asynchronous mode.
+	 * Check whether the Credential is valid in asynchronous mode.
 	 *
-	 * @return the new CompletableStage, the result is the boolean interface for
-	 *         valid judgement if success; null otherwise.
+	 * @return the new CompletableStage if success; null otherwise.
+	 * 	       The boolean result is valid or not
 	 */
 	public CompletableFuture<Boolean> isValidAsync() {
 		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
 			try {
 				return isValid();
-			} catch (DIDBackendException e) {
+			} catch (DIDResolveException e) {
 				throw new CompletionException(e);
 			}
 		});
@@ -459,291 +460,126 @@ public class VerifiablePresentation {
 	}
 
 	/**
-	 * Get Presentation Proof object.
+	 * Parse a VerifiablePresentation object from from a string JSON
+	 * representation.
 	 *
-	 * @return the Presentation Proof object
+	 * @param content the string JSON content for building the object
+	 * @return the VerifiablePresentation object
+	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public Proof getProof() {
-		return proof;
+	public static VerifiablePresentation parse(String content)
+			throws DIDSyntaxException {
+		return parse(content, VerifiablePresentation.class);
 	}
 
 	/**
-	 * Set Presentation Proof object.
+	 * Parse a VerifiablePresentation object from from a Reader object.
 	 *
-	 * @param proof the Presentation Proof object.
+	 * @param src Reader object used to read JSON content for building the object
+	 * @return the VerifiablePresentation object
+	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws IOException if an IO error occurs
 	 */
-	protected void setProof(Proof proof) {
-		this.proof = proof;
-	}
-
-	private void parse(Reader reader) throws MalformedPresentationException {
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			JsonNode node = mapper.readTree(reader);
-			parse(node);
-		} catch (IOException e) {
-			throw new MalformedPresentationException("Parse presentation error.", e);
-		}
-	}
-
-	private void parse(InputStream in) throws MalformedPresentationException {
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			JsonNode node = mapper.readTree(in);
-			parse(node);
-		} catch (IOException e) {
-			throw new MalformedPresentationException("Parse presentation error.", e);
-		}
-	}
-
-	private void parse(String json) throws MalformedPresentationException {
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			JsonNode node = mapper.readTree(json);
-			parse(node);
-		} catch (IOException e) {
-			throw new MalformedPresentationException("Parse presentation error.", e);
-		}
-	}
-
-	private void parse(JsonNode presentation) throws MalformedPresentationException {
-		Class<MalformedPresentationException> clazz = MalformedPresentationException.class;
-
-		String type = JsonHelper.getString(presentation, TYPE,
-				false, null, "presentation type", clazz);
-		if (!type.contentEquals(DEFAULT_PRESENTATION_TYPE))
-			throw new MalformedPresentationException("Unknown presentation type: " + type);
-		else
-			setType(type);
-
-		Date created = JsonHelper.getDate(presentation, CREATED,
-				false, null, "presentation created date", clazz);
-		setCreated(created);
-
-		JsonNode node = presentation.get(VERIFIABLE_CREDENTIAL);
-		if (node == null)
-			throw new MalformedPresentationException("Missing credentials.");
-		parseCredential(node);
-
-		node = presentation.get(PROOF);
-		if (node == null)
-			throw new MalformedPresentationException("Missing credentials.");
-		Proof proof = Proof.fromJson(node, null);
-		setProof(proof);
-	}
-
-	private void parseCredential(JsonNode node)
-			throws MalformedPresentationException {
-		if (!node.isArray())
-			throw new MalformedPresentationException(
-					"Invalid verifiableCredentia, should be an array.");
-
-		if (node.size() == 0)
-			throw new MalformedPresentationException(
-					"Invalid verifiableCredentia, should not be an empty array.");
-
-		for (int i = 0; i < node.size(); i++) {
-			try {
-				VerifiableCredential vc = VerifiableCredential.fromJson(node.get(i));
-				addCredential(vc);
-			} catch (MalformedCredentialException e) {
-				throw new MalformedPresentationException(e.getMessage(), e);
-			}
-		}
+	public static VerifiablePresentation parse(Reader src)
+			throws DIDSyntaxException, IOException {
+		return parse(src, VerifiablePresentation.class);
 	}
 
 	/**
-	 * Get Presentation from input content.
+	 * Parse a VerifiablePresentation object from from a InputStream object.
 	 *
-	 * @param reader the Reader content
-	 * @return the Presentation object
-	 * @throws MalformedPresentationException the Presentation is malfromed.
+	 * @param src InputStream object used to read JSON content for building the object
+	 * @return the VerifiablePresentation object
+	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws IOException if an IO error occurs
 	 */
-	public static VerifiablePresentation fromJson(Reader reader)
-			throws MalformedPresentationException {
-		if (reader == null)
-			throw new IllegalArgumentException();
-
-		VerifiablePresentation vp = new VerifiablePresentation();
-		vp.parse(reader);
-
-		return vp;
+	public static VerifiablePresentation parse(InputStream src)
+			throws DIDSyntaxException, IOException {
+		return parse(src, VerifiablePresentation.class);
 	}
 
 	/**
-	 * Get Presentation from input content.
+	 * Parse a VerifiablePresentation object from from a File object.
 	 *
-	 * @param in the InputStream content
-	 * @return the Presentation object
-	 * @throws MalformedPresentationException the Presentation is malfromed.
+	 * @param src File object used to read JSON content for building the object
+	 * @return the VerifiablePresentation object
+	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws IOException if an IO error occurs
 	 */
-	public static VerifiablePresentation fromJson(InputStream in)
-			throws MalformedPresentationException {
-		if (in == null)
-			throw new IllegalArgumentException();
-
-		VerifiablePresentation vp = new VerifiablePresentation();
-		vp.parse(in);
-
-		return vp;
+	public static VerifiablePresentation parse(File src)
+			throws DIDSyntaxException, IOException {
+		return parse(src, VerifiablePresentation.class);
 	}
 
 	/**
-	 * Get Presentation from input content.
+	 * Parse a VerifiablePresentation object from from a string JSON
+	 * representation.
 	 *
-	 * @param json the json string content
-	 * @return the Presentation object
-	 * @throws MalformedPresentationException the Presentation is malfromed.
+	 * @param content the string JSON content for building the object
+	 * @return the VerifiablePresentation object
+	 * @throws DIDSyntaxException if a parse error occurs
+	 * @deprecated use {@link #parse(String))} instead
 	 */
-	public static VerifiablePresentation fromJson(String json)
-			throws MalformedPresentationException {
-		if (json == null || json.isEmpty())
-			throw new IllegalArgumentException();
-
-		VerifiablePresentation vp = new VerifiablePresentation();
-		vp.parse(json);
-
-		return vp;
+	@Deprecated
+	public static VerifiablePresentation fromJson(String content)
+			throws DIDSyntaxException {
+		return parse(content);
 	}
 
 	/**
-	 * Get json content of Presentation.
+	 * Parse a VerifiablePresentation object from from a Reader object.
 	 *
-	 * Normalized serialization order:
-	 * - type
-	 * - created
-	 * - verifiableCredential (ordered by name(case insensitive/ascending)
-	 * + proof
-	 *   - type
-	 *   - verificationMethod
-	 *   - realm
-	 *   - nonce
-	 *   - signature
-	 *
-	 * @param generator the JsonGenerator handle
-	 * @param forSign = true, only generate json string without proof;
-	 *        forSign = false, getnerate json string the whole Presentation.
-	 * @throws IOException  write field to json string failed.
+	 * @param src Reader object used to read JSON content for building the object
+	 * @return the VerifiablePresentation object
+	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws IOException if an IO error occurs
+	 * @deprecated use {@link #parse(Reader))} instead
 	 */
-	protected void toJson(JsonGenerator generator, boolean forSign)
-			throws IOException {
-		generator.writeStartObject();
-
-		// type
-		generator.writeFieldName(TYPE);
-		generator.writeString(type);
-
-		// created
-		generator.writeFieldName(CREATED);
-		generator.writeString(JsonHelper.formatDate(created));
-
-		// credentials
-		generator.writeFieldName(VERIFIABLE_CREDENTIAL);
-		generator.writeStartArray();
-		for (VerifiableCredential vc : credentials.values())
-			vc.toJson(generator, null, true);
-		generator.writeEndArray();
-
-		// proof
-		if (!forSign ) {
-			generator.writeFieldName(PROOF);
-			proof.toJson(generator);
-		}
-
-		generator.writeEndObject();
+	@Deprecated
+	public static VerifiablePresentation fromJson(Reader src)
+			throws DIDSyntaxException, IOException {
+		return parse(src);
 	}
 
 	/**
-	 * Get json content of Presentation.
+	 * Parse a VerifiablePresentation object from from a InputStream object.
 	 *
-	 * @param out the Writer handle
-	 * @param forSign = true, only generate json string without proof;
-	 *        forSign = false, getnerate json string the whole Presentation.
-	 * @throws IOException write field to json string failed.
+	 * @param src InputStream object used to read JSON content for building the object
+	 * @return the VerifiablePresentation object
+	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws IOException if an IO error occurs
+	 * @deprecated use {@link #parse(InputStream))} instead
 	 */
-	protected void toJson(Writer out, boolean forSign) throws IOException {
-		JsonFactory factory = new JsonFactory();
-		JsonGenerator generator = factory.createGenerator(out);
-		toJson(generator, forSign);
-		generator.close();
+	@Deprecated
+	public static VerifiablePresentation fromJson(InputStream src)
+			throws DIDSyntaxException, IOException {
+		return parse(src);
 	}
 
 	/**
-	 * Get json content of Presentation.
+	 * Parse a VerifiablePresentation object from from a File object.
 	 *
-	 * @param out the Writer handle
-	 * @throws IOException write field to json string failed.
+	 * @param src File object used to read JSON content for building the object
+	 * @return the VerifiablePresentation object
+	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws IOException if an IO error occurs
+	 * @deprecated use {@link #parse(File))} instead
 	 */
-	public void toJson(Writer out) throws IOException {
-		if (out == null)
-			throw new IllegalArgumentException();
-
-		toJson(out, false);
+	@Deprecated
+	public static VerifiablePresentation fromJson(File src)
+			throws DIDSyntaxException, IOException {
+		return parse(src);
 	}
 
 	/**
-	 * Get json content of Presentation.
-	 *
-	 * @param out the OutputStream handle
-	 * @param charsetName encode using this charset
-	 * @throws IOException write field to json string failed.
-	 */
-	public void toJson(OutputStream out, String charsetName)
-			throws IOException {
-		if (out == null)
-			throw new IllegalArgumentException();
-
-		if (charsetName == null)
-			charsetName = "UTF-8";
-
-		toJson(new OutputStreamWriter(out, charsetName));
-	}
-
-	/**
-	 * Get json content of Presentation.
-	 *
-	 * @param out the OutputStream handle
-	 * @throws IOException write field to json string failed.
-	 */
-	public void toJson(OutputStream out) throws IOException {
-		if (out == null)
-			throw new IllegalArgumentException();
-
-		toJson(new OutputStreamWriter(out));
-	}
-
-	/**
-	 * Get json content of Presentation.
-	 *
-	 * @param forSign = true, only generate json string without proof;
-	 *        forSign = false, getnerate json string the whole Presentation.
-	 * @return the Presentation's json string
-	 */
-	protected String toJson(boolean forSign) {
-		Writer out = new StringWriter(4096);
-
-		try {
-			toJson(out, forSign);
-		} catch (IOException ignore) {
-		}
-
-		return out.toString();
-	}
-
-	@Override
-	public String toString() {
-		return toJson(false);
-	}
-
-	/**
-	 * Get Presential Builder.
+	 * Get the Builder object to create presentation for DID.
 	 *
 	 * @param did the owner of Presentation.
 	 * @param signKey the key to sign
 	 * @param store the specified DIDStore
-	 * @return the Presential Builder object
-	 * @throws DIDStoreException can not load DID.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @return the presentation Builder object
+	 * @throws DIDStoreException can not load DID
+	 * @throws InvalidKeyException if the signKey is invalid
 	 */
 	public static Builder createFor(DID did, DIDURL signKey, DIDStore store)
 			throws DIDStoreException, InvalidKeyException {
@@ -752,7 +588,7 @@ public class VerifiablePresentation {
 
 		DIDDocument signer = store.loadDid(did);
 		if (signer == null)
-			throw new DIDStoreException("Can not load DID.");
+			throw new DIDStoreException("Can not load DID."); // TODO: checkme!!!
 
 		if (signKey == null) {
 			signKey = signer.getDefaultPublicKey();
@@ -768,13 +604,13 @@ public class VerifiablePresentation {
 	}
 
 	/**
-	 * Get Presential Builder.
+	 * Get the Builder object to create presentation for DID.
 	 *
-	 * @param did the owner of Presentation.
+	 * @param did the owner of the presentation
 	 * @param store the specified DIDStore
-	 * @return the Presential Builder object
-	 * @throws DIDStoreException can not load DID.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @return the presentation Builder object
+	 * @throws DIDStoreException can not load DID
+	 * @throws InvalidKeyException if the signKey is invalid
 	 */
 	public static Builder createFor(DID did, DIDStore store)
 			throws DIDStoreException, InvalidKeyException {
@@ -782,7 +618,7 @@ public class VerifiablePresentation {
 	}
 
 	/**
-     * A Presentation Builder to modify Presentation elements.
+     * Presentation Builder object to create presentation.
 	 */
 	public static class Builder {
 		private DIDDocument signer;
@@ -792,7 +628,7 @@ public class VerifiablePresentation {
 		private VerifiablePresentation presentation;
 
 		/**
-		 * Constructs the Presentation Builder with the given value.
+		 * Create a Builder object with issuer information.
 		 *
 		 * @param signer the Presentation's signer
 		 * @param signKey the key to sign Presentation
@@ -806,7 +642,7 @@ public class VerifiablePresentation {
 		/**
 		 * Add Credentials to Presentation.
 		 *
-		 * @param credentials the Credentail array
+		 * @param credentials the credentials array
 		 * @return the Presentation Builder object
 		 */
 		public Builder credentials(VerifiableCredential ... credentials) {
@@ -818,12 +654,16 @@ public class VerifiablePresentation {
 					throw new IllegalArgumentException("Credential '" +
 							vc.getId() + "' not match with requested did");
 
+				if (presentation.credentials.containsKey(vc.getId()))
+					throw new IllegalArgumentException("Credential '" +
+							vc.getId() + "' already exists in the presentation");
+
 				// TODO: integrity check?
 				// if (!vc.isValid())
 				//	throw new IllegalArgumentException("Credential '" +
 				//			vc.getId() + "' is invalid");
 
-				presentation.addCredential(vc);
+				presentation.credentials.put(vc.getId(), vc);
 			}
 
 			return this;
@@ -864,26 +704,41 @@ public class VerifiablePresentation {
 		}
 
 		/**
-		 * Finish the Presentation editting.
+		 * Seal the presentation object, attach the generated proof to the
+		 * presentation.
 		 *
 		 * @param storepass the password for DIDStore
 		 * @return the Presentation object
-		 * @throws DIDStoreException there is no an authentication key to sign.
+		 * @throws MalformedPresentationException if the presentation is invalid
+		 * @throws DIDStoreException if an error occurs when access DID store
 		 */
 		public VerifiablePresentation seal(String storepass)
-				throws DIDStoreException {
+				throws MalformedPresentationException, DIDStoreException  {
 			if (presentation == null)
 				throw new IllegalStateException("Presentation already sealed.");
 
 			if (storepass == null || storepass.isEmpty())
 				throw new IllegalArgumentException();
 
-			String json = presentation.toJson(true);
+			Calendar cal = Calendar.getInstance(Constants.UTC);
+			presentation.created = cal.getTime();
+
+			presentation.sanitize(false);
+
+			String json;
+			try {
+				json = presentation.serialize(true);
+			} catch (DIDSyntaxException e) {
+				// should never happen
+				// re-throw it after up-cast
+				throw (MalformedPresentationException)e;
+			}
+
 			String sig = signer.sign(signKey, storepass, json.getBytes(),
 					realm.getBytes(), nonce.getBytes());
 
 			Proof proof = new Proof(signKey, realm, nonce, sig);
-			presentation.setProof(proof);
+			presentation.proof = proof;
 
 			// Invalidate builder
 			VerifiablePresentation vp = presentation;

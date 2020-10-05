@@ -54,7 +54,7 @@ public class VerifiableCredentialTest {
 		assertEquals(issuer.getSubject(), vc.getIssuer());
 		assertEquals(test.getSubject(), vc.getSubject().getId());
 
-		assertEquals("john@example.com", vc.getSubject().getPropertyAsString("email"));
+		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
 
 		assertNotNull(vc.getIssuanceDate());
 		assertNotNull(vc.getExpirationDate());
@@ -82,12 +82,12 @@ public class VerifiableCredentialTest {
 		assertEquals(test.getSubject(), vc.getIssuer());
 		assertEquals(test.getSubject(), vc.getSubject().getId());
 
-		assertEquals("John", vc.getSubject().getPropertyAsString("name"));
-		assertEquals("Male", vc.getSubject().getPropertyAsString("gender"));
-		assertEquals("Singapore", vc.getSubject().getPropertyAsString("nation"));
-		assertEquals("English", vc.getSubject().getPropertyAsString("language"));
-		assertEquals("john@example.com", vc.getSubject().getPropertyAsString("email"));
-		assertEquals("@john", vc.getSubject().getPropertyAsString("twitter"));
+		assertEquals("John", vc.getSubject().getProperty("name"));
+		assertEquals("Male", vc.getSubject().getProperty("gender"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("English", vc.getSubject().getProperty("language"));
+		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
+		assertEquals("@john", vc.getSubject().getProperty("twitter"));
 
 		assertNotNull(vc.getIssuanceDate());
 		assertNotNull(vc.getExpirationDate());
@@ -103,10 +103,10 @@ public class VerifiableCredentialTest {
 		TestData testData = new TestData();
 
 		String json = testData.loadTwitterVcNormalizedJson();
-		VerifiableCredential normalized = VerifiableCredential.fromJson(json);
+		VerifiableCredential normalized = VerifiableCredential.parse(json);
 
 		json = testData.loadTwitterVcCompactJson();
-		VerifiableCredential compact = VerifiableCredential.fromJson(json);
+		VerifiableCredential compact = VerifiableCredential.parse(json);
 
 		VerifiableCredential vc = testData.loadTwitterCredential();
 
@@ -114,9 +114,12 @@ public class VerifiableCredentialTest {
 		assertEquals(testData.loadTwitterVcNormalizedJson(), compact.toString(true));
 		assertEquals(testData.loadTwitterVcNormalizedJson(), vc.toString(true));
 
+		// Don't check the compact mode anymore
+		/*
 		assertEquals(testData.loadTwitterVcCompactJson(), normalized.toString(false));
 		assertEquals(testData.loadTwitterVcCompactJson(), compact.toString(false));
 		assertEquals(testData.loadTwitterVcCompactJson(), vc.toString(false));
+		*/
 	}
 
 	@Test
@@ -125,10 +128,10 @@ public class VerifiableCredentialTest {
 		TestData testData = new TestData();
 
 		String json = testData.loadProfileVcNormalizedJson();
-		VerifiableCredential normalized = VerifiableCredential.fromJson(json);
+		VerifiableCredential normalized = VerifiableCredential.parse(json);
 
 		json = testData.loadProfileVcCompactJson();
-		VerifiableCredential compact = VerifiableCredential.fromJson(json);
+		VerifiableCredential compact = VerifiableCredential.parse(json);
 
 		VerifiableCredential vc = testData.loadProfileCredential();
 
@@ -136,9 +139,12 @@ public class VerifiableCredentialTest {
 		assertEquals(testData.loadProfileVcNormalizedJson(), compact.toString(true));
 		assertEquals(testData.loadProfileVcNormalizedJson(), vc.toString(true));
 
+		// Don't check the compact mode anymore
+		/*
 		assertEquals(testData.loadProfileVcCompactJson(), normalized.toString(false));
 		assertEquals(testData.loadProfileVcCompactJson(), compact.toString(false));
 		assertEquals(testData.loadProfileVcCompactJson(), vc.toString(false));
+		*/
 	}
 
 	@Test
@@ -147,10 +153,10 @@ public class VerifiableCredentialTest {
 		TestData testData = new TestData();
 
 		String json = testData.loadJsonVcNormalizedJson();
-		VerifiableCredential normalized = VerifiableCredential.fromJson(json);
+		VerifiableCredential normalized = VerifiableCredential.parse(json);
 
 		json = testData.loadJsonVcCompactJson();
-		VerifiableCredential compact = VerifiableCredential.fromJson(json);
+		VerifiableCredential compact = VerifiableCredential.parse(json);
 
 		VerifiableCredential vc = testData.loadJsonCredential();
 
@@ -158,8 +164,11 @@ public class VerifiableCredentialTest {
 		assertEquals(testData.loadJsonVcNormalizedJson(), compact.toString(true));
 		assertEquals(testData.loadJsonVcNormalizedJson(), vc.toString(true));
 
+		// Don't check the compact mode anymore
+		/*
 		assertEquals(testData.loadJsonVcCompactJson(), normalized.toString(false));
 		assertEquals(testData.loadJsonVcCompactJson(), compact.toString(false));
 		assertEquals(testData.loadJsonVcCompactJson(), vc.toString(false));
+		*/
 	}
 }

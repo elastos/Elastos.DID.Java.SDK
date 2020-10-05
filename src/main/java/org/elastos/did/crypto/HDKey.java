@@ -220,41 +220,41 @@ public class HDKey {
     }
 
 	private static byte[] getRedeemScript(byte[] pk) {
-        byte[] script = new byte[35];
-        script[0] = 33;
-        System.arraycopy(pk, 0, script, 1, 33);
-        script[34] = PADDING_STANDARD;
-        return script;
+		byte[] script = new byte[35];
+		script[0] = 33;
+		System.arraycopy(pk, 0, script, 1, 33);
+		script[34] = PADDING_STANDARD;
+		return script;
 	}
 
 	private static byte[] sha256Ripemd160(byte[] input) {
-        byte[] sha256 = new byte[32];
+		byte[] sha256 = new byte[32];
 
-        SHA256Digest sha256Digest = new SHA256Digest();
-        sha256Digest.update(input, 0, input.length);
-        sha256Digest.doFinal(sha256, 0);
+		SHA256Digest sha256Digest = new SHA256Digest();
+		sha256Digest.update(input, 0, input.length);
+		sha256Digest.doFinal(sha256, 0);
 
-        RIPEMD160Digest digest = new RIPEMD160Digest();
-        digest.update(sha256, 0, sha256.length);
-        byte[] out = new byte[20];
-        digest.doFinal(out, 0);
-        return out;
-    }
+		RIPEMD160Digest digest = new RIPEMD160Digest();
+		digest.update(sha256, 0, sha256.length);
+		byte[] out = new byte[20];
+		digest.doFinal(out, 0);
+		return out;
+	}
 
 	private static byte[] getBinAddress(byte[] pk) {
-        byte[] script = getRedeemScript(pk);
+		byte[] script = getRedeemScript(pk);
 
-        byte[] hash = sha256Ripemd160(script);
-        byte[] programHash = new byte[hash.length + 1];
-        programHash[0] = PADDING_IDENTITY;
-        System.arraycopy(hash, 0, programHash, 1, hash.length);
+		byte[] hash = sha256Ripemd160(script);
+		byte[] programHash = new byte[hash.length + 1];
+		programHash[0] = PADDING_IDENTITY;
+		System.arraycopy(hash, 0, programHash, 1, hash.length);
 
-        hash = Sha256Hash.hashTwice(programHash);
-        byte[] binAddress = new byte[programHash.length+4];
-        System.arraycopy(programHash, 0, binAddress, 0, programHash.length);
-        System.arraycopy(hash, 0, binAddress, programHash.length, 4);
+		hash = Sha256Hash.hashTwice(programHash);
+		byte[] binAddress = new byte[programHash.length + 4];
+		System.arraycopy(programHash, 0, binAddress, 0, programHash.length);
+		System.arraycopy(hash, 0, binAddress, programHash.length, 4);
 
-        return binAddress;
+		return binAddress;
 	}
 
 	public byte[] getBinAddress() {
@@ -262,7 +262,7 @@ public class HDKey {
 	}
 
 	public String getAddress() {
-        return Base58.encode(getBinAddress());
+		return Base58.encode(getBinAddress());
 	}
 
 	public static String toAddress(byte[] pk) {

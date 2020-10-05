@@ -129,15 +129,15 @@ public class VerifiablePresentationTest {
 		assertTrue(vp.isGenuine());
 		assertTrue(vp.isValid());
 
-		VerifiablePresentation normalized = VerifiablePresentation.fromJson(
+		VerifiablePresentation normalized = VerifiablePresentation.parse(
 				testData.loadPresentationNormalizedJson());
 		assertNotNull(normalized);
 		assertTrue(normalized.isGenuine());
 		assertTrue(normalized.isValid());
 
 		assertEquals(testData.loadPresentationNormalizedJson(),
-				normalized.toString());
+				normalized.toString(true));
 		assertEquals(testData.loadPresentationNormalizedJson(),
-				vp.toString());
+				vp.toString(true));
 	}
 }

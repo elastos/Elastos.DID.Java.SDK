@@ -22,15 +22,28 @@
 
 package org.elastos.did;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.elastos.did.DIDObject.SerializeContext;
+import org.elastos.did.VerifiableCredential.Proof;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.MalformedDIDURLException;
-import org.elastos.did.metadata.CredentialMetadataImpl;
 import org.elastos.did.parser.DIDURLBaseListener;
 import org.elastos.did.parser.DIDURLParser;
 import org.elastos.did.parser.ParserHelper;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
  * DID URL defines by the did-url rule, refers to a URL that begins with a DID
@@ -39,6 +52,8 @@ import org.elastos.did.parser.ParserHelper;
  * A DID URL always identifies the resource to be located.
  * DIDURL includes DID and Url fragment by user defined.
  */
+@JsonSerialize(using = DIDURL.Serializer.class)
+@JsonDeserialize(using = DIDURL.Deserializer.class)
 public class DIDURL implements Comparable<DIDURL> {
 	private DID did;
 	private Map<String, String> parameters;
@@ -46,7 +61,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	private Map<String, String> query;
 	private String fragment;
 
-	private CredentialMetadataImpl metadata;
+	private CredentialMetadata metadata;
 
 	/**
 	 * Constructs the DIDURl with the given value.
@@ -55,13 +70,13 @@ public class DIDURL implements Comparable<DIDURL> {
 	 * @param url the DIDURl string
 	 */
 	public DIDURL(DID base, String url) {
-		if (base == null || url == null || url.isEmpty())
+		if (url == null || url.isEmpty())
 			throw new IllegalArgumentException();
 
 		if (url != null) {
 			if (url.startsWith("did:")) {
 				ParserHelper.parse(url, false, new Listener());
-				if (!getDid().equals(base))
+				if (base != null && !getDid().equals(base))
 					throw new IllegalArgumentException("Mismatched arguments");
 
 				return;
@@ -106,7 +121,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	 *
 	 * @param did the DID Object
 	 */
-	public void setDid(DID did) {
+	protected void setDid(DID did) {
 		if (did == null)
 			throw new IllegalArgumentException();
 
@@ -266,7 +281,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	 *
 	 * @param metadata the meta data
 	 */
-	protected void setMetadata(CredentialMetadataImpl metadata) {
+	protected void setMetadata(CredentialMetadata metadata) {
 		this.metadata = metadata;
 	}
 
@@ -277,7 +292,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	 */
 	public CredentialMetadata getMetadata() {
 		if (metadata == null)
-			metadata = new CredentialMetadataImpl();
+			metadata = new CredentialMetadata();
 
 		return metadata;
 	}
@@ -292,10 +307,10 @@ public class DIDURL implements Comparable<DIDURL> {
 			metadata.getStore().storeCredentialMetadata(this.getDid(), this, metadata);
 	}
 
-	@Override
-	public String toString() {
+	public String toString(DID base) {
 		StringBuilder builder = new StringBuilder(512);
-		builder.append(did);
+		if (did != null && (base == null || !did.equals(base)))
+			builder.append(did);
 
 		if (parameters != null && !parameters.isEmpty())
 			builder.append(";").append(getParameters());
@@ -310,6 +325,11 @@ public class DIDURL implements Comparable<DIDURL> {
 			builder.append("#").append(getFragment());
 
 		return builder.toString();
+	}
+
+	@Override
+	public String toString() {
+		return toString(null);
 	}
 
 	@Override
@@ -359,6 +379,69 @@ public class DIDURL implements Comparable<DIDURL> {
 		hash += fragment == null ? 0 : fragment.hashCode();
 
 		return hash;
+	}
+
+	static class Serializer extends StdSerializer<DIDURL> {
+		private static final long serialVersionUID = -5560151545310632117L;
+
+		public Serializer() {
+	        this(null);
+	    }
+
+	    public Serializer(Class<DIDURL> t) {
+	        super(t);
+	    }
+
+		@Override
+		public void serialize(DIDURL id, JsonGenerator gen,
+				SerializerProvider provider) throws IOException {
+			SerializeContext context = (SerializeContext)provider.getConfig()
+					.getAttributes().getAttribute(DIDObject.CONTEXT_KEY);
+			// TODO: checkme
+			DID did = context.isNormalized() ? null : id.getDid();
+			gen.writeString(id.toString(did));
+		}
+	}
+
+	static class NormalizedSerializer extends StdSerializer<DIDURL> {
+		private static final long serialVersionUID = -5560151545310632117L;
+
+		public NormalizedSerializer() {
+	        this(null);
+	    }
+
+	    public NormalizedSerializer(Class<DIDURL> t) {
+	        super(t);
+	    }
+
+		@Override
+		public void serialize(DIDURL id, JsonGenerator gen,
+				SerializerProvider provider) throws IOException {
+			gen.writeString(id.toString());
+		}
+	}
+
+    static class Deserializer extends StdDeserializer<DIDURL> {
+		private static final long serialVersionUID = -3649714336670800081L;
+
+		public Deserializer() {
+	        this(null);
+	    }
+
+	    public Deserializer(Class<Proof> t) {
+	        super(t);
+	    }
+
+	    @Override
+		public DIDURL deserialize(JsonParser p, DeserializationContext ctxt)
+				throws IOException, JsonProcessingException {
+	    	JsonToken token = p.getCurrentToken();
+	    	if (!token.equals(JsonToken.VALUE_STRING))
+	    		throw ctxt.weirdStringException(p.getText(), DIDURL.class, "Invalid DIDURL");
+
+	    	String url = p.getText().trim();
+	    	return new DIDURL(null, url);
+	    }
 	}
 
 	class Listener extends DIDURLBaseListener {

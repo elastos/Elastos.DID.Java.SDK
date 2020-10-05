@@ -364,7 +364,7 @@ public class DIDStoreTest {
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	doc.getMetadataImpl().setPreviousSignature(null);
+    	doc.getMetadata().setPreviousSignature(null);
     	doc.saveMetadata();
 
     	// Update again
@@ -414,7 +414,7 @@ public class DIDStoreTest {
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	doc.getMetadataImpl().setSignature(null);
+    	doc.getMetadata().setSignature(null);
     	doc.saveMetadata();
 
     	// Update again
@@ -448,8 +448,8 @@ public class DIDStoreTest {
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	doc.getMetadataImpl().setPreviousSignature(null);
-    	doc.getMetadataImpl().setSignature(null);
+    	doc.getMetadata().setPreviousSignature(null);
+    	doc.getMetadata().setSignature(null);
     	doc.saveMetadata();
 
     	// Update
@@ -483,8 +483,8 @@ public class DIDStoreTest {
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	doc.getMetadataImpl().setPreviousSignature(null);
-    	doc.getMetadataImpl().setSignature(null);
+    	doc.getMetadata().setPreviousSignature(null);
+    	doc.getMetadata().setSignature(null);
     	doc.saveMetadata();
 
     	// Update
@@ -534,7 +534,7 @@ public class DIDStoreTest {
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	doc.getMetadataImpl().setPreviousSignature("1234567890");
+    	doc.getMetadata().setPreviousSignature("1234567890");
     	doc.saveMetadata();
 
     	// Update
@@ -583,7 +583,7 @@ public class DIDStoreTest {
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	doc.getMetadataImpl().setSignature("1234567890");
+    	doc.getMetadata().setSignature("1234567890");
     	doc.saveMetadata();
 
     	// Update
@@ -617,7 +617,7 @@ public class DIDStoreTest {
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	doc.getMetadataImpl().setPreviousSignature("1234567890");
+    	doc.getMetadata().setPreviousSignature("1234567890");
     	doc.saveMetadata();
 
     	// Update
@@ -652,7 +652,7 @@ public class DIDStoreTest {
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	doc.getMetadataImpl().setSignature("1234567890");
+    	doc.getMetadata().setSignature("1234567890");
     	doc.saveMetadata();
 
     	// Update
@@ -1346,7 +1346,7 @@ public class DIDStoreTest {
 
 	private void createDataForPerformanceTest(DIDStore store)
 			throws DIDException {
-		Map<String, String> props= new HashMap<String, String>();
+		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nation", "Singapore");
@@ -1359,7 +1359,7 @@ public class DIDStoreTest {
         	DIDDocument doc = store.newDid(alias, TestConfig.storePass);
 
         	Issuer issuer = new Issuer(doc);
-        	Issuer.CredentialBuilder cb = issuer.issueFor(doc.getSubject());
+        	VerifiableCredential.Builder cb = issuer.issueFor(doc.getSubject());
         	VerifiableCredential vc = cb.id("cred-1")
         			.type("BasicProfileCredential", "SelfProclaimedCredential")
         			.properties(props)

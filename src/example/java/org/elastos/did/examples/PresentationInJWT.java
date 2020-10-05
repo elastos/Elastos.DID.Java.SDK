@@ -35,7 +35,6 @@ import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.Issuer;
-import org.elastos.did.Issuer.CredentialBuilder;
 import org.elastos.did.Mnemonic;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
@@ -147,7 +146,7 @@ public class PresentationInJWT {
 		}
 
 		public VerifiableCredential issueDiplomaFor(Student student) throws DIDException {
-			Map<String, String> subject = new HashMap<String, String>();
+			Map<String, Object> subject = new HashMap<String, Object>();
 			subject.put("name", student.getName());
 			subject.put("degree", "bachelor");
 			subject.put("institute", "Computer Science");
@@ -156,7 +155,7 @@ public class PresentationInJWT {
 			Calendar exp = Calendar.getInstance();
 			exp.add(Calendar.YEAR, 5);
 
-			CredentialBuilder cb = issuer.issueFor(student.getDid());
+			VerifiableCredential.Builder cb = issuer.issueFor(student.getDid());
 			VerifiableCredential vc = cb.id("diploma")
 				.type("DiplomaCredential")
 				.properties(subject)
@@ -181,7 +180,7 @@ public class PresentationInJWT {
 		}
 
 		public VerifiableCredential createSelfProclaimedCredential() throws DIDException {
-			Map<String, String> subject = new HashMap<String, String>();
+			Map<String, Object> subject = new HashMap<String, Object>();
 			subject.put("name", getName());
 			subject.put("gender", gender);
 			subject.put("email", email);
@@ -189,7 +188,7 @@ public class PresentationInJWT {
 			Calendar exp = Calendar.getInstance();
 			exp.add(Calendar.YEAR, 1);
 
-			CredentialBuilder cb = new Issuer(getDocument()).issueFor(getDid());
+			VerifiableCredential.Builder cb = new Issuer(getDocument()).issueFor(getDid());
 			VerifiableCredential vc = cb.id("profile")
 				.type("ProfileCredential", "SelfProclaimedCredential")
 				.properties(subject)

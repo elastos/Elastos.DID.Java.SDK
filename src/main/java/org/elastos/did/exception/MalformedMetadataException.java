@@ -25,40 +25,40 @@ package org.elastos.did.exception;
 /**
  * Thrown to indicate that the meta data is malformed.
  */
-public class MalformedMetaException extends DIDStoreException {
+public class MalformedMetadataException extends DIDSyntaxException {
 	private static final long serialVersionUID = 3633945564100769501L;
 
 	/**
-	 * Constructs the MalformedMetaException.
+	 * Constructs the MalformedMetadataException.
 	 */
-	public MalformedMetaException() {
+	public MalformedMetadataException() {
         super();
     }
 
 	/**
-	 * Constructs the MalformedMetaException with the given message.
+	 * Constructs the MalformedMetadataException with the given message.
 	 *
 	 * @param message the message string
 	 */
-    public MalformedMetaException(String message) {
+    public MalformedMetadataException(String message) {
         super(message);
     }
     /**
-     * Constructs the MalformedMetaException with the given message and the reason.
+     * Constructs the MalformedMetadataException with the given message and the reason.
      *
      * @param message the message string
      * @param cause the reason
      */
-    public MalformedMetaException(String message, Throwable cause) {
+    public MalformedMetadataException(String message, Throwable cause) {
         super(message, cause);
     }
 
     /**
-     * Constructs the MalformedMetaException with the given reason.
+     * Constructs the MalformedMetadataException with the given reason.
      *
      * @param cause the reason
      */
-    public MalformedMetaException(Throwable cause) {
+    public MalformedMetadataException(Throwable cause) {
         super(cause);
     }
 }

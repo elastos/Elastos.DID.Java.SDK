@@ -362,9 +362,9 @@ public class IDChainOperationsTest {
 		DID did = doc.getSubject();
 
 		Issuer selfIssuer = new Issuer(doc);
-		Issuer.CredentialBuilder cb = selfIssuer.issueFor(did);
+		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
 
-		Map<String, String> props= new HashMap<String, String>();
+		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nation", "Singapore");
@@ -491,9 +491,9 @@ public class IDChainOperationsTest {
 		DID did = doc.getSubject();
 
 		Issuer selfIssuer = new Issuer(doc);
-		Issuer.CredentialBuilder cb = selfIssuer.issueFor(did);
+		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
 
-		Map<String, String> props= new HashMap<String, String>();
+		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nation", "Singapore");

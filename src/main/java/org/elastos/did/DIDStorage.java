@@ -26,8 +26,6 @@ import java.util.List;
 
 import org.elastos.did.exception.DIDStorageException;
 import org.elastos.did.exception.DIDStoreException;
-import org.elastos.did.metadata.CredentialMetadataImpl;
-import org.elastos.did.metadata.DIDMetadataImpl;
 
 /**
  * The interface for DIDStorage to support different file system.
@@ -145,7 +143,7 @@ public interface DIDStorage {
 	 * @param metadata the meta data
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public void storeDidMetadata(DID did, DIDMetadataImpl metadata) throws DIDStorageException;
+	public void storeDidMetadata(DID did, DIDMetadata metadata) throws DIDStorageException;
 
 	/**
 	 * Load DID Metadata.
@@ -154,7 +152,7 @@ public interface DIDStorage {
 	 * @return the meta data
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public DIDMetadataImpl loadDidMetadata(DID did) throws DIDStorageException;
+	public DIDMetadata loadDidMetadata(DID did) throws DIDStorageException;
 
 	/**
 	 * Store DID Document.
@@ -212,7 +210,7 @@ public interface DIDStorage {
      * @param metadata the meta data for Credential
      * @throws DIDStorageException DIDStorage error.
 	 */
-	public void storeCredentialMetadata(DID did, DIDURL id, CredentialMetadataImpl metadata)
+	public void storeCredentialMetadata(DID did, DIDURL id, CredentialMetadata metadata)
 			throws DIDStorageException;
 
 	/**
@@ -223,7 +221,7 @@ public interface DIDStorage {
 	 * @return the meta data for Credential
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public CredentialMetadataImpl loadCredentialMetadata(DID did, DIDURL id)
+	public CredentialMetadata loadCredentialMetadata(DID did, DIDURL id)
 			throws DIDStorageException;
 
 	/**

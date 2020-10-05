@@ -157,7 +157,7 @@ public final class TestData {
 			throws DIDException, IOException {
 		Reader input = new InputStreamReader(getClass()
 				.getClassLoader().getResourceAsStream("testdata/" + fileName));
-		DIDDocument doc = DIDDocument.fromJson(input);
+		DIDDocument doc = DIDDocument.parse(input);
 		input.close();
 
 		if (store != null) {
@@ -207,7 +207,7 @@ public final class TestData {
 			throws DIDException, IOException {
 		Reader input = new InputStreamReader(getClass()
 				.getClassLoader().getResourceAsStream("testdata/" + fileName));
-		VerifiableCredential vc = VerifiableCredential.fromJson(input);
+		VerifiableCredential vc = VerifiableCredential.parse(input);
 		input.close();
 
 		if (store != null)
@@ -261,7 +261,7 @@ public final class TestData {
 		if (testVp == null) {
 			Reader input = new InputStreamReader(getClass()
 					.getClassLoader().getResourceAsStream("testdata/vp.json"));
-			testVp = VerifiablePresentation.fromJson(input);
+			testVp = VerifiablePresentation.parse(input);
 			input.close();
 		}
 

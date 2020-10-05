@@ -112,7 +112,7 @@ public class IssuerTest {
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 		DIDDocument testDoc = testData.loadTestDocument();
 
-		Map<String, String> props= new HashMap<String, String>();
+		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nation", "Singapore");
@@ -122,7 +122,7 @@ public class IssuerTest {
 
 		Issuer issuer = new Issuer(issuerDoc);
 
-		Issuer.CredentialBuilder cb = issuer.issueFor(testDoc.getSubject());
+		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
 		VerifiableCredential vc = cb.id("testCredential")
 			.type("BasicProfileCredential", "InternetAccountCredential")
 			.properties(props)
@@ -139,12 +139,12 @@ public class IssuerTest {
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(testDoc.getSubject(), vc.getSubject().getId());
 
-		assertEquals("John", vc.getSubject().getPropertyAsString("name"));
-		assertEquals("Male", vc.getSubject().getPropertyAsString("gender"));
-		assertEquals("Singapore", vc.getSubject().getPropertyAsString("nation"));
-		assertEquals("English", vc.getSubject().getPropertyAsString("language"));
-		assertEquals("john@example.com", vc.getSubject().getPropertyAsString("email"));
-		assertEquals("@john", vc.getSubject().getPropertyAsString("twitter"));
+		assertEquals("John", vc.getSubject().getProperty("name"));
+		assertEquals("Male", vc.getSubject().getProperty("gender"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("English", vc.getSubject().getProperty("language"));
+		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
+		assertEquals("@john", vc.getSubject().getProperty("twitter"));
 
 		assertFalse(vc.isExpired());
 		assertTrue(vc.isGenuine());
@@ -158,7 +158,7 @@ public class IssuerTest {
 
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 
-		Map<String, String> props= new HashMap<String, String>();
+		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Testing Issuer");
 		props.put("nation", "Singapore");
 		props.put("language", "English");
@@ -166,7 +166,7 @@ public class IssuerTest {
 
 		Issuer issuer = new Issuer(issuerDoc);
 
-		Issuer.CredentialBuilder cb = issuer.issueFor(issuerDoc.getSubject());
+		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
 		VerifiableCredential vc = cb.id("myCredential")
 			.type("BasicProfileCredential", "SelfProclaimedCredential")
 			.properties(props)
@@ -183,10 +183,10 @@ public class IssuerTest {
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());
 
-		assertEquals("Testing Issuer", vc.getSubject().getPropertyAsString("name"));
-		assertEquals("Singapore", vc.getSubject().getPropertyAsString("nation"));
-		assertEquals("English", vc.getSubject().getPropertyAsString("language"));
-		assertEquals("issuer@example.com", vc.getSubject().getPropertyAsString("email"));
+		assertEquals("Testing Issuer", vc.getSubject().getProperty("name"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("English", vc.getSubject().getProperty("language"));
+		assertEquals("issuer@example.com", vc.getSubject().getProperty("email"));
 
 		assertFalse(vc.isExpired());
 		assertTrue(vc.isGenuine());
@@ -205,7 +205,7 @@ public class IssuerTest {
 
 		Issuer issuer = new Issuer(issuerDoc);
 
-		Issuer.CredentialBuilder cb = issuer.issueFor(issuerDoc.getSubject());
+		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
 		VerifiableCredential vc = cb.id("myCredential")
 			.type("BasicProfileCredential", "SelfProclaimedCredential")
 			.properties(props)
@@ -222,10 +222,10 @@ public class IssuerTest {
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());
 
-		assertEquals("Technologist", vc.getSubject().getPropertyAsString("Description"));
-		assertEquals("Jason Holtslander", vc.getSubject().getPropertyAsString("alternateName"));
-		assertEquals("1234", vc.getSubject().getPropertyAsString("numberValue"));
-		assertEquals("9.5", vc.getSubject().getPropertyAsString("doubleValue"));
+		assertEquals("Technologist", vc.getSubject().getProperty("Description"));
+		assertEquals("Jason Holtslander", vc.getSubject().getProperty("alternateName"));
+		assertEquals(1234, vc.getSubject().getProperty("numberValue"));
+		assertEquals(9.5, vc.getSubject().getProperty("doubleValue"));
 
 		assertNotNull(vc.getSubject().getProperties());
 
