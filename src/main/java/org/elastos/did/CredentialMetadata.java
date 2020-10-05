@@ -22,48 +22,64 @@
 
 package org.elastos.did;
 
-import java.util.Date;
-
 /**
  * The interface for Credential's meta data(include alias name, last modified time for Credential
  * and user's extra element).
  */
-public interface CredentialMetadata {
+/**
+ * The class defines the implement of Credential Meta data.
+ */
+public class CredentialMetadata extends AbstractMetadata implements Cloneable {
+	private final static String ALIAS = RESERVED_PREFIX + "alias";
+
+	/**
+	 * Construct the empty CredentialMetadataImpl.
+	 */
+	protected CredentialMetadata() {
+		this(null);
+	}
+
+	/**
+	 * Construct the CredentialMetadataImpl with the given store.
+	 *
+	 * @param store the specified DIDStore
+	 */
+	protected CredentialMetadata(DIDStore store) {
+		super(store);
+	}
+
 	/**
 	 * Set alias for credential.
 	 *
-	 * @param alias
-	 * alias string
+	 * @param alias alias string
 	 */
-	public void setAlias(String alias);
+	public void setAlias(String alias) {
+		put(ALIAS, alias);
+	}
 
 	/**
 	 * Get alias from credential.
 	 *
 	 * @return alias string
 	 */
-	public String getAlias();
+	public String getAlias() {
+		return (String)get(ALIAS);
+	}
 
-	/**
-	 * Get last modified time for credential.
-	 *
-	 * @return last modified time
-	 */
-	public Date getLastModified();
-
-	/**
-	 * Set Extra element for credential.
-	 *
-	 * @param key the key string
-	 * @param value the value string
-	 */
-	public void setExtra(String key, String value);
-
-	/**
-	 * Get Extra string according to the key string.
-	 *
-	 * @param key the key string
-	 * @return the extra string matched key string
-	 */
-	public String getExtra(String key);
+    /**
+     * Returns a shallow copy of this instance: the keys and values themselves
+     * are not cloned.
+     *
+     * @return a shallow copy of this object
+     */
+	@Override
+	public CredentialMetadata clone() {
+		try {
+			return (CredentialMetadata)super.clone();
+		} catch (CloneNotSupportedException ignore) {
+			ignore.printStackTrace();
+			return null;
+		}
+    }
 }
+

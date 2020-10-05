@@ -171,7 +171,7 @@ public class DIDTest {
 		DIDBackend.setResolveHandle((d) -> {
 			try {
 				if (d.equals(did))
-					return DIDDocument.fromJson(json);
+					return DIDDocument.parse(json);
 			} catch (Exception e) {
 			}
 

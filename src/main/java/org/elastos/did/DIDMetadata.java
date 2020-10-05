@@ -22,60 +22,142 @@
 
 package org.elastos.did;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * The interface for DIDMetaData to store for other information about DID except DIDDocument information.
+ * The class defines the implement of DID Metadata.
  */
-public interface DIDMetadata {
+public class DIDMetadata extends AbstractMetadata implements Cloneable {
+	private final static String TXID = RESERVED_PREFIX + "txid";
+	private final static String PREV_SIGNATURE = RESERVED_PREFIX + "prevSignature";
+	private final static String SIGNATURE = RESERVED_PREFIX + "signature";
+	private final static String PUBLISHED = RESERVED_PREFIX + "published";
+	private final static String ALIAS = RESERVED_PREFIX + "alias";
+	private final static String DEACTIVATED = RESERVED_PREFIX + "deactivated";
+
+	private final static SimpleDateFormat dateFormat =
+			new SimpleDateFormat(Constants.DATE_FORMAT);
+	/**
+	 * Constructs the empty DIDMetadataImpl.
+	 */
+	protected DIDMetadata() {
+		this(null);
+	}
+
+	/**
+	 * Constructs the empty DIDMetadataImpl with the given store.
+	 *
+	 * @param store the specified DIDStore
+	 */
+	protected DIDMetadata(DIDStore store) {
+		super(store);
+	}
+
 	/**
 	 * Set alias for DID.
 	 *
 	 * @param alias the alias string
 	 */
-	public void setAlias(String alias);
+	public void setAlias(String alias) {
+		put(ALIAS, alias);
+	}
 
 	/**
 	 * Get alias from DID.
 	 *
 	 * @return the alias string
 	 */
-	public String getAlias();
+	public String getAlias() {
+		return (String)get(ALIAS);
+	}
+
+	/**
+	 * Set transaction id into DIDMetadata.
+	 *
+	 * @param txid the transaction id string
+	 */
+	protected void setTransactionId(String txid) {
+		put(TXID, txid);
+	}
 
 	/**
 	 * Get the last transaction id.
 	 *
 	 * @return the transaction string
 	 */
-	public String getTransactionId();
+	public String getTransactionId() {
+		return (String)get(TXID);
+	}
+
+	/**
+	 * Set previous signature into DIDMetadata.
+	 *
+	 * @param signature the signature string
+	 */
+	protected void setPreviousSignature(String signature) {
+		put(PREV_SIGNATURE, signature);
+	}
 
 	/**
 	 * Get the document signature from the previous transaction.
 	 *
 	 * @return the signature string
 	 */
-	public String getPreviousSignature();
+	public String getPreviousSignature() {
+		return (String)get(PREV_SIGNATURE);
+	}
+
+	/**
+	 * Set signature into DIDMetadata.
+	 *
+	 * @param signature the signature string
+	 */
+	protected void setSignature(String signature) {
+		put(SIGNATURE, signature);
+	}
 
 	/**
 	 * Get the document signature from the lastest transaction.
 	 *
 	 * @return the signature string
 	 */
-	public String getSignature();
+	public String getSignature() {
+		return (String)get(SIGNATURE);
+	}
+
+	/**
+	 * Set published time into DIDMetadata.
+	 *
+	 * @param timestamp the time published
+	 */
+	protected void setPublished(Date timestamp) {
+		put(PUBLISHED, dateFormat.format(timestamp));
+	}
 
 	/**
 	 * Get the time of the lastest published transaction.
 	 *
 	 * @return the published time
 	 */
-	public Date getPublished();
+	public Date getPublished() {
+		try {
+			String published = (String)get(PUBLISHED);
+			return published == null ? null : dateFormat.parse(published);
+		} catch (ParseException e) {
+			return null;
+		}
+	}
 
 	/**
-	 * Get the last modified time for local did document.
+	 * Set deactivate status into DIDMetadata.
 	 *
-	 * @return the last modified time
+	 * @param deactivated the deactivate status
 	 */
-	public Date getLastModified();
+	protected void setDeactivated(boolean deactivated) {
+		put(DEACTIVATED, deactivated);
+	}
 
 	/**
 	 * the DID deactivated status.
@@ -83,21 +165,24 @@ public interface DIDMetadata {
 	 * @return the returned value is true if the did is deactivated.
 	 *         the returned value is false if the did is activated.
 	 */
-	public boolean isDeactivated();
+	public boolean isDeactivated( ) {
+		Boolean v = (Boolean)get(DEACTIVATED);
+		return v == null ? false : v;
+	}
 
-	/**
-	 * Set extra element for user.
-	 *
-	 * @param key the key string
-	 * @param value the value string
-	 */
-	public void setExtra(String key, String value);
-
-	/**
-	 * Get the value according to the key.
-	 *
-	 * @param key the key string
-	 * @return the value string
-	 */
-	public String getExtra(String key);
+    /**
+     * Returns a shallow copy of this instance: the keys and values themselves
+     * are not cloned.
+     *
+     * @return a shallow copy of this object
+     */
+	@Override
+	public DIDMetadata clone() {
+		try {
+			return (DIDMetadata)super.clone();
+		} catch (CloneNotSupportedException ignore) {
+			ignore.printStackTrace();
+			return null;
+		}
+    }
 }

@@ -22,6 +22,7 @@
 
 package org.elastos.did;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -29,15 +30,27 @@ import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.MalformedDIDException;
-import org.elastos.did.metadata.DIDMetadataImpl;
 import org.elastos.did.parser.DIDURLBaseListener;
 import org.elastos.did.parser.DIDURLParser;
 import org.elastos.did.parser.ParserHelper;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
  * DID is a globally unique identifier that does not require
  * a centralized registration authority.
  */
+@JsonSerialize(using = DID.Serializer.class)
+@JsonDeserialize(using = DID.Deserializer.class)
 public class DID implements Comparable<DID> {
 	/**
 	 * The default DID method filed
@@ -47,7 +60,7 @@ public class DID implements Comparable<DID> {
 	private String method;
 	private String methodSpecificId;
 
-	private DIDMetadataImpl metadata;
+	private DIDMetadata metadata;
 
 	/**
 	 * Get DID object.
@@ -124,7 +137,7 @@ public class DID implements Comparable<DID> {
 	 *
 	 * @param metadata the metadata implement object
 	 */
-	protected void setMetadata(DIDMetadataImpl metadata) {
+	protected void setMetadata(DIDMetadata metadata) {
 		this.metadata = metadata;
 	}
 
@@ -135,7 +148,7 @@ public class DID implements Comparable<DID> {
 	 */
 	public DIDMetadata getMetadata() {
 		if (metadata == null)
-			metadata = new DIDMetadataImpl();
+			metadata = new DIDMetadata();
 
 		return metadata;
 	}
@@ -171,7 +184,7 @@ public class DID implements Comparable<DID> {
 			throws DIDResolveException {
 		DIDDocument doc = DIDBackend.resolve(this, force);
 		if (doc != null)
-			setMetadata(doc.getMetadataImpl());
+			setMetadata(doc.getMetadata());
 
 		return doc;
 	}
@@ -288,6 +301,53 @@ public class DID implements Comparable<DID> {
 
 		int rc = method.compareTo(did.method);
 		return rc == 0 ? methodSpecificId.compareTo(did.methodSpecificId) : rc;
+	}
+
+	static class Serializer extends StdSerializer<DID> {
+		private static final long serialVersionUID = -5048323762128760963L;
+
+		public Serializer() {
+	        this(null);
+	    }
+
+	    public Serializer(Class<DID> t) {
+	        super(t);
+	    }
+
+		@Override
+		public void serialize(DID did, JsonGenerator gen,
+				SerializerProvider provider) throws IOException {
+			gen.writeString(did.toString());
+		}
+	}
+
+	static class Deserializer extends StdDeserializer<DID> {
+		private static final long serialVersionUID = -306953602840919050L;
+
+		public Deserializer() {
+	        this(null);
+	    }
+
+	    public Deserializer(Class<?> vc) {
+	        super(vc);
+	    }
+
+		@Override
+		public DID deserialize(JsonParser p, DeserializationContext ctxt)
+				throws IOException, JsonProcessingException {
+	    	JsonToken token = p.getCurrentToken();
+	    	if (!token.equals(JsonToken.VALUE_STRING))
+	    		throw ctxt.weirdStringException(p.getText(), DID.class, "Invalid DIDURL");
+
+	    	String did = p.getText().trim();
+
+	    	try {
+				return new DID(did);
+			} catch (MalformedDIDException e) {
+				throw ctxt.weirdStringException(did, DID.class, "Invalid DID");
+			}
+		}
+
 	}
 
 	class Listener extends DIDURLBaseListener {

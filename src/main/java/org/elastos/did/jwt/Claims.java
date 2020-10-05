@@ -28,6 +28,10 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,6 +62,8 @@ public class Claims implements Map<String, Object> {
 	public static final String ID = "jti";
 
 	private io.jsonwebtoken.Claims impl;
+
+	private static final Logger log = LoggerFactory.getLogger(Claims.class);
 
 	protected Claims(io.jsonwebtoken.Claims impl) {
 		this.impl = impl;
@@ -302,13 +308,6 @@ public class Claims implements Map<String, Object> {
 	 * @return the JWT {@code claimName} value or {@code null} if not present.
 	 */
 	public <T> T get(String claimName, Class<T> requiredType) {
-		if (JsonNode.class.equals(requiredType)) {
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			Class<Map<String, Object>> clazz = (Class)Map.class;
-			Map<String, Object> map = impl.get(claimName, clazz);
-			return requiredType.cast(map2JsonNode(map));
-		}
-
 		return impl.get(claimName, requiredType);
 	}
 
@@ -347,20 +346,17 @@ public class Claims implements Map<String, Object> {
 	public String getAsJson(Object key) {
 		Object v = impl.get(key);
 
-		if (v instanceof Map) {
-			@SuppressWarnings("unchecked")
-			JsonNode n = map2JsonNode((Map<String, Object>)v);
-			return n.toString();
-		} else {
-			throw new UnsupportedOperationException();
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.writeValueAsString(v);
+		} catch (JsonProcessingException e) {
+			log.error("INTERNAL - Can not serialize field", e);
+			return null;
 		}
 	}
 
 	@Override
 	public Object put(String key, Object value) {
-		if (value instanceof JsonNode)
-			return impl.put(key, jsonNode2Map((JsonNode)value));
-
 		return impl.put(key, value);
 	}
 
@@ -385,15 +381,6 @@ public class Claims implements Map<String, Object> {
 	@Override
 	public void putAll(Map<? extends String, ? extends Object> m) {
 		impl.putAll(m);
-	}
-
-	/**
-	 * Copies all of the mappings from the specified map to this map (optional operation).
-	 *
-	 * @param node the JsonNode handle
-	 */
-	public void putAll(JsonNode node) {
-		impl.putAll(jsonNode2Map(node));
 	}
 
 	/**
@@ -426,20 +413,6 @@ public class Claims implements Map<String, Object> {
 	}
 
 	/**
-	 * Change JsonNode format into Map format.
-	 *
-	 * @param node the JsonNode data
-	 * @return the Map data
-	 */
-	protected static Map<String, Object> jsonNode2Map(JsonNode node) {
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, Object> map = mapper.convertValue(node,
-				new TypeReference<Map<String, Object>>(){});
-
-		return map;
-	}
-
-	/**
 	 * Change json string into Map format.
 	 *
 	 * @param json the data's json string
@@ -456,16 +429,5 @@ public class Claims implements Map<String, Object> {
 		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
-	}
-
-	/**
-	 * Change Map format into JsonNode format.
-	 *
-	 * @param map the Map data
-	 * @return the JsonNode data
-	 */
-	protected static JsonNode map2JsonNode(Map<String, Object> map) {
-		ObjectMapper mapper = new ObjectMapper();
-		return mapper.convertValue(map, JsonNode.class);
 	}
 }

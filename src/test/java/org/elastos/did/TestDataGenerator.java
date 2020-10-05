@@ -78,9 +78,9 @@ public class TestDataGenerator {
 		System.out.print("Generate issuer DID: " + doc.getSubject() + "...");
 
 		Issuer selfIssuer = new Issuer(doc);
-		Issuer.CredentialBuilder cb = selfIssuer.issueFor(doc.getSubject());
+		VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
-		Map<String, String> props= new HashMap<String, String>();
+		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Test Issuer");
 		props.put("nation", "Singapore");
 		props.put("language", "English");
@@ -143,9 +143,9 @@ public class TestDataGenerator {
 				"carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d");
 
 		Issuer selfIssuer = new Issuer(doc);
-		Issuer.CredentialBuilder cb = selfIssuer.issueFor(doc.getSubject());
+		VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
-		Map<String, String> props= new HashMap<String, String>();
+		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nation", "Singapore");
@@ -161,7 +161,7 @@ public class TestDataGenerator {
 		Issuer kycIssuer = new Issuer(issuer);
 		cb = kycIssuer.issueFor(doc.getSubject());
 
-		props= new HashMap<String, String>();
+		props= new HashMap<String, Object>();
 		props.put("email", "john@example.com");
 
 		VerifiableCredential vcEmail = cb.id("email")
@@ -228,7 +228,7 @@ public class TestDataGenerator {
 
 		cb = selfIssuer.issueFor(doc.getSubject());
 
-		props= new HashMap<String, String>();
+		props= new HashMap<String, Object>();
 		props.put("nation", "Singapore");
 		props.put("passport", "S653258Z07");
 
@@ -257,7 +257,7 @@ public class TestDataGenerator {
 
 		cb = kycIssuer.issueFor(doc.getSubject());
 
-		props= new HashMap<String, String>();
+		props= new HashMap<String, Object>();
 		props.put("twitter", "@john");
 
 		VerifiableCredential vcTwitter = cb.id(id)
@@ -362,9 +362,9 @@ public class TestDataGenerator {
 	    	DIDDocument doc = store.newDid(TestConfig.storePass);
 
 			Issuer selfIssuer = new Issuer(doc);
-			Issuer.CredentialBuilder cb = selfIssuer.issueFor(doc.getSubject());
+			VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
-			Map<String, String> props = new HashMap<String, String>();
+			Map<String, Object> props = new HashMap<String, Object>();
 			props.put("name", "John");
 			props.put("nation", "Singapore");
 			props.put("language", "English");

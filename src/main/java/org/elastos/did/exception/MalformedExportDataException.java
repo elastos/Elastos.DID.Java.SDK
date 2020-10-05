@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Elastos Foundation
+ * Copyright (c) 2019 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +20,42 @@
  * SOFTWARE.
  */
 
-/**
- * <p>
- * Defines the API for DID and Credential's meta data.
- * </p>
- *
- * @since 1.0
- * @version 1.0
- **/
+package org.elastos.did.exception;
 
-package org.elastos.did.metadata;
+public class MalformedExportDataException extends DIDSyntaxException {
+	private static final long serialVersionUID = -7784263406524731443L;
+
+	/**
+	 * Constructs the MalformedMetadataException.
+	 */
+	public MalformedExportDataException() {
+        super();
+    }
+
+	/**
+	 * Constructs the MalformedMetadataException with the given message.
+	 *
+	 * @param message the message string
+	 */
+    public MalformedExportDataException(String message) {
+        super(message);
+    }
+    /**
+     * Constructs the MalformedMetadataException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
+    public MalformedExportDataException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Constructs the MalformedMetadataException with the given reason.
+     *
+     * @param cause the reason
+     */
+    public MalformedExportDataException(Throwable cause) {
+        super(cause);
+    }
+}

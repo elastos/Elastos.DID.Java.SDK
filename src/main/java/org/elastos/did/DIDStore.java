@@ -25,17 +25,16 @@ package org.elastos.did;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -57,25 +56,23 @@ import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDExpiredException;
 import org.elastos.did.exception.DIDNotFoundException;
 import org.elastos.did.exception.DIDStoreException;
+import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.InvalidKeyException;
-import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDocumentException;
+import org.elastos.did.exception.MalformedExportDataException;
 import org.elastos.did.exception.WrongPasswordException;
-import org.elastos.did.metadata.CredentialMetadataImpl;
-import org.elastos.did.metadata.DIDMetadataImpl;
-import org.elastos.did.util.JsonHelper;
 import org.elastos.did.util.LRUCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.CryptoException;
 import org.spongycastle.crypto.digests.SHA256Digest;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * DIDStore is local store for all DIDs.
@@ -225,6 +222,14 @@ public final class DIDStore {
 		} catch (CryptoException e) {
 			throw new WrongPasswordException("Decrypt private key error.", e);
 		}
+	}
+
+	private static String reEncrypt(String secret, String oldpass, String newpass)
+			throws DIDStoreException {
+		byte[] plain = decryptFromBase64(secret, oldpass);
+		String newSecret = encryptToBase64(plain, newpass);
+		Arrays.fill(plain, (byte)0);
+		return newSecret;
 	}
 
 	/**
@@ -530,8 +535,8 @@ public final class DIDStore {
 	public void synchronize(String storepass)
 			throws DIDBackendException, DIDStoreException {
 		synchronize((c, l) -> {
-			l.getMetadataImpl().setPublished(c.getMetadata().getPublished());
-			l.getMetadataImpl().setSignature(c.getMetadata().getSignature());
+			l.getMetadata().setPublished(c.getMetadata().getPublished());
+			l.getMetadata().setSignature(c.getMetadata().getSignature());
 			return l;
 		}, storepass);
 	}
@@ -614,7 +619,11 @@ public final class DIDStore {
 
 			DIDDocument.Builder db = new DIDDocument.Builder(did, this);
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
-			doc = db.seal(storepass);
+			try {
+				doc = db.seal(storepass);
+			} catch (MalformedDocumentException ignore) {
+				ignore.printStackTrace();
+			}
 			doc.getMetadata().setAlias(alias);
 			storeDid(doc);
 			return doc;
@@ -731,8 +740,8 @@ public final class DIDStore {
 		DIDDocument resolvedDoc = did.resolve(true);
 		if (resolvedDoc != null) {
 			if (resolvedDoc.isDeactivated()) {
-				doc.getMetadataImpl().setDeactivated(true);
-				storage.storeDidMetadata(doc.getSubject(), doc.getMetadataImpl());
+				doc.getMetadata().setDeactivated(true);
+				storage.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
 				log.error("{} already deactivated.", did.toString());
 				throw new DIDStoreException("DID already deactivated.");
@@ -778,9 +787,9 @@ public final class DIDStore {
 			backend.update(doc, lastTxid, signKey, storepass);
 		}
 
-		doc.getMetadataImpl().setPreviousSignature(reolvedSignautre);
-		doc.getMetadataImpl().setSignature(doc.getProof().getSignature());
-		storage.storeDidMetadata(doc.getSubject(), doc.getMetadataImpl());
+		doc.getMetadata().setPreviousSignature(reolvedSignautre);
+		doc.getMetadata().setSignature(doc.getProof().getSignature());
+		storage.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 	}
 
 	/**
@@ -1005,7 +1014,7 @@ public final class DIDStore {
 			else
 				localCopy = true;
 		} else {
-			doc.getMetadataImpl().setStore(this);
+			doc.getMetadata().setStore(this);
 		}
 
 		if (signKey == null) {
@@ -1019,8 +1028,8 @@ public final class DIDStore {
 
 		// Save deactivated status to DID metadata
 		if (localCopy) {
-			doc.getMetadataImpl().setDeactivated(true);
-			storage.storeDidMetadata(did, doc.getMetadataImpl());
+			doc.getMetadata().setDeactivated(true);
+			storage.storeDidMetadata(did, doc.getMetadata());
 		}
 	}
 
@@ -1175,7 +1184,7 @@ public final class DIDStore {
 			if (doc == null)
 				throw new DIDNotFoundException(did.toString());
 		} else {
-			doc.getMetadataImpl().setStore(this);
+			doc.getMetadata().setStore(this);
 		}
 
 		PublicKey signPk = null;
@@ -1366,11 +1375,11 @@ public final class DIDStore {
 
 		storage.storeDid(doc);
 
-		DIDMetadataImpl metadata = loadDidMetadata(doc.getSubject());
-		doc.getMetadataImpl().merge(metadata);
-		doc.getMetadataImpl().setStore(this);
+		DIDMetadata metadata = loadDidMetadata(doc.getSubject());
+		doc.getMetadata().merge(metadata);
+		doc.getMetadata().setStore(this);
 
-		storage.storeDidMetadata(doc.getSubject(), doc.getMetadataImpl());
+		storage.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
 		for (VerifiableCredential vc : doc.getCredentials())
 			storeCredential(vc);
@@ -1386,7 +1395,7 @@ public final class DIDStore {
 	 * @param metadata the meta data
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	protected void storeDidMetadata(DID did, DIDMetadataImpl metadata)
+	protected void storeDidMetadata(DID did, DIDMetadata metadata)
 			throws DIDStoreException {
 		storage.storeDidMetadata(did, metadata);
 
@@ -1404,7 +1413,7 @@ public final class DIDStore {
 	 * @param metadata the meta data
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	protected void storeDidMetadata(String did, DIDMetadataImpl metadata)
+	protected void storeDidMetadata(String did, DIDMetadata metadata)
 			throws DIDStoreException{
 		DID _did = null;
 		try {
@@ -1423,17 +1432,17 @@ public final class DIDStore {
 	 * @return the Meta data
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	protected DIDMetadataImpl loadDidMetadata(DID did) throws DIDStoreException {
+	protected DIDMetadata loadDidMetadata(DID did) throws DIDStoreException {
 		if (did == null)
 			throw new IllegalArgumentException();
 
-		DIDMetadataImpl metadata = null;
+		DIDMetadata metadata = null;
 		DIDDocument doc = null;
 
 		if (didCache != null) {
 			doc = didCache.get(did);
 			if (doc != null) {
-				metadata = doc.getMetadataImpl();
+				metadata = doc.getMetadata();
 				if (metadata != null)
 					return metadata;
 			}
@@ -1453,7 +1462,7 @@ public final class DIDStore {
 	 * @return the Meta data
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	protected DIDMetadataImpl loadDidMetadata(String did) throws DIDStoreException {
+	protected DIDMetadata loadDidMetadata(String did) throws DIDStoreException {
 		DID _did = null;
 		try {
 			_did = new DID(did);
@@ -1485,7 +1494,7 @@ public final class DIDStore {
 
 		doc = storage.loadDid(did);
 		if (doc != null) {
-			DIDMetadataImpl metadata = storage.loadDidMetadata(did);
+			DIDMetadata metadata = storage.loadDidMetadata(did);
 			metadata.setStore(this);
 			doc.setMetadata(metadata);
 		}
@@ -1596,7 +1605,7 @@ public final class DIDStore {
 		List<DID> dids = storage.listDids(filter);
 
 		for (DID did : dids) {
-			DIDMetadataImpl metadata = loadDidMetadata(did);
+			DIDMetadata metadata = loadDidMetadata(did);
 			metadata.setStore(this);
 			did.setMetadata(metadata);
 		}
@@ -1617,13 +1626,13 @@ public final class DIDStore {
 
 		storage.storeCredential(credential);
 
-		CredentialMetadataImpl metadata = loadCredentialMetadata(
+		CredentialMetadata metadata = loadCredentialMetadata(
 				credential.getSubject().getId(), credential.getId());
-		credential.getMetadataImpl().merge(metadata);
-		credential.getMetadataImpl().setStore(this);
+		credential.getMetadata().merge(metadata);
+		credential.getMetadata().setStore(this);
 
 		storage.storeCredentialMetadata(credential.getSubject().getId(),
-				credential.getId(), credential.getMetadataImpl());
+				credential.getId(), credential.getMetadata());
 
 		if (vcCache != null)
 			vcCache.put(credential.getId(), credential);
@@ -1638,7 +1647,7 @@ public final class DIDStore {
      * @throws DIDStoreException DIDStore error.
      */
 	protected void storeCredentialMetadata(DID did, DIDURL id,
-			CredentialMetadataImpl metadata) throws DIDStoreException {
+			CredentialMetadata metadata) throws DIDStoreException {
 		if (did == null || id == null)
 			throw new IllegalArgumentException();
 
@@ -1661,7 +1670,7 @@ public final class DIDStore {
      * @throws DIDStoreException DIDStore error.
      */
 	protected void storeCredentialMetadata(String did, String id,
-			CredentialMetadataImpl metadata) throws DIDStoreException {
+			CredentialMetadata metadata) throws DIDStoreException {
 		DID _did = null;
 		DIDURL _id = null;
 		try {
@@ -1682,18 +1691,18 @@ public final class DIDStore {
 	 * @return the meta data for Credential
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	protected CredentialMetadataImpl loadCredentialMetadata(DID did, DIDURL id)
+	protected CredentialMetadata loadCredentialMetadata(DID did, DIDURL id)
 			throws DIDStoreException {
 		if (did == null || id == null)
 			throw new IllegalArgumentException();
 
-		CredentialMetadataImpl metadata = null;
+		CredentialMetadata metadata = null;
 		VerifiableCredential vc = null;
 
 		if (vcCache != null) {
 			vc = vcCache.get(id);
 			if (vc != null) {
-				metadata = vc.getMetadataImpl();
+				metadata = vc.getMetadata();
 				if (metadata != null)
 					return metadata;
 			}
@@ -1714,7 +1723,7 @@ public final class DIDStore {
 	 * @return the meta data for Credential
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	protected CredentialMetadataImpl loadCredentialMetadata(String did, String id)
+	protected CredentialMetadata loadCredentialMetadata(String did, String id)
 			throws DIDStoreException {
 		DID _did = null;
 		DIDURL _id = null;
@@ -1751,7 +1760,7 @@ public final class DIDStore {
 
 		vc = storage.loadCredential(did, id);
 		if (vc != null) {
-			CredentialMetadataImpl metadata = storage.loadCredentialMetadata(did, id);
+			CredentialMetadata metadata = storage.loadCredentialMetadata(did, id);
 			metadata.setStore(this);
 			vc.setMetadata(metadata);
 		}
@@ -1910,7 +1919,7 @@ public final class DIDStore {
 		List<DIDURL> ids = storage.listCredentials(did);
 
 		for (DIDURL id : ids) {
-			CredentialMetadataImpl metadata = loadCredentialMetadata(did, id);
+			CredentialMetadata metadata = loadCredentialMetadata(did, id);
 			metadata.setStore(this);
 			id.setMetadata(metadata);
 		}
@@ -2250,8 +2259,250 @@ public final class DIDStore {
 		storage.changePassword(ree);
 	}
 
-	private void exportDid(DID did, JsonGenerator generator, String password,
-			String storepass) throws DIDStoreException, IOException {
+	@JsonPropertyOrder({ "type", "created", "id", "document", "credential", "privatekey", "fingerprint" })
+	@JsonInclude(Include.NON_NULL)
+	static class DIDExport extends DIDObject<DIDExport> {
+		@JsonProperty("type")
+		private String type;
+		@JsonProperty("created")
+		private Date created;
+		@JsonProperty("id")
+		private DID id;
+		@JsonProperty("document")
+		private Document document;
+		@JsonProperty("credential")
+		private List<Credential> credentials;
+		@JsonProperty("privatekey")
+		private List<PrivateKey> privatekeys;
+		@JsonProperty("fingerprint")
+		private String fingerprint;
+
+		@JsonPropertyOrder({ "content", "metadata" })
+		static class Document {
+			@JsonProperty("content")
+			private DIDDocument content;
+			@JsonProperty("metadata")
+			private DIDMetadata metadata;
+
+			@JsonCreator
+			protected Document(@JsonProperty(value = "content", required = true) DIDDocument content,
+					@JsonProperty(value = "metadata") DIDMetadata metadata) {
+				this.content = content;
+				this.metadata = metadata;
+			}
+		}
+
+		@JsonPropertyOrder({ "content", "metadata" })
+		static class Credential {
+			@JsonProperty("content")
+			private VerifiableCredential content;
+			@JsonProperty("metadata")
+			private CredentialMetadata metadata;
+
+			@JsonCreator
+			protected Credential(@JsonProperty(value = "content", required = true) VerifiableCredential content,
+					@JsonProperty(value = "metadata") CredentialMetadata metadata) {
+				this.content = content;
+				this.metadata = metadata;
+			}
+		}
+
+		@JsonPropertyOrder({ "id", "key" })
+		static class PrivateKey {
+			@JsonProperty("id")
+			private DIDURL id;
+			@JsonProperty("key")
+			private String key;
+
+			@JsonCreator
+			protected PrivateKey(@JsonProperty(value = "id", required = true) DIDURL id) {
+				this.id = id;
+			}
+
+			public DIDURL getId() {
+				return id;
+			}
+
+			public void setId(DIDURL id) {
+				this.id = id;
+			}
+
+			public String getKey(String exportpass, String storepass)
+					throws DIDStoreException {
+				return reEncrypt(key, exportpass, storepass);
+			}
+
+			public void setKey(String key, String storepass, String exportpass)
+					throws DIDStoreException {
+				this.key = reEncrypt(key, storepass, exportpass);
+			}
+		}
+
+		@JsonCreator
+		protected DIDExport(@JsonProperty(value = "type", required = true) String type,
+				@JsonProperty(value = "id", required = true) DID id) {
+			if (type == null)
+				throw new IllegalArgumentException("Invalid export type");
+
+			this.type = type;
+			this.id = id;
+		}
+
+		public DID getId() {
+			return id;
+		}
+
+		public DIDDocument getDocument() {
+			return document.content;
+		}
+
+		public void setDocument(DIDDocument doc) {
+			this.document = new Document(doc,
+					doc.getMetadata().isEmpty() ? null : doc.getMetadata());
+		}
+
+		public List<VerifiableCredential> getCredentials() {
+			if (credentials == null)
+				return null;
+
+			List<VerifiableCredential> vcs = new ArrayList<VerifiableCredential>();
+			for (Credential cred : credentials)
+				vcs.add(cred.content);
+
+			return vcs;
+		}
+
+		public void addCredential(VerifiableCredential credential) {
+			if (this.credentials == null)
+				this.credentials = new ArrayList<Credential>();
+
+			this.credentials.add(new Credential(credential,
+					credential.getMetadata().isEmpty() ? null : credential.getMetadata()));
+		}
+
+		public List<PrivateKey> getPrivatekey() {
+			return privatekeys;
+		}
+
+		public void addPrivatekey(DIDURL id, String privatekey, String storepass,
+				String exportpass) throws DIDStoreException {
+			if (this.privatekeys == null)
+				this.privatekeys = new ArrayList<PrivateKey>();
+
+			PrivateKey sk = new PrivateKey(id);
+			sk.setKey(privatekey, storepass, exportpass);
+			this.privatekeys.add(sk);
+		}
+
+		private String calculateFingerprint(String exportpass) {
+			SHA256Digest sha256 = new SHA256Digest();
+			byte[] bytes = exportpass.getBytes();
+			sha256.update(bytes, 0, bytes.length);
+
+			bytes = type.getBytes();
+			sha256.update(bytes, 0, bytes.length);
+
+			bytes = Long.toString(created.getTime()).getBytes();
+			sha256.update(bytes, 0, bytes.length);
+
+			bytes = id.toString().getBytes();
+			sha256.update(bytes, 0, bytes.length);
+
+			bytes = document.content.toString(true).getBytes();
+			sha256.update(bytes, 0, bytes.length);
+
+			if (document.metadata != null) {
+				bytes = document.metadata.toString(true).getBytes();
+				sha256.update(bytes, 0, bytes.length);
+			}
+
+			if (credentials != null && credentials.size() > 0) {
+				for (Credential cred : credentials) {
+					bytes = cred.content.toString(true).getBytes();
+					sha256.update(bytes, 0, bytes.length);
+
+					if (cred.metadata != null) {
+						bytes = cred.metadata.toString(true).getBytes();
+						sha256.update(bytes, 0, bytes.length);
+					}
+				}
+			}
+
+			if (privatekeys != null && privatekeys.size() > 0) {
+				for (PrivateKey sk : privatekeys) {
+					bytes = sk.id.toString().getBytes();
+					sha256.update(bytes, 0, bytes.length);
+
+					bytes = sk.key.getBytes();
+					sha256.update(bytes, 0, bytes.length);
+				}
+			}
+
+			byte digest[] = new byte[32];
+			sha256.doFinal(digest, 0);
+			return Base64.encodeToString(digest,
+					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+		}
+
+		public DIDExport seal(String exportpass) {
+			Calendar now = Calendar.getInstance();
+			now.set(Calendar.MILLISECOND, 0);
+			this.created = now.getTime();
+			fingerprint = calculateFingerprint(exportpass);
+			return this;
+		}
+
+		public void verify(String exportpass) throws MalformedExportDataException {
+			if (!fingerprint.equals(calculateFingerprint(exportpass)))
+				throw new MalformedExportDataException(
+							"Invalid export data, fingerprint mismatch.");
+		}
+
+		@Override
+		protected void sanitize() throws MalformedExportDataException {
+			if (type == null || !type.equals(DID_EXPORT))
+				throw new MalformedExportDataException(
+						"Invalid export data, unknown type.");
+
+			if (created == null)
+				throw new MalformedExportDataException(
+						"Invalid export data, missing created time.");
+
+			if (id == null)
+				throw new MalformedExportDataException(
+						"Invalid export data, missing id.");
+
+			if (document == null || document.content == null)
+				throw new MalformedExportDataException(
+						"Invalid export data, missing document.");
+			document.content.setMetadata(document.metadata);
+
+			if (credentials != null) {
+				for (Credential cred : credentials) {
+					if (cred == null || cred.content == null)
+						throw new MalformedExportDataException(
+								"Invalid export data, invalid credential.");
+
+					cred.content.setMetadata(cred.metadata);
+				}
+			}
+
+			if (privatekeys != null) {
+				for (PrivateKey sk : privatekeys) {
+					if (sk == null || sk.id == null || sk.key == null || sk.key.isBlank())
+						throw new MalformedExportDataException(
+								"Invalid export data, invalid privatekey.");
+				}
+			}
+
+			if (fingerprint == null || fingerprint.isBlank())
+				throw new MalformedExportDataException(
+						"Invalid export data, missing fingerprint.");
+		}
+	}
+
+	private DIDExport exportDid(DID did, String password, String storepass)
+			throws DIDStoreException, IOException {
 		// All objects should load directly from storage,
 		// avoid affects the cached objects.
 
@@ -2259,130 +2510,39 @@ public final class DIDStore {
 		if (doc == null)
 			throw new DIDStoreException("Export DID " + did + " failed, not exist.");
 
+		doc.setMetadata(storage.loadDidMetadata(did));
+
 		log.debug("Exporting {}...", did.toString());
 
-		SHA256Digest sha256 = new SHA256Digest();
-		byte[] bytes = password.getBytes();
-		sha256.update(bytes, 0, bytes.length);
+		DIDExport de = new DIDExport(DID_EXPORT, did);
+		de.setDocument(doc);
 
-		generator.writeStartObject();
-
-		// Type
-		generator.writeStringField("type", DID_EXPORT);
-		bytes = DID_EXPORT.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// DID
-		String value = did.toString();
-		generator.writeStringField("id", value);
-		bytes = value.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// Create
-		Date now = Calendar.getInstance(Constants.UTC).getTime();
-		value = JsonHelper.formatDate(now);
-		generator.writeStringField("created", value);
-		bytes = value.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// Document
-		generator.writeFieldName("document");
-		generator.writeStartObject();
-
-		generator.writeFieldName("content");
-		doc.toJson(generator, false);
-		value = doc.toString(true);
-		bytes = value.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		DIDMetadataImpl didMetadata = storage.loadDidMetadata(did);
-		if (!didMetadata.isEmpty()) {
-			generator.writeFieldName("metadata");
-			value = didMetadata.toString();
-			generator.writeRawValue(value);
-			bytes = value.getBytes();
-			sha256.update(bytes, 0, bytes.length);
-		}
-
-		generator.writeEndObject();
-
-		// Credential
 		if (storage.containsCredentials(did)) {
-			generator.writeFieldName("credential");
-			generator.writeStartArray();
-
 			List<DIDURL> ids = listCredentials(did);
 			Collections.sort(ids);
 			for (DIDURL id : ids) {
 				log.debug("Exporting credential {}...", id.toString());
 
-				generator.writeStartObject();
-
-				generator.writeFieldName("content");
 				VerifiableCredential vc = storage.loadCredential(did, id);
-				vc.toJson(generator, false);
-				value = vc.toString(true);
-				bytes = value.getBytes();
-				sha256.update(bytes, 0, bytes.length);
-
-				CredentialMetadataImpl metadata = storage.loadCredentialMetadata(did, id);
-				if (!metadata.isEmpty()) {
-					generator.writeFieldName("metadata");
-					value = metadata.toString();
-					generator.writeRawValue(value);
-					bytes = value.getBytes();
-					sha256.update(bytes, 0, bytes.length);
-				}
-
-				generator.writeEndObject();
+				vc.setMetadata(storage.loadCredentialMetadata(did, id));
+				de.addCredential(vc);
 			}
-
-			generator.writeEndArray();
 		}
 
-		// Private key
 		if (storage.containsPrivateKeys(did)) {
-			generator.writeFieldName("privatekey");
-			generator.writeStartArray();
-
 			List<PublicKey> pks = doc.getPublicKeys();
 			for (PublicKey pk : pks) {
 				DIDURL id = pk.getId();
-
 				if (storage.containsPrivateKey(did, id)) {
 					log.debug("Exporting private key {}...", id.toString());
 
-					String csk = storage.loadPrivateKey(did, id);
-					byte[] sk = decryptFromBase64(csk, storepass);
-					csk = encryptToBase64(sk, password);
-					Arrays.fill(sk, (byte)0);
-
-					generator.writeStartObject();
-
-					value = id.toString();
-					generator.writeStringField("id", value);
-					bytes = value.getBytes();
-					sha256.update(bytes, 0, bytes.length);
-
-					generator.writeStringField("key", csk);
-					bytes = csk.getBytes();
-					sha256.update(bytes, 0, bytes.length);
-
-					generator.writeEndObject();
+					String key = storage.loadPrivateKey(did, id);
+					de.addPrivatekey(id, key, storepass, password);
 				}
 			}
-
-			generator.writeEndArray();
 		}
 
-		// Fingerprint
-		byte digest[] = new byte[32];
-		sha256.doFinal(digest, 0);
-		String fingerprint = Base64.encodeToString(digest,
-				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-		generator.writeStringField("fingerprint", fingerprint);
-
-		generator.writeEndObject();
+		return de.seal(password);
 	}
 
 	/**
@@ -2402,11 +2562,12 @@ public final class DIDStore {
 				password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		JsonFactory factory = new JsonFactory();
-		JsonGenerator generator = factory.createGenerator(out);
-		generator.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-		exportDid(did, generator, password, storepass);
-		generator.close();
+		try {
+			exportDid(did, password, storepass).serialize(out, true);
+		} catch (DIDSyntaxException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Serialize exported private identity", ignore);
+		}
 	}
 
 	/**
@@ -2449,11 +2610,12 @@ public final class DIDStore {
 				password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		JsonFactory factory = new JsonFactory();
-		JsonGenerator generator = factory.createGenerator(out);
-		generator.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-		exportDid(did, generator, password, storepass);
-		generator.close();
+		try {
+			exportDid(did, password, storepass).serialize(out, true);
+		} catch (DIDSyntaxException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Serialize exported private identity", ignore);
+		}
 	}
 
 	/**
@@ -2496,7 +2658,12 @@ public final class DIDStore {
 				password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		exportDid(did, new FileWriter(file), password, storepass);
+		try {
+			exportDid(did, password, storepass).serialize(file, true);
+		} catch (DIDSyntaxException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Serialize exported private identity", ignore);
+		}
 	}
 
 	/**
@@ -2565,192 +2732,32 @@ public final class DIDStore {
 		exportDid(_did, file, password, storepass);
 	}
 
-	private void importDid(JsonNode root, String password, String storepass)
-			throws DIDStoreException, IOException {
-		Class<DIDStoreException> exceptionClass = DIDStoreException.class;
-
-		SHA256Digest sha256 = new SHA256Digest();
-		byte[] bytes = password.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// Type
-		String type = JsonHelper.getString(root, "type", false, null,
-				"export type", exceptionClass);
-		if (!type.equals(DID_EXPORT))
-			throw new DIDStoreException("Invalid export data, unknown type.");
-		bytes = type.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// DID
-		DID did = JsonHelper.getDid(root, "id", false, null,
-				"DID subject", exceptionClass);
-		bytes = did.toString().getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		log.debug("Importing {}...", did.toString());
-
-		// Created
-		Date created = JsonHelper.getDate(root, "created", true, null,
-				"export date", exceptionClass);
-		bytes = JsonHelper.formatDate(created).getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// Document
-		JsonNode node = root.get("document");
-		if (node == null) {
-			log.error("Missing DID document.");
-			throw new DIDStoreException("Missing DID document in the export data");
-		}
-
-		JsonNode docNode = node.get("content");
-		if (docNode == null) {
-			log.error("Missing DID document content.");
-			throw new DIDStoreException("Missing DID document content in the export data");
-		}
-
-		DIDDocument doc = null;
-		try {
-			doc = DIDDocument.fromJson(docNode);
-		} catch (MalformedDocumentException e) {
-			log.error("Parse DID document error.", e);
-			throw new DIDStoreException("Invalid export data.", e);
-		}
-
-		if (!doc.getSubject().equals(did) || !doc.isGenuine()) {
-			log.error("DID Document not blongs to {}", did.toString());
-			throw new DIDStoreException("Invalid DID document in the export data.");
-		}
-
-		bytes = doc.toString(true).getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		JsonNode metaNode = node.get("metadata");
-		if (metaNode != null) {
-			DIDMetadataImpl metadata = new DIDMetadataImpl();
-			metadata.load(metaNode);
-			metadata.setStore(this);
-			doc.setMetadata(metadata);
-
-			bytes = metadata.toString().getBytes();
-			sha256.update(bytes, 0, bytes.length);
-		}
-
-		// Credential
-		HashMap<DIDURL, VerifiableCredential> vcs = null;
-		node = root.get("credential");
-		if (node != null) {
-			if (!node.isArray()) {
-				log.error("Credential should be an array.");
-				throw new DIDStoreException("Invalid export data, wrong credential data.");
-			}
-
-			vcs = new HashMap<DIDURL, VerifiableCredential>(node.size());
-
-			for (int i = 0; i < node.size(); i++) {
-				JsonNode vcNode = node.get(i).get("content");
-				if (vcNode == null) {
-					log.error("Missing credential " + i + " content");
-					throw new DIDStoreException("Invalid export data.");
-				}
-
-				VerifiableCredential vc = null;
-
-				try {
-					vc = VerifiableCredential.fromJson(vcNode, did);
-				} catch (MalformedCredentialException e) {
-					log.error("Parse credential " + i + " error", e);
-					throw new DIDStoreException("Invalid export data.", e);
-				}
-
-				if (!vc.getSubject().getId().equals(did) /* || !vc.isGenuine() */) {
-					log.error("Credential {} not blongs to {}", i, did.toString());
-					throw new DIDStoreException("Invalid credential in the export data.");
-				}
-
-				bytes = vc.toString(true).getBytes();
-				sha256.update(bytes, 0, bytes.length);
-
-				metaNode = node.get(i).get("metadata");
-				if (metaNode != null) {
-					CredentialMetadataImpl metadata = new CredentialMetadataImpl();
-					metadata.load(metaNode);
-					metadata.setStore(this);
-					vc.setMetadata(metadata);
-
-					bytes = metadata.toString().getBytes();
-					sha256.update(bytes, 0, bytes.length);
-				}
-
-				vcs.put(vc.getId(), vc);
-			}
-		}
-
-		// Private key
-		HashMap<DIDURL, String> sks = null;
-		node = root.get("privatekey");
-		if (node != null) {
-			if (!node.isArray()) {
-				log.error("Privatekey should be an array.");
-				throw new DIDStoreException("Invalid export data, wrong privatekey data.");
-			}
-
-			sks = new HashMap<DIDURL, String>(node.size());
-
-			for (int i = 0; i < node.size(); i++) {
-				DIDURL id = JsonHelper.getDidUrl(node.get(i), "id", did,
-						"privatekey id", exceptionClass);
-				String csk = JsonHelper.getString(node.get(i), "key", false, null,
-						"privatekey", exceptionClass);
-
-				bytes = id.toString().getBytes();
-				sha256.update(bytes, 0, bytes.length);
-
-				bytes = csk.getBytes();
-				sha256.update(bytes, 0, bytes.length);
-
-				byte[] sk = decryptFromBase64(csk, password);
-				csk = encryptToBase64(sk, storepass);
-				Arrays.fill(sk, (byte)0);
-
-				sks.put(id, csk);
-			}
-		}
-
-		// Fingerprint
-		node = root.get("fingerprint");
-		if (node == null) {
-			log.error("Missing fingerprint");
-			throw new DIDStoreException("Missing fingerprint in the export data");
-		}
-		String refFingerprint = node.asText();
-
-		byte digest[] = new byte[32];
-		sha256.doFinal(digest, 0);
-		String fingerprint = Base64.encodeToString(digest,
-				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-
-		if (!fingerprint.equals(refFingerprint)) {
-			log.error("Fingerprint mismatch.");
-			throw new DIDStoreException("Invalid export data, the fingerprint mismatch.");
-		}
+	private void importDid(DIDExport de, String password, String storepass)
+			throws MalformedExportDataException, DIDStoreException, IOException {
+		de.verify(password);
 
 		// Save
-		//
-		// All objects should load directly from storage,
-		// avoid affects the cached objects.
 		log.debug("Importing document...");
+		DIDDocument doc = de.document.content;
 		storage.storeDid(doc);
-		storage.storeDidMetadata(doc.getSubject(), doc.getMetadataImpl());
+		storage.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
-		for (VerifiableCredential vc : vcs.values()) {
-			log.debug("Importing credential {}...", vc.getId().toString());
-			storage.storeCredential(vc);
-			storage.storeCredentialMetadata(did, vc.getId(), vc.getMetadataImpl());
+		List<VerifiableCredential> vcs =  de.getCredentials();
+		if (vcs != null) {
+			for (VerifiableCredential vc : vcs) {
+				log.debug("Importing credential {}...", vc.getId().toString());
+				storage.storeCredential(vc);
+				storage.storeCredentialMetadata(doc.getSubject(), vc.getId(), vc.getMetadata());
+			}
 		}
 
-		for (Map.Entry<DIDURL, String> sk : sks.entrySet()) {
-			log.debug("Importing private key {}...", sk.getKey().toString());
-			storage.storePrivateKey(did, sk.getKey(), sk.getValue());
+		List<DIDExport.PrivateKey> sks = de.getPrivatekey();
+		if (sks != null) {
+			for (DIDExport.PrivateKey sk : sks) {
+				log.debug("Importing private key {}...", sk.getId().toString());
+				storage.storePrivateKey(doc.getSubject(), sk.getId(),
+						sk.getKey(password, storepass));
+			}
 		}
 	}
 
@@ -2764,15 +2771,18 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importDid(InputStream in, String password, String storepass)
-			throws DIDStoreException, IOException {
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-		JsonNode root = mapper.readTree(in);
-		importDid(root, password, storepass);
+		DIDExport de;
+		try {
+			de = DIDExport.parse(in, DIDExport.class);
+		} catch (DIDSyntaxException e) {
+			throw (MalformedExportDataException)e;
+		}
+		importDid(de, password, storepass);
 	}
 
 	/**
@@ -2785,15 +2795,18 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importDid(Reader in, String password, String storepass)
-			throws DIDStoreException, IOException {
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-		JsonNode root = mapper.readTree(in);
-		importDid(root, password, storepass);
+		DIDExport de;
+		try {
+			de = DIDExport.parse(in, DIDExport.class);
+		} catch (DIDSyntaxException e) {
+			throw (MalformedExportDataException)e;
+		}
+		importDid(de, password, storepass);
 	}
 
 	/**
@@ -2806,15 +2819,18 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importDid(File file, String password, String storepass)
-			throws DIDStoreException, IOException {
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (file == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-		JsonNode root = mapper.readTree(file);
-		importDid(root, password, storepass);
+		DIDExport de;
+		try {
+			de = DIDExport.parse(file, DIDExport.class);
+		} catch (DIDSyntaxException e) {
+			throw (MalformedExportDataException)e;
+		}
+		importDid(de, password, storepass);
 	}
 
 	/**
@@ -2827,7 +2843,7 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importDid(String file, String password, String storepass)
-			throws DIDStoreException, IOException {
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (file == null || file.isEmpty() || password == null ||
 				password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -2835,69 +2851,149 @@ public final class DIDStore {
 		importDid(new File(file), password, storepass);
 	}
 
-	private void exportPrivateIdentity(JsonGenerator generator, String password,
-			String storepass) throws DIDStoreException, IOException {
-		String encryptedKey = storage.loadPrivateIdentity();
-		byte[] plain = decryptFromBase64(encryptedKey, storepass);
-		encryptedKey = encryptToBase64(plain, password);
-		Arrays.fill(plain, (byte)0);
+	@JsonPropertyOrder({ "type", "created", "mnemonic", "key", "key.pub", "index", "fingerprint" })
+	@JsonInclude(Include.NON_NULL)
+	static class PrivateIdentityExport extends DIDObject<PrivateIdentityExport> {
+		@JsonProperty("type")
+		private String type;
+		@JsonProperty("created")
+		private Date created;
+		@JsonProperty("mnemonic")
+		private String mnemonic;
+		@JsonProperty("key")
+		private String key;
+		@JsonProperty("key.pub")
+		private String pubkey;
+		@JsonProperty("index")
+		private int index;
+		@JsonProperty("fingerprint")
+		private String fingerprint;
 
-		String encryptedMnemonic = null;
-		if (storage.containsMnemonic()) {
-			encryptedMnemonic = storage.loadMnemonic();
-			plain = decryptFromBase64(encryptedMnemonic, storepass);
-			encryptedMnemonic = encryptToBase64(plain, password);
-			Arrays.fill(plain, (byte)0);
+		@JsonCreator
+		protected PrivateIdentityExport(@JsonProperty(value = "type", required = true) String type) {
+			if (type == null)
+				throw new IllegalArgumentException("Invalid export type");
+
+			this.type = type;
 		}
 
-		String pubKey = storage.containsPublicIdentity() ?
-				storage.loadPublicIdentity() : null;
+		public String getMnemonic(String exportpass, String storepass)
+				throws DIDStoreException {
+			return mnemonic == null ? null : reEncrypt(mnemonic, exportpass, storepass);
+		}
 
-		int index = storage.loadPrivateIdentityIndex();
+		public void setMnemonic(String mnemonic, String storepass, String exportpass)
+				throws DIDStoreException {
+			this.mnemonic = reEncrypt(mnemonic, storepass, exportpass);
+		}
 
-		SHA256Digest sha256 = new SHA256Digest();
-		byte[] bytes = password.getBytes();
-		sha256.update(bytes, 0, bytes.length);
+		public String getKey(String exportpass, String storepass)
+				throws DIDStoreException {
+			return reEncrypt(key, exportpass, storepass);
+		}
 
-		generator.writeStartObject();
+		public void setKey(String key, String storepass, String exportpass)
+				throws DIDStoreException {
+			this.key = reEncrypt(key, storepass, exportpass);
+		}
 
-		// Type
-		generator.writeStringField("type", DID_EXPORT);
-		bytes = DID_EXPORT.getBytes();
-		sha256.update(bytes, 0, bytes.length);
+		public String getPubkey() {
+			return pubkey;
+		}
 
-		// Mnemonic
-		if (encryptedMnemonic != null) {
-			generator.writeStringField("mnemonic", encryptedMnemonic);
-			bytes = encryptedMnemonic.getBytes();
+		public void setPubkey(String pubkey) {
+			this.pubkey = pubkey;
+		}
+
+		public int getIndex() {
+			return index;
+		}
+
+		public void setIndex(int index) {
+			this.index = index;
+		}
+
+		private String calculateFingerprint(String exportpass) {
+			SHA256Digest sha256 = new SHA256Digest();
+			byte[] bytes = exportpass.getBytes();
 			sha256.update(bytes, 0, bytes.length);
-		}
 
-		// Key
-		generator.writeStringField("key", encryptedKey);
-		bytes = encryptedKey.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// Key.pub
-		if (pubKey != null) {
-			generator.writeStringField("key.pub", pubKey);
-			bytes = pubKey.getBytes();
+			bytes = type.getBytes();
 			sha256.update(bytes, 0, bytes.length);
+
+			bytes = Long.toString(created.getTime()).getBytes();
+			sha256.update(bytes, 0, bytes.length);
+
+			if (mnemonic != null) {
+				bytes = mnemonic.getBytes();
+				sha256.update(bytes, 0, bytes.length);
+			}
+
+			bytes = key.getBytes();
+			sha256.update(bytes, 0, bytes.length);
+
+			if (pubkey != null) {
+				bytes = pubkey.getBytes();
+				sha256.update(bytes, 0, bytes.length);
+			}
+
+			bytes = Integer.toString(index).getBytes();
+			sha256.update(bytes, 0, bytes.length);
+
+			byte digest[] = new byte[32];
+			sha256.doFinal(digest, 0);
+			return Base64.encodeToString(digest,
+					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 		}
 
-		// Index
-		generator.writeNumberField("index", index);
-		bytes = Integer.toString(index).getBytes();
-		sha256.update(bytes, 0, bytes.length);
+		public PrivateIdentityExport seal(String exportpass) {
+			Calendar now = Calendar.getInstance();
+			now.set(Calendar.MILLISECOND, 0);
+			this.created = now.getTime();
+			this.fingerprint = calculateFingerprint(exportpass);
+			return this;
+		}
 
-		// Fingerprint
-		byte digest[] = new byte[32];
-		sha256.doFinal(digest, 0);
-		String fingerprint = Base64.encodeToString(digest,
-				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-		generator.writeStringField("fingerprint", fingerprint);
+		public void verify(String exportpass) throws MalformedExportDataException {
+			if (!fingerprint.equals(calculateFingerprint(exportpass)))
+				throw new MalformedExportDataException(
+							"Invalid export data, fingerprint mismatch.");
+		}
 
-		generator.writeEndObject();
+		@Override
+		protected void sanitize() throws MalformedExportDataException {
+			if (type == null || !type.equals(DID_EXPORT))
+				throw new MalformedExportDataException(
+						"Invalid export data, unknown type.");
+
+			if (created == null)
+				throw new MalformedExportDataException(
+						"Invalid export data, missing created time.");
+
+			if (key == null || key.isBlank())
+				throw new MalformedExportDataException(
+						"Invalid export data, missing key.");
+
+			if (fingerprint == null || fingerprint.isBlank())
+				throw new MalformedExportDataException(
+						"Invalid export data, missing fingerprint.");
+		}
+	}
+
+	private PrivateIdentityExport exportPrivateIdentity(String password,
+			String storepass) throws DIDStoreException {
+		PrivateIdentityExport pie = new PrivateIdentityExport(DID_EXPORT);
+
+		if (storage.containsMnemonic())
+			pie.setMnemonic(storage.loadMnemonic(), storepass, password);
+
+		pie.setKey(storage.loadPrivateIdentity(), storepass, password);
+
+		if (storage.containsPublicIdentity())
+			pie.setPubkey(storage.loadPublicIdentity());
+
+		pie.setIndex(storage.loadPrivateIdentityIndex());
+		return pie.seal(password);
 	}
 
 	/**
@@ -2917,11 +3013,12 @@ public final class DIDStore {
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		JsonFactory factory = new JsonFactory();
-		JsonGenerator generator = factory.createGenerator(out);
-		generator.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-		exportPrivateIdentity(generator, password, storepass);
-		generator.close();
+		try {
+			exportPrivateIdentity(password, storepass).serialize(out);
+		} catch (DIDSyntaxException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Serialize exported private identity", ignore);
+		}
 	}
 
 	/**
@@ -2941,11 +3038,12 @@ public final class DIDStore {
 				|| storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		JsonFactory factory = new JsonFactory();
-		JsonGenerator generator = factory.createGenerator(out);
-		generator.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-		exportPrivateIdentity(generator, password, storepass);
-		generator.close();
+		try {
+			exportPrivateIdentity(password, storepass).serialize(out);
+		} catch (DIDSyntaxException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Serialize exported private identity", ignore);
+		}
 	}
 
 	/**
@@ -2961,11 +3059,12 @@ public final class DIDStore {
 	 */
 	public void exportPrivateIdentity(File file, String password,
 			String storepass) throws DIDStoreException, IOException {
-		if (file == null || password == null || password.isEmpty()
-				|| storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
-
-		exportPrivateIdentity(new FileWriter(file), password, storepass);
+		try {
+			exportPrivateIdentity(password, storepass).serialize(file);
+		} catch (DIDSyntaxException ignore) {
+			// Should never heppen
+			log.error("INTERNAL - Serialize exported private identity", ignore);
+		}
 	}
 
 	/**
@@ -2988,84 +3087,22 @@ public final class DIDStore {
 		exportPrivateIdentity(new File(file), password, storepass);
 	}
 
-	private void importPrivateIdentity(JsonNode root, String password,
-			String storepass) throws DIDStoreException, IOException {
-		Class<DIDStoreException> exceptionClass = DIDStoreException.class;
-
-		SHA256Digest sha256 = new SHA256Digest();
-		byte[] bytes = password.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// Type
-		String type = JsonHelper.getString(root, "type", false, null,
-				"export type", exceptionClass);
-		if (!type.equals(DID_EXPORT))
-			throw new DIDStoreException("Invalid export data, unknown type.");
-		bytes = type.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// Mnemonic
-		String encryptedMnemonic = JsonHelper.getString(root, "mnemonic",
-				true, null, "mnemonic", exceptionClass);
-		if (encryptedMnemonic != null) {
-			bytes = encryptedMnemonic.getBytes();
-			sha256.update(bytes, 0, bytes.length);
-		}
-
-		byte[] plain = decryptFromBase64(encryptedMnemonic, password);
-		encryptedMnemonic = encryptToBase64(plain, storepass);
-		Arrays.fill(plain, (byte)0);
-
-		// Key
-		String encryptedKey = JsonHelper.getString(root, "key",
-				false, null, "key", exceptionClass);
-		bytes = encryptedKey.getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		plain = decryptFromBase64(encryptedKey, password);
-		encryptedKey = encryptToBase64(plain, storepass);
-		Arrays.fill(plain, (byte)0);
-
-		// Key.pub
-		String pubKey = JsonHelper.getString(root, "key.pub",
-				true, null, "publickey", exceptionClass);
-		if (pubKey != null) {
-			bytes = pubKey.getBytes();
-			sha256.update(bytes, 0, bytes.length);
-		}
-
-		// Index
-		JsonNode node = root.get("index");
-		if (node == null || !node.isNumber())
-			throw new DIDStoreException("Invalid export data, unknow index.");
-		int index = node.asInt();
-		bytes = Integer.toString(index).getBytes();
-		sha256.update(bytes, 0, bytes.length);
-
-		// Fingerprint
-		node = root.get("fingerprint");
-		if (node == null)
-			throw new DIDStoreException("Missing fingerprint in the export data");
-		String refFingerprint = node.asText();
-
-		byte digest[] = new byte[32];
-		sha256.doFinal(digest, 0);
-		String fingerprint = Base64.encodeToString(digest,
-				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-
-		if (!fingerprint.equals(refFingerprint))
-			throw new DIDStoreException("Invalid export data, the fingerprint mismatch.");
+	private void importPrivateIdentity(PrivateIdentityExport pie, String password,
+			String storepass) throws MalformedExportDataException, DIDStoreException, IOException {
+		pie.verify(password);
 
 		// Save
+		String encryptedMnemonic = pie.getMnemonic(password, storepass);
 		if (encryptedMnemonic != null)
 			storage.storeMnemonic(encryptedMnemonic);
 
-		storage.storePrivateIdentity(encryptedKey);
+		storage.storePrivateIdentity(pie.getKey(password, storepass));
 
-		if (pubKey != null)
-			storage.storePublicIdentity(pubKey);
+		String pubkey = pie.getPubkey();
+		if (pubkey != null)
+			storage.storePublicIdentity(pubkey);
 
-		storage.storePrivateIdentityIndex(index);
+		storage.storePrivateIdentityIndex(pie.getIndex());
 	}
 
 
@@ -3077,17 +3114,21 @@ public final class DIDStore {
 	 * @param storepass the password to DIDStore
 	 * @throws DIDStoreException DIDStore error.
 	 * @throws IOException write json string failed.
+	 * @throws
 	 */
 	public void importPrivateIdentity(InputStream in, String password,
-			String storepass) throws DIDStoreException, IOException {
+			String storepass) throws MalformedExportDataException, DIDStoreException, IOException  {
 		if (in == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-		JsonNode root = mapper.readTree(in);
-		importPrivateIdentity(root, password, storepass);
+		PrivateIdentityExport pie;
+		try {
+			pie = PrivateIdentityExport.parse(in, PrivateIdentityExport.class);
+		} catch (DIDSyntaxException e) {
+			throw (MalformedExportDataException)e;
+		}
+		importPrivateIdentity(pie, password, storepass);
 	}
 
 	/**
@@ -3100,15 +3141,18 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importPrivateIdentity(Reader in, String password,
-			String storepass) throws DIDStoreException, IOException {
+			String storepass) throws MalformedExportDataException, DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-		JsonNode root = mapper.readTree(in);
-		importPrivateIdentity(root, password, storepass);
+		PrivateIdentityExport pie;
+		try {
+			pie = PrivateIdentityExport.parse(in, PrivateIdentityExport.class);
+		} catch (DIDSyntaxException e) {
+			throw (MalformedExportDataException)e;
+		}
+		importPrivateIdentity(pie, password, storepass);
 	}
 
 	/**
@@ -3121,15 +3165,18 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importPrivateIdentity(File file, String password,
-			String storepass) throws DIDStoreException, IOException {
+			String storepass) throws MalformedExportDataException, DIDStoreException, IOException {
 		if (file == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-		JsonNode root = mapper.readTree(file);
-		importPrivateIdentity(root, password, storepass);
+		PrivateIdentityExport pie;
+		try {
+			pie = PrivateIdentityExport.parse(file, PrivateIdentityExport.class);
+		} catch (DIDSyntaxException e) {
+			throw (MalformedExportDataException)e;
+		}
+		importPrivateIdentity(pie, password, storepass);
 	}
 
 	/**
@@ -3142,10 +3189,11 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importPrivateIdentity(String file, String password,
-			String storepass) throws DIDStoreException, IOException {
+			String storepass) throws MalformedExportDataException, DIDStoreException, IOException {
 		if (file == null || file.isEmpty() || password == null ||
 				password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
+
 		importPrivateIdentity(new File(file), password, storepass);
 	}
 
@@ -3230,7 +3278,7 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importStore(ZipInputStream in, String password, String storepass)
-			throws DIDStoreException, IOException {
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty()
 				|| storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -3255,7 +3303,7 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importStore(File zipFile, String password, String storepass)
-			throws DIDStoreException, IOException {
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (zipFile == null || password == null || password.isEmpty()
 				|| storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -3275,7 +3323,7 @@ public final class DIDStore {
 	 * @throws IOException write json string failed.
 	 */
 	public void importStore(String zipFile, String password, String storepass)
-			throws DIDStoreException, IOException {
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (zipFile == null || zipFile.isEmpty() || password == null
 				|| password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();

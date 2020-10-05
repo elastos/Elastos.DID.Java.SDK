@@ -39,6 +39,7 @@ import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDException;
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -343,7 +344,7 @@ public class JwtTest {
 		cal.add(Calendar.MONTH, 4);
 		Date exp = cal.getTime();
 
-		JsonNode node = loadJson(testData.loadEmailVcNormalizedJson());
+		Map<String, Object> vc = loadJson(testData.loadEmailVcNormalizedJson());
 
 		String token = doc.jwtBuilder()
 				.addHeader(Header.TYPE, Header.JWT_TYPE)
@@ -357,7 +358,7 @@ public class JwtTest {
 				.setExpiration(exp)
 				.setNotBefore(nbf)
 				.claim("foo", "bar")
-				.claim("vc", node)
+				.claim("vc", vc)
 				.signWith("#key2", TestConfig.storePass)
 				.compact();
 
@@ -393,18 +394,12 @@ public class JwtTest {
 		Map<String, Object> map = c.get("vc", clazz);
 		assertNotNull(map);
 		assertEquals(testData.loadEmailCredential().getId().toString(), map.get("id"));
-		assertEquals(node, map2JsonNode(map));
-
-		// get as JsonNode
-		JsonNode n = c.get("vc", JsonNode.class);
-		assertNotNull(n);
-		assertEquals(testData.loadEmailCredential().getId().toString(), n.get("id").asText());
-		assertEquals(node, n);
+		assertTrue(map.equals(vc));
 
 		// get as json text
 		String json = c.getAsJson("vc");
 		assertNotNull(json);
-		assertEquals(node, loadJson(json));
+		assertTrue(loadJson(json).equals(vc));
 
 		String s = jwt.getSignature();
 		assertNotNull(s);
@@ -473,7 +468,7 @@ public class JwtTest {
 		assertEquals(nbf, c.getNotBefore());
 		assertEquals("bar", c.get("foo", String.class));
 
-		JsonNode node = loadJson(jsonValue);
+		Map<String, Object> vc = loadJson(jsonValue);
 
 		// get as map
 		@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -481,18 +476,12 @@ public class JwtTest {
 		Map<String, Object> map = c.get("vc", clazz);
 		assertNotNull(map);
 		assertEquals(testData.loadEmailCredential().getId().toString(), map.get("id"));
-		assertEquals(node, map2JsonNode(map));
-
-		// get as JsonNode
-		JsonNode n = c.get("vc", JsonNode.class);
-		assertNotNull(n);
-		assertEquals(testData.loadEmailCredential().getId().toString(), n.get("id").asText());
-		assertEquals(node, n);
+		assertTrue(map.equals(vc));
 
 		// get as json text
 		String json = c.getAsJson("vc");
 		assertNotNull(json);
-		assertEquals(node, loadJson(json));
+		assertTrue(loadJson(json).equals(vc));
 
 		String s = jwt.getSignature();
 		assertNotNull(s);
@@ -528,14 +517,14 @@ public class JwtTest {
 				"  }\n" +
 				"}";
 
-		JsonNode node = loadJson(json);
+		Map<String, Object> m = loadJson(json);
 
 		String token = doc.jwtBuilder()
 				.addHeader(Header.TYPE, Header.JWT_TYPE)
 				.addHeader(Header.CONTENT_TYPE, "json")
 				.addHeader("library", "Elastos DID")
 				.addHeader("version", "1.0")
-				.setClaims(node)
+				.setClaims(m)
 				.setIssuedAt(iat)
 				.setExpiration(exp)
 				.setNotBefore(nbf)
@@ -573,10 +562,6 @@ public class JwtTest {
 		Class<Map<String, Object>> clazz = (Class)Map.class;
 		Map<String, Object> map = c.get("object", clazz);
 		assertNotNull(map);
-
-		// get as JsonNode
-		JsonNode n = c.get("object", JsonNode.class);
-		assertNotNull(n);
 
 		// get as json text
 		String v = c.getAsJson("object");
@@ -661,10 +646,6 @@ public class JwtTest {
 		Map<String, Object> map = c.get("object", clazz);
 		assertNotNull(map);
 
-		// get as JsonNode
-		JsonNode n = c.get("object", JsonNode.class);
-		assertNotNull(n);
-
 		// get as json text
 		String v = c.getAsJson("object");
 		assertNotNull(v);
@@ -704,7 +685,7 @@ public class JwtTest {
 				"  }\n" +
 				"}";
 
-		JsonNode node = loadJson(json);
+		Map<String, Object> m = loadJson(json);
 
 		String token = doc.jwtBuilder()
 				.addHeader(Header.TYPE, Header.JWT_TYPE)
@@ -714,7 +695,7 @@ public class JwtTest {
 				.setIssuedAt(iat)
 				.setExpiration(exp)
 				.setNotBefore(nbf)
-				.addClaims(node)
+				.addClaims(m)
 				.signWith("#key2", TestConfig.storePass)
 				.compact();
 
@@ -749,10 +730,6 @@ public class JwtTest {
 		Class<Map<String, Object>> clazz = (Class)Map.class;
 		Map<String, Object> map = c.get("object", clazz);
 		assertNotNull(map);
-
-		// get as JsonNode
-		JsonNode n = c.get("object", JsonNode.class);
-		assertNotNull(n);
 
 		// get as json text
 		String v = c.getAsJson("object");
@@ -837,10 +814,6 @@ public class JwtTest {
 		Map<String, Object> map = c.get("object", clazz);
 		assertNotNull(map);
 
-		// get as JsonNode
-		JsonNode n = c.get("object", JsonNode.class);
-		assertNotNull(n);
-
 		// get as json text
 		String v = c.getAsJson("object");
 		assertNotNull(v);
@@ -895,18 +868,13 @@ public class JwtTest {
 		});
 	}
 
-	private JsonNode loadJson(String json) {
+	private Map<String, Object> loadJson(String json) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			JsonNode node = mapper.readTree(json);
-			return node;
+			return mapper.convertValue(node, new TypeReference<Map<String, Object>>(){});
 		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
-	}
-
-	protected JsonNode map2JsonNode(Map<String, Object> map) {
-		ObjectMapper mapper = new ObjectMapper();
-		return mapper.convertValue(map, JsonNode.class);
 	}
 }

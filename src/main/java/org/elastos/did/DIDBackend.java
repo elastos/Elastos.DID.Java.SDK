@@ -44,7 +44,6 @@ import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedResolveResultException;
 import org.elastos.did.exception.NetworkException;
-import org.elastos.did.metadata.DIDMetadataImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -404,7 +403,7 @@ public class DIDBackend {
 			}
 
 			DIDDocument doc = ti.getRequest().getDocument();
-			DIDMetadataImpl metadata = new DIDMetadataImpl();
+			DIDMetadata metadata = new DIDMetadata();
 			metadata.setTransactionId(ti.getTransactionId());
 			metadata.setSignature(doc.getProof().getSignature());
 			metadata.setPublished(ti.getTimestamp());

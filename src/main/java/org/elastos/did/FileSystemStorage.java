@@ -41,11 +41,9 @@ import java.util.List;
 import org.elastos.did.exception.DIDStorageException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDStoreVersionMismatch;
-import org.elastos.did.exception.MalformedCredentialException;
-import org.elastos.did.exception.MalformedDocumentException;
-import org.elastos.did.exception.MalformedMetaException;
-import org.elastos.did.metadata.CredentialMetadataImpl;
-import org.elastos.did.metadata.DIDMetadataImpl;
+import org.elastos.did.exception.DIDSyntaxException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * FileSystem DID Store: storage layout
@@ -100,6 +98,8 @@ class FileSystemStorage implements DIDStorage {
 	private static final String DEPRECATED_SUFFIX = ".deprecated";
 
 	private File storeRoot;
+
+	private static final Logger log = LoggerFactory.getLogger(FileSystemStorage.class);
 
 	FileSystemStorage(String dir) throws DIDStorageException {
 		if (dir == null)
@@ -391,33 +391,31 @@ class FileSystemStorage implements DIDStorage {
 	}
 
 	@Override
-	public void storeDidMetadata(DID did, DIDMetadataImpl metadata) throws DIDStorageException {
+	public void storeDidMetadata(DID did, DIDMetadata metadata) throws DIDStorageException {
 		try {
 			File file = getFile(true, DID_DIR, did.getMethodSpecificId(), META_FILE);
 
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
-				metadata.save(new FileWriter(file));
-		} catch (IOException e) {
+				metadata.serialize(file);
+		} catch (DIDSyntaxException | IOException e) {
 			throw new DIDStorageException("Store DID metadata error.", e);
 		}
 	}
 
 	@Override
-	public DIDMetadataImpl loadDidMetadata(DID did) throws DIDStorageException {
-		DIDMetadataImpl metadata = new DIDMetadataImpl();
-
+	public DIDMetadata loadDidMetadata(DID did) throws DIDStorageException {
 		try {
 			File file = getFile(DID_DIR, did.getMethodSpecificId(), META_FILE);
-			metadata.load(new FileReader(file));
+			DIDMetadata metadata = DIDMetadata.parse(file, DIDMetadata.class);
 
 			file = getFile(DID_DIR, did.getMethodSpecificId(), DOCUMENT_FILE);
 			metadata.setLastModified(new Date(file.lastModified()));
-		} catch (FileNotFoundException | MalformedMetaException ignore) {
+			return metadata;
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDStorageException(e);
 		}
-
-		return metadata;
 	}
 
 	@Override
@@ -426,15 +424,18 @@ class FileSystemStorage implements DIDStorage {
 			File file = getFile(true, DID_DIR,
 					doc.getSubject().getMethodSpecificId(), DOCUMENT_FILE);
 
-			doc.toJson(new FileWriter(file), true);
+			doc.serialize(file, true);
 			if (doc.getMetadata().getLastModified() != null)
 				file.setLastModified(doc.getMetadata().getLastModified().getTime());
 			else {
-				doc.getMetadataImpl().setLastModified(new Date(file.lastModified()));
-				storeDidMetadata(doc.getSubject(), doc.getMetadataImpl());
+				doc.getMetadata().setLastModified(new Date(file.lastModified()));
+				storeDidMetadata(doc.getSubject(), doc.getMetadata());
 			}
 		} catch (IOException e) {
 			throw new DIDStorageException("Store DIDDocument error.", e);
+		} catch (DIDSyntaxException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Try to store a malformed document", ignore);
 		}
 	}
 
@@ -446,8 +447,8 @@ class FileSystemStorage implements DIDStorage {
 			if (!file.exists())
 				return null;
 
-			return DIDDocument.fromJson(new FileReader(file));
-		} catch (MalformedDocumentException | IOException e) {
+			return DIDDocument.parse(file);
+		} catch (DIDSyntaxException | IOException e) {
 			throw new DIDStorageException("Load DIDDocument error.", e);
 		}
 	}
@@ -513,7 +514,7 @@ class FileSystemStorage implements DIDStorage {
 	}
 
 	@Override
-	public void storeCredentialMetadata(DID did, DIDURL id, CredentialMetadataImpl metadata)
+	public void storeCredentialMetadata(DID did, DIDURL id, CredentialMetadata metadata)
 			throws DIDStorageException {
 		try {
 			File file = getFile(true, DID_DIR, did.getMethodSpecificId(),
@@ -522,29 +523,28 @@ class FileSystemStorage implements DIDStorage {
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
-				metadata.save(new FileWriter(file));
-		} catch (IOException e) {
+				metadata.serialize(file);
+		} catch (DIDSyntaxException | IOException e) {
 			throw new DIDStorageException("Store credential metadata error.", e);
 		}
 	}
 
 	@Override
-	public CredentialMetadataImpl loadCredentialMetadata(DID did, DIDURL id)
+	public CredentialMetadata loadCredentialMetadata(DID did, DIDURL id)
 			throws DIDStorageException {
-		CredentialMetadataImpl metadata = new CredentialMetadataImpl();
-
 		try {
 			File file = getFile(DID_DIR, did.getMethodSpecificId(),
 					CREDENTIALS_DIR, id.getFragment(), META_FILE);
-			metadata.load(new FileReader(file));
+			CredentialMetadata metadata = CredentialMetadata.parse(file, CredentialMetadata.class);
 
 			file = getFile(DID_DIR, did.getMethodSpecificId(),
 					CREDENTIALS_DIR, id.getFragment(), CREDENTIAL_FILE);
 			metadata.setLastModified(new Date(file.lastModified()));
-		} catch (FileNotFoundException | MalformedMetaException ignore) {
-		}
 
-		return metadata;
+			return metadata;
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDStorageException(e);
+		}
 	}
 
 	@Override
@@ -556,17 +556,20 @@ class FileSystemStorage implements DIDStorage {
 					CREDENTIALS_DIR, credential.getId().getFragment(),
 					CREDENTIAL_FILE);
 
-			credential.toJson(new FileWriter(file), true);
+			credential.serialize(file, true);
 
 			if (credential.getMetadata().getLastModified() != null)
 				file.setLastModified(credential.getMetadata().getLastModified().getTime());
 			else {
-				credential.getMetadataImpl().setLastModified(new Date(file.lastModified()));
+				credential.getMetadata().setLastModified(new Date(file.lastModified()));
 				storeCredentialMetadata(credential.getSubject().getId(),
-						credential.getId(), credential.getMetadataImpl());
+						credential.getId(), credential.getMetadata());
 			}
 		} catch (IOException e) {
 			throw new DIDStorageException("Store credential error.", e);
+		} catch (DIDSyntaxException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Try to store a malformed credential", ignore);
 		}
 	}
 
@@ -579,8 +582,8 @@ class FileSystemStorage implements DIDStorage {
 			if (!file.exists())
 				return null;
 
-			return VerifiableCredential.fromJson(new FileReader(file));
-		} catch (MalformedCredentialException | IOException e) {
+			return VerifiableCredential.parse(file);
+		} catch (DIDSyntaxException | IOException e) {
 			throw new DIDStorageException("Load VerifiableCredential error.", e);
 		}
 	}

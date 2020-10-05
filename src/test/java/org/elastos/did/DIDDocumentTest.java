@@ -46,9 +46,6 @@ import org.elastos.did.exception.DIDObjectAlreadyExistException;
 import org.elastos.did.exception.DIDObjectNotExistException;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class DIDDocumentTest {
 	@Test
 	public void testGetPublicKey() throws IOException, DIDException {
@@ -758,17 +755,15 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit();
 
 		// Add credentials.
-		Map<String, String> subject = new HashMap<String, String>();
+		Map<String, Object> subject = new HashMap<String, Object>();
 		subject.put("passport", "S653258Z07");
 		db.addCredential("passport", subject, TestConfig.storePass);
 
-		String subjectjson = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\"}";
-		db.addCredential("name", subjectjson, TestConfig.storePass);
+		String json = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\"}";
+		db.addCredential("name", json, TestConfig.storePass);
 
-		ObjectMapper mapper = new ObjectMapper();
-		String json = "{\"twitter\":\"@john\"}";
-		JsonNode subjectnode = mapper.readTree(json);
-		db.addCredential("twitter", subjectnode, TestConfig.storePass);
+		json = "{\"twitter\":\"@john\"}";
+		db.addCredential("twitter", json, TestConfig.storePass);
 
 		doc = db.seal(TestConfig.storePass);
 		assertNotNull(doc);
@@ -990,7 +985,7 @@ public class DIDDocumentTest {
 		testData.initIdentity();
 
 		DIDDocument compact = DIDDocument
-				.fromJson(testData.loadTestCompactJson());
+				.parse(testData.loadTestCompactJson());
 		assertNotNull(compact);
 		assertTrue(compact.isValid());
 
@@ -1002,7 +997,7 @@ public class DIDDocumentTest {
 		assertEquals(3, compact.getServiceCount());
 
 		DIDDocument normalized = DIDDocument
-				.fromJson(testData.loadTestCompactJson());
+				.parse(testData.loadTestCompactJson());
 		assertNotNull(normalized);
 		assertTrue(normalized.isValid());
 
@@ -1022,10 +1017,13 @@ public class DIDDocumentTest {
 				normalized.toString(true));
 		assertEquals(testData.loadTestNormalizedJson(), doc.toString(true));
 
+		// Don't check the compact mode anymore
+		/*
 		assertEquals(testData.loadTestCompactJson(), compact.toString(false));
 		assertEquals(testData.loadTestCompactJson(),
 				normalized.toString(false));
 		assertEquals(testData.loadTestCompactJson(), doc.toString(false));
+		*/
 	}
 
 	@Test

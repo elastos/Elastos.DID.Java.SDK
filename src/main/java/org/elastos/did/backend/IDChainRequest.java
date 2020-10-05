@@ -248,7 +248,7 @@ public class IDChainRequest {
 		this.doc = doc;
 
 		if (operation != Operation.DEACTIVATE) {
-			String json = doc.toString(false);
+			String json = doc.toString(true);
 
 			this.payload = Base64.encodeToString(json.getBytes(),
 					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
@@ -263,7 +263,7 @@ public class IDChainRequest {
 				String json = new String(Base64.decode(payload,
 						Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
 
-				doc = DIDDocument.fromJson(json);
+				doc = DIDDocument.parse(json);
 				did = doc.getSubject();
 			} else {
 				did = new DID(payload);
