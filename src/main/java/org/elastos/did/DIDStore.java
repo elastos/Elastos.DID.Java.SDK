@@ -2229,7 +2229,7 @@ public final class DIDStore {
 	 * @param storepass the password for DIDStore
 	 * @param digest the digest data
 	 * @return the signature string
-	 * @throws DIDStoreException can not get DID Document if no specified sign key.
+	 * @throws DIDStoreException can not get DID Document if no specified sign key
 	 */
 	protected String sign(DID did, String storepass, byte[] digest)
 			throws DIDStoreException {
@@ -2546,15 +2546,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content include document,
-     * credentials, private keys and meta.
+     * Export DID information into file with json format. The json content
+     * include document, credentials, private keys and meta.
 	 *
 	 * @param did the specified DID
 	 * @param out the export output
-	 * @param password the password to encrypt the private key in output.
-	 * @param storepass the password for DIDStore.
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void exportDid(DID did, OutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
@@ -2571,15 +2571,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content include document,
-     * credentials, private keys and meta.
+     * Export DID information into file with json format. The json content
+     * include document, credentials, private keys and meta.
 	 *
 	 * @param did the specified DID
 	 * @param out the export output
-	 * @param password the password to encrypt the private key in output.
-	 * @param storepass the password for DIDStore.
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void exportDid(String did, OutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
@@ -2594,15 +2594,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content include document,
-     * credentials, private keys and meta.
+     * Export DID information into file with json format. The json content
+     *  include document, credentials, private keys and meta.
 	 *
 	 * @param did the specified DID
 	 * @param out the export output
-	 * @param password the password to encrypt the private key in output.
-	 * @param storepass the password for DIDStore.
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void exportDid(DID did, Writer out, String password,
 			String storepass) throws DIDStoreException, IOException {
@@ -2619,18 +2619,18 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content include document,
-     * credentials, private keys and meta.
+     * Export DID information into file with json format. The json content
+     * include document, credentials, private keys and meta.
 	 *
 	 * @param did the specified DID string
 	 * @param out the export output
-	 * @param password the password to encrypt the private key in output.
-	 * @param storepass the password for DIDStore.
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void exportDid(String did, Writer out, String password,
-			String storepass) throws DIDStoreException, IOException {
+	public void exportDid(String did, Writer out, String password, String storepass)
+			throws DIDStoreException, IOException {
 		DID _did = null;
 		try {
 			_did = new DID(did);
@@ -2642,18 +2642,18 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content include document,
-     * credentials, private keys and meta.
+     * Export DID information into file with json format. The json content
+     * include document, credentials, private keys and meta.
 	 *
 	 * @param did the specified DID
 	 * @param file the export output
-	 * @param password the password to encrypt the private key in output.
-	 * @param storepass the password for DIDStore.
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void exportDid(DID did, File file, String password,
-			String storepass) throws DIDStoreException, IOException {
+	public void exportDid(DID did, File file, String password, String storepass)
+			throws DIDStoreException, IOException {
 		if (did == null || file == null || password == null ||
 				password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -2667,18 +2667,18 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content include document,
-     * credentials, private keys and meta.
+     * Export DID information into file with json format. The json content
+     * include document, credentials, private keys and meta.
 	 *
 	 * @param did the specified DID string
 	 * @param file the export output
-	 * @param password the password to encrypt the private key in output.
-	 * @param storepass the password for DIDStore.
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void exportDid(String did, File file, String password,
-			String storepass) throws DIDStoreException, IOException {
+	public void exportDid(String did, File file, String password, String storepass)
+			throws DIDStoreException, IOException {
 		DID _did = null;
 		try {
 			_did = new DID(did);
@@ -2690,18 +2690,18 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content include document,
-     * credentials, private keys and meta.
+     * Export DID information into file with json format. The json content
+     * include document, credentials, private keys and meta.
 	 *
 	 * @param did the specified DID
 	 * @param file the export output
-	 * @param password the password to encrypt the private key in output.
-	 * @param storepass the password for DIDStore.
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void exportDid(DID did, String file, String password,
-			String storepass) throws DIDStoreException, IOException {
+	public void exportDid(DID did, String file, String password, String storepass)
+			throws DIDStoreException, IOException {
 		if (did == null || file == null || file.isEmpty() || password == null ||
 				password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -2710,18 +2710,18 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content include document,
-     * credentials, private keys and meta.
+     * Export DID information into file with json format. The json content
+     * include document, credentials, private keys and meta.
 	 *
 	 * @param did the specified DID string
 	 * @param file the export output
-	 * @param password the password to encrypt the private key in output.
-	 * @param storepass the password for DIDStore.
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @param password the password to encrypt the private key in output
+	 * @param storepass the password for DIDStore
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void exportDid(String did, String file, String password,
-			String storepass) throws DIDStoreException, IOException {
+	public void exportDid(String did, String file, String password, String storepass)
+			throws DIDStoreException, IOException {
 		DID _did = null;
 		try {
 			_did = new DID(did);
@@ -2767,8 +2767,9 @@ public final class DIDStore {
 	 * @param in the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void importDid(InputStream in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2791,8 +2792,9 @@ public final class DIDStore {
 	 * @param in the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void importDid(Reader in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2815,8 +2817,9 @@ public final class DIDStore {
 	 * @param file the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void importDid(File file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2839,8 +2842,9 @@ public final class DIDStore {
 	 * @param file the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void importDid(String file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2980,8 +2984,8 @@ public final class DIDStore {
 		}
 	}
 
-	private PrivateIdentityExport exportPrivateIdentity(String password,
-			String storepass) throws DIDStoreException {
+	private PrivateIdentityExport exportPrivateIdentity(String password, String storepass)
+			throws DIDStoreException {
 		PrivateIdentityExport pie = new PrivateIdentityExport(DID_EXPORT);
 
 		if (storage.containsMnemonic())
@@ -3004,11 +3008,11 @@ public final class DIDStore {
 	 * @param out the export output
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void exportPrivateIdentity(OutputStream out, String password,
-			String storepass) throws DIDStoreException, IOException {
+	public void exportPrivateIdentity(OutputStream out, String password, String storepass)
+			throws DIDStoreException, IOException {
 		if (out == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -3029,11 +3033,11 @@ public final class DIDStore {
 	 * @param out the export output
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void exportPrivateIdentity(Writer out, String password,
-			String storepass) throws DIDStoreException, IOException {
+	public void exportPrivateIdentity(Writer out, String password, String storepass)
+			throws DIDStoreException, IOException {
 		if (out == null || password == null || password.isEmpty()
 				|| storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -3054,11 +3058,11 @@ public final class DIDStore {
 	 * @param file the export output
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void exportPrivateIdentity(File file, String password,
-			String storepass) throws DIDStoreException, IOException {
+	public void exportPrivateIdentity(File file, String password, String storepass)
+			throws DIDStoreException, IOException {
 		try {
 			exportPrivateIdentity(password, storepass).serialize(file);
 		} catch (DIDSyntaxException ignore) {
@@ -3075,11 +3079,11 @@ public final class DIDStore {
 	 * @param file the export output
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void exportPrivateIdentity(String file, String password,
-			String storepass) throws DIDStoreException, IOException {
+	public void exportPrivateIdentity(String file, String password, String storepass)
+			throws DIDStoreException, IOException {
 		if (file == null || file.isEmpty() || password == null ||
 				password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -3087,8 +3091,8 @@ public final class DIDStore {
 		exportPrivateIdentity(new File(file), password, storepass);
 	}
 
-	private void importPrivateIdentity(PrivateIdentityExport pie, String password,
-			String storepass) throws MalformedExportDataException, DIDStoreException, IOException {
+	private void importPrivateIdentity(PrivateIdentityExport pie, String password, String storepass)
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		pie.verify(password);
 
 		// Save
@@ -3112,12 +3116,12 @@ public final class DIDStore {
 	 * @param in the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password to DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
-	 * @throws
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void importPrivateIdentity(InputStream in, String password,
-			String storepass) throws MalformedExportDataException, DIDStoreException, IOException  {
+	public void importPrivateIdentity(InputStream in, String password, String storepass)
+			throws MalformedExportDataException, DIDStoreException, IOException  {
 		if (in == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -3137,11 +3141,12 @@ public final class DIDStore {
 	 * @param in the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password to DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void importPrivateIdentity(Reader in, String password,
-			String storepass) throws MalformedExportDataException, DIDStoreException, IOException {
+	public void importPrivateIdentity(Reader in, String password, String storepass)
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (in == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -3161,11 +3166,12 @@ public final class DIDStore {
 	 * @param file the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password to DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void importPrivateIdentity(File file, String password,
-			String storepass) throws MalformedExportDataException, DIDStoreException, IOException {
+	public void importPrivateIdentity(File file, String password, String storepass)
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (file == null || password == null || password.isEmpty() ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -3185,11 +3191,12 @@ public final class DIDStore {
 	 * @param file the import input
 	 * @param password the password to decrypt private key in input
 	 * @param storepass the password to DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
-	public void importPrivateIdentity(String file, String password,
-			String storepass) throws MalformedExportDataException, DIDStoreException, IOException {
+	public void importPrivateIdentity(String file, String password, String storepass)
+			throws MalformedExportDataException, DIDStoreException, IOException {
 		if (file == null || file.isEmpty() || password == null ||
 				password.isEmpty() || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -3203,8 +3210,8 @@ public final class DIDStore {
 	 * @param out the export output
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void exportStore(ZipOutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
@@ -3236,8 +3243,8 @@ public final class DIDStore {
 	 * @param zipFile the export zip file
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void exportStore(File zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
@@ -3256,8 +3263,8 @@ public final class DIDStore {
 	 * @param zipFile the export zip file
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void exportStore(String zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
@@ -3274,8 +3281,9 @@ public final class DIDStore {
 	 * @param in the import input
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void importStore(ZipInputStream in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -3299,8 +3307,9 @@ public final class DIDStore {
 	 * @param zipFile the import zip file
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void importStore(File zipFile, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -3319,8 +3328,9 @@ public final class DIDStore {
 	 * @param zipFile the import zip file
 	 * @param password the password to encrypt the private key in output
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
-	 * @throws IOException write json string failed.
+	 * @throws MalformedExportDataException if the exported data is invalid
+	 * @throws DIDStoreException DIDStore error
+	 * @throws IOException write json string failed
 	 */
 	public void importStore(String zipFile, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {

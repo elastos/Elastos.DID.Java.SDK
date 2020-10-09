@@ -1918,7 +1918,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param content the string JSON content for building the object
 	 * @return the DIDDocument object
 	 * @throws DIDSyntaxException if a parse error occurs
-	 * @deprecated use {@link #parse(String))} instead
+	 * @deprecated use {@link #parse(String)} instead
 	 */
 	@Deprecated
 	public static DIDDocument fromJson(String content) throws DIDSyntaxException {
@@ -1932,7 +1932,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the DIDDocument object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #parse(Reader))} instead
+	 * @deprecated use {@link #parse(Reader)} instead
 	 */
 	@Deprecated
 	public static DIDDocument fromJson(Reader src)
@@ -1947,7 +1947,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the DIDDocument object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #parse(InputStream))} instead
+	 * @deprecated use {@link #parse(InputStream)} instead
 	 */
 	@Deprecated
 	public static DIDDocument fromJson(InputStream src)
@@ -1962,7 +1962,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the DIDDocument object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #parse(File))} instead
+	 * @deprecated use {@link #parse(File)} instead
 	 */
 	@Deprecated
 	public static DIDDocument fromJson(File src)
@@ -3012,7 +3012,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 *
 		 * @param storepass the password for DIDStore
 		 * @return the DIDDocument object
-		 * @throws MalformedCredentialException if the DIDDocument is malformed
+		 * @throws MalformedDocumentException if the DIDDocument is malformed
 		 * @throws DIDStoreException if an error occurs when access DID store
 		 */
 		public DIDDocument seal(String storepass)

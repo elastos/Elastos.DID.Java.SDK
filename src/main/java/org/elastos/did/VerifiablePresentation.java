@@ -518,7 +518,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 	 * @param content the string JSON content for building the object
 	 * @return the VerifiablePresentation object
 	 * @throws DIDSyntaxException if a parse error occurs
-	 * @deprecated use {@link #parse(String))} instead
+	 * @deprecated use {@link #parse(String)} instead
 	 */
 	@Deprecated
 	public static VerifiablePresentation fromJson(String content)
@@ -533,7 +533,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 	 * @return the VerifiablePresentation object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #parse(Reader))} instead
+	 * @deprecated use {@link #parse(Reader)} instead
 	 */
 	@Deprecated
 	public static VerifiablePresentation fromJson(Reader src)
@@ -548,7 +548,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 	 * @return the VerifiablePresentation object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #parse(InputStream))} instead
+	 * @deprecated use {@link #parse(InputStream)} instead
 	 */
 	@Deprecated
 	public static VerifiablePresentation fromJson(InputStream src)
@@ -563,7 +563,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 	 * @return the VerifiablePresentation object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #parse(File))} instead
+	 * @deprecated use {@link #parse(File)} instead
 	 */
 	@Deprecated
 	public static VerifiablePresentation fromJson(File src)
