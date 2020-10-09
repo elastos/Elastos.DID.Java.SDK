@@ -1348,7 +1348,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (pks.containsKey(pk.getId()))
 				throw new MalformedDocumentException("Public key already exists: " + pk.getId());
 
-			if (pk.getPublicKeyBase58() == null || pk.getPublicKeyBase58().isBlank())
+			if (pk.getPublicKeyBase58() == null || pk.getPublicKeyBase58().isEmpty())
 				throw new MalformedDocumentException("Missing public key base58 value.");
 
 			if (pk.getType() == null)
@@ -1380,7 +1380,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 					if (pks.containsKey(pk.getId()))
 						throw new MalformedDocumentException("Public key already exists: " + pk.getId());
 
-					if (pk.getPublicKeyBase58() == null || pk.getPublicKeyBase58().isBlank())
+					if (pk.getPublicKeyBase58() == null || pk.getPublicKeyBase58().isEmpty())
 						throw new MalformedDocumentException("Missing public key base58 value.");
 
 					if (pk.getType() == null)
@@ -1417,7 +1417,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 					if (pks.containsKey(pk.getId()))
 						throw new MalformedDocumentException("Public key already exists: " + pk.getId());
 
-					if (pk.getPublicKeyBase58() == null || pk.getPublicKeyBase58().isBlank())
+					if (pk.getPublicKeyBase58() == null || pk.getPublicKeyBase58().isEmpty())
 						throw new MalformedDocumentException("Missing public key base58 value.");
 
 					if (pk.getType() == null)
@@ -1480,10 +1480,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (svc.getId() == null)
 				throw new MalformedDocumentException("Missing service id.");
 
-			if (svc.getType() == null || svc.getType().isBlank())
+			if (svc.getType() == null || svc.getType().isEmpty())
 				throw new MalformedDocumentException("Missing service type.");
 
-			if (svc.getServiceEndpoint() == null || svc.getServiceEndpoint().isBlank())
+			if (svc.getServiceEndpoint() == null || svc.getServiceEndpoint().isEmpty())
 				throw new MalformedDocumentException("Missing service endpoint.");
 
 			if (svc.getId().getDid() == null)
@@ -2010,7 +2010,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		private void addPublicKey(PublicKey key) {
 			if (key.id == null || key.controller == null ||
-					key.keyBase58 == null || key.keyBase58.isBlank())
+					key.keyBase58 == null || key.keyBase58.isEmpty())
 				throw new IllegalArgumentException();
 
 			if ( Base58.decode(key.keyBase58).length != HDKey.PUBLICKEY_BYTES)
