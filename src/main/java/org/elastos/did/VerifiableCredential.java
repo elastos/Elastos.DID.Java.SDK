@@ -721,7 +721,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * @param content the string JSON content for building the object
 	 * @return the VerifiableCredential object
 	 * @throws DIDSyntaxException if a parse error occurs
-	 * @deprecated use {@link #parse(String))} instead
+	 * @deprecated use {@link #parse(String)} instead
 	 */
 	@Deprecated
 	public static VerifiableCredential fromJson(String content)
@@ -736,7 +736,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * @return the VerifiableCredential object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #parse(Reader))} instead
+	 * @deprecated use {@link #parse(Reader)} instead
 	 */
 	@Deprecated
 	public static VerifiableCredential fromJson(Reader src)
@@ -751,7 +751,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * @return the VerifiableCredential object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #parse(InputStream))} instead
+	 * @deprecated use {@link #parse(InputStream)} instead
 	 */
 	@Deprecated
 	public static VerifiableCredential fromJson(InputStream src)
@@ -766,7 +766,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * @return the VerifiableCredential object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #parse(File))} instead
+	 * @deprecated use {@link #parse(File)} instead
 	 */
 	@Deprecated
 	public static VerifiableCredential fromJson(File src)
@@ -778,7 +778,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * The builder object defines the APIs to create the Credential.
 	 *
 	 * The credential object is sealed object. After set the contents for new
-	 * credential, should call seal {@see Builder#seal(String)} method to
+	 * credential, should call seal {@link Builder#seal(String)} method to
 	 * create the final credential object.
 	 */
 	public static class Builder {
@@ -937,7 +937,8 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		/**
 		 * Set Credential's subject.
 		 *
-		 * @param node the subject subject with JsonNode format
+		 * @param name the property name
+		 * @param value the property value
 		 * @return the Builder object
 		 */
 		public Builder propertie(String name, Object value) {

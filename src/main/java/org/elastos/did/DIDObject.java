@@ -423,7 +423,7 @@ public abstract class DIDObject<T> {
 	 * @param normalized whether normalized output
 	 * @return the serialized JSON string
 	 * @throws DIDSyntaxException if a serialization error occurs
-	 * @deprecated use {@link #serialize(boolean))} instead
+	 * @deprecated use {@link #serialize(boolean)} instead
 	 */
 	@Deprecated
 	public String toJson(boolean normalized) throws DIDSyntaxException {
@@ -435,7 +435,7 @@ public abstract class DIDObject<T> {
 	 *
 	 * @return the serialized JSON string
 	 * @throws DIDSyntaxException if a serialization error occurs
-	 * @deprecated use {@link #serialize())} instead
+	 * @deprecated use {@link #serialize()} instead
 	 */
 	@Deprecated
 	public String toJson() throws DIDSyntaxException {
@@ -449,7 +449,7 @@ public abstract class DIDObject<T> {
 	 * @param normalized whether normalized output
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(Writer, boolean))} instead
+	 * @deprecated use {@link #serialize(Writer, boolean)} instead
 	 */
 	@Deprecated
 	public void toJson(Writer out, boolean normalized)
@@ -463,7 +463,7 @@ public abstract class DIDObject<T> {
 	 * @param out the output writer object
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(Writer))} instead
+	 * @deprecated use {@link #serialize(Writer)} instead
 	 */
 	@Deprecated
 	public void toJson(Writer out) throws DIDSyntaxException, IOException {
@@ -477,7 +477,7 @@ public abstract class DIDObject<T> {
 	 * @param normalized whether normalized output
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(OutputStream, boolean))} instead
+	 * @deprecated use {@link #serialize(OutputStream, boolean)} instead
 	 */
 	@Deprecated
 	public void toJson(OutputStream out, boolean normalized)
@@ -491,7 +491,7 @@ public abstract class DIDObject<T> {
 	 * @param out the output stream object
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(OutputStream))} instead
+	 * @deprecated use {@link #serialize(OutputStream)} instead
 	 */
 	@Deprecated
 	public void toJson(OutputStream out) throws DIDSyntaxException, IOException {
@@ -505,7 +505,7 @@ public abstract class DIDObject<T> {
 	 * @param normalized whether normalized output
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(File, boolean))} instead
+	 * @deprecated use {@link #serialize(File, boolean)} instead
 	 */
 	@Deprecated
 	public void toJson(File out, boolean normalized)
@@ -519,7 +519,7 @@ public abstract class DIDObject<T> {
 	 * @param out the output file object
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(File))} instead
+	 * @deprecated use {@link #serialize(File)} instead
 	 */
 	@Deprecated
 	public void toJson(File out) throws DIDSyntaxException, IOException {
