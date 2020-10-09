@@ -119,23 +119,23 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	public PublicKey defaultPublicKey;
 
 	@JsonProperty(PUBLICKEY)
-	private List<PublicKey> _publickey;
+	private List<PublicKey> _publickeys;
 	@JsonProperty(AUTHENTICATION)
 	@JsonInclude(Include.NON_NULL)
-	private List<WeakPublicKey> _authentication;
+	private List<WeakPublicKey> _authentications;
 	@JsonProperty(AUTHORIZATION)
 	@JsonInclude(Include.NON_NULL)
-	private List<WeakPublicKey> _authorization;
+	private List<WeakPublicKey> _authorizations;
 
 	private Map<DIDURL, VerifiableCredential> credentials;
 	@JsonProperty(VERIFIABLE_CREDENTIAL)
 	@JsonInclude(Include.NON_NULL)
-	private List<VerifiableCredential> _credential;
+	private List<VerifiableCredential> _credentials;
 
 	private Map<DIDURL, Service> services;
 	@JsonProperty(SERVICE)
 	@JsonInclude(Include.NON_NULL)
-	private List<Service> _service;
+	private List<Service> _services;
 
 	@JsonProperty(EXPIRES)
 	@JsonInclude(Include.NON_NULL)
@@ -531,14 +531,14 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	protected DIDDocument(DIDDocument doc) {
 		this.subject = doc.subject;
 		this.publicKeys = doc.publicKeys;
-		this._publickey = doc._publickey;
-		this._authentication = doc._authentication;
-		this._authorization = doc._authorization;
+		this._publickeys = doc._publickeys;
+		this._authentications = doc._authentications;
+		this._authorizations = doc._authorizations;
 		this.defaultPublicKey = doc.defaultPublicKey;
 		this.credentials = doc.credentials;
-		this._credential = doc._credential;
+		this._credentials = doc._credentials;
 		this.services = doc.services;
-		this._service = doc._service;
+		this._services = doc._services;
 		this.expires = doc.expires;
 		this.proof = doc.proof;
 		this.metadata = doc.metadata;
@@ -1282,9 +1282,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (publicKeys == null || publicKeys.isEmpty())
 			throw new MalformedDocumentException("No public key.");
 
-		this._publickey = new ArrayList<PublicKey>(publicKeys.values());
-		this._authentication = new ArrayList<WeakPublicKey>();
-		this._authorization = new ArrayList<WeakPublicKey>();
+		this._publickeys = new ArrayList<PublicKey>(publicKeys.values());
+		this._authentications = new ArrayList<WeakPublicKey>();
+		this._authorizations = new ArrayList<WeakPublicKey>();
 		for (PublicKey pk : publicKeys.values()) {
 			if (defaultPublicKey == null && pk.getController().equals(getSubject())) {
 				String address = HDKey.toAddress(pk.getPublicKeyBytes());
@@ -1295,27 +1295,27 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			}
 
 			if (pk.isAuthenticationKey())
-				_authentication.add(new WeakPublicKey(pk.getId()));
+				_authentications.add(new WeakPublicKey(pk.getId()));
 
 			if (pk.isAuthorizationKey())
-				_authorization.add(new WeakPublicKey(pk.getId()));
+				_authorizations.add(new WeakPublicKey(pk.getId()));
 		}
 
 		if (defaultPublicKey == null)
 			throw new MalformedDocumentException("Missing default public key.");
 
-		if (_authorization.size() == 0)
-			this._authorization = null;
+		if (_authorizations.size() == 0)
+			this._authorizations = null;
 
 		if (credentials != null && !credentials.isEmpty())
-			this._credential = new ArrayList<VerifiableCredential>(credentials.values());
+			this._credentials = new ArrayList<VerifiableCredential>(credentials.values());
 		else
-			this._credential = null;
+			this._credentials = null;
 
 		if (services != null && !services.isEmpty())
-			this._service = new ArrayList<Service>(services.values());
+			this._services = new ArrayList<Service>(services.values());
 		else
-			this._service = null;
+			this._services = null;
 
 		if (expires == null)
 			throw new MalformedDocumentException("Missing document expires.");
@@ -1334,11 +1334,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	private void sanitizePublickKey() throws MalformedDocumentException {
-		if (_publickey == null || _publickey.size() == 0)
+		if (_publickeys == null || _publickeys.size() == 0)
 			throw new MalformedDocumentException("No publickey.");
 
 		Map<DIDURL, PublicKey> pks = new TreeMap<DIDURL, PublicKey>();
-		for (PublicKey pk : _publickey) {
+		for (PublicKey pk : _publickeys) {
 			if (pk.getId() == null)
 				throw new MalformedDocumentException("Missing public key id.");
 
@@ -1360,10 +1360,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			pks.put(pk.getId(), pk);
 		}
 
-		if (_authentication != null && _authentication.size() > 0) {
+		if (_authentications != null && _authentications.size() > 0) {
 			PublicKey pk;
 
-			for (WeakPublicKey wpk : _authentication) {
+			for (WeakPublicKey wpk : _authentications) {
 				if (wpk.isReference()) {
 					if (wpk.getId().getDid() == null)
 						wpk.getId().setDid(getSubject());
@@ -1397,10 +1397,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			}
 		}
 
-		if (_authorization != null && _authorization.size() > 0) {
+		if (_authorizations != null && _authorizations.size() > 0) {
 			PublicKey pk;
 
-			for (WeakPublicKey wpk : _authorization) {
+			for (WeakPublicKey wpk : _authorizations) {
 				if (wpk.isReference()) {
 					if (wpk.getId().getDid() == null)
 						wpk.getId().setDid(getSubject());
@@ -1442,11 +1442,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	private void sanitizeCredential() throws MalformedDocumentException {
-		if (_credential == null || _credential.size() == 0)
+		if (_credentials == null || _credentials.size() == 0)
 			return;
 
 		Map<DIDURL, VerifiableCredential> vcs = new TreeMap<DIDURL, VerifiableCredential>();
-		for (VerifiableCredential vc : _credential) {
+		for (VerifiableCredential vc : _credentials) {
 			if (vc.getId() == null)
 				throw new MalformedDocumentException("Missing credential id.");
 
@@ -1472,11 +1472,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	private void sanitizeService() throws MalformedDocumentException {
-		if (_service == null || _service.size() == 0)
+		if (_services == null || _services.size() == 0)
 			return;
 
 		Map<DIDURL, Service> svcs = new TreeMap<DIDURL, Service>();
-		for (Service svc : _service) {
+		for (Service svc : _services) {
 			if (svc.getId() == null)
 				throw new MalformedDocumentException("Missing service id.");
 
