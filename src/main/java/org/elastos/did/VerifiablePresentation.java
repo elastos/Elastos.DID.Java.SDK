@@ -84,7 +84,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 	private Date created;
 	private Map<DIDURL, VerifiableCredential> credentials;
 	@JsonProperty(VERIFIABLE_CREDENTIAL)
-	private List<VerifiableCredential> _credential;
+	private List<VerifiableCredential> _credentials;
 	@JsonProperty(PROOF)
 	@JsonInclude(Include.NON_NULL)
 	private Proof proof;
@@ -207,7 +207,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 		this.type = vp.type;
 		this.created = vp.created;
 		this.credentials = vp.credentials;
-		this._credential = vp._credential;
+		this._credentials = vp._credentials;
 		this.proof = vp.proof;
 	}
 
@@ -303,8 +303,8 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 		if (created == null)
 			throw new MalformedPresentationException("Missing presentation create timestamp");
 
-		if (withProof && _credential != null && _credential.size() > 0) {
-			for (VerifiableCredential vc : _credential) {
+		if (withProof && _credentials != null && _credentials.size() > 0) {
+			for (VerifiableCredential vc : _credentials) {
 				try {
 					vc.sanitize();
 				} catch (DIDSyntaxException e) {
@@ -318,7 +318,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 			}
 		}
 
-		this._credential = new ArrayList<VerifiableCredential>(credentials.values());
+		this._credentials = new ArrayList<VerifiableCredential>(credentials.values());
 
 		if (withProof) {
 			if (proof == null)
