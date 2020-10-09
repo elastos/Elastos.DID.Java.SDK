@@ -2489,13 +2489,13 @@ public final class DIDStore {
 
 			if (privatekeys != null) {
 				for (PrivateKey sk : privatekeys) {
-					if (sk == null || sk.id == null || sk.key == null || sk.key.isBlank())
+					if (sk == null || sk.id == null || sk.key == null || sk.key.isEmpty())
 						throw new MalformedExportDataException(
 								"Invalid export data, invalid privatekey.");
 				}
 			}
 
-			if (fingerprint == null || fingerprint.isBlank())
+			if (fingerprint == null || fingerprint.isEmpty())
 				throw new MalformedExportDataException(
 						"Invalid export data, missing fingerprint.");
 		}
@@ -2970,11 +2970,11 @@ public final class DIDStore {
 				throw new MalformedExportDataException(
 						"Invalid export data, missing created time.");
 
-			if (key == null || key.isBlank())
+			if (key == null || key.isEmpty())
 				throw new MalformedExportDataException(
 						"Invalid export data, missing key.");
 
-			if (fingerprint == null || fingerprint.isBlank())
+			if (fingerprint == null || fingerprint.isEmpty())
 				throw new MalformedExportDataException(
 						"Invalid export data, missing fingerprint.");
 		}
