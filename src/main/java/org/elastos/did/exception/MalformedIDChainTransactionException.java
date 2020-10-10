@@ -20,56 +20,42 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.exception;
 
-import java.util.List;
-
-/**
- * The interface for DIDHistroy to store all did transactions from chain.
- */
-public interface DIDHistory {
-	/**
-	 * The DID is valid.
-	 */
-	public static final int STATUS_VALID = 0;
-	/**
-	 * The DID is expired.
-	 */
-	public static final int STATUS_EXPIRED = 1;
-	/**
-	 * The DID is deactivated.
-	 */
-	public static final int STATUS_DEACTIVATED = 2;
-	/**
-	 * The DID is not published.
-	 */
-	public static final int STATUS_NOT_FOUND = 3;
+public class MalformedIDChainTransactionException extends DIDSyntaxException {
+	private static final long serialVersionUID = 8151545348724517751L;
 
 	/**
-	 * Get owner of DID resolved history.
+	 * Constructs the MalformedMetadataException.
+	 */
+	public MalformedIDChainTransactionException() {
+        super();
+    }
+
+	/**
+	 * Constructs the MalformedMetadataException with the given message.
 	 *
-	 * @return the owner object
+	 * @param message the message string
 	 */
-	public DID getDid();
+    public MalformedIDChainTransactionException(String message) {
+        super(message);
+    }
+    /**
+     * Constructs the MalformedMetadataException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
+    public MalformedIDChainTransactionException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-	/**
-	 * Get DID status.
-	 *
-	 * @return the status code
-	 */
-	public int getStatus();
-
-	/**
-	 * Get all Id transactions about the specified DID.
-	 *
-	 * @return the did transaction array
-	 */
-	public List<DIDTransaction> getAllTransactions();
-
-	/**
-	 * Get the count of transactions.
-	 *
-	 * @return the count
-	 */
-	public int getTransactionCount();
+    /**
+     * Constructs the MalformedMetadataException with the given reason.
+     *
+     * @param cause the reason
+     */
+    public MalformedIDChainTransactionException(Throwable cause) {
+        super(cause);
+    }
 }

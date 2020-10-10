@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Elastos Foundation
+ * Copyright (c) 2019 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,17 +20,42 @@
  * SOFTWARE.
  */
 
-/**
- * <p>
- * Defines the API for the main DID's framework.
- * </p>
- * <p>
- * DID has several main modules：DID, DIDDocument(DID detail information), DIDStore,
- * Verifiable Credential and Verifiable Presentation.
- * </p>
- *
- * @since 1.0
- * @version 1.0
- **/
+package org.elastos.did.exception;
 
-package org.elastos.did.adapter;
+public class MalformedIDChainRequestException extends DIDSyntaxException {
+	private static final long serialVersionUID = -6312161054230656816L;
+
+	/**
+	 * Constructs the MalformedMetadataException.
+	 */
+	public MalformedIDChainRequestException() {
+        super();
+    }
+
+	/**
+	 * Constructs the MalformedMetadataException with the given message.
+	 *
+	 * @param message the message string
+	 */
+    public MalformedIDChainRequestException(String message) {
+        super(message);
+    }
+    /**
+     * Constructs the MalformedMetadataException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
+    public MalformedIDChainRequestException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Constructs the MalformedMetadataException with the given reason.
+     *
+     * @param cause the reason
+     */
+    public MalformedIDChainRequestException(Throwable cause) {
+        super(cause);
+    }
+}

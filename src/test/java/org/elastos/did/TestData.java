@@ -28,15 +28,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import org.elastos.did.adapter.DummyAdapter;
 import org.elastos.did.adapter.SPVAdapter;
+import org.elastos.did.backend.DummyBackend;
 import org.elastos.did.backend.ResolverCache;
 import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 
 public final class TestData {
-	private static DummyAdapter dummyAdapter;
+	private static DummyBackend dummyAdapter;
 	private static DIDAdapter spvAdapter;
 
 	private static HDKey rootKey;
@@ -87,7 +87,7 @@ public final class TestData {
 	public DIDStore setup(boolean dummyBackend) throws DIDException {
 		if (dummyBackend) {
 			if (TestData.dummyAdapter == null)
-				TestData.dummyAdapter = new DummyAdapter(TestConfig.verbose);
+				TestData.dummyAdapter = new DummyBackend(TestConfig.verbose);
 			else
 				TestData.dummyAdapter.reset();
 

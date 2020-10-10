@@ -38,7 +38,7 @@ import org.elastos.did.Issuer;
 import org.elastos.did.Mnemonic;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
-import org.elastos.did.adapter.DummyAdapter;
+import org.elastos.did.backend.DummyBackend;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.jwt.Claims;
 import org.elastos.did.jwt.Header;
@@ -48,8 +48,8 @@ import org.elastos.did.jwt.JwtParser;
 import org.elastos.did.jwt.JwtParserBuilder;
 
 public class PresentationInJWT {
-	// DummyAdapter only for demo and testing.
-	private static DummyAdapter adapter;
+	// DummyBackend only for demo and testing.
+	private static DummyBackend adapter;
 
 	public static class Entity {
 		// Mnemonic passphrase and the store password should set by the end user.
@@ -218,7 +218,7 @@ public class PresentationInJWT {
 				+ File.separator + "elastos.did";
 
 		// Dummy adapter for easy to use
-		adapter = new DummyAdapter();
+		adapter = new DummyBackend();
 
 		// Initializa the DID backend globally.
 		DIDBackend.initialize(adapter, cacheDir);
@@ -281,7 +281,7 @@ public class PresentationInJWT {
 
 			// Get claims from the token
 			String preJson = jwt.getBody().getAsJson("presentation");
-			vp = VerifiablePresentation.fromJson(preJson);
+			vp = VerifiablePresentation.parse(preJson);
 			System.out.println("Presentation from JWT:");
 			System.out.println("  " + vp);
 			System.out.println("  Genuine: " + vp.isGenuine());

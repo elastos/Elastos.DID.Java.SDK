@@ -20,46 +20,42 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.exception;
 
-import java.util.Date;
-
-/**
- * The interface for DIDTransaction to store ID transaction content.
- */
-public interface DIDTransaction {
-	/**
-	 * Get owner of DID transaction.
-	 *
-	 * @return the owner DID
-	 */
-	public DID getDid();
+public class MalformedResolveRequestException extends DIDSyntaxException {
+	private static final long serialVersionUID = -496102066029064582L;
 
 	/**
-	 * Get id of DID transaction.
-	 *
-	 * @return the transaction id string
+	 * Constructs the MalformedMetadataException.
 	 */
-	public String getTransactionId();
+	public MalformedResolveRequestException() {
+        super();
+    }
 
 	/**
-	 * Get published time of DID transaction.
+	 * Constructs the MalformedMetadataException with the given message.
 	 *
-	 * @return the time
+	 * @param message the message string
 	 */
-	public Date getTimestamp();
+    public MalformedResolveRequestException(String message) {
+        super(message);
+    }
+    /**
+     * Constructs the MalformedMetadataException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
+    public MalformedResolveRequestException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-	/**
-	 * Get operation string of DID transaction.
-	 *
-	 * @return the operation string
-	 */
-	public String getOperation();
-
-	/**
-	 * Get DID Document from DID transaction.
-	 *
-	 * @return the DID Document object
-	 */
-	public DIDDocument getDocument();
+    /**
+     * Constructs the MalformedMetadataException with the given reason.
+     *
+     * @param cause the reason
+     */
+    public MalformedResolveRequestException(Throwable cause) {
+        super(cause);
+    }
 }

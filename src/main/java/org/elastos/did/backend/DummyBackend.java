@@ -20,10 +20,9 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.adapter;
+package org.elastos.did.backend;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.LinkedList;
@@ -33,28 +32,24 @@ import org.elastos.did.Constants;
 import org.elastos.did.DID;
 import org.elastos.did.DIDAdapter;
 import org.elastos.did.DIDResolver;
-import org.elastos.did.backend.IDChainRequest;
-import org.elastos.did.backend.IDChainTransaction;
 import org.elastos.did.exception.DIDResolveException;
+import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.DIDTransactionException;
+import org.elastos.did.exception.MalformedDIDException;
 
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-
-public class DummyAdapter implements DIDAdapter, DIDResolver {
+public class DummyBackend implements DIDAdapter, DIDResolver {
 	private static Random random = new Random();
 
 	private boolean verbose;
 	private LinkedList<IDChainTransaction> idtxs;
 
-	public DummyAdapter(boolean verbose) {
+	public DummyBackend(boolean verbose) {
 		this.verbose = verbose;
 
 		idtxs = new LinkedList<IDChainTransaction>();
 	}
 
-	public DummyAdapter() {
+	public DummyBackend() {
 		this(false);
 	}
 
@@ -68,9 +63,9 @@ public class DummyAdapter implements DIDAdapter, DIDResolver {
     }
 
 	private IDChainTransaction getLastTransaction(DID did) {
-		for (IDChainTransaction ti : idtxs) {
-			if (ti.getDid().equals(did))
-				return ti;
+		for (IDChainTransaction tx : idtxs) {
+			if (tx.getDid().equals(did))
+				return tx;
 		}
 
 		return null;
@@ -79,12 +74,17 @@ public class DummyAdapter implements DIDAdapter, DIDResolver {
 	@Override
 	public void createIdTransaction(String payload, String memo)
 			throws DIDTransactionException {
-		IDChainRequest request = IDChainRequest.fromJson(payload);
+		IDChainRequest request;
+		try {
+			request = IDChainRequest.parse(payload, IDChainRequest.class);
+		} catch (DIDSyntaxException e) {
+			throw new DIDTransactionException(e);
+		}
 
 		if (verbose) {
 			System.out.println("ID Transaction: " + request.getOperation()
 					+ "[" + request.getDid() + "]");
-			System.out.println("    " + request.toJson(false));
+			System.out.println("    " + request.toString(true));
 
 			if (request.getOperation() != IDChainRequest.Operation.DEACTIVATE)
 				System.out.println("    " + request.getDocument().toString(true));
@@ -98,47 +98,45 @@ public class DummyAdapter implements DIDAdapter, DIDResolver {
 				throw new DIDTransactionException("Invalid DID Document.");
 		}
 
-		IDChainTransaction ti = getLastTransaction(request.getDid());
+		IDChainTransaction tx = getLastTransaction(request.getDid());
 
 		switch (request.getOperation()) {
 		case CREATE:
-			if (ti != null)
+			if (tx != null)
 				throw new DIDTransactionException("DID already exist.");
 
 			break;
 
 		case UPDATE:
-			if (ti == null)
+			if (tx == null)
 				throw new DIDTransactionException("DID not exist.");
 
-			if (ti.getOperationCode() == IDChainRequest.Operation.DEACTIVATE)
+			if (tx.getOperation().equals(IDChainRequest.Operation.DEACTIVATE.toString()))
 				throw new DIDTransactionException("DID already dactivated.");
 
-			if (!request.getPreviousTxid().equals(ti.getTransactionId()))
+			if (!request.getPreviousTxid().equals(tx.getTransactionId()))
 				throw new DIDTransactionException("Previous transaction id missmatch.");
 
 			break;
 
 		case DEACTIVATE:
-			if (ti == null)
+			if (tx == null)
 				throw new DIDTransactionException("DID not exist.");
 
-			if (ti.getOperationCode() == IDChainRequest.Operation.DEACTIVATE)
+			if (tx.getOperation().equals(IDChainRequest.Operation.DEACTIVATE.toString()))
 				throw new DIDTransactionException("DID already dactivated.");
 
 			break;
 		}
 
-		ti = new IDChainTransaction(generateTxid(),
+		tx = new IDChainTransaction(generateTxid(),
 				Calendar.getInstance(Constants.UTC).getTime(), request);
-		idtxs.add(0, ti);
+		idtxs.add(0, tx);
 	}
 
 	@Override
 	public InputStream resolve(String requestId, String did, boolean all)
 			throws DIDResolveException {
-		ByteArrayOutputStream os = new ByteArrayOutputStream(4096);
-		JsonFactory factory = new JsonFactory();
 		boolean matched = false;
 
 		if (verbose)
@@ -147,61 +145,48 @@ public class DummyAdapter implements DIDAdapter, DIDResolver {
 		if (!did.startsWith("did:elastos:"))
 			did = "did:elastos:" + did;
 
+		DID target;
 		try {
-			JsonGenerator generator = factory.createGenerator(os, JsonEncoding.UTF8);
-			generator.writeStartObject();
-
-			generator.writeStringField("id", requestId);
-			generator.writeStringField("jsonrpc", "2.0");
-			generator.writeFieldName("result");
-			generator.writeStartObject();
-
-			DID target = new DID(did);
-
-			generator.writeStringField("did", target.toString());
-
-			int status = 3;
-			IDChainTransaction last = getLastTransaction(target);
-			if (last != null) {
-				if (last.getOperationCode() == IDChainRequest.Operation.DEACTIVATE) {
-					status = 2;
-			    } else {
-					if (last.getRequest().getDocument().isExpired())
-						status = 1;
-					else
-						status = 0;
-				}
-
-				matched = true;
-			}
-
-			generator.writeNumberField("status", status);
-
-			if (status != 3) {
-				generator.writeFieldName("transaction");
-				generator.writeStartArray();
-				for (IDChainTransaction ti : idtxs) {
-					if (ti.getDid().equals(target)) {
-						ti.toJson(generator);
-
-						if (!all)
-							break;
-					}
-				}
-				generator.writeEndArray();
-			}
-
-			generator.writeEndObject();
-			generator.writeEndObject();
-			generator.close();
-		} catch (Exception e) {
-			throw new DIDResolveException(e);
+			target = new DID(did);
+		} catch (MalformedDIDException e) {
+			throw new DIDResolveException("Invalid did", e);
 		}
+
+		int status = 3;
+
+		IDChainTransaction last = getLastTransaction(target);
+		if (last != null) {
+			if (last.getOperation().equals(IDChainRequest.Operation.DEACTIVATE.toString())) {
+				status = 2;
+		    } else {
+				if (last.getRequest().getDocument().isExpired())
+					status = 1;
+				else
+					status = 0;
+			}
+
+			matched = true;
+		}
+
+		ResolveResult rr = new ResolveResult(target, status);
+		if (status != 3) {
+			for (IDChainTransaction tx : idtxs) {
+				if (tx.getDid().equals(target)) {
+					rr.addTransaction(tx);;
+
+					if (!all)
+						break;
+				}
+			}
+		}
+
+		ResolveResponse response = new ResolveResponse(requestId, rr);
+		InputStream os = new ByteArrayInputStream(response.toString(true).getBytes());
 
 		if (verbose)
 			System.out.println(matched ? "success" : "failed");
 
-		return new ByteArrayInputStream(os.toByteArray());
+		return os;
 	}
 
 	public void reset() {

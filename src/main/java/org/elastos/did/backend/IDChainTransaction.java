@@ -22,29 +22,37 @@
 
 package org.elastos.did.backend;
 
-import java.io.IOException;
 import java.util.Date;
 
 import org.elastos.did.DID;
-import org.elastos.did.DIDDocument;
-import org.elastos.did.DIDTransaction;
-import org.elastos.did.exception.DIDTransactionException;
-import org.elastos.did.util.JsonHelper;
+import org.elastos.did.DIDObject;
+import org.elastos.did.exception.MalformedIDChainRequestException;
+import org.elastos.did.exception.MalformedIDChainTransactionException;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * The class records the information of the specified DID's transaction.
  */
-public class IDChainTransaction implements DIDTransaction {
-	private final static String TXID = "txid";
-	private final static String TIMESTAMP = "timestamp";
-	private final static String OPERATION = "operation";
+@JsonPropertyOrder({ IDChainTransaction.TXID,
+	IDChainTransaction.TIMESTAMP,
+	IDChainTransaction.OPERATION })
+public class IDChainTransaction extends DIDObject<IDChainTransaction> {
+	protected final static String TXID = "txid";
+	protected final static String TIMESTAMP = "timestamp";
+	protected final static String OPERATION = "operation";
 
+	@JsonProperty(TXID)
 	private String txId;
+	@JsonProperty(TIMESTAMP)
 	private Date timestamp;
+	@JsonProperty(OPERATION)
 	private IDChainRequest request;
+
+	@JsonCreator
+	protected IDChainTransaction() {}
 
 	/**
 	 * Constructs the IDChainTransaction with the given value.
@@ -53,44 +61,27 @@ public class IDChainTransaction implements DIDTransaction {
 	 * @param timestamp the time stamp
 	 * @param request the IDChainRequest content
 	 */
-	public IDChainTransaction(String txid, Date timestamp,
+	protected IDChainTransaction(String txid, Date timestamp,
 			IDChainRequest request) {
 		this.txId = txid;
 		this.timestamp = timestamp;
 		this.request = request;
 	}
 
-	@Override
 	public String getTransactionId() {
 		return txId;
 	}
 
-	@Override
 	public Date getTimestamp() {
 		return timestamp;
 	}
 
-	@Override
 	public DID getDid() {
 		return request.getDid();
 	}
 
-	/**
-	 * Get IDChain Operation.
-	 *
-	 * @return the operation string
-	 */
-	public IDChainRequest.Operation getOperationCode() {
-		return request.getOperation();
-	}
-
-	/**
-	 * Get payload from IDChain Request.
-	 *
-	 * @return the payload string
-	 */
-	public String getPayload() {
-		return request.toJson(false);
+	public String getOperation() {
+		return request.getOperation().toString();
 	}
 
 	/**
@@ -103,56 +94,20 @@ public class IDChainTransaction implements DIDTransaction {
 	}
 
 	@Override
-	public String getOperation() {
-		return getOperationCode().toString();
-	}
+	protected void sanitize() throws MalformedIDChainTransactionException {
+		if (txId == null || txId.isEmpty())
+			throw new MalformedIDChainTransactionException("Missing txid");
 
-	@Override
-	public DIDDocument getDocument() {
-		return request.getDocument();
-	}
+		if (timestamp == null)
+			throw new MalformedIDChainTransactionException("Missing timestamp");
 
-	/**
-	 * Get json string with input content.
-	 *
-	 * @param generator the JsonGenerator handle
-	 * @throws IOException write field to json string failed.
-	 */
-	public void toJson(JsonGenerator generator) throws IOException {
-		generator.writeStartObject();
-		generator.writeStringField(TXID, getTransactionId());
-		generator.writeStringField(TIMESTAMP, JsonHelper.formatDate(getTimestamp()));
-		generator.writeFieldName(OPERATION);
-		request.toJson(generator, false);
-		generator.writeEndObject();
-	}
+		if (request == null)
+			throw new MalformedIDChainTransactionException("Missing request");
 
-	/**
-	 * Get IDChainTransaction from json content.
-	 *
-	 * @param node the JsonNode content
-	 * @return the IDChainTransaction object
-	 * @throws DIDTransactionException DIDTransaction error.
-	 */
-	public static IDChainTransaction fromJson(JsonNode node)
-			throws DIDTransactionException {
-		Class<DIDTransactionException> exceptionClass = DIDTransactionException.class;
-
-		if (node == null || node.size() == 0)
-			return null;
-
-		String txid = JsonHelper.getString(node, TXID, false, null,
-				"transaction id", exceptionClass);
-
-		Date timestamp = JsonHelper.getDate(node, TIMESTAMP, false,
-				null, "transaction timestamp", exceptionClass);
-
-		JsonNode reqNode = node.get(OPERATION);
-		if (reqNode == null)
-			throw new DIDTransactionException("Missing ID operation.");
-
-		IDChainRequest request = IDChainRequest.fromJson(reqNode);
-
-		return new IDChainTransaction(txid, timestamp, request);
+		try {
+			request.sanitizeHelper();
+		} catch (MalformedIDChainRequestException e) {
+			throw new MalformedIDChainTransactionException("Invalid request", e);
+		}
 	}
 }

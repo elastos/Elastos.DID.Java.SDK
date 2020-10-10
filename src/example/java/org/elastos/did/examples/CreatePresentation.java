@@ -37,12 +37,12 @@ import org.elastos.did.Issuer;
 import org.elastos.did.Mnemonic;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
-import org.elastos.did.adapter.DummyAdapter;
+import org.elastos.did.backend.DummyBackend;
 import org.elastos.did.exception.DIDException;
 
 public class CreatePresentation {
-	// DummyAdapter only for demo and testing.
-	private static DummyAdapter adapter;
+	// DummyBackend only for demo and testing.
+	private static DummyBackend adapter;
 
 	public static class Entity {
 		// Mnemonic passphrase and the store password should set by the end user.
@@ -211,7 +211,7 @@ public class CreatePresentation {
 				+ File.separator + "elastos.did";
 
 		// Dummy adapter for easy to use
-		adapter = new DummyAdapter();
+		adapter = new DummyBackend();
 
 		// Initializa the DID backend globally.
 		DIDBackend.initialize(adapter, cacheDir);
