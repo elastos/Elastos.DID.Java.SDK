@@ -102,7 +102,7 @@ public class Issuer {
 		this.self = doc;
 
 		if (signKey == null) {
-			signKey = self.getDefaultPublicKey();
+			signKey = self.getDefaultPublicKeyId();
 		} else {
 			if (!self.isAuthenticationKey(signKey))
 				throw new InvalidKeyException("Not an authentication key.");

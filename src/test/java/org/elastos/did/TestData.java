@@ -179,7 +179,7 @@ public final class TestData {
 		if (testIssuer == null) {
 			testIssuer = loadDIDDocument("issuer.json");
 
-			importPrivateKey(testIssuer.getDefaultPublicKey(), "issuer.primary.sk");
+			importPrivateKey(testIssuer.getDefaultPublicKeyId(), "issuer.primary.sk");
 
 			store.publishDid(testIssuer.getSubject(), TestConfig.storePass);
 		}
@@ -193,7 +193,7 @@ public final class TestData {
 		if (testDocument == null) {
 			testDocument = loadDIDDocument("document.json");
 
-			importPrivateKey(testDocument.getDefaultPublicKey(), "document.primary.sk");
+			importPrivateKey(testDocument.getDefaultPublicKeyId(), "document.primary.sk");
 			importPrivateKey(testDocument.getPublicKey("key2").getId(), "document.key2.sk");
 			importPrivateKey(testDocument.getPublicKey("key3").getId(), "document.key3.sk");
 

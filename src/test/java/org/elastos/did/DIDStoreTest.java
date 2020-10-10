@@ -496,7 +496,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), doc.getDefaultPublicKey(),
+    	store.publishDid(doc.getSubject(), doc.getDefaultPublicKeyId(),
     			true, TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
@@ -629,7 +629,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), doc.getDefaultPublicKey(),
+    	store.publishDid(doc.getSubject(), doc.getDefaultPublicKeyId(),
     			true, TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
@@ -664,7 +664,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), doc.getDefaultPublicKey(),
+    	store.publishDid(doc.getSubject(), doc.getDefaultPublicKeyId(),
     			true, TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);

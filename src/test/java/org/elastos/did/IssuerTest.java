@@ -46,7 +46,7 @@ public class IssuerTest {
 
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 
-		DIDURL signKey = issuerDoc.getDefaultPublicKey();
+		DIDURL signKey = issuerDoc.getDefaultPublicKeyId();
 
 		Issuer issuer = new Issuer(issuerDoc.getSubject(), signKey, store);
 
@@ -64,7 +64,7 @@ public class IssuerTest {
 		Issuer issuer = new Issuer(issuerDoc.getSubject(), store);
 
 		assertEquals(issuerDoc.getSubject(), issuer.getDid());
-		assertEquals(issuerDoc.getDefaultPublicKey(), issuer.getSignKey());
+		assertEquals(issuerDoc.getDefaultPublicKeyId(), issuer.getSignKey());
 	}
 
 	@Test
