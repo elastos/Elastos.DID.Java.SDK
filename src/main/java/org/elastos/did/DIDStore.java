@@ -500,7 +500,7 @@ public final class DIDStore {
 						}
 
 						// Save private key
-						storePrivateKey(did, finalCopy.getDefaultPublicKey(),
+						storePrivateKey(did, finalCopy.getDefaultPublicKeyId(),
 								key.serialize(), storepass);
 
 						storeDid(finalCopy);
@@ -777,7 +777,7 @@ public final class DIDStore {
 		}
 
 		if (signKey == null)
-			signKey = doc.getDefaultPublicKey();
+			signKey = doc.getDefaultPublicKeyId();
 
 		if (lastTxid == null || lastTxid.isEmpty()) {
 			log.info("Try to publish[create] {}...", did.toString());
@@ -1018,7 +1018,7 @@ public final class DIDStore {
 		}
 
 		if (signKey == null) {
-			signKey = doc.getDefaultPublicKey();
+			signKey = doc.getDefaultPublicKeyId();
 		} else {
 			if (!doc.isAuthenticationKey(signKey))
 				throw new InvalidKeyException("Not an authentication key.");
@@ -2211,7 +2211,7 @@ public final class DIDStore {
 			if (doc == null)
 				throw new DIDStoreException("Can not resolve DID document.");
 
-			id = doc.getDefaultPublicKey();
+			id = doc.getDefaultPublicKeyId();
 		}
 
 		HDKey key = HDKey.deserialize(loadPrivateKey(did, id, storepass));

@@ -591,7 +591,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 			throw new DIDStoreException("Can not load DID."); // TODO: checkme!!!
 
 		if (signKey == null) {
-			signKey = signer.getDefaultPublicKey();
+			signKey = signer.getDefaultPublicKeyId();
 		} else {
 			if (!signer.isAuthenticationKey(signKey))
 				throw new InvalidKeyException("Not an authentication key.");

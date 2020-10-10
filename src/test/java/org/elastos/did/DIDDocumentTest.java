@@ -87,7 +87,7 @@ public class DIDDocumentTest {
 		assertNotNull(pk);
 		assertEquals(id, pk.getId());
 
-		id = doc.getDefaultPublicKey();
+		id = doc.getDefaultPublicKeyId();
 		assertNotNull(id);
 		assertEquals(new DIDURL(doc.getSubject(), "primary"), id);
 
@@ -100,7 +100,7 @@ public class DIDDocumentTest {
 		assertNull(pk);
 
 		// Selector
-		id = doc.getDefaultPublicKey();
+		id = doc.getDefaultPublicKeyId();
 		pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
 		assertEquals(new DIDURL(doc.getSubject(), "primary"),
@@ -194,7 +194,7 @@ public class DIDDocumentTest {
 		// Can not remove default publickey, should fail.
 		final DIDDocument d = doc;
 		assertThrows(UnsupportedOperationException.class, () -> {
-			db.removePublicKey(d.getDefaultPublicKey(), true);
+			db.removePublicKey(d.getDefaultPublicKeyId(), true);
 	    });
 
 		doc = db.seal(TestConfig.storePass);
@@ -386,7 +386,7 @@ public class DIDDocumentTest {
 		});
 
 		// Default publickey, can not remove, should fail.
-		DIDURL id = doc.getDefaultPublicKey();
+		DIDURL id = doc.getDefaultPublicKeyId();
 		assertThrows(UnsupportedOperationException.class, () -> {
 			db.removeAuthenticationKey(id);
 		});

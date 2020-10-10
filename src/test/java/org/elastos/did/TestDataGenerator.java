@@ -98,7 +98,7 @@ public class TestDataGenerator {
 		vc.getMetadata().setAlias("Profile");
 		store.storeCredential(vc);
 
-		DIDURL id = issuer.getDefaultPublicKey();
+		DIDURL id = issuer.getDefaultPublicKeyId();
 		HDKey key = HDKey.deserialize(store.loadPrivateKey(issuer.getSubject(), id, TestConfig.storePass));
 		writeTo("issuer." + id.getFragment() + ".sk", key.serializeBase58());
 
@@ -179,7 +179,7 @@ public class TestDataGenerator {
 		vcEmail.getMetadata().setAlias("Email");
 		store.storeCredential(vcEmail);
 
-		DIDURL id = test.getDefaultPublicKey();
+		DIDURL id = test.getDefaultPublicKeyId();
 		HDKey key = HDKey.deserialize(store.loadPrivateKey(test.getSubject(), id, TestConfig.storePass));
 		writeTo("document." + id.getFragment() + ".sk", key.serializeBase58());
 

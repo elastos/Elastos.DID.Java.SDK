@@ -70,7 +70,7 @@ public class JwtParserBuilder {
 					else {
 						DID did = new DID(claims.getIssuer());
 						DIDDocument doc = did.resolve();
-						DIDURL id = keyid == null ? doc.getDefaultPublicKey()
+						DIDURL id = keyid == null ? doc.getDefaultPublicKeyId()
 								: new DIDURL(doc.getSubject(), keyid);
 						return doc.getKeyPair(id).getPublic();
 					}
