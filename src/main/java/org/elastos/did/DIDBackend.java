@@ -25,46 +25,33 @@ package org.elastos.did;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.Random;
 
 import org.elastos.did.backend.IDChainRequest;
 import org.elastos.did.backend.IDChainTransaction;
+import org.elastos.did.backend.ResolveRequest;
+import org.elastos.did.backend.ResolveResponse;
 import org.elastos.did.backend.ResolveResult;
 import org.elastos.did.backend.ResolverCache;
 import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
+import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
-import org.elastos.did.exception.MalformedResolveResultException;
 import org.elastos.did.exception.NetworkException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * The class is to provide the backend for resolving DID.
  */
 public class DIDBackend {
-	private final static String ID = "id";
-	private final static String RESULT = "result";
-	private final static String ERROR = "error";
-	private final static String ERROR_CODE = "code";
-	private final static String ERROR_MESSAGE = "message";
-
 	private static final long DEFAULT_TTL = 24 * 60 * 60 * 1000;
-	private static final Charset utf8 = Charset.forName("UTF-8");
 	private static DIDResolver resolver;
 	private static ResolveHandle resolveHandle;
 
@@ -126,19 +113,15 @@ public class DIDBackend {
 				connection.connect();
 
 				OutputStream os = connection.getOutputStream();
-				JsonFactory factory = new JsonFactory();
-				JsonGenerator generator = factory.createGenerator(os, JsonEncoding.UTF8);
-				generator.writeStartObject();
-				generator.writeStringField("id", requestId);
-				generator.writeStringField("method", "resolvedid");
-				generator.writeFieldName("params");
-				generator.writeStartObject();
-				generator.writeStringField("did", did);
-				generator.writeBooleanField("all", all);
-				generator.writeEndObject();
-				generator.writeEndObject();
-				generator.close();
-				os.close();
+				ResolveRequest request = new ResolveRequest(requestId, ResolveRequest.METHOD_RESOLVE_DID);
+				request.setParameter(did, all);
+				try {
+					request.serialize(os, true);
+				} catch (DIDSyntaxException ignore) {
+					log.error("INTERNAL - Serialize resolve request", ignore);
+				} finally {
+					os.close();
+				}
 
 				int code = connection.getResponseCode();
 				if (code != 200) {
@@ -293,37 +276,31 @@ public class DIDBackend {
 
 	private static ResolveResult resolveFromBackend(DID did, boolean all)
 			throws DIDResolveException {
-		String requestId = generateRequestId();
-
 		if (resolver == null)
 			throw new DIDResolveException("DID resolver not initialized.");
 
+		String requestId = generateRequestId();
 		InputStream is = resolver.resolve(requestId, did.toString(), all);
-
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode node = null;
-
+		ResolveResponse response;
 		try {
-			node = mapper.readTree(new InputStreamReader(is, utf8));
-		} catch (IOException e) {
-			throw new DIDResolveException("Parse resolved json error.", e);
+			response = ResolveResponse.parse(is, ResolveResponse.class);
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDResolveException(e);
+		} finally {
+			try {
+				is.close();
+			} catch (IOException ignore) {
+			}
 		}
 
-		// Check response id, should equals requestId
-		JsonNode id = node.get(ID);
-		if (id == null || id.textValue() == null ||
-				!id.textValue().equals(requestId))
-			throw new MalformedResolveResultException("Mismatched resolve result with request.");
+		if (response.getId() == null || !response.getId().equals(requestId))
+			throw new DIDResolveException("Mismatched resolve result with request.");
 
-		JsonNode result = node.get(RESULT);
-		if (result == null || result.isNull()) {
-			JsonNode error = node.get(ERROR);
+		ResolveResult rr = response.getResult();
+		if (rr == null) {
 			throw new DIDResolveException("Resolve DID error("
-					+ error.get(ERROR_CODE).longValue() + "): "
-					+ error.get(ERROR_MESSAGE).textValue());
+					+ response.getErrorCode() + "): " + response.getErrorMessage());
 		}
-
-		ResolveResult rr = ResolveResult.fromJson(result);
 
 		if (rr.getStatus() != ResolveResult.STATUS_NOT_FOUND) {
 			try {
@@ -341,10 +318,10 @@ public class DIDBackend {
      * Resolve all DID transactions.
      *
      * @param did the specified DID object
-     * @return the DIDHistory object
+     * @return the ResolveResult object
      * @throws DIDResolveException throw this exception if resolving did transcations failed.
      */
-	protected static DIDHistory resolveHistory(DID did) throws DIDResolveException {
+	protected static ResolveResult resolveHistory(DID did) throws DIDResolveException {
 		log.info("Resolving {}...", did.toString());
 
 		ResolveResult rr = resolveFromBackend(did, true);
@@ -395,19 +372,21 @@ public class DIDBackend {
 			return null;
 
 		default:
-			IDChainTransaction ti;
+			IDChainTransaction tx = rr.getTransaction(0);
+
 			try {
-				ti = rr.getTransactionInfo(0);
-			} catch (DIDTransactionException e) {
-				throw new DIDResolveException(e);
+				if (!tx.getRequest().isValid())
+					throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
+			} catch (DIDTransactionException | DIDResolveException e) {
+				throw new DIDResolveException("Can not verify the transaction", e);
 			}
 
-			DIDDocument doc = ti.getRequest().getDocument();
+			DIDDocument doc = tx.getRequest().getDocument();
 			DIDMetadata metadata = new DIDMetadata();
-			metadata.setTransactionId(ti.getTransactionId());
+			metadata.setTransactionId(tx.getTransactionId());
 			metadata.setSignature(doc.getProof().getSignature());
-			metadata.setPublished(ti.getTimestamp());
-			metadata.setLastModified(ti.getTimestamp());
+			metadata.setPublished(tx.getTimestamp());
+			metadata.setLastModified(tx.getTimestamp());
 			doc.setMetadata(metadata);
 			return doc;
 		}
@@ -456,7 +435,7 @@ public class DIDBackend {
 	protected void create(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		IDChainRequest request = IDChainRequest.create(doc, signKey, storepass);
-		String json = request.toJson(true);
+		String json = request.toString(true);
 		createTransaction(json, null);
 	}
 
@@ -476,7 +455,7 @@ public class DIDBackend {
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		IDChainRequest request = IDChainRequest.update(doc, previousTxid,
 				signKey, storepass);
-		String json = request.toJson(true);
+		String json = request.toString(true);
 		createTransaction(json, null);
 		ResolverCache.invalidate(doc.getSubject());
 	}
@@ -494,7 +473,7 @@ public class DIDBackend {
 	protected void deactivate(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		IDChainRequest request = IDChainRequest.deactivate(doc, signKey, storepass);
-		String json = request.toJson(true);
+		String json = request.toString(true);
 		createTransaction(json, null);
 		ResolverCache.invalidate(doc.getSubject());
 	}
@@ -516,7 +495,7 @@ public class DIDBackend {
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		IDChainRequest request = IDChainRequest.deactivate(target,
 				targetSignKey, doc, signKey, storepass);
-		String json = request.toJson(true);
+		String json = request.toString(true);
 		createTransaction(json, null);
 		ResolverCache.invalidate(target);
 	}

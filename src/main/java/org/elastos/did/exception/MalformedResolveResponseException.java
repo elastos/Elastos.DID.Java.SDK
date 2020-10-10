@@ -1,3 +1,5 @@
+package org.elastos.did.exception;
+
 /*
  * Copyright (c) 2019 Elastos Foundation
  *
@@ -20,46 +22,41 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.exception;
-
-/**
- * Thrown to indicate that the Resolve Result is malformed.
- */
-public class MalformedResolveResultException extends DIDSyntaxException {
-	private static final long serialVersionUID = -6564279904659655505L;
+public class MalformedResolveResponseException extends DIDSyntaxException {
+	private static final long serialVersionUID = -4586685356960789704L;
 
 	/**
-	 * Constructs the MalformedResolveResultException.
+	 * Constructs the MalformedMetadataException.
 	 */
-	public MalformedResolveResultException() {
+	public MalformedResolveResponseException() {
         super();
     }
 
 	/**
-	 * Constructs the MalformedResolveResultException with the given message.
+	 * Constructs the MalformedMetadataException with the given message.
 	 *
 	 * @param message the message string
 	 */
-    public MalformedResolveResultException(String message) {
+    public MalformedResolveResponseException(String message) {
         super(message);
     }
-
     /**
-     * Constructs the MalformedResolveResultException with the given message and the reason.
+     * Constructs the MalformedMetadataException with the given message and the reason.
      *
      * @param message the message string
      * @param cause the reason
      */
-    public MalformedResolveResultException(String message, Throwable cause) {
+    public MalformedResolveResponseException(String message, Throwable cause) {
         super(message, cause);
     }
 
     /**
-     * Constructs the MalformedResolveResultException with the given reason.
+     * Constructs the MalformedMetadataException with the given reason.
      *
      * @param cause the reason
      */
-    public MalformedResolveResultException(Throwable cause) {
+    public MalformedResolveResponseException(Throwable cause) {
         super(cause);
     }
+
 }

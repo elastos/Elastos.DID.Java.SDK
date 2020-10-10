@@ -23,34 +23,28 @@
 package org.elastos.did.backend;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.charset.Charset;
 import java.util.Map;
 
 import org.elastos.did.DID;
 import org.elastos.did.exception.DIDResolveException;
+import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.util.LRUCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The class to store resolved did document in the temporary directory.
  */
 public class ResolverCache {
-	private static final Charset utf8 = Charset.forName("UTF-8");
-
 	private static final int CACHE_INITIAL_CAPACITY = 16;
 	private static final int CACHE_MAX_CAPACITY = 32;
 
 	private static File rootDir;
 	private static Map<DID, ResolveResult> cache = LRUCache.createInstance(
 			CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
+
+	private static final Logger log = LoggerFactory.getLogger(IDChainRequest.class);
 
 	private ResolverCache() {
 
@@ -98,29 +92,11 @@ public class ResolverCache {
 	 * @throws IOException write the resolve result to output failed.
 	 */
 	public static void store(ResolveResult rr) throws IOException {
-		OutputStream os = null;
-		Writer out = null;
-
 		try {
-			os = new FileOutputStream(getFile(rr.getDid().getMethodSpecificId()));
-			out = new OutputStreamWriter(os, utf8);
-			out.write(rr.toJson());
-
+			rr.serialize(getFile(rr.getDid().getMethodSpecificId()));
 			cache.put(rr.getDid(), rr);
-		} finally {
-			if (out != null) {
-				try {
-					out.close();
-				} catch (IOException ignore) {
-				}
-			}
-
-			if (os != null) {
-				try {
-					os.close();
-				} catch (IOException ignore) {
-				}
-			}
+		} catch (DIDSyntaxException ignore) {
+			log.error("INTERNAL - Serialize ResolveResult", ignore);
 		}
 	}
 
@@ -145,31 +121,12 @@ public class ResolverCache {
 		if (cache.containsKey(did))
 			return cache.get(did);
 
-		InputStream is = null;
-		Reader in = null;
-
 		try {
-			is = new FileInputStream(file);
-			in = new InputStreamReader(is, utf8);
-			ResolveResult rr = ResolveResult.fromJson(in);
+			ResolveResult rr = ResolveResult.parse(file, ResolveResult.class);
 			cache.put(rr.getDid(), rr);
 			return rr;
-		} catch (IOException e) {
+		} catch (IOException | DIDSyntaxException e) {
 			throw new DIDResolveException(e);
-		} finally {
-			if (in != null) {
-				try {
-					in.close();
-				} catch (IOException ignore) {
-				}
-			}
-
-			if (is != null) {
-				try {
-					is.close();
-				} catch (IOException ignore) {
-				}
-			}
 		}
 	}
 

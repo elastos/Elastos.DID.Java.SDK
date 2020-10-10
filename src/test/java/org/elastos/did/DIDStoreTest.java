@@ -37,7 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.elastos.did.adapter.DummyAdapter;
+import org.elastos.did.backend.DummyBackend;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDException;
@@ -1270,7 +1270,7 @@ public class DIDStoreTest {
 		File dir = new File(url.getPath());
 		System.out.println(url.getPath());
 
-		DummyAdapter adapter = new DummyAdapter();
+		DummyBackend adapter = new DummyBackend();
 		DIDBackend.initialize(adapter, TestData.getResolverCacheDir());
 		DIDStore store = DIDStore.open("filesystem", dir.getAbsolutePath(), adapter);
 
@@ -1311,7 +1311,7 @@ public class DIDStoreTest {
 		URL url = this.getClass().getResource("/teststore");
 		File dir = new File(url.getPath());
 
-		DummyAdapter adapter = new DummyAdapter();
+		DummyBackend adapter = new DummyBackend();
 		DIDBackend.initialize(adapter, TestData.getResolverCacheDir());
 		DIDStore store = DIDStore.open("filesystem", dir.getAbsolutePath(), adapter);
 
@@ -1325,7 +1325,7 @@ public class DIDStoreTest {
 		URL url = this.getClass().getResource("/teststore");
 		File dir = new File(url.getPath());
 
-		DummyAdapter adapter = new DummyAdapter();
+		DummyBackend adapter = new DummyBackend();
 		DIDBackend.initialize(adapter, TestData.getResolverCacheDir());
 		DIDStore store = DIDStore.open("filesystem", dir.getAbsolutePath(), adapter);
 
@@ -1370,7 +1370,7 @@ public class DIDStoreTest {
 	}
 
 	private void testStorePerformance(boolean cached) throws DIDException {
-		DummyAdapter adapter = new DummyAdapter();
+		DummyBackend adapter = new DummyBackend();
 		DIDBackend.initialize(adapter, TestData.getResolverCacheDir());
 
 		Utils.deleteFile(new File(TestConfig.storeRoot));
@@ -1425,7 +1425,7 @@ public class DIDStoreTest {
 
 		for (int i = 0; i < stores.length; i++) {
 			Utils.deleteFile(new File(TestConfig.storeRoot + i));
-			stores[i] = DIDStore.open("filesystem", TestConfig.storeRoot + i, new DummyAdapter());
+			stores[i] = DIDStore.open("filesystem", TestConfig.storeRoot + i, new DummyBackend());
 			assertNotNull(stores[i]);
 			String mnemonic = Mnemonic.getInstance().generate();
 			stores[i].initPrivateIdentity(Mnemonic.ENGLISH, mnemonic, "", TestConfig.storePass);
@@ -1448,7 +1448,7 @@ public class DIDStoreTest {
 		URL url = this.getClass().getResource("/teststore");
 		File storeDir = new File(url.getPath());
 
-		DummyAdapter adapter = new DummyAdapter();
+		DummyBackend adapter = new DummyBackend();
 		DIDBackend.initialize(adapter, TestData.getResolverCacheDir());
 		DIDStore store = DIDStore.open("filesystem", storeDir.getAbsolutePath(), adapter);
 
@@ -1479,7 +1479,7 @@ public class DIDStoreTest {
 		URL url = this.getClass().getResource("/teststore");
 		File storeDir = new File(url.getPath());
 
-		DummyAdapter adapter = new DummyAdapter();
+		DummyBackend adapter = new DummyBackend();
 		DIDBackend.initialize(adapter, TestData.getResolverCacheDir());
 		DIDStore store = DIDStore.open("filesystem", storeDir.getAbsolutePath(), adapter);
 

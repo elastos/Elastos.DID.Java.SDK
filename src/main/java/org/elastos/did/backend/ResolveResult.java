@@ -22,36 +22,56 @@
 
 package org.elastos.did.backend;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.elastos.did.DID;
-import org.elastos.did.DIDHistory;
-import org.elastos.did.DIDTransaction;
-import org.elastos.did.exception.DIDTransactionException;
+import org.elastos.did.DIDObject;
+import org.elastos.did.exception.MalformedIDChainTransactionException;
 import org.elastos.did.exception.MalformedResolveResultException;
-import org.elastos.did.util.JsonHelper;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * The class records the resolved content.
  */
-public class ResolveResult implements DIDHistory {
-	private final static String DID = "did";
-	private final static String STATUS = "status";
-	private final static String TRANSACTION = "transaction";
+@JsonPropertyOrder({ ResolveResult.DID,
+	ResolveResult.STATUS,
+	ResolveResult.TRANSACTION })
+@JsonInclude(Include.NON_NULL)
+public class ResolveResult extends DIDObject<ResolveResult> {
+	protected final static String DID = "did";
+	protected final static String STATUS = "status";
+	protected final static String TRANSACTION = "transaction";
 
+	/**
+	 * The DID is valid.
+	 */
+	public static final int STATUS_VALID = 0;
+	/**
+	 * The DID is expired.
+	 */
+	public static final int STATUS_EXPIRED = 1;
+	/**
+	 * The DID is deactivated.
+	 */
+	public static final int STATUS_DEACTIVATED = 2;
+	/**
+	 * The DID is not published.
+	 */
+	public static final int STATUS_NOT_FOUND = 3;
+
+
+	@JsonProperty(DID)
 	private DID did;
+	@JsonProperty(STATUS)
 	private int status;
+	@JsonProperty(TRANSACTION)
 	private List<IDChainTransaction> idtxs;
 
 	/**
@@ -60,22 +80,21 @@ public class ResolveResult implements DIDHistory {
 	 * @param did the specified DID
 	 * @param status the DID's status
 	 */
-	protected ResolveResult(DID did, int status) {
+	@JsonCreator
+	protected ResolveResult(@JsonProperty(value = DID, required = true)DID did,
+			@JsonProperty(value = STATUS, required = true) int status) {
 		this.did = did;
 		this.status = status;
 	}
 
-	@Override
 	public DID getDid() {
 		return did;
 	}
 
-	@Override
 	public int getStatus() {
 		return status;
 	}
 
-	@Override
 	public int getTransactionCount() {
 		if (idtxs == null)
 			return 0;
@@ -88,168 +107,52 @@ public class ResolveResult implements DIDHistory {
 	 *
 	 * @param index the index
 	 * @return the index IDChainTransaction content
-	 * @throws DIDTransactionException Invalid ID transaction, can not verify the signature.
 	 */
-	public IDChainTransaction getTransactionInfo(int index)
-			throws DIDTransactionException {
+	public IDChainTransaction getTransaction(int index) {
 		if (idtxs == null)
 			return null;
 
-		IDChainTransaction tx = idtxs.get(index);
-		if (!tx.getRequest().isValid())
-			throw new DIDTransactionException("Invalid ID transaction, can not verify the signature.");
-
-		return tx;
+		return idtxs.get(index);
 	}
 
-	@Override
-	public List<DIDTransaction> getAllTransactions() {
-		List<DIDTransaction> txs = new ArrayList<DIDTransaction>(idtxs.size());
+	public List<IDChainTransaction> getAllTransactions() {
+		List<IDChainTransaction> txs = new ArrayList<IDChainTransaction>(idtxs.size());
 		txs.addAll(idtxs);
 		return txs;
 	}
 
 	/**
 	 * Add transaction infomation into IDChain Transaction.
-	 * @param ti the IDChainTransaction object
+	 * @param tx the IDChainTransaction object
 	 */
-	protected synchronized void addTransactionInfo(IDChainTransaction ti) {
+	protected synchronized void addTransaction(IDChainTransaction tx) {
 		if (idtxs == null)
 			idtxs = new LinkedList<IDChainTransaction>();
 
-		idtxs.add(ti);
-	}
-
-    /**
-     * Get json string from Resolve Result content.
-     *
-     * @param out the Writer handle
-     * @throws IOException write field to json string failed.
-     */
-	public void toJson(Writer out) throws IOException {
-		JsonFactory factory = new JsonFactory();
-		JsonGenerator generator = factory.createGenerator(out);
-
-		generator.writeStartObject();
-
-		generator.writeStringField(DID, did.toString());
-		generator.writeNumberField(STATUS, status);
-
-		if (status != STATUS_NOT_FOUND) {
-			generator.writeFieldName(TRANSACTION);
-			generator.writeStartArray();
-
-			for (IDChainTransaction ti : idtxs)
-				ti.toJson(generator);
-
-			generator.writeEndArray();
-		}
-
-		generator.writeEndObject();
-		generator.close();
-	}
-
-	/**
-	 * Get json string from Resolve Result content.
-	 *
-	 * @return the json string
-	 * @throws IOException write field to json string failed.
-	 */
-	public String toJson() throws IOException {
-		Writer out = new StringWriter(4096);
-		toJson(out);
-		return out.toString();
-	}
-
-	/**
-	 * Get Resolve Result object from input content.
-	 *
-	 * @param result the JsonNode input
-	 * @return the ResolveResult object
-	 * @throws MalformedResolveResultException the Resolve Result is malformed.
-	 */
-	public static ResolveResult fromJson(JsonNode result)
-			throws MalformedResolveResultException {
-		Class<MalformedResolveResultException> exceptionClass = MalformedResolveResultException.class;
-
-		if (result == null || result.size() == 0)
-			throw new MalformedResolveResultException("Empty resolve result.");
-
-		DID did = JsonHelper.getDid(result, DID, false, null,
-				"Resolved result DID", exceptionClass);
-
-		int status = JsonHelper.getInteger(result, STATUS, false, -1,
-					"Resolved status", exceptionClass);
-
-		ResolveResult rr = new ResolveResult(did, status);
-
-		if (status != STATUS_NOT_FOUND) {
-			JsonNode txs = result.get(TRANSACTION);
-			if (txs == null || !txs.isArray() || txs.size() == 0)
-				throw new MalformedResolveResultException("Invalid resolve result, missing transaction.");
-
-			for (int i = 0; i < txs.size(); i++) {
-				try {
-					IDChainTransaction ti = IDChainTransaction.fromJson(txs.get(i));
-					rr.addTransactionInfo(ti);
-				} catch (DIDTransactionException e) {
-					new MalformedResolveResultException(e);
-				}
-			}
-		}
-
-		return rr;
-	}
-
-	/**
-	 * Get Resolve Result object from input content.
-	 *
-	 * @param json the json input
-	 * @return the ResolveResult object
-	 * @throws MalformedResolveResultException the Resolve Result is malformed.
-	 */
-	public static ResolveResult fromJson(String json)
-			throws MalformedResolveResultException {
-		if (json == null || json.isEmpty())
-			throw new IllegalArgumentException();
-
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			JsonNode result = mapper.readTree(json);
-			return fromJson(result);
-		} catch (IOException e) {
-			throw new MalformedResolveResultException("Parse resolve result error.", e);
-		}
-	}
-
-	/**
-	 * Get Resolve Result object from input content.
-	 *
-	 * @param in the Reader input
-	 * @return the ResolveResult object
-	 * @throws MalformedResolveResultException the Resolve Result is malformed.
-	 */
-	public static ResolveResult fromJson(Reader in)
-			throws MalformedResolveResultException {
-		if (in == null)
-			throw new IllegalArgumentException();
-
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			JsonNode result = mapper.readTree(in);
-			return fromJson(result);
-		} catch (IOException e) {
-			throw new MalformedResolveResultException("Parse resolve result error.", e);
-		}
+		idtxs.add(tx);
 	}
 
 	@Override
-	public String toString() {
-		try {
-			return toJson();
-		} catch (IOException ignore) {
-		}
+	protected void sanitize() throws MalformedResolveResultException {
+		if (did == null)
+			throw new MalformedResolveResultException("Missing did");
 
-		return super.toString();
+		if (status < STATUS_VALID || status > STATUS_NOT_FOUND)
+			throw new MalformedResolveResultException("Unknown status");
+
+		if (status != STATUS_NOT_FOUND) {
+			if (idtxs == null || idtxs.size() == 0)
+				throw new MalformedResolveResultException("Missing transaction");
+
+			try {
+				for (IDChainTransaction tx : idtxs)
+					tx.sanitize();
+			} catch (MalformedIDChainTransactionException e) {
+				throw new MalformedResolveResultException("Invalid transaction", e);
+			}
+		} else {
+			if (idtxs != null)
+				throw new MalformedResolveResultException("Should not include transaction");
+		}
 	}
 }

@@ -37,6 +37,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import org.elastos.did.backend.IDChainTransaction;
+import org.elastos.did.backend.ResolveResult;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 import org.junit.jupiter.api.Test;
@@ -220,19 +222,19 @@ public class IDChainOperationsTest {
 		lastTxid = resolved.getMetadata().getTransactionId();
 		System.out.println("Last transaction id: " + lastTxid);
 
-		DIDHistory his = did.resolveHistory();
-		assertNotNull(his);
-		assertEquals(did, his.getDid());
-		assertEquals(DIDHistory.STATUS_VALID, his.getStatus());
-		assertEquals(3, his.getTransactionCount());
-		List<DIDTransaction> txs = his.getAllTransactions();
+		ResolveResult rr = did.resolveHistory();
+		assertNotNull(rr);
+		assertEquals(did, rr.getDid());
+		assertEquals(ResolveResult.STATUS_VALID, rr.getStatus());
+		assertEquals(3, rr.getTransactionCount());
+		List<IDChainTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());
 
 		for (int i = 0; i < txs.size(); i++) {
-			DIDTransaction tx = txs.get(i);
+			IDChainTransaction tx = txs.get(i);
 			assertEquals(did, tx.getDid());
-			assertEquals(sigs[i], tx.getDocument().getProof().getSignature());
+			assertEquals(sigs[i], tx.getRequest().getDocument().getProof().getSignature());
 		}
 	}
 
@@ -332,20 +334,20 @@ public class IDChainOperationsTest {
 		lastTxid = resolved.getMetadata().getTransactionId();
 		System.out.println("Last transaction id: " + lastTxid);
 
-		CompletableFuture<DIDHistory> hf = did.resolveHistoryAsync();
-		DIDHistory his = hf.join();
-		assertNotNull(his);
-		assertEquals(did, his.getDid());
-		assertEquals(DIDHistory.STATUS_VALID, his.getStatus());
-		assertEquals(3, his.getTransactionCount());
-		List<DIDTransaction> txs = his.getAllTransactions();
+		CompletableFuture<ResolveResult> rhf = did.resolveHistoryAsync();
+		ResolveResult rr = rhf.join();
+		assertNotNull(rr);
+		assertEquals(did, rr.getDid());
+		assertEquals(ResolveResult.STATUS_VALID, rr.getStatus());
+		assertEquals(3, rr.getTransactionCount());
+		List<IDChainTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());
 
 		for (int i = 0; i < txs.size(); i++) {
-			DIDTransaction tx = txs.get(i);
+			IDChainTransaction tx = txs.get(i);
 			assertEquals(did, tx.getDid());
-			assertEquals(sigs[i], tx.getDocument().getProof().getSignature());
+			assertEquals(sigs[i], tx.getRequest().getDocument().getProof().getSignature());
 		}
 
 	}

@@ -22,13 +22,10 @@
 
 package org.elastos.did.backend;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-
 import org.elastos.did.Constants;
 import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
+import org.elastos.did.DIDObject;
 import org.elastos.did.DIDURL;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDBackendException;
@@ -36,38 +33,45 @@ import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
-import org.elastos.did.util.JsonHelper;
+import org.elastos.did.exception.MalformedIDChainRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * The class records the information of IDChain Request.
  */
-public class IDChainRequest {
+@JsonPropertyOrder({ IDChainRequest.HEADER,
+	IDChainRequest.PAYLOAD,
+	IDChainRequest.PROOF })
+public class IDChainRequest extends DIDObject<IDChainRequest> {
 	/**
 	 * The specification string of IDChain Request
 	 */
 	public static final String CURRENT_SPECIFICATION = "elastos/did/1.0";
 
-	private static final String HEADER = "header";
+	protected static final String HEADER = "header";
+	protected static final String PAYLOAD = "payload";
+	protected static final String PROOF = "proof";
 	private static final String SPECIFICATION = "specification";
 	private static final String OPERATION = "operation";
 	private static final String PREVIOUS_TXID = "previousTxid";
-	private static final String PAYLOAD = "payload";
-	private static final String PROOF = "proof";
-	private static final String KEY_TYPE = "type";
+	private static final String TYPE = "type";
 	private static final String VERIFICATION_METHOD = "verificationMethod";
 	private static final String SIGNATURE = "signature";
 
-	private static final String DEFAULT_PUBLICKEY_TYPE = Constants.DEFAULT_PUBLICKEY_TYPE;
+	private static final Logger log = LoggerFactory.getLogger(IDChainRequest.class);
 
 	/**
      * The IDChain Request Operation
 	 */
-	public enum Operation {
+	public static enum Operation {
 		/**
 		 * the new did operation
 		 */
@@ -82,29 +86,117 @@ public class IDChainRequest {
 		DEACTIVATE;
 
 		@Override
+		@JsonValue
 		public String toString() {
 			return name().toLowerCase();
 		}
+
+		@JsonCreator
+		public static Operation fromString(String name) {
+			return valueOf(name.toUpperCase());
+		}
 	}
 
-	// header
-	private String specification;
-	private Operation operation;
-	private String previousTxid;
+	@JsonPropertyOrder({ SPECIFICATION, OPERATION, PREVIOUS_TXID })
+	@JsonInclude(Include.NON_NULL)
+	public static class Header {
+		@JsonProperty(SPECIFICATION)
+		private String specification;
+		@JsonProperty(OPERATION)
+		private Operation operation;
+		@JsonProperty(PREVIOUS_TXID)
+		private String previousTxid;
 
-	// payload
+		@JsonCreator
+		protected Header(@JsonProperty(value = SPECIFICATION, required = true) String spec) {
+			this.specification = spec;
+		}
+
+		protected Header(Operation operation, String previousTxid) {
+			this(CURRENT_SPECIFICATION);
+			this.operation = operation;
+			this.previousTxid = previousTxid;
+		}
+
+		protected Header(Operation operation) {
+			this(operation, null);
+		}
+
+		public String getSpecification() {
+			return specification;
+		}
+
+		public Operation getOperation() {
+			return operation;
+		}
+
+		protected void setOperation(Operation operation) {
+			this.operation = operation;
+		}
+
+		public String getPreviousTxid() {
+			return previousTxid;
+		}
+
+		protected void setPreviousTxid(String previousTxid) {
+			this.previousTxid = previousTxid;
+		}
+	}
+
+	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, SIGNATURE })
+	public static class Proof {
+		@JsonProperty(TYPE)
+		private String type;
+		@JsonProperty(VERIFICATION_METHOD)
+		private DIDURL verificationMethod;
+		@JsonProperty(SIGNATURE)
+		private String signature;
+
+		@JsonCreator
+		protected Proof(@JsonProperty(value = TYPE) String type,
+				@JsonProperty(value = VERIFICATION_METHOD, required = true) DIDURL verificationMethod,
+				@JsonProperty(value = SIGNATURE, required = true) String signature) {
+			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+			this.verificationMethod = verificationMethod;
+			this.signature = signature;
+		}
+
+		protected Proof(DIDURL verificationMethod, String signature) {
+			this(null, verificationMethod, signature);
+		}
+
+		public String getType() {
+			return type;
+		}
+
+		public DIDURL getVerificationMethod() {
+			return verificationMethod;
+		}
+
+		public String getSignature() {
+			return signature;
+		}
+	}
+
+	@JsonProperty(HEADER)
+	private Header header;
+	@JsonProperty(PAYLOAD)
+	private String payload;
+	@JsonProperty(PROOF)
+	private Proof proof;
+
 	private DID did;
 	private DIDDocument doc;
-	private String payload;
 
-	// signature
-	private String keyType;
-	private DIDURL signKey;
-	private String signature;
+	@JsonCreator
+	protected IDChainRequest() {}
 
-	private IDChainRequest(Operation op) {
-		this.specification = CURRENT_SPECIFICATION;
-		this.operation = op;
+	private IDChainRequest(Operation operation) {
+		this.header = new Header(operation);
+	}
+
+	private IDChainRequest(Operation operation, String previousTxid) {
+		this.header = new Header(operation, previousTxid);
 	}
 
 	/**
@@ -121,7 +213,12 @@ public class IDChainRequest {
 			String storepass) throws DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.CREATE);
 		request.setPayload(doc);
-		request.seal(signKey, storepass);
+		try {
+			request.seal(signKey, storepass);
+		} catch (MalformedIDChainRequestException ignore) {
+			// should never happen
+			log.error("INTERNAL - Seal the request", ignore);
+		}
 
 		return request;
 	}
@@ -140,10 +237,14 @@ public class IDChainRequest {
 	public static IDChainRequest update(DIDDocument doc, String previousTxid,
 			DIDURL signKey, String storepass)
 			throws DIDStoreException, InvalidKeyException {
-		IDChainRequest request = new IDChainRequest(Operation.UPDATE);
-		request.setPreviousTxid(previousTxid);
+		IDChainRequest request = new IDChainRequest(Operation.UPDATE, previousTxid);
 		request.setPayload(doc);
-		request.seal(signKey, storepass);
+		try {
+			request.seal(signKey, storepass);
+		} catch (MalformedIDChainRequestException ignore) {
+			// should never happen
+			log.error("INTERNAL - Seal the request", ignore);
+		}
 
 		return request;
 	}
@@ -162,7 +263,12 @@ public class IDChainRequest {
 			String storepass) throws DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.DEACTIVATE);
 		request.setPayload(doc);
-		request.seal(signKey, storepass);
+		try {
+			request.seal(signKey, storepass);
+		} catch (MalformedIDChainRequestException ignore) {
+			// should never happen
+			log.error("INTERNAL - Seal the request", ignore);
+		}
 
 		return request;
 	}
@@ -184,7 +290,12 @@ public class IDChainRequest {
 			throws DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.DEACTIVATE);
 		request.setPayload(target);
-		request.seal(targetSignKey, doc, signKey, storepass);
+		try {
+			request.seal(targetSignKey, doc, signKey, storepass);
+		} catch (MalformedIDChainRequestException ignore) {
+			// should never happen
+			log.error("INTERNAL - Seal the request", ignore);
+		}
 
 		return request;
 	}
@@ -194,7 +305,7 @@ public class IDChainRequest {
 	 * @return the operation string
 	 */
 	public Operation getOperation() {
-		return operation;
+		return header.getOperation();
 	}
 
 	/**
@@ -203,11 +314,7 @@ public class IDChainRequest {
 	 * @return the transaction id string
 	 */
 	public String getPreviousTxid() {
-		return previousTxid;
-	}
-
-	private void setPreviousTxid(String previousTxid) {
-		this.previousTxid = previousTxid != null ? previousTxid : "";
+		return header.getPreviousTxid();
 	}
 
 	/**
@@ -247,7 +354,7 @@ public class IDChainRequest {
 		this.did = doc.getSubject();
 		this.doc = doc;
 
-		if (operation != Operation.DEACTIVATE) {
+		if (header.getOperation() != Operation.DEACTIVATE) {
 			String json = doc.toString(true);
 
 			this.payload = Base64.encodeToString(json.getBytes(),
@@ -257,68 +364,94 @@ public class IDChainRequest {
 		}
 	}
 
-	private void setPayload(String payload) throws DIDTransactionException {
-		try {
-			if (operation != Operation.DEACTIVATE) {
-				String json = new String(Base64.decode(payload,
-						Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
-
-				doc = DIDDocument.parse(json);
-				did = doc.getSubject();
-			} else {
-				did = new DID(payload);
-				doc = null;
-			}
-		} catch (DIDException e) {
-			throw new DIDTransactionException("Parse ID operation payload error.", e);
-		}
-
-		this.payload = payload;
+	public Proof getProof() {
+		return proof;
 	}
 
-	private void setProof(String keyType, DIDURL signKey, String signature) {
-		this.keyType = keyType;
-		this.signKey = signKey;
-		this.signature = signature;
+	@Override
+	protected void sanitize(boolean withProof) throws MalformedIDChainRequestException {
+		if (header == null)
+			throw new MalformedIDChainRequestException("Missing header");
+
+		if (header.getSpecification() == null ||
+				!header.getSpecification().equals(CURRENT_SPECIFICATION))
+			throw new MalformedIDChainRequestException("Unsupported specification");
+
+		if (header.getOperation() == Operation.UPDATE &&
+				(header.getPreviousTxid() == null || header.getPreviousTxid().isEmpty()))
+			throw new MalformedIDChainRequestException("Missing previousTxid");
+
+		if (payload == null || payload.isEmpty())
+			throw new MalformedIDChainRequestException("Missing payload");
+
+		if (withProof) {
+			try {
+				if (header.getOperation() != Operation.DEACTIVATE) {
+					String json = new String(Base64.decode(payload,
+							Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
+
+					doc = DIDDocument.parse(json);
+					did = doc.getSubject();
+				} else {
+					did = new DID(payload);
+					doc = null;
+				}
+			} catch (DIDException e) {
+				throw new MalformedIDChainRequestException("Invalid payload", e);
+			}
+
+			if (proof == null)
+				throw new MalformedIDChainRequestException("Missing proof");
+
+			if (proof.verificationMethod.getDid() == null)
+				proof.verificationMethod = new DIDURL(did, proof.verificationMethod.toString());
+		}
+	}
+
+	// Helper method for IDChainTransaction
+	void sanitizeHelper() throws MalformedIDChainRequestException {
+		sanitize(true);
 	}
 
 	private void seal(DIDURL signKey, String storepass)
-			throws DIDStoreException, InvalidKeyException {
+			throws MalformedIDChainRequestException, DIDStoreException, InvalidKeyException {
 		if (!doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key.");
 
-		String prevtxid = operation == Operation.UPDATE ? previousTxid : "";
+		sanitize(false);
+
+		String prevtxid = getOperation() == Operation.UPDATE ? getPreviousTxid() : "";
 
 		byte[][] inputs = new byte[][] {
-			specification.getBytes(),
-			operation.toString().getBytes(),
+			header.getSpecification().getBytes(),
+			header.getOperation().toString().getBytes(),
 			prevtxid.getBytes(),
 			payload.getBytes()
 		};
 
-		this.signature = doc.sign(signKey, storepass, inputs);
-		this.signKey = signKey;
-		this.keyType = DEFAULT_PUBLICKEY_TYPE;
+		String signature = doc.sign(signKey, storepass, inputs);
+		this.proof = new Proof(signKey, signature);
 	}
 
 	private void seal(DIDURL targetSignKey, DIDDocument doc,
 			DIDURL signKey, String storepass)
-			throws DIDStoreException, InvalidKeyException {
+			throws MalformedIDChainRequestException, DIDStoreException, InvalidKeyException {
 		if (!doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key.");
 
-		String prevtxid = operation == Operation.UPDATE ? previousTxid : "";
+		sanitize(false);
+
+		String prevtxid = getOperation() == Operation.UPDATE ? getPreviousTxid() : "";
 
 		byte[][] inputs = new byte[][] {
-			specification.getBytes(),
-			operation.toString().getBytes(),
+			header.getSpecification().getBytes(),
+			header.getOperation().toString().getBytes(),
 			prevtxid.getBytes(),
 			payload.getBytes()
 		};
 
-		this.signature = doc.sign(signKey, storepass, inputs);
-		this.signKey = targetSignKey;
-		this.keyType = DEFAULT_PUBLICKEY_TYPE;
+		String signature = doc.sign(signKey, storepass, inputs);
+		this.proof = new Proof(targetSignKey, signature);
 	}
 
 	/**
@@ -330,7 +463,9 @@ public class IDChainRequest {
 	 */
 	public boolean isValid() throws DIDTransactionException {
 		DIDDocument doc = null;
-		if (operation != Operation.DEACTIVATE) {
+		DIDURL signKey = proof.getVerificationMethod();
+
+		if (getOperation() != Operation.DEACTIVATE) {
 			doc = this.doc;
 			if (!doc.isAuthenticationKey(signKey))
 				return false;
@@ -345,182 +480,15 @@ public class IDChainRequest {
 			}
 		}
 
-		String prevtxid = operation == Operation.UPDATE ? previousTxid : "";
+		String prevtxid = getOperation() == Operation.UPDATE ? getPreviousTxid() : "";
 
 		byte[][] inputs = new byte[][] {
-			specification.getBytes(),
-			operation.toString().getBytes(),
+			header.getSpecification().getBytes(),
+			header.getOperation().toString().getBytes(),
 			prevtxid.getBytes(),
 			payload.getBytes()
 		};
 
-		return doc.verify(signKey, signature, inputs);
+		return doc.verify(signKey, proof.getSignature(), inputs);
 	}
-
-	/**
-	 * Get json content of IDChain Request.
-	 *
-	 * @param generator the JsonGenerator handle
-	 * @param normalized json string is normalized or compact
-	 * @throws IOException write field to json string failed.
-	 */
-	public void toJson(JsonGenerator generator, boolean normalized) throws IOException {
-		generator.writeStartObject();
-
-		// header
-		generator.writeFieldName(HEADER);
-		generator.writeStartObject();
-
-		generator.writeFieldName(SPECIFICATION);
-		generator.writeString(specification);
-
-		generator.writeFieldName(OPERATION);
-		generator.writeString(operation.toString());
-
-		if (operation == Operation.UPDATE) {
-			generator.writeFieldName(PREVIOUS_TXID);
-			generator.writeString(previousTxid);
-		}
-
-		generator.writeEndObject();
-
-		// payload
-		generator.writeFieldName(PAYLOAD);
-		generator.writeString(payload);
-
-		// signature
-		generator.writeFieldName(PROOF);
-		generator.writeStartObject();
-
-		String keyId;
-
-		if (normalized) {
-			generator.writeFieldName(KEY_TYPE);
-			generator.writeString(keyType);
-
-			keyId = signKey.toString();
-		} else {
-			keyId = "#" + signKey.getFragment();
-		}
-
-		generator.writeFieldName(VERIFICATION_METHOD);
-		generator.writeString(keyId);
-
-
-		generator.writeFieldName(SIGNATURE);
-		generator.writeString(signature);
-
-		generator.writeEndObject();
-		generator.writeEndObject();
-	}
-
-	/**
-	 * Get json content of IDChain Request.
-	 *
-	 * @param out the Writer handle
-	 * @param normalized json string is normalized or compact
-	 * @throws IOException write field to json string failed.
-	 */
-	public void toJson(Writer out, boolean normalized) throws IOException {
-		JsonFactory factory = new JsonFactory();
-		JsonGenerator generator = factory.createGenerator(out);
-		toJson(generator, normalized);
-		generator.close();
-	}
-
-	/**
-	 * Get json content of IDChain Request.
-	 *
-	 * @param normalized json string is normalized or compact
-	 * @return the IDChain Request json string
-	 */
-	public String toJson(boolean normalized) {
-		Writer out = new StringWriter(2048);
-
-		try {
-			toJson(out, normalized);
-		} catch (IOException ignore) {
-		}
-
-		return out.toString();
-	}
-
-	/**
-	 * Get IDChain Request from json.
-	 *
-	 * @param node the JsonNode content
-	 * @return the IDChainRequest object
-	 * @throws DIDTransactionException DIDTransaction error.
-	 */
-	public static IDChainRequest fromJson(JsonNode node)
-			throws DIDTransactionException {
-		Class<DIDTransactionException> clazz = DIDTransactionException.class;
-
-		JsonNode header = node.get(HEADER);
-		if (header == null)
-			throw new DIDTransactionException("Missing header.");
-
-		String spec = JsonHelper.getString(header, SPECIFICATION, false,
-				null, SPECIFICATION, clazz);
-		if (!spec.equals(CURRENT_SPECIFICATION))
-			throw new DIDTransactionException("Unknown ID request specification.");
-
-		String opstr = JsonHelper.getString(header, OPERATION, false,
-				null, OPERATION, clazz);
-		Operation op = Operation.valueOf(opstr.toUpperCase());
-
-		IDChainRequest request = new IDChainRequest(op);
-
-		if (op == Operation.UPDATE) {
-			String txid = JsonHelper.getString(header, PREVIOUS_TXID, false,
-					null, PREVIOUS_TXID, clazz);
-			request.setPreviousTxid(txid);
-		}
-
-		String payload = JsonHelper.getString(node, PAYLOAD, false,
-				null, PAYLOAD, clazz);
-		request.setPayload(payload);
-
-		JsonNode proof = node.get(PROOF);
-		if (proof == null)
-			throw new DIDTransactionException("Missing proof.");
-
-		String keyType = JsonHelper.getString(proof, KEY_TYPE, true,
-				DEFAULT_PUBLICKEY_TYPE, KEY_TYPE, clazz);
-		if (!keyType.equals(DEFAULT_PUBLICKEY_TYPE))
-			throw new DIDTransactionException("Unknown signature key type.");
-
-		DIDURL signKey = JsonHelper.getDidUrl(proof, VERIFICATION_METHOD,
-				request.getDid(), VERIFICATION_METHOD, clazz);
-		//if (doc.getAuthenticationKey(signKey) == null)
-		//	throw new DIDResolveException("Unknown signature key.");
-
-		String sig = JsonHelper.getString(proof, SIGNATURE, false,
-				null, SIGNATURE, clazz);
-
-		request.setProof(keyType, signKey, sig);
-		return request;
-	}
-
-	/**
-	 * Get IDChain Request from json.
-	 *
-	 * @param json the json string
-	 * @return the IDChainRequest object
-	 * @throws DIDTransactionException DIDTransaction error.
-	 */
-	public static IDChainRequest fromJson(String json)
-			throws DIDTransactionException {
-		if (json == null || json.isEmpty())
-			throw new IllegalArgumentException();
-
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			JsonNode node = mapper.readTree(json);
-			return fromJson(node);
-		} catch (IOException e) {
-			throw new DIDTransactionException("Parse transaction payload error.", e);
-		}
-	}
-
 }
