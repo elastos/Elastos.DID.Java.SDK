@@ -71,13 +71,15 @@ public abstract class DIDObject<T> {
 
 	protected static class SerializeContext {
 		private boolean normalized;
+		private DID did;
 
 		protected SerializeContext() {
-			this(false);
+			this(false, null);
 		}
 
-		protected SerializeContext(boolean normalized) {
+		protected SerializeContext(boolean normalized, DID did) {
 			this.normalized = normalized;
+			this.did = did;
 		}
 
 		public boolean isNormalized() {
@@ -87,6 +89,14 @@ public abstract class DIDObject<T> {
 		public SerializeContext setNormalized(boolean normalized) {
 			this.normalized = normalized;
 			return this;
+		}
+
+		public DID getDid() {
+			return did;
+		}
+
+		public void setDid(DID did) {
+			this.did = did;
 		}
 	}
 
@@ -126,6 +136,15 @@ public abstract class DIDObject<T> {
 	}
 
 	/**
+	 * Get current object's DID context.
+	 *
+	 * @return the DID object or null
+	 */
+	protected DID getSerializeContextDid() {
+		return null;
+	}
+
+	/**
 	 * Post sanitize routine after deserialization.
 	 *
 	 * @throws DIDSyntaxException if the DID object is invalid
@@ -152,16 +171,6 @@ public abstract class DIDObject<T> {
 	 * @return the ObjectMapper instance.
 	 */
 	protected static ObjectMapper getObjectMapper() {
-		return getObjectMapper(true);
-	}
-
-	/**
-	 * Get the ObjectMapper for serialization.
-	 *
-	 * @param normalized if normalized output, ignored when the sign is true
-	 * @return the ObjectMapper instance
-	 */
-	private static ObjectMapper getObjectMapper(boolean normalized) {
 		JsonFactory jsonFactory = new JsonFactory();
 		jsonFactory.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 		jsonFactory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
@@ -182,8 +191,20 @@ public abstract class DIDObject<T> {
 
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+		return mapper;
+	}
+
+	/**
+	 * Get the ObjectMapper for serialization.
+	 *
+	 * @param normalized if normalized output, ignored when the sign is true
+	 * @return the ObjectMapper instance
+	 */
+	private ObjectMapper getObjectMapper(boolean normalized) {
+		ObjectMapper mapper = getObjectMapper();
+
 		mapper.setConfig(mapper.getSerializationConfig().withAttribute(CONTEXT_KEY,
-				new SerializeContext(normalized)));
+				new SerializeContext(normalized, getSerializeContextDid())));
 
 		return mapper;
 	}

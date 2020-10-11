@@ -88,6 +88,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
  * key.
  */
 @JsonPropertyOrder({ DIDDocument.ID,
+    DIDDocument.CONTROLLER,
     DIDDocument.PUBLICKEY,
     DIDDocument.AUTHENTICATION,
     DIDDocument.AUTHORIZATION,
@@ -527,6 +528,12 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	@JsonCreator
 	protected DIDDocument(@JsonProperty(value = ID, required = true) DID subject) {
 		this.subject = subject;
+	}
+
+	protected DIDDocument(DID subject, DIDDocument controllerDoc) {
+		this.subject = subject;
+		this.controller = controllerDoc.getSubject();
+		this.controllerDoc = controllerDoc;
 	}
 
 	/**
@@ -1362,6 +1369,16 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	/**
+	 * Get current object's DID context.
+	 *
+	 * @return the DID object or null
+	 */
+	@Override
+	protected DID getSerializeContextDid() {
+		return getSubject();
+	}
+
+	/**
 	 * Sanitize routine before sealing or after deserialization.
 	 *
 	 * @param withProof check the proof object or not
@@ -1386,7 +1403,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			}
 		}
 
-		if (publicKeys != null || publicKeys.size() > 0) {
+		if (publicKeys != null && !publicKeys.isEmpty()) {
 			this._publickeys = new ArrayList<PublicKey>(publicKeys.values());
 			this._authentications = new ArrayList<WeakPublicKey>();
 			this._authorizations = new ArrayList<WeakPublicKey>();
@@ -1406,8 +1423,12 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 					_authorizations.add(new WeakPublicKey(pk.getId()));
 			}
 
-			if (defaultPublicKey == null)
-				throw new MalformedDocumentException("Missing default public key.");
+			if (controller == null) {
+				if (defaultPublicKey == null)
+					throw new MalformedDocumentException("Missing default public key.");
+			} else {
+				defaultPublicKey = controllerDoc.getDefaultPublicKey();
+			}
 
 			if (_authentications.size() == 0)
 				this._authentications = null;
@@ -2100,6 +2121,17 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 */
 		protected Builder(DID did, DIDStore store) {
 			this.document = new DIDDocument(did);
+			this.document.getMetadata().setStore(store);
+		}
+
+		/**
+		 * Constructs DID Document Builder with given customizedDid and DIDStore.
+		 *
+		 * @param did the specified DID
+		 * @param store the DIDStore object
+		 */
+		protected Builder(DID did, DIDDocument controller, DIDStore store) {
+			this.document = new DIDDocument(did, controller);
 			this.document.getMetadata().setStore(store);
 		}
 

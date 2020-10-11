@@ -55,6 +55,7 @@ import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDExpiredException;
 import org.elastos.did.exception.DIDNotFoundException;
+import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.InvalidKeyException;
@@ -622,7 +623,8 @@ public final class DIDStore {
 			try {
 				doc = db.seal(storepass);
 			} catch (MalformedDocumentException ignore) {
-				ignore.printStackTrace();
+				log.error("INTERNAL - Seal DID document", ignore);
+				throw new DIDStoreException(ignore);
 			}
 			doc.getMetadata().setAlias(alias);
 			storeDid(doc);
@@ -690,6 +692,50 @@ public final class DIDStore {
 		HDKey key = publicIdentity.derive("0/" + index);
 		DID did = new DID(DID.METHOD, key.getAddress());
 		return did;
+	}
+
+	public DIDDocument newDid(DID did, DID controller, String storepass)
+			throws DIDStoreException {
+		if (did == null || controller == null || storepass.isEmpty())
+			throw new IllegalArgumentException();
+
+		log.info("Creating new DID {} with controller {}...", did, controller);
+
+		DIDDocument controllerDoc = loadDid(controller);
+		if (controllerDoc == null)
+			throw new DIDStoreException("Controller DID not exists in the store");
+
+		if (!controllerDoc.isValid())
+			throw new DIDStoreException("Controller DID not valid");
+
+		if (loadDid(did) != null)
+			throw new DIDStoreException("DID " + did + " already exists.");
+
+		try {
+			if (did.resolve(true) != null)
+				throw new DIDStoreException("DID " + did + " already exist.");
+		} catch (DIDResolveException ignore) {
+			// If already exist, the ID transaction will failed in the future
+		}
+
+		DIDDocument.Builder db = new DIDDocument.Builder(did, controllerDoc, this);
+		try {
+			DIDDocument doc = db.seal(storepass);
+			storeDid(doc);
+			return doc;
+		} catch (MalformedDocumentException ignore) {
+			log.error("INTERNAL - Seal DID document", ignore);
+			throw new DIDStoreException(ignore);
+		}
+	}
+
+	public DIDDocument newDid(String did, String controller, String storepass)
+			throws DIDStoreException {
+		try {
+			return newDid(new DID(did), new DID(controller), storepass);
+		} catch (MalformedDIDException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 
 	/**
@@ -2047,7 +2093,8 @@ public final class DIDStore {
 	 */
 	protected byte[] loadPrivateKey(DID did, DIDURL id, String storepass)
 			throws DIDStoreException {
-		String encryptedKey = storage.loadPrivateKey(did, id);
+		// TODO: Check if it's security if ignore did parameter?!
+		String encryptedKey = storage.loadPrivateKey(id.getDid(), id);
 		byte[] keyBytes = decryptFromBase64(encryptedKey, storepass);
 
 		// For backward compatible, convert to extended private key
