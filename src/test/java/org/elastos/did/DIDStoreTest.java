@@ -271,6 +271,65 @@ public class DIDStoreTest {
 	}
 
 	@Test
+	public void testCreateCustomizedDid() throws DIDException {
+    	TestData testData = new TestData();
+    	DIDStore store = testData.setup(true);
+    	testData.initIdentity();
+
+    	// Create normal DID first
+    	DIDDocument doc = store.newDid(TestConfig.storePass);
+    	assertTrue(doc.isValid());
+    	DID controller = doc.getSubject();
+
+    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	assertNull(resolved);
+
+    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+
+    	File file = new File(TestConfig.storeRoot + File.separator + "ids"
+    			+ File.separator + doc.getSubject().getMethodSpecificId()
+    			+ File.separator + "document");
+    	assertTrue(file.exists());
+    	assertTrue(file.isFile());
+
+    	resolved = doc.getSubject().resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(doc.getSubject(), resolved.getSubject());
+    	assertEquals(doc.getProof().getSignature(),
+    			resolved.getProof().getSignature());
+
+    	assertTrue(resolved.isValid());
+
+    	// Create customized DID
+    	DID did = new DID("did:elastos:foobar");
+    	doc = store.newDid(did, controller, TestConfig.storePass);
+    	assertTrue(doc.isValid());
+
+    	assertEquals(did, doc.getSubject());
+    	assertEquals(controller, doc.getController());
+
+    	resolved = did.resolve(true);
+    	assertNull(resolved);
+
+    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+
+    	file = new File(TestConfig.storeRoot + File.separator + "ids"
+    			+ File.separator + doc.getSubject().getMethodSpecificId()
+    			+ File.separator + "document");
+    	assertTrue(file.exists());
+    	assertTrue(file.isFile());
+
+    	resolved = did.resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(did, resolved.getSubject());
+    	assertEquals(controller, resolved.getController());
+    	assertEquals(doc.getProof().getSignature(),
+    			resolved.getProof().getSignature());
+
+    	assertTrue(resolved.isValid());
+    }
+
+	@Test
 	public void testGetDid() throws DIDException {
 	    TestData testData = new TestData();
 	    DIDStore store = testData.setup(true);
@@ -333,6 +392,99 @@ public class DIDStoreTest {
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 	}
+
+	@Test
+	public void testUpdateCustomizedDid() throws DIDException {
+    	TestData testData = new TestData();
+    	DIDStore store = testData.setup(true);
+    	testData.initIdentity();
+
+    	// Create normal DID first
+    	DIDDocument doc = store.newDid(TestConfig.storePass);
+    	assertTrue(doc.isValid());
+    	DID controller = doc.getSubject();
+
+    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	assertNull(resolved);
+
+    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+
+    	File file = new File(TestConfig.storeRoot + File.separator + "ids"
+    			+ File.separator + doc.getSubject().getMethodSpecificId()
+    			+ File.separator + "document");
+    	assertTrue(file.exists());
+    	assertTrue(file.isFile());
+
+    	resolved = doc.getSubject().resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(doc.getSubject(), resolved.getSubject());
+    	assertEquals(doc.getProof().getSignature(),
+    			resolved.getProof().getSignature());
+
+    	assertTrue(resolved.isValid());
+
+    	// Create customized DID
+    	DID did = new DID("did:elastos:foobar");
+    	doc = store.newDid(did, controller, TestConfig.storePass);
+    	assertTrue(doc.isValid());
+
+    	assertEquals(did, doc.getSubject());
+    	assertEquals(controller, doc.getController());
+
+    	resolved = did.resolve(true);
+    	assertNull(resolved);
+
+    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+
+    	file = new File(TestConfig.storeRoot + File.separator + "ids"
+    			+ File.separator + doc.getSubject().getMethodSpecificId()
+    			+ File.separator + "document");
+    	assertTrue(file.exists());
+    	assertTrue(file.isFile());
+
+    	resolved = did.resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(did, resolved.getSubject());
+    	assertEquals(controller, resolved.getController());
+    	assertEquals(doc.getProof().getSignature(),
+    			resolved.getProof().getSignature());
+
+    	assertTrue(resolved.isValid());
+
+    	// Update
+    	DIDDocument.Builder db = doc.edit();
+    	HDKey key = TestData.generateKeypair();
+    	db.addAuthenticationKey("foobar-key1", key.getPublicKeyBase58());
+    	doc = db.seal(TestConfig.storePass);
+    	assertEquals(2, doc.getPublicKeyCount());
+    	assertEquals(2, doc.getAuthenticationKeyCount());
+    	store.storeDid(doc);
+
+    	DIDDocument d = DIDDocument.parse(doc.toString(true));
+    	System.out.println(d.toString());
+
+    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+
+    	resolved = doc.getSubject().resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(doc.toString(), resolved.toString());
+
+    	// Update again
+    	db = doc.edit();
+    	key = TestData.generateKeypair();
+    	db.addAuthenticationKey("foobar-key2", key.getPublicKeyBase58());
+    	doc = db.seal(TestConfig.storePass);
+    	assertEquals(3, doc.getPublicKeyCount());
+    	assertEquals(3, doc.getAuthenticationKeyCount());
+    	store.storeDid(doc);
+
+    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+
+    	resolved = doc.getSubject().resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(doc.toString(), resolved.toString());
+
+    }
 
 	@Test
 	public void testUpdateDidWithoutPrevSignature() throws DIDException {

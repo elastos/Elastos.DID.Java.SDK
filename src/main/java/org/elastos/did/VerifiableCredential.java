@@ -399,6 +399,16 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	/**
+	 * Get current object's DID context.
+	 *
+	 * @return the DID object or null
+	 */
+	@Override
+	protected DID getSerializeContextDid() {
+		return getSubject().getId();
+	}
+
+	/**
 	 * Sanitize routine before sealing or after deserialization.
 	 *
 	 * @param withProof check the proof object or not

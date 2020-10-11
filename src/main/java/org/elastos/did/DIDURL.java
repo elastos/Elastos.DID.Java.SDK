@@ -398,8 +398,11 @@ public class DIDURL implements Comparable<DIDURL> {
 			SerializeContext context = (SerializeContext)provider.getConfig()
 					.getAttributes().getAttribute(DIDObject.CONTEXT_KEY);
 			// TODO: checkme
-			DID did = context.isNormalized() ? null : id.getDid();
-			gen.writeString(id.toString(did));
+			DID base = null;
+			if (!context.isNormalized())
+				base = context.getDid() != null ? context.getDid() : id.getDid();
+
+			gen.writeString(id.toString(base));
 		}
 	}
 
