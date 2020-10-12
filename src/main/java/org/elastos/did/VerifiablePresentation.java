@@ -734,11 +734,16 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 				throw (MalformedPresentationException)e;
 			}
 
-			String sig = signer.sign(signKey, storepass, json.getBytes(),
-					realm.getBytes(), nonce.getBytes());
-
-			Proof proof = new Proof(signKey, realm, nonce, sig);
-			presentation.proof = proof;
+			try {
+				String sig = signer.sign(signKey, storepass, json.getBytes(),
+						realm.getBytes(), nonce.getBytes());
+				Proof proof = new Proof(signKey, realm, nonce, sig);
+				presentation.proof = proof;
+			} catch (InvalidKeyException ignore) {
+				// should never happen
+				log.error("INTERNAL - Signing digest", ignore);
+				throw new DIDStoreException(ignore);
+			}
 
 			// Invalidate builder
 			VerifiablePresentation vp = presentation;

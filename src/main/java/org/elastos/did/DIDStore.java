@@ -2093,8 +2093,7 @@ public final class DIDStore {
 	 */
 	protected byte[] loadPrivateKey(DID did, DIDURL id, String storepass)
 			throws DIDStoreException {
-		// TODO: Check if it's security if ignore did parameter?!
-		String encryptedKey = storage.loadPrivateKey(id.getDid(), id);
+		String encryptedKey = storage.loadPrivateKey(did, id);
 		byte[] keyBytes = decryptFromBase64(encryptedKey, storepass);
 
 		// For backward compatible, convert to extended private key

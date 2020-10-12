@@ -52,6 +52,9 @@ public final class TestData {
 	private String testCompactJson;
 	private String testNormalizedJson;
 
+	private DIDDocument emptyCustomizedDidDocument;
+	private DIDDocument customizedDidDocument;
+
 	private VerifiableCredential profileVc;
 	private String profileVcCompactJson;
 	private String profileVcNormalizedJson;
@@ -201,6 +204,32 @@ public final class TestData {
 		}
 
 		return testDocument;
+	}
+
+	public DIDDocument loadEmptyCustomizedDidDocument() throws DIDException, IOException {
+		loadTestIssuer();
+		loadTestDocument();
+
+		if (emptyCustomizedDidDocument == null) {
+			emptyCustomizedDidDocument = loadDIDDocument("customized-did-empty.json");
+
+			store.publishDid(emptyCustomizedDidDocument.getSubject(), TestConfig.storePass);
+		}
+
+		return emptyCustomizedDidDocument;
+	}
+
+	public DIDDocument loadCustomizedDidDocument() throws DIDException, IOException {
+		loadTestIssuer();
+		loadTestDocument();
+
+		if (customizedDidDocument == null) {
+			customizedDidDocument = loadDIDDocument("customized-did.json");
+
+			store.publishDid(customizedDidDocument.getSubject(), TestConfig.storePass);
+		}
+
+		return customizedDidDocument;
 	}
 
 	private VerifiableCredential loadCredential(String fileName)

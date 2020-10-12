@@ -1698,17 +1698,23 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 			return false;
 
-		DIDDocument doc = new DIDDocument(this);
-		doc.proof = null;
-		String json;
 		try {
-			json = doc.serialize(true);
+			DIDDocument doc = new DIDDocument(this);
+			doc.proof = null;
+			String json = doc.serialize(true);
+
+			if (!verify(proof.getCreator(), proof.getSignature(), json.getBytes()))
+				return false;
 		} catch (DIDSyntaxException ignore) {
 			// Should never happen
 			log.error("INTERNAL - Serialize document", ignore);
 			return false;
 		}
-		return verify(proof.getCreator(), proof.getSignature(), json.getBytes());
+
+		if (hasController())
+			return getControllerDocument().isGenuine();
+		else
+			return true;
 	}
 
 	/**
@@ -1728,13 +1734,18 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if the did document is not valid.
 	 */
 	public boolean isValid() {
-		return !isDeactivated() && !isExpired() && isGenuine();
+		boolean valid = !isDeactivated() && !isExpired() && isGenuine();
+		if (valid && hasController())
+			return (!getControllerDocument().isDeactivated() && getControllerDocument().isGenuine());
+		else
+			return valid;
 	}
 
 	protected DIDDocument copy() {
 		DIDDocument doc = new DIDDocument(subject);
 
 		doc.controller = this.controller;
+		doc.controllerDoc = this.controllerDoc;
 		doc.publicKeys = publicKeys != null ? new TreeMap<DIDURL, PublicKey>(publicKeys) : null;
 		doc.defaultPublicKey = this.defaultPublicKey;
 
@@ -1772,7 +1783,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
 	public String sign(DIDURL id, String storepass, byte[] ... data)
-			throws DIDStoreException {
+			throws InvalidKeyException, DIDStoreException {
 		if (id == null || data == null || data.length == 0 ||
 				storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
@@ -1788,10 +1799,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @param data the data be signed
 	 * @return the signature string
+	 * @throws InvalidKeyException if the sign key is invalid
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
 	public String sign(String id, String storepass, byte[] ... data)
-			throws DIDStoreException {
+			throws InvalidKeyException, DIDStoreException {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return sign(_id, storepass, data);
 	}
@@ -1807,7 +1819,13 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	public String sign(String storepass, byte[] ... data)
 			throws DIDStoreException {
 		DIDURL key = getDefaultPublicKeyId();
-		return sign(key, storepass, data);
+		try {
+			return sign(key, storepass, data);
+		} catch (InvalidKeyException ignore) {
+			// should never happen
+			log.error("INTERNAL - Signing digest", ignore);
+			throw new DIDStoreException(ignore);
+		}
 	}
 
 	/**
@@ -1817,17 +1835,30 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @param digest the digest data to be signed
 	 * @return the signature string
-	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 * @throws InvalidKeyException if the sign key is invalid
+	 * @throws DIDStoreException there is no DIDStore to get private key
 	 */
 	public String signDigest(DIDURL id, String storepass, byte[] digest)
-			throws DIDStoreException {
+			throws InvalidKeyException, DIDStoreException {
 		if (id == null || digest == null || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
 		if (!getMetadata().attachedStore())
 			throw new DIDStoreException("Not attached with a DID store.");
 
-		return getMetadata().getStore().sign(getSubject(), id, storepass, digest);
+		PublicKey pk = getPublicKey(id);
+		if (pk == null)
+			throw new InvalidKeyException("Invalid sign key");
+
+		DID signer = null;
+		if (pk.getController().equals(getSubject()))
+			signer = getSubject();
+		else if (hasController() && pk.getController().equals(getController()))
+			signer = getController();
+		else
+			throw new InvalidKeyException("Invalid sign key");
+
+		return getMetadata().getStore().sign(signer, id, storepass, digest);
 	}
 
 	/**
@@ -1837,10 +1868,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @param digest the digest data to be signed
 	 * @return the signature string
+	 * @throws InvalidKeyException if the sign key is invalid
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
 	public String signDigest(String id, String storepass, byte[] digest)
-			throws DIDStoreException {
+			throws InvalidKeyException, DIDStoreException {
 		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
 		return signDigest(_id, storepass, digest);
 	}
@@ -1856,7 +1888,13 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	public String signDigest(String storepass, byte[] digest)
 			throws DIDStoreException {
 		DIDURL key = getDefaultPublicKeyId();
-		return signDigest(key, storepass, digest);
+		try {
+			return signDigest(key, storepass, digest);
+		} catch (InvalidKeyException ignore) {
+			// should never happen
+			log.error("INTERNAL - Signing digest", ignore);
+			throw new DIDStoreException(ignore);
+		}
 	}
 
 	/**
@@ -2231,7 +2269,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (id == null)
 				throw new IllegalArgumentException();
 
-	        PublicKey pk = document.getPublicKey(id);
+	        PublicKey pk = document.getEntry(document.publicKeys, id);
 	        if (pk == null)
 	            throw new DIDObjectNotExistException("PublicKey id '"
 	                    + id + "' not exist.");
@@ -2305,7 +2343,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (id == null)
 				throw new IllegalArgumentException();
 
-	        PublicKey key = document.getPublicKey(id);
+	        PublicKey key = document.getEntry(document.publicKeys, id);
 	        if (key == null)
 	            throw new DIDObjectNotExistException("PublicKey '" + id + "' not exists.");
 
@@ -2374,7 +2412,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (id == null)
 				throw new IllegalArgumentException();
 
-	        PublicKey pk = document.getPublicKey(id);
+	        PublicKey pk = document.getEntry(document.publicKeys, id);
 	        if (pk == null)
 	            throw new DIDObjectNotExistException("PublicKey id '"
 	                    + id + "' not exist.");
@@ -2417,7 +2455,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (id == null)
 				throw new IllegalArgumentException();
 
-	        PublicKey key = document.getPublicKey(id);
+	        PublicKey key = document.getEntry(document.publicKeys, id);
 	        if (key == null)
 	            throw new DIDObjectNotExistException("PublicKey '" + id + "' not exists.");
 
@@ -2606,7 +2644,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (id == null)
 				throw new IllegalArgumentException();
 
-	        PublicKey pk = document.getPublicKey(id);
+	        PublicKey pk = document.getEntry(document.publicKeys, id);
 	        if (pk == null)
 	            throw new DIDObjectNotExistException("PublicKey id '"
 	                    + id + "' not exist.");
@@ -3186,9 +3224,13 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				throw (MalformedDocumentException)e;
 			}
 
-			String sig = document.sign(signKey, storepass, json.getBytes());
-			Proof proof = new Proof(signKey, sig);
-			document.proof = proof;
+			try {
+				String sig = document.sign(signKey, storepass, json.getBytes());
+				Proof proof = new Proof(signKey, sig);
+				document.proof = proof;
+			} catch (InvalidKeyException ignore) {
+				log.error("INTERNAL - Sealing document", ignore);
+			}
 
 			// Invalidate builder
 			DIDDocument doc = document;
