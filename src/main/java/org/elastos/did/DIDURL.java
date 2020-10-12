@@ -76,8 +76,9 @@ public class DIDURL implements Comparable<DIDURL> {
 		if (url != null) {
 			if (url.startsWith("did:")) {
 				ParserHelper.parse(url, false, new Listener());
-				if (base != null && !getDid().equals(base))
-					throw new IllegalArgumentException("Mismatched arguments");
+				// TODO: checkme!!!
+				//if (base != null && !getDid().equals(base))
+				//	throw new IllegalArgumentException("Mismatched arguments");
 
 				return;
 			}

@@ -26,6 +26,8 @@ import org.elastos.did.VerifiableCredential.Builder;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedDIDException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A issuer is the DID to issue Credential. Issuer includes issuer's did and
@@ -34,6 +36,8 @@ import org.elastos.did.exception.MalformedDIDException;
 public class Issuer {
 	private DIDDocument self;
 	private DIDURL signKey;
+
+	private static final Logger log = LoggerFactory.getLogger(Issuer.class);
 
 	/**
 	 * Constructs Issuer object with the given value.
@@ -143,7 +147,13 @@ public class Issuer {
 	}
 
 	public String sign(String storepass, byte[] data) throws DIDStoreException {
-		return self.sign(signKey, storepass, data);
+		try {
+			return self.sign(signKey, storepass, data);
+		} catch (InvalidKeyException ignore) {
+			// should never happen
+			log.error("INTERNAL - Signing digest", ignore);
+			throw new DIDStoreException(ignore);
+		}
 	}
 
 	/**

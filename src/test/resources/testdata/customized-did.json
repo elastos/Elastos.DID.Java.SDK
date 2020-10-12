@@ -1,0 +1,61 @@
+{
+  "id": "did:elastos:john",
+  "controller": "did:elastos:iWFAUYhTa35c1fPe3iCJvihZHx6quumnym",
+  "publicKey": [
+    {
+      "id": "#k1",
+      "type": "ECDSAsecp256r1",
+      "controller": "did:elastos:john",
+      "publicKeyBase58": "21cTPvm1QtnxtGftiTNFtVGUTvKcek9t7T1zR3SJ9uA8c"
+    },
+    {
+      "id": "#k2",
+      "type": "ECDSAsecp256r1",
+      "controller": "did:elastos:john",
+      "publicKeyBase58": "26oGXrCyMCAXCPY5ECGDcwXBnLjwoSwX3oiBerEk7nF78"
+    }
+  ],
+  "authentication": [
+    "#k1",
+    "#k2"
+  ],
+  "verifiableCredential": [
+    {
+      "id": "#p1",
+      "type": [
+        "SelfProclaimedCredential"
+      ],
+      "issuanceDate": "2020-10-12T06:27:38Z",
+      "expirationDate": "2025-10-12T06:27:37Z",
+      "credentialSubject": {
+        "email": "john@john.com",
+        "homepage": "https://john.com/",
+        "name": "John"
+      },
+      "proof": {
+        "type": "ECDSAsecp256r1",
+        "verificationMethod": "did:elastos:iWFAUYhTa35c1fPe3iCJvihZHx6quumnym#primary",
+        "signature": "gho-kmtMkybqJtIZjeVrANuG4njb02TbPpuu-7NGz-mcmiKNLoDREbnGr4LusRjcs1rEsBbbecAxuDOCAI6TwQ"
+      }
+    }
+  ],
+  "service": [
+    {
+      "id": "#blog",
+      "type": "blog",
+      "serviceEndpoint": "https://john.com/blog"
+    },
+    {
+      "id": "#vcrepo",
+      "type": "CredentialRepository",
+      "serviceEndpoint": "https://john.com/vcs"
+    }
+  ],
+  "expires": "2025-10-12T06:27:37Z",
+  "proof": {
+    "type": "ECDSAsecp256r1",
+    "created": "2020-10-12T06:27:38Z",
+    "creator": "did:elastos:iWFAUYhTa35c1fPe3iCJvihZHx6quumnym#primary",
+    "signatureValue": "5BjAGy3aOUwY724hiOZC0JKRiicPJ_3hD_Swejr67JrBAEa4EpadBu7yWI20sKQjTIbvr_Sjo1FA-7azs-EKmA"
+  }
+}
