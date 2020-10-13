@@ -151,6 +151,8 @@ public class Issuer {
 
 		if (signKey == null) {
 			signKey = self.getDefaultPublicKeyId();
+			if (signKey == null)
+				throw new InvalidKeyException("Need explict sign key");
 		} else {
 			if (!self.isAuthenticationKey(signKey))
 				throw new InvalidKeyException("Not an authentication key.");

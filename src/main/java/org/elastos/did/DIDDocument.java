@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -61,6 +62,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.SHA256Digest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -117,9 +119,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	private DID subject;
 
 	@JsonProperty(CONTROLLER)
+	@JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,
+	                    JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
 	@JsonInclude(Include.NON_NULL)
-	private DID controller;
-	private DIDDocument controllerDoc;
+	private List<DID> controllers;
+	private Map<DID, DIDDocument> controllerDocs;
 
 	private Map<DIDURL, PublicKey> publicKeys;
 	public PublicKey defaultPublicKey;
@@ -532,8 +536,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 	protected DIDDocument(DID subject, DIDDocument controllerDoc) {
 		this.subject = subject;
-		this.controller = controllerDoc.getSubject();
-		this.controllerDoc = controllerDoc;
+		this.controllers = new ArrayList<DID>();
+		this.controllerDocs = new HashMap<DID, DIDDocument>();
+
+		this.controllers.add(controllerDoc.getSubject());
+		this.controllerDocs.put(controllerDoc.getSubject(), controllerDoc);
 	}
 
 	/**
@@ -543,7 +550,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	protected DIDDocument(DIDDocument doc) {
 		this.subject = doc.subject;
-		this.controller = doc.controller;
+		this.controllers = doc.controllers;
+		this.controllerDocs = doc.controllerDocs;
 		this.publicKeys = doc.publicKeys;
 		this._publickeys = doc._publickeys;
 		this._authentications = doc._authentications;
@@ -628,10 +636,23 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	/**
 	 * Get contoller's DID.
 	 *
-	 * @return the DID object or null if no controller
+	 * @return the Controllers DID list or empty list if no controller
+	 */
+	public List<DID> getControllers() {
+		List<DID> ctrls = new ArrayList<DID>();
+		if (controllers != null)
+			ctrls.addAll(controllers);
+
+		return ctrls;
+	}
+
+	/**
+	 * Get contoller's DID.
+	 *
+	 * @return the Controller's DID if only has one controller, other wise null
 	 */
 	public DID getController() {
-		return controller;
+		return (controllers != null && controllers.size() == 1) ? controllers.get(0) : null;
 	}
 
 	/**
@@ -640,7 +661,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return true if has, otherwise false
 	 */
 	public boolean hasController() {
-		return controller != null;
+		return controllers != null && !controllers.isEmpty();
 	}
 
 	/**
@@ -648,8 +669,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *
 	 * @return the DIDDocument object or null if no controller
 	 */
-	public DIDDocument getControllerDocument() {
-		return controllerDoc;
+	protected DIDDocument getControllerDocument(DID did) {
+		return controllerDocs.get(did);
 	}
 
 	/**
@@ -660,8 +681,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	public int getPublicKeyCount() {
 		int count = getEntryCount(publicKeys);
 
-		if (hasController())
-			count += getControllerDocument().getPublicKeyCount();
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values())
+				count += doc.getPublicKeyCount();
+		}
 
 		return count;
 	}
@@ -674,8 +697,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	public List<PublicKey> getPublicKeys() {
 		List<PublicKey> pks =  getEntries(publicKeys);
 
-		if (hasController())
-			pks.addAll(getControllerDocument().getPublicKeys());
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values())
+				pks.addAll(doc.getPublicKeys());
+		}
 
 		return pks;
 	}
@@ -701,8 +726,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			return true;
 		});
 
-		if (hasController())
-			pks.addAll(getControllerDocument().selectPublicKeys(id, type));
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values())
+				pks.addAll(doc.selectPublicKeys(id, type));
+		}
 
 		return pks;
 
@@ -745,8 +772,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (pk != null)
 			return pk;
 
-		if (hasController())
-			pk = getControllerDocument().getPublicKey(id);
+		if (hasController()) {
+			DIDDocument doc = getControllerDocument(id.getDid());
+			if (doc != null)
+				pk = doc.getPublicKey(id);
+		}
 
 		return pk;
 	}
@@ -813,7 +843,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the default key id
 	 */
 	public DIDURL getDefaultPublicKeyId() {
-		return defaultPublicKey.getId();
+		return defaultPublicKey != null ? defaultPublicKey.getId() : null;
 	}
 
 	/**
@@ -959,8 +989,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		int count = getEntryCount(publicKeys,
 				(v) -> ((PublicKey)v).isAuthenticationKey());
 
-		if (hasController())
-			count += getControllerDocument().getAuthenticationKeyCount();
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values())
+				count += doc.getAuthenticationKeyCount();
+		}
 
 		return count;
 	}
@@ -974,8 +1006,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		List<PublicKey> pks = getEntries(publicKeys,
 				(v) -> ((PublicKey)v).isAuthenticationKey());
 
-		if (hasController())
-			pks.addAll(getControllerDocument().getAuthenticationKeys());
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values())
+				pks.addAll(doc.getAuthenticationKeys());
+		}
 
 		return pks;
 	}
@@ -1004,8 +1038,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			return true;
 		});
 
-		if (hasController())
-			pks.addAll(getControllerDocument().selectAuthenticationKeys(id, type));
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values())
+				pks.addAll(doc.selectAuthenticationKeys(id, type));
+		}
 
 		return pks;
 	}
@@ -1081,8 +1117,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		int count = getEntryCount(publicKeys,
 				(v) -> ((PublicKey)v).isAuthorizationKey());
 
-		if (hasController())
-			count += getControllerDocument().getAuthorizationKeyCount();
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values())
+				count += doc.getAuthorizationKeyCount();
+		}
 
 		return count;
 	}
@@ -1096,8 +1134,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		List<PublicKey> pks = getEntries(publicKeys,
 				(v) -> ((PublicKey)v).isAuthorizationKey());
 
-		if (hasController())
-			pks.addAll(getControllerDocument().getAuthorizationKeys());
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values())
+				pks.addAll(doc.getAuthorizationKeys());
+		}
 
 		return pks;
 	}
@@ -1126,8 +1166,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			return true;
 		});
 
-		if (hasController())
-			pks.addAll(getControllerDocument().selectAuthorizationKeys(id, type));
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values())
+				pks.addAll(doc.selectAuthorizationKeys(id, type));
+		}
 
 		return pks;
 	}
@@ -1392,12 +1434,17 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			sanitizeService();
 		}
 
-		if (controller == null) {
+		if (controllers == null || controllers.isEmpty()) {
 			if (publicKeys == null || publicKeys.isEmpty())
 				throw new MalformedDocumentException("Missing public key.");
 		} else {
+			controllerDocs = new HashMap<DID, DIDDocument>();
+
 			try {
-				controllerDoc = controller.resolve();
+				for (DID did : controllers) {
+					DIDDocument doc = did.resolve();
+					controllerDocs.put(did, doc);
+				}
 			} catch (DIDResolveException e) {
 				throw new  MalformedDocumentException("Can not resolve the controller's DID");
 			}
@@ -1423,11 +1470,14 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 					_authorizations.add(new WeakPublicKey(pk.getId()));
 			}
 
-			if (controller == null) {
+			if (!hasController()) {
 				if (defaultPublicKey == null)
 					throw new MalformedDocumentException("Missing default public key.");
 			} else {
-				defaultPublicKey = controllerDoc.getDefaultPublicKey();
+				if (controllers.size() == 1)
+					defaultPublicKey = controllerDocs.get(controllers.get(0)).getDefaultPublicKey();
+				else // other wise, no default public key
+					defaultPublicKey = null;
 			}
 
 			if (_authentications.size() == 0)
@@ -1436,7 +1486,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (_authorizations.size() == 0)
 				this._authorizations = null;
 		} else {
-			this.defaultPublicKey = controllerDoc.getDefaultPublicKey();
+			if (controllers.size() == 1)
+				defaultPublicKey = controllerDocs.get(controllers.get(0)).getDefaultPublicKey();
+			else
+				defaultPublicKey = null;
+
 			this._publickeys = null;
 			this._authentications = null;
 			this._authorizations = null;
@@ -1460,6 +1514,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				throw new MalformedDocumentException("Missing document proof");
 
 			if (proof.getCreator() == null) {
+				if (defaultPublicKey == null)
+					throw new MalformedDocumentException("No explict creator key");
+
 				proof.creator = defaultPublicKey.getId();
 			} else {
 				if (proof.getCreator().getDid() == null)
@@ -1711,10 +1768,14 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			return false;
 		}
 
-		if (hasController())
-			return getControllerDocument().isGenuine();
-		else
-			return true;
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values()) {
+				 if (!doc.isGenuine())
+					 return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -1734,19 +1795,25 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if the did document is not valid.
 	 */
 	public boolean isValid() {
-		boolean valid = !isDeactivated() && !isExpired() && isGenuine();
-		if (valid && hasController())
-			return (!getControllerDocument().isDeactivated() && getControllerDocument().isGenuine());
-		else
-			return valid;
+		if (isDeactivated() || isExpired() || !isGenuine())
+			return false;
+
+		if (hasController()) {
+			for (DIDDocument doc : controllerDocs.values()) {
+				if (doc.isDeactivated() || !doc.isGenuine())
+					return false;
+			}
+		}
+
+		return true;
 	}
 
 	protected DIDDocument copy() {
 		DIDDocument doc = new DIDDocument(subject);
 
-		doc.controller = this.controller;
-		doc.controllerDoc = this.controllerDoc;
-		doc.publicKeys = publicKeys != null ? new TreeMap<DIDURL, PublicKey>(publicKeys) : null;
+		doc.controllers = this.controllers != null ? new ArrayList<DID>(controllers) : null;
+		doc.controllerDocs = this.controllerDocs != null ? new HashMap<DID, DIDDocument>(controllerDocs) : null;
+		doc.publicKeys = this.publicKeys != null ? new TreeMap<DIDURL, PublicKey>(publicKeys) : null;
 		doc.defaultPublicKey = this.defaultPublicKey;
 
 		if (credentials != null)
@@ -1784,8 +1851,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public String sign(DIDURL id, String storepass, byte[] ... data)
 			throws InvalidKeyException, DIDStoreException {
-		if (id == null || data == null || data.length == 0 ||
-				storepass == null || storepass.isEmpty())
+		if (data == null || data.length == 0 || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
 		byte[] digest = EcdsaSigner.sha256Digest(data);
@@ -1814,18 +1880,12 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @param data the data be signed
 	 * @return the signature string
+	 * @throws InvalidKeyException if no valid sign key
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
 	public String sign(String storepass, byte[] ... data)
-			throws DIDStoreException {
-		DIDURL key = getDefaultPublicKeyId();
-		try {
-			return sign(key, storepass, data);
-		} catch (InvalidKeyException ignore) {
-			// should never happen
-			log.error("INTERNAL - Signing digest", ignore);
-			throw new DIDStoreException(ignore);
-		}
+			throws InvalidKeyException, DIDStoreException {
+		return sign((DIDURL)null, storepass, data);
 	}
 
 	/**
@@ -1840,23 +1900,25 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public String signDigest(DIDURL id, String storepass, byte[] digest)
 			throws InvalidKeyException, DIDStoreException {
-		if (id == null || digest == null || storepass == null || storepass.isEmpty())
+		if (digest == null || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
 		if (!getMetadata().attachedStore())
 			throw new DIDStoreException("Not attached with a DID store.");
 
-		PublicKey pk = getPublicKey(id);
+		PublicKey pk = id != null ? getPublicKey(id) : getDefaultPublicKey();
 		if (pk == null)
 			throw new InvalidKeyException("Invalid sign key");
 
 		DID signer = null;
 		if (pk.getController().equals(getSubject()))
 			signer = getSubject();
-		else if (hasController() && pk.getController().equals(getController()))
-			signer = getController();
-		else
+		else if (hasController()) {
+			controllers.contains(pk.getController());
+			signer = pk.getController();
+		} else {
 			throw new InvalidKeyException("Invalid sign key");
+		}
 
 		return getMetadata().getStore().sign(signer, id, storepass, digest);
 	}
@@ -1883,18 +1945,12 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @param digest the digest data to be signed
 	 * @return the signature string
+	 * @throws InvalidKeyException if no valid sign key
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
 	public String signDigest(String storepass, byte[] digest)
-			throws DIDStoreException {
-		DIDURL key = getDefaultPublicKeyId();
-		try {
-			return signDigest(key, storepass, digest);
-		} catch (InvalidKeyException ignore) {
-			// should never happen
-			log.error("INTERNAL - Signing digest", ignore);
-			throw new DIDStoreException(ignore);
-		}
+			throws InvalidKeyException, DIDStoreException {
+		return signDigest((DIDURL)null, storepass, digest);
 	}
 
 	/**
@@ -1907,8 +1963,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if verifing data is not successfully.
 	 */
 	public boolean verify(DIDURL id, String signature, byte[] ... data) {
-		if (id == null || signature == null || signature.isEmpty() ||
-				data == null || data.length == 0)
+		if (signature == null || signature.isEmpty() || data == null || data.length == 0)
 			throw new IllegalArgumentException();
 
 		byte[] digest = EcdsaSigner.sha256Digest(data);
@@ -1938,8 +1993,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if verifing data is not successfully.
 	 */
 	public boolean verify(String signature, byte[] ... data) {
-		DIDURL key = getDefaultPublicKeyId();
-		return verify(key, signature, data);
+		return verify((DIDURL)null, signature, data);
 	}
 
 	/**
@@ -1952,10 +2006,15 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if verifing digest is not successfully.
 	 */
 	public boolean verifyDigest(DIDURL id, String signature, byte[] digest) {
-		if (id == null || signature == null || signature.isEmpty() || digest == null)
+		if (signature == null || signature.isEmpty() || digest == null)
 			throw new IllegalArgumentException();
 
-		PublicKey pk = getPublicKey(id);
+		PublicKey pk = id != null ? getPublicKey(id) : getDefaultPublicKey();
+		if (pk == null)
+			// TODO: checkme
+			// throw new InvalidKeyException("Invalid sign key");
+			return false;
+
 		byte[] binkey = pk.getPublicKeyBytes();
 		byte[] sig = Base64.decode(signature,
 				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
@@ -1986,8 +2045,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if verifing digest is not successfully.
 	 */
 	public boolean verifyDigest(String signature, byte[] digest) {
-		DIDURL key = getDefaultPublicKeyId();
-		return verifyDigest(key, signature, digest);
+		return verifyDigest((DIDURL)null, signature, digest);
 	}
 
 	public JwtBuilder jwtBuilder() {
