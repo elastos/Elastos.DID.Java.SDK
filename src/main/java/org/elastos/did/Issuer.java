@@ -59,12 +59,25 @@ public class Issuer {
 	 * Constructs Issuer object with the given value.
 	 *
 	 * @param doc the Issuer's document
-	 * @throws DIDStoreException there is no store to attatch.
+	 * @param signKey the specified issuer's key to sign
+	 * @throws DIDStoreException there is no store to attatch
 	 * @throws InvalidKeyException the sign key is not an authenication key.
+	 */
+	public Issuer(DIDDocument doc, String signKey)
+			throws DIDStoreException, InvalidKeyException {
+		this(doc, signKey != null ? new DIDURL(doc.getSubject(), signKey) : null);
+	}
+
+	/**
+	 * Constructs Issuer object with the given value.
+	 *
+	 * @param doc the Issuer's document
+	 * @throws DIDStoreException there is no store to attach
+	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
 	public Issuer(DIDDocument doc)
 			throws DIDStoreException, InvalidKeyException {
-		this(doc, null);
+		this(doc, (DIDURL)null);
 	}
 
 	/**
@@ -73,8 +86,8 @@ public class Issuer {
 	 * @param did the Issuer's DID
 	 * @param signKey the specified issuer's key to sign
 	 * @param store the DIDStore object
-	 * @throws DIDStoreException there is no store to attatch.
-	 * @throws InvalidKeyException the sign key is not an authenication key.
+	 * @throws DIDStoreException there is no store to attach
+	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
 	public Issuer(DID did, DIDURL signKey, DIDStore store)
 			throws DIDStoreException, InvalidKeyException {
@@ -92,13 +105,44 @@ public class Issuer {
 	 * Constructs Issuer object with the given value.
 	 *
 	 * @param did the Issuer's DID
+	 * @param signKey the specified issuer's key to sign
 	 * @param store the DIDStore object
-	 * @throws DIDStoreException there is no store to attatch.
-	 * @throws InvalidKeyException the sign key is not an authenication key.
+	 * @throws MalformedDIDException if the DID is invalid
+	 * @throws DIDStoreException there is no store to attach
+	 * @throws InvalidKeyException the sign key is not an authentication key
+	 */
+	public Issuer(String did, String signKey, DIDStore store)
+			throws MalformedDIDException, DIDStoreException, InvalidKeyException {
+		this(new DID(did),
+				signKey != null ? new DIDURL(new DID(did), signKey) : null,
+				store);
+	}
+
+	/**
+	 * Constructs Issuer object with the given value.
+	 *
+	 * @param did the Issuer's DID
+	 * @param store the DIDStore object
+	 * @throws DIDStoreException there is no store to attach
+	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
 	public Issuer(DID did, DIDStore store)
 			throws DIDStoreException, InvalidKeyException {
 		this(did, null, store);
+	}
+
+	/**
+	 * Constructs Issuer object with the given value.
+	 *
+	 * @param did the Issuer's DID
+	 * @param store the DIDStore object
+	 * @throws MalformedDIDException if the DID is invalid
+	 * @throws DIDStoreException there is no store to attach
+	 * @throws InvalidKeyException the sign key is not an authentication key
+	 */
+	public Issuer(String did, DIDStore store)
+			throws MalformedDIDException, DIDStoreException, InvalidKeyException {
+		this(new DID(did), null, store);
 	}
 
 	private void init(DIDDocument doc, DIDURL signKey)

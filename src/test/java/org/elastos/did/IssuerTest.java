@@ -194,6 +194,142 @@ public class IssuerTest {
 	}
 
 	@Test
+	public void IssueKycCredentialForCidTest() throws DIDException, IOException {
+		TestData testData = new TestData();
+		testData.setup(true);
+
+		DIDDocument issuerDoc = testData.loadTestIssuer();
+		DIDDocument testDoc = testData.loadCustomizedDidDocument();
+
+		Map<String, Object> props= new HashMap<String, Object>();
+		props.put("name", "John");
+		props.put("gender", "Male");
+		props.put("nation", "Singapore");
+		props.put("language", "English");
+		props.put("email", "john@example.com");
+		props.put("twitter", "@john");
+
+		Issuer issuer = new Issuer(issuerDoc);
+
+		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
+		VerifiableCredential vc = cb.id("testCredential")
+			.type("BasicProfileCredential", "InternetAccountCredential")
+			.properties(props)
+			.seal(TestConfig.storePass);
+
+		DIDURL vcId = new DIDURL(testDoc.getSubject(), "testCredential");
+
+		assertEquals(vcId, vc.getId());
+
+		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
+		assertFalse(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
+
+		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
+		assertEquals(testDoc.getSubject(), vc.getSubject().getId());
+
+		assertEquals("John", vc.getSubject().getProperty("name"));
+		assertEquals("Male", vc.getSubject().getProperty("gender"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("English", vc.getSubject().getProperty("language"));
+		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
+		assertEquals("@john", vc.getSubject().getProperty("twitter"));
+
+		assertFalse(vc.isExpired());
+		assertTrue(vc.isGenuine());
+		assertTrue(vc.isValid());
+	}
+
+	@Test
+	public void IssueKycCredentialFromCidTest() throws DIDException, IOException {
+		TestData testData = new TestData();
+		testData.setup(true);
+
+		DIDDocument issuerDoc = testData.loadCustomizedDidDocument();
+		DIDDocument testDoc = testData.loadTestDocument();
+
+		Map<String, Object> props= new HashMap<String, Object>();
+		props.put("name", "John");
+		props.put("gender", "Male");
+		props.put("nation", "Singapore");
+		props.put("language", "English");
+		props.put("email", "john@example.com");
+		props.put("twitter", "@john");
+
+		Issuer issuer = new Issuer(issuerDoc);
+
+		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
+		VerifiableCredential vc = cb.id("testCredential")
+			.type("BasicProfileCredential", "InternetAccountCredential")
+			.properties(props)
+			.seal(TestConfig.storePass);
+
+		DIDURL vcId = new DIDURL(testDoc.getSubject(), "testCredential");
+
+		assertEquals(vcId, vc.getId());
+
+		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
+		assertFalse(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
+
+		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
+		assertEquals(testDoc.getSubject(), vc.getSubject().getId());
+
+		assertEquals("John", vc.getSubject().getProperty("name"));
+		assertEquals("Male", vc.getSubject().getProperty("gender"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("English", vc.getSubject().getProperty("language"));
+		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
+		assertEquals("@john", vc.getSubject().getProperty("twitter"));
+
+		assertFalse(vc.isExpired());
+		assertTrue(vc.isGenuine());
+		assertTrue(vc.isValid());
+	}
+
+	@Test
+	public void IssueSelfProclaimedCredentialFromCidTest() throws DIDException, IOException {
+		TestData testData = new TestData();
+		testData.setup(true);
+
+		DIDDocument issuerDoc = testData.loadCustomizedDidDocument();
+
+		Map<String, Object> props= new HashMap<String, Object>();
+		props.put("name", "Testing Issuer");
+		props.put("nation", "Singapore");
+		props.put("language", "English");
+		props.put("email", "issuer@example.com");
+
+		Issuer issuer = new Issuer(issuerDoc);
+
+		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
+		VerifiableCredential vc = cb.id("myCredential")
+			.type("BasicProfileCredential", "SelfProclaimedCredential")
+			.properties(props)
+			.seal(TestConfig.storePass);
+
+		DIDURL vcId = new DIDURL(issuerDoc.getSubject(), "myCredential");
+
+		assertEquals(vcId, vc.getId());
+
+		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
+		assertTrue(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
+		assertFalse(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
+
+		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
+		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());
+
+		assertEquals("Testing Issuer", vc.getSubject().getProperty("name"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("English", vc.getSubject().getProperty("language"));
+		assertEquals("issuer@example.com", vc.getSubject().getProperty("email"));
+
+		assertFalse(vc.isExpired());
+		assertTrue(vc.isGenuine());
+		assertTrue(vc.isValid());
+	}
+
+	@Test
 	public void IssueJsonPropsCredentialTest()
 			throws DIDException, IOException {
 		TestData testData = new TestData();
