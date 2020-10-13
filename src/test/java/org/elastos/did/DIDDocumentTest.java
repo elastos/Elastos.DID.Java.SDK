@@ -212,8 +212,6 @@ public class DIDDocumentTest {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		System.out.println(doc);
-
 		// Count and list.
 		assertEquals(6, doc.getPublicKeyCount());
 
