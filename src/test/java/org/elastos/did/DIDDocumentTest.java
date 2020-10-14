@@ -861,7 +861,7 @@ public class DIDDocumentTest {
 		});
 
 		// Remove controller's key, should fail.
-		DIDURL key2 = new DIDURL(doc.getSubject(), "key2");
+		DIDURL key2 = new DIDURL(doc.getController(), "key2");
 		assertThrows(DIDObjectNotExistException.class, () -> {
 			db.removeAuthenticationKey(key2);
 		});

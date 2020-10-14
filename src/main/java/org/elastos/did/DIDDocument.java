@@ -1847,7 +1847,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @param data the data be signed
 	 * @return the signature string
-	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 * @throws InvalidKeyException if the sign key is invalid
+	 * @throws DIDStoreException there is no DIDStore to get private key
 	 */
 	public String sign(DIDURL id, String storepass, byte[] ... data)
 			throws InvalidKeyException, DIDStoreException {
