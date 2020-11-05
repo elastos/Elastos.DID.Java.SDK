@@ -22,9 +22,6 @@
 
 package org.elastos.did;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -38,9 +35,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  */
 public abstract class AbstractMetadata extends DIDObject<AbstractMetadata> {
 	protected final static String RESERVED_PREFIX = "DX-";
-	private final static String LAST_MODIFIED = RESERVED_PREFIX + "lastModified";
-	private final static SimpleDateFormat dateFormat =
-			new SimpleDateFormat(Constants.DATE_FORMAT);
 
 	public TreeMap<String, Object> props;
 	private DIDStore store;
@@ -103,36 +97,6 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata> {
 	 */
 	protected boolean attachedStore() {
 		return store != null;
-	}
-
-	/**
-	 * Set last modified time for DID content.
-	 *
-	 * @param timestamp the last modified time
-	 */
-	protected void setLastModified(Date timestamp) {
-		put(LAST_MODIFIED, dateFormat.format(timestamp));
-	}
-
-	/**
-	 * Get last modified time from DID content.
-	 *
-	 * @return the last modified time
-	 */
-	public Date getLastModified() {
-		try {
-			String lastModified = (String)get(LAST_MODIFIED);
-			return lastModified == null ? null : dateFormat.parse(lastModified);
-		} catch (ParseException e) {
-			return null;
-		}
-	}
-
-	/**
-	 * Clear the last modified time.
-	 */
-	protected void clearLastModified() {
-		remove(LAST_MODIFIED);
 	}
 
 	/**

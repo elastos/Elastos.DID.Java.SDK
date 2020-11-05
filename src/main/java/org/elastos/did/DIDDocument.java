@@ -647,21 +647,39 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	/**
+	 * Get controller count.
+	 *
+	 * @return the controller count
+	 */
+	public int getCountrollerCount() {
+		return controllers == null ? 0 : controllers.size();
+	}
+
+	/**
 	 * Get contoller's DID.
 	 *
 	 * @return the Controller's DID if only has one controller, other wise null
 	 */
-	public DID getController() {
+	protected DID getController() {
 		return (controllers != null && controllers.size() == 1) ? controllers.get(0) : null;
 	}
 
 	/**
-	 * Check if current DID has controller DID.
+	 * Check if current DID has controller.
 	 *
 	 * @return true if has, otherwise false
 	 */
 	public boolean hasController() {
 		return controllers != null && !controllers.isEmpty();
+	}
+
+	/**
+	 * Check if current DID has specific controller.
+	 *
+	 * @return true if has, otherwise false
+	 */
+	public boolean hasController(DID did) {
+		return controllers != null && controllers.contains(did);
 	}
 
 	/**
@@ -1402,6 +1420,15 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	/**
+	 * Get last modified time.
+	 *
+	 * @return the last modified time
+	 */
+	public Date getLastModified() {
+		return proof.getCreated();
+	}
+
+	/**
 	 * Get Proof object from did document.
 	 *
 	 * @return the Proof object
@@ -1748,8 +1775,17 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public boolean isGenuine() {
 		// Document should signed(only) by default public key.
-		if (!proof.getCreator().equals(getDefaultPublicKeyId()))
-			return false;
+		if (!hasController()) {
+			if (!proof.getCreator().equals(getDefaultPublicKeyId()))
+				return false;
+		} else {
+			DIDDocument signer = controllerDocs.get(proof.getCreator().getDid());
+			if (signer == null)
+				return false;
+
+			if (!signer.getDefaultPublicKeyId().equals(proof.getCreator()))
+				return false;
+		}
 
 		// Unsupported public key type;
 		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
@@ -1779,7 +1815,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	/**
-	 * Judge whether the did doucment is deactivated or not.
+	 * Judge whether the did document is deactivated or not.
 	 *
 	 * @return the returned value is true if the did document is genuine;
 	 *         the returned value is false if the did document is not genuine.
@@ -1825,7 +1861,6 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		doc.expires = expires;
 
 		DIDMetadata metadata = getMetadata().clone();
-		metadata.clearLastModified();
 		doc.setMetadata(metadata);
 
 		return doc;
@@ -2251,6 +2286,87 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				throw new IllegalStateException("Document already sealed.");
 
 			return document.getSubject();
+		}
+
+		/**
+		 * Add a new controller to the customized DID document.
+		 *
+		 * @param controller the new controller's DID
+		 * @return the Builder object
+		 * @throws DIDResolveException if failed resolve the new controller's DID
+		 */
+		public Builder addController(DID controller) throws DIDResolveException {
+			if (document == null)
+				throw new IllegalStateException("Document already sealed.");
+
+			if (document.controllers == null)
+				throw new UnsupportedOperationException("Document not support controller");
+
+			if (document.controllers.contains(controller))
+				throw new IllegalArgumentException("Controller already exists");
+
+			DIDDocument controllerDoc = controller.resolve(true);
+			if (controllerDoc == null)
+				throw new IllegalArgumentException("Controller'd DID not exists");
+
+			if (!controllerDoc.isValid())
+				throw new IllegalArgumentException("Controller'd DID document is invalid");
+
+			document.controllers.add(controller);
+			document.controllerDocs.put(controller, controllerDoc);
+
+			return this;
+		}
+
+		/**
+		 * Add a new controller to the customized DID document.
+		 *
+		 * @param controller the new controller's DID
+		 * @return the Builder object
+		 * @throws DIDResolveException if failed resolve the new controller's DID
+		 */
+		public Builder addController(String controller) throws DIDResolveException {
+			try {
+				return addController(new DID(controller));
+			} catch (MalformedDIDException e) {
+				throw new IllegalArgumentException();
+			}
+		}
+
+		/**
+		 * Remove controller from the customized DID document.
+		 *
+		 * @param controller the controller's DID to be remove
+		 * @return the Builder object
+		 */
+		public Builder removeController(DID controller) {
+			if (document == null)
+				throw new IllegalStateException("Document already sealed.");
+
+			if (document.controllers == null)
+				throw new UnsupportedOperationException("Document does not have controller");
+
+			if (document.controllers.size() == 1)
+				throw new UnsupportedOperationException("Document should has at least one controller");
+
+			document.controllers.remove(controller);
+			document.controllerDocs.remove(controller);
+
+			return this;
+		}
+
+		/**
+		 * Remove controller from the customized DID document.
+		 *
+		 * @param controller the controller's DID to be remove
+		 * @return the Builder object
+		 */
+		public Builder removeController(String controller) {
+			try {
+				return removeController(new DID(controller));
+			} catch (MalformedDIDException e) {
+				throw new IllegalArgumentException();
+			}
 		}
 
 		private void addPublicKey(PublicKey key) {
@@ -3257,11 +3373,12 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 *
 		 * @param storepass the password for DIDStore
 		 * @return the DIDDocument object
+		 * @throws InvalidKeyException if no valid sign key to seal the document
 		 * @throws MalformedDocumentException if the DIDDocument is malformed
 		 * @throws DIDStoreException if an error occurs when access DID store
 		 */
-		public DIDDocument seal(String storepass)
-				throws MalformedDocumentException, DIDStoreException {
+		public DIDDocument seal(DID signer, String storepass)
+				throws InvalidKeyException, MalformedDocumentException, DIDStoreException {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
 
@@ -3273,22 +3390,37 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 			document.sanitize(false);
 
-			DIDURL signKey = document.getDefaultPublicKeyId();
-			String json;
-			try {
-				json = document.serialize(true);
-			} catch (DIDSyntaxException e) {
-				// should never happen
-				// re-throw it after up-cast
-				throw (MalformedDocumentException)e;
+			DIDDocument signerDoc;
+			if (!document.hasController()) {
+				if (signer != null && !document.getSubject().equals(signer))
+					throw new InvalidKeyException("Invalid signer to seal the document");
+
+				signerDoc = document;
+			} else {
+				if (signer == null)
+					signer = document.getController(); // if only one controller
+
+				if (signer == null) // still null
+					throw new InvalidKeyException("No valid signer to seal the document");
+
+				signerDoc = document.getControllerDocument(signer);
+				if (signerDoc == null)
+					throw new InvalidKeyException("Invalid signer to seal the document");
 			}
 
+			DIDURL signKey = signerDoc.getDefaultPublicKeyId();
+
 			try {
+				String json = document.serialize(true);
 				String sig = document.sign(signKey, storepass, json.getBytes());
 				Proof proof = new Proof(signKey, sig);
 				document.proof = proof;
 			} catch (InvalidKeyException ignore) {
 				log.error("INTERNAL - Sealing document", ignore);
+			} catch (DIDSyntaxException e) {
+				// should never happen
+				// re-throw it after up-cast
+				throw (MalformedDocumentException)e;
 			}
 
 			// Invalidate builder
@@ -3296,6 +3428,21 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			this.document = null;
 
 			return doc;
+		}
+
+		/**
+		 * Seal the document object, attach the generated proof to the
+		 * document.
+		 *
+		 * @param storepass the password for DIDStore
+		 * @return the DIDDocument object
+		 * @throws InvalidKeyException if no valid sign key to seal the document
+		 * @throws MalformedDocumentException if the DIDDocument is malformed
+		 * @throws DIDStoreException if an error occurs when access DID store
+		 */
+		public DIDDocument seal(String storepass)
+				throws InvalidKeyException, MalformedDocumentException, DIDStoreException {
+			return seal(null, storepass);
 		}
 	}
 }

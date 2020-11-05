@@ -599,7 +599,7 @@ public class DIDDocumentTest {
 		pk = doc.getAuthenticationKey("notExist");
 		assertNull(pk);
 
-		id = new DIDURL(doc.getSubject(), "notExist");
+		id = new DIDURL(doc.getController(), "notExist");
 		pk = doc.getAuthenticationKey(id);
 		assertNull(pk);
 
@@ -773,9 +773,6 @@ public class DIDDocumentTest {
 		assertEquals(8, doc.getPublicKeyCount());
 		assertEquals(7, doc.getAuthenticationKeyCount());
 		assertEquals(1, doc.getAuthorizationKeyCount());
-
-		for (PublicKey k : doc.getAuthenticationKeys())
-			System.out.println(k.getId());
 	}
 
 	@Test

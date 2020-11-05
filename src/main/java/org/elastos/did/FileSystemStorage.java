@@ -35,7 +35,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import org.elastos.did.exception.DIDStorageException;
@@ -408,10 +407,12 @@ class FileSystemStorage implements DIDStorage {
 	public DIDMetadata loadDidMetadata(DID did) throws DIDStorageException {
 		try {
 			File file = getFile(DID_DIR, did.getMethodSpecificId(), META_FILE);
-			DIDMetadata metadata = DIDMetadata.parse(file, DIDMetadata.class);
+			DIDMetadata metadata;
+			if (file.exists())
+				metadata = DIDMetadata.parse(file, DIDMetadata.class);
+			else
+				metadata = new DIDMetadata();
 
-			file = getFile(DID_DIR, did.getMethodSpecificId(), DOCUMENT_FILE);
-			metadata.setLastModified(new Date(file.lastModified()));
 			return metadata;
 		} catch (DIDSyntaxException | IOException e) {
 			throw new DIDStorageException(e);
@@ -425,12 +426,7 @@ class FileSystemStorage implements DIDStorage {
 					doc.getSubject().getMethodSpecificId(), DOCUMENT_FILE);
 
 			doc.serialize(file, true);
-			if (doc.getMetadata().getLastModified() != null)
-				file.setLastModified(doc.getMetadata().getLastModified().getTime());
-			else {
-				doc.getMetadata().setLastModified(new Date(file.lastModified()));
-				storeDidMetadata(doc.getSubject(), doc.getMetadata());
-			}
+			storeDidMetadata(doc.getSubject(), doc.getMetadata());
 		} catch (IOException e) {
 			throw new DIDStorageException("Store DIDDocument error.", e);
 		} catch (DIDSyntaxException ignore) {
@@ -535,11 +531,11 @@ class FileSystemStorage implements DIDStorage {
 		try {
 			File file = getFile(DID_DIR, did.getMethodSpecificId(),
 					CREDENTIALS_DIR, id.getFragment(), META_FILE);
-			CredentialMetadata metadata = CredentialMetadata.parse(file, CredentialMetadata.class);
-
-			file = getFile(DID_DIR, did.getMethodSpecificId(),
-					CREDENTIALS_DIR, id.getFragment(), CREDENTIAL_FILE);
-			metadata.setLastModified(new Date(file.lastModified()));
+			CredentialMetadata metadata;
+			if (file.exists())
+				metadata = CredentialMetadata.parse(file, CredentialMetadata.class);
+			else
+				metadata = new CredentialMetadata();
 
 			return metadata;
 		} catch (DIDSyntaxException | IOException e) {
@@ -557,14 +553,8 @@ class FileSystemStorage implements DIDStorage {
 					CREDENTIAL_FILE);
 
 			credential.serialize(file, true);
-
-			if (credential.getMetadata().getLastModified() != null)
-				file.setLastModified(credential.getMetadata().getLastModified().getTime());
-			else {
-				credential.getMetadata().setLastModified(new Date(file.lastModified()));
-				storeCredentialMetadata(credential.getSubject().getId(),
+			storeCredentialMetadata(credential.getSubject().getId(),
 						credential.getId(), credential.getMetadata());
-			}
 		} catch (IOException e) {
 			throw new DIDStorageException("Store credential error.", e);
 		} catch (DIDSyntaxException ignore) {

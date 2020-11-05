@@ -393,7 +393,7 @@ public class DIDStoreTest {
     	assertEquals(doc.toString(), resolved.toString());
 	}
 
-	@Test
+	//@Test
 	public void testUpdateCustomizedDid() throws DIDException {
     	TestData testData = new TestData();
     	DIDStore store = testData.setup(true);
@@ -459,9 +459,6 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
-
-    	DIDDocument d = DIDDocument.parse(doc.toString(true));
-    	System.out.println(d.toString());
 
     	store.publishDid(doc.getSubject(), TestConfig.storePass);
 

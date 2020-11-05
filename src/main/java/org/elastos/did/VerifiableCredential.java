@@ -78,6 +78,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	protected final static String CREDENTIAL_SUBJECT = "credentialSubject";
 	protected final static String PROOF = "proof";
 	protected final static String VERIFICATION_METHOD = "verificationMethod";
+	protected final static String CREATED = "created";
 	protected final static String SIGNATURE = "signature";
 
 	private static final Logger log = LoggerFactory.getLogger(VerifiableCredential.class);
@@ -220,12 +221,15 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 *
 	 * The default proof type is ECDSAsecp256r1.
 	 */
-	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, SIGNATURE })
+	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, CREATED, SIGNATURE })
 	static public class Proof {
 		@JsonProperty(TYPE)
 		private String type;
 		@JsonProperty(VERIFICATION_METHOD)
 		private DIDURL verificationMethod;
+		@JsonProperty(CREATED)
+		@JsonInclude(Include.NON_NULL)
+		private Date created;
 		@JsonProperty(SIGNATURE)
 		private String signature;
 
@@ -239,10 +243,17 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		@JsonCreator
 		protected Proof(@JsonProperty(value = TYPE) String type,
 				@JsonProperty(value = VERIFICATION_METHOD, required = true) DIDURL method,
+				@JsonProperty(value = CREATED) Date created,
 				@JsonProperty(value = SIGNATURE, required = true) String signature) {
 			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
 			this.verificationMethod = method;
+			this.created = created;
 			this.signature = signature;
+		}
+
+		protected Proof(DIDURL method, String signature) {
+			this(Constants.DEFAULT_PUBLICKEY_TYPE, method,
+					Calendar.getInstance(Constants.UTC).getTime(), signature);
 		}
 
 		/**
@@ -261,6 +272,15 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	     */
 	    public DIDURL getVerificationMethod() {
 	    	return verificationMethod;
+	    }
+
+	    /**
+	     * Get the created timestamp.
+	     *
+	     * @return the created date
+	     */
+	    public Date getCreated() {
+	    	return created;
 	    }
 
 	    /**
@@ -379,6 +399,14 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		}
 	}
 
+	/**
+	 * Get last modified time.
+	 *
+	 * @return the last modified time, maybe null for old version vc
+	 */
+	public Date getLastModified() {
+		return proof.getCreated();
+	}
 
 	/**
 	 * Get Credential subject content.
@@ -998,7 +1026,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 
 			String sig = issuer.sign(storepass, json.getBytes());
 
-			Proof proof = new Proof(Constants.DEFAULT_PUBLICKEY_TYPE, issuer.getSignKey(), sig);
+			Proof proof = new Proof(issuer.getSignKey(), sig);
 			credential.proof = proof;
 
 			// Invalidate builder
