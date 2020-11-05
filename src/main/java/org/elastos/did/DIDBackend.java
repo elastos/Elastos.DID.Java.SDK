@@ -386,7 +386,6 @@ public class DIDBackend {
 			metadata.setTransactionId(tx.getTransactionId());
 			metadata.setSignature(doc.getProof().getSignature());
 			metadata.setPublished(tx.getTimestamp());
-			metadata.setLastModified(tx.getTimestamp());
 			doc.setMetadata(metadata);
 			return doc;
 		}

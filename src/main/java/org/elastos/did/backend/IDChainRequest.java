@@ -22,6 +22,11 @@
 
 package org.elastos.did.backend;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.elastos.did.Constants;
 import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
@@ -30,6 +35,7 @@ import org.elastos.did.DIDURL;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
@@ -38,10 +44,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
@@ -62,11 +71,23 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	private static final String SPECIFICATION = "specification";
 	private static final String OPERATION = "operation";
 	private static final String PREVIOUS_TXID = "previousTxid";
+	private static final String MULTI_SIGNATURE = "multisig";
 	private static final String TYPE = "type";
 	private static final String VERIFICATION_METHOD = "verificationMethod";
 	private static final String SIGNATURE = "signature";
 
 	private static final Logger log = LoggerFactory.getLogger(IDChainRequest.class);
+
+	@JsonProperty(HEADER)
+	private Header header;
+	@JsonProperty(PAYLOAD)
+	private String payload;
+
+	private LinkedHashMap<DIDURL, Proof> proofs;
+
+	private DID did;
+	private DIDDocument doc;
+	private DIDDocument effectiveDoc;
 
 	/**
      * The IDChain Request Operation
@@ -97,15 +118,60 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		}
 	}
 
-	@JsonPropertyOrder({ SPECIFICATION, OPERATION, PREVIOUS_TXID })
+	public static class MultiSignature {
+		private int m;
+		private int n;
+
+		public MultiSignature(int m, int n) {
+			apply(m, n);
+		}
+
+		@JsonCreator
+		public MultiSignature(String mOfN) {
+			if (mOfN == null || mOfN.isEmpty())
+				throw new IllegalArgumentException("Invalid multisig spec");
+
+			String[] mn = mOfN.split(":");
+			if (mn == null || mn.length != 2)
+				throw new IllegalArgumentException("Invalid multisig spec");
+
+			apply(Integer.valueOf(mn[0]), Integer.valueOf(mn[1]));
+		}
+
+		protected void apply(int m, int n) {
+			if (m <= 0 || n <= 1 || m > n)
+				throw new IllegalArgumentException("Invalid multisig spec");
+
+			this.m = m;
+			this.n = n;
+		}
+
+		public int m() {
+			return m;
+		}
+
+		public int n() {
+			return n;
+		}
+
+		@Override
+		@JsonValue
+		public String toString() {
+			return String.format("%d:%d", m, n);
+		}
+	}
+
+	@JsonPropertyOrder({ SPECIFICATION, OPERATION, PREVIOUS_TXID, MULTI_SIGNATURE })
 	@JsonInclude(Include.NON_NULL)
-	public static class Header {
+	protected static class Header {
 		@JsonProperty(SPECIFICATION)
 		private String specification;
 		@JsonProperty(OPERATION)
 		private Operation operation;
 		@JsonProperty(PREVIOUS_TXID)
 		private String previousTxid;
+		@JsonProperty(MULTI_SIGNATURE)
+		private MultiSignature multisig;
 
 		@JsonCreator
 		protected Header(@JsonProperty(value = SPECIFICATION, required = true) String spec) {
@@ -140,6 +206,14 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 
 		protected void setPreviousTxid(String previousTxid) {
 			this.previousTxid = previousTxid;
+		}
+
+		public MultiSignature getMultiSignature() {
+			return multisig;
+		}
+
+		protected void setMultiSignature(int m, int n) {
+			this.multisig = new MultiSignature(m, n);
 		}
 	}
 
@@ -177,16 +251,6 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 			return signature;
 		}
 	}
-
-	@JsonProperty(HEADER)
-	private Header header;
-	@JsonProperty(PAYLOAD)
-	private String payload;
-	@JsonProperty(PROOF)
-	private Proof proof;
-
-	private DID did;
-	private DIDDocument doc;
 
 	@JsonCreator
 	protected IDChainRequest() {}
@@ -318,6 +382,20 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	}
 
 	/**
+	 * Get MultiSignature information.
+	 *
+	 * @return the MultiSignature object for multisig request; or null
+	 */
+	public MultiSignature getMultiSignature() {
+		return header.getMultiSignature();
+	}
+
+	public MultiSignature getEffectiveMultiSignature() {
+		// TODO: no impl
+		return getMultiSignature();
+	}
+
+	/**
 	 * Get payload of IDChain Request.
 	 *
 	 * @return the payload string
@@ -344,6 +422,24 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		return doc;
 	}
 
+	private DIDDocument getEffectiveDocument() throws DIDTransactionException {
+		if (getOperation() == Operation.CREATE ||
+				(getOperation() == Operation.UPDATE && !getDocument().hasController())) {
+			return getDocument();
+		} else {
+			if (effectiveDoc == null) {
+				try {
+					 // TODO: need resolve specific tx
+					effectiveDoc = getDid().resolve();
+				} catch (DIDResolveException e) {
+					throw new DIDTransactionException(e);
+				}
+			}
+
+			return effectiveDoc;
+		}
+	}
+
 	private void setPayload(DID did) {
 		this.did = did;
 		this.doc = null;
@@ -364,8 +460,40 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		}
 	}
 
-	public Proof getProof() {
-		return proof;
+	@JsonGetter(PROOF)
+	@JsonFormat(with = {JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
+	public List<Proof> getProofs() {
+		return proofs.isEmpty() ? null : new ArrayList<Proof>(proofs.values());
+	}
+
+	@JsonSetter(PROOF)
+	@JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY})
+	protected void setProofs(List<Proof> proofs) throws MalformedIDChainRequestException {
+		if (this.proofs != null)
+			this.proofs.clear();
+
+		if (proofs == null || proofs.isEmpty())
+			return;
+
+		for (Proof proof : proofs)
+			addProof(proof);
+	}
+
+	private void addProof(Proof proof) throws MalformedIDChainRequestException {
+		if (proofs == null)
+			proofs = new LinkedHashMap<DIDURL, Proof>();
+
+		if (proofs.containsKey(proof.getVerificationMethod()))
+			throw new MalformedIDChainRequestException("Aleady exist proof from " + proof.verificationMethod);
+
+		proofs.put(proof.verificationMethod, proof);
+	}
+
+	public boolean isQualified() {
+		if (header.getMultiSignature() == null)
+			return proofs.size() == 1;
+		else
+			return proofs.size() >= header.getMultiSignature().m();
 	}
 
 	@Override
@@ -400,11 +528,16 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 				throw new MalformedIDChainRequestException("Invalid payload", e);
 			}
 
-			if (proof == null)
+			if (proofs == null || proofs.isEmpty())
 				throw new MalformedIDChainRequestException("Missing proof");
 
-			if (proof.verificationMethod.getDid() == null)
-				proof.verificationMethod = new DIDURL(did, proof.verificationMethod.toString());
+			if (header.multisig == null && proofs.size() != 1)
+					throw new MalformedIDChainRequestException("Proof and multisig mismatch.");
+
+			for (Proof proof : proofs.values()) {
+				if (proof.verificationMethod.getDid() == null)
+					throw new MalformedIDChainRequestException("Uncanonical verification method.");
+			}
 		}
 	}
 
@@ -413,24 +546,30 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		sanitize(true);
 	}
 
-	private void seal(DIDURL signKey, String storepass)
+	private byte[][] getSigningInputs() {
+		String prevtxid = getOperation() == Operation.UPDATE ? getPreviousTxid() : "";
+		String multisig = header.getMultiSignature() != null ? header.getMultiSignature().toString() : "";
+
+		byte[][] inputs = new byte[][] {
+			header.getSpecification().getBytes(),
+			header.getOperation().toString().getBytes(),
+			prevtxid.getBytes(),
+			multisig.getBytes(),
+			payload.getBytes()
+		};
+
+		return inputs;
+	}
+
+	public void seal(DIDURL signKey, String storepass)
 			throws MalformedIDChainRequestException, DIDStoreException, InvalidKeyException {
 		if (!doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key.");
 
 		sanitize(false);
 
-		String prevtxid = getOperation() == Operation.UPDATE ? getPreviousTxid() : "";
-
-		byte[][] inputs = new byte[][] {
-			header.getSpecification().getBytes(),
-			header.getOperation().toString().getBytes(),
-			prevtxid.getBytes(),
-			payload.getBytes()
-		};
-
-		String signature = doc.sign(signKey, storepass, inputs);
-		this.proof = new Proof(signKey, signature);
+		String signature = doc.sign(signKey, storepass, getSigningInputs());
+		addProof(new Proof(signKey, signature));
 	}
 
 	private void seal(DIDURL targetSignKey, DIDDocument doc,
@@ -441,17 +580,8 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 
 		sanitize(false);
 
-		String prevtxid = getOperation() == Operation.UPDATE ? getPreviousTxid() : "";
-
-		byte[][] inputs = new byte[][] {
-			header.getSpecification().getBytes(),
-			header.getOperation().toString().getBytes(),
-			prevtxid.getBytes(),
-			payload.getBytes()
-		};
-
-		String signature = doc.sign(signKey, storepass, inputs);
-		this.proof = new Proof(targetSignKey, signature);
+		String signature = doc.sign(signKey, storepass, getSigningInputs());
+		addProof(new Proof(targetSignKey, signature));
 	}
 
 	/**
@@ -462,33 +592,82 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	 * @throws DIDTransactionException there is no invalid key.
 	 */
 	public boolean isValid() throws DIDTransactionException {
-		DIDDocument doc = null;
-		DIDURL signKey = proof.getVerificationMethod();
+		DIDDocument doc = getEffectiveDocument();
+		MultiSignature multisig = getEffectiveMultiSignature();
 
-		if (getOperation() != Operation.DEACTIVATE) {
-			doc = this.doc;
-			if (!doc.isAuthenticationKey(signKey))
+		if (!doc.hasController()) {
+			if (multisig != null)
 				return false;
+
+			if (proofs.size() != 1)
+				return false;
+
+			Map.Entry<DIDURL, Proof> entry = proofs.entrySet().iterator().next();
+			Proof proof = entry.getValue();
+			DIDURL id = proof.getVerificationMethod();
+
+			if (!doc.isAuthenticationKey(id) && !doc.isAuthorizationKey(id))
+				return false;
+
+			return doc.verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs());
 		} else {
-			try {
-				doc = did.resolve();
-				if (!doc.isAuthenticationKey(signKey) &&
-						!doc.isAuthorizationKey(signKey))
+			if (doc.getCountrollerCount() == 1) {
+				if (multisig != null)
 					return false;
-			} catch (DIDBackendException e) {
-				new DIDTransactionException(e);
+
+				if (proofs.size() != 1)
+					return false;
+			} else {
+				if (multisig == null)
+					return false;
+
+				if (multisig.n() != doc.getCountrollerCount())
+					return false;
+
+				if (proofs.size() != multisig.n())
+					return false;
 			}
+
+			for (Proof proof : proofs.values()) {
+				DIDURL id = proof.getVerificationMethod();
+				if (!doc.hasController(id.getDid()))
+					return false;
+
+				try {
+					DIDDocument controller = id.getDid().resolve(true);
+					if (!id.equals(controller.getDefaultPublicKeyId()))
+						return false;
+
+					if (!controller.verify(id, proof.getSignature(), getSigningInputs()))
+						return false;
+				} catch (DIDBackendException e) {
+					new DIDTransactionException(e);
+				}
+			}
+
+			if (getOperation() == Operation.UPDATE) {
+				multisig = getMultiSignature();
+				doc = getDocument();
+
+				if (doc.getCountrollerCount() == 1) {
+					if (multisig != null)
+						return false;
+
+					if (proofs.size() != 1)
+						return false;
+				} else {
+					if (multisig == null)
+						return false;
+
+					if (multisig.n() != doc.getCountrollerCount())
+						return false;
+
+					if (proofs.size() != multisig.n())
+						return false;
+				}
+			}
+
+			return true;
 		}
-
-		String prevtxid = getOperation() == Operation.UPDATE ? getPreviousTxid() : "";
-
-		byte[][] inputs = new byte[][] {
-			header.getSpecification().getBytes(),
-			header.getOperation().toString().getBytes(),
-			prevtxid.getBytes(),
-			payload.getBytes()
-		};
-
-		return doc.verify(signKey, proof.getSignature(), inputs);
 	}
 }

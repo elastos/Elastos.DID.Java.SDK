@@ -622,7 +622,7 @@ public final class DIDStore {
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 			try {
 				doc = db.seal(storepass);
-			} catch (MalformedDocumentException ignore) {
+			} catch (MalformedDocumentException | InvalidKeyException ignore) {
 				log.error("INTERNAL - Seal DID document", ignore);
 				throw new DIDStoreException(ignore);
 			}
@@ -723,7 +723,7 @@ public final class DIDStore {
 			DIDDocument doc = db.seal(storepass);
 			storeDid(doc);
 			return doc;
-		} catch (MalformedDocumentException ignore) {
+		} catch (MalformedDocumentException | InvalidKeyException ignore) {
 			log.error("INTERNAL - Seal DID document", ignore);
 			throw new DIDStoreException(ignore);
 		}
