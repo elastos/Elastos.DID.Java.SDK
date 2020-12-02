@@ -22,6 +22,7 @@
 
 package org.elastos.did;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,6 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -327,6 +330,95 @@ public class DIDStoreTest {
     			resolved.getProof().getSignature());
 
     	assertTrue(resolved.isValid());
+    }
+
+	@Test
+	public void testCreateMultisigCustomizedDid() throws DIDException {
+    	TestData testData = new TestData();
+    	DIDStore store = testData.setup(true);
+    	testData.initIdentity();
+
+    	// Create normal DID first
+    	DIDDocument ctrl1 = store.newDid(TestConfig.storePass);
+    	assertTrue(ctrl1.isValid());
+    	store.publishDid(ctrl1.getSubject(), TestConfig.storePass);
+
+    	DIDDocument resolved = ctrl1.getSubject().resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(ctrl1.getSubject(), resolved.getSubject());
+    	assertEquals(ctrl1.getProof().getSignature(),
+    			resolved.getProof().getSignature());
+
+    	assertTrue(resolved.isValid());
+
+       	DIDDocument ctrl2 = store.newDid(TestConfig.storePass);
+    	assertTrue(ctrl2.isValid());
+    	store.publishDid(ctrl2.getSubject(), TestConfig.storePass);
+
+    	resolved = ctrl2.getSubject().resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(ctrl2.getSubject(), resolved.getSubject());
+    	assertEquals(ctrl2.getProof().getSignature(),
+    			resolved.getProof().getSignature());
+
+    	assertTrue(resolved.isValid());
+
+       	DIDDocument ctrl3 = store.newDid(TestConfig.storePass);
+    	assertTrue(ctrl3.isValid());
+    	store.publishDid(ctrl3.getSubject(), TestConfig.storePass);
+
+    	resolved = ctrl3.getSubject().resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(ctrl3.getSubject(), resolved.getSubject());
+    	assertEquals(ctrl3.getProof().getSignature(),
+    			resolved.getProof().getSignature());
+
+    	assertTrue(resolved.isValid());
+
+
+    	// Create customized DID
+    	DID did = new DID("did:elastos:foobar");
+    	DIDDocument doc = store.newDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
+    			ctrl1.getSubject(), 2, TestConfig.storePass);
+    	assertFalse(doc.isValid());
+
+    	DIDDocument.Builder db = doc.edit();
+    	doc = db.seal(ctrl2.getSubject(), TestConfig.storePass);
+    	assertTrue(doc.isValid());
+
+    	assertEquals(did, doc.getSubject());
+    	assertEquals(3, doc.getControllerCount());
+    	List<DID> ctrls = new ArrayList<DID>();
+    	ctrls.add(ctrl1.getSubject());
+    	ctrls.add(ctrl2.getSubject());
+    	ctrls.add(ctrl3.getSubject());
+    	Collections.sort(ctrls);
+    	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+
+    	resolved = did.resolve(true);
+    	assertNull(resolved);
+
+    	System.out.println(doc.serialize(true));
+
+    	// TODO:
+    	/*
+    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+
+    	file = new File(TestConfig.storeRoot + File.separator + "ids"
+    			+ File.separator + doc.getSubject().getMethodSpecificId()
+    			+ File.separator + "document");
+    	assertTrue(file.exists());
+    	assertTrue(file.isFile());
+
+    	resolved = did.resolve(true);
+    	assertNotNull(resolved);
+    	assertEquals(did, resolved.getSubject());
+    	assertEquals(controller, resolved.getController());
+    	assertEquals(doc.getProof().getSignature(),
+    			resolved.getProof().getSignature());
+
+    	assertTrue(resolved.isValid());
+    	*/
     }
 
 	@Test
