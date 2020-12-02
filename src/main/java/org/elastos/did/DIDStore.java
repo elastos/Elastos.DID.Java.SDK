@@ -738,6 +738,65 @@ public final class DIDStore {
 		}
 	}
 
+	public DIDDocument newDid(DID did, DID[] controllers, DID self, int multisig, String storepass)
+			throws DIDStoreException, DIDResolveException {
+		if (did == null || controllers == null || controllers.length == 0 ||
+				self == null ||storepass.isEmpty())
+			throw new IllegalArgumentException();
+
+		log.info("Creating new DID {} with controllers {}...", did, controllers);
+
+		DIDDocument controllerDoc = loadDid(self);
+		if (controllerDoc == null)
+			throw new DIDStoreException("Controller DID not exists in the store");
+
+		if (!controllerDoc.isValid())
+			throw new DIDStoreException("Controller DID not valid");
+
+		if (loadDid(did) != null)
+			throw new DIDStoreException("DID " + did + " already exists.");
+
+		try {
+			if (did.resolve(true) != null)
+				throw new DIDStoreException("DID " + did + " already exist.");
+		} catch (DIDResolveException ignore) {
+			// If already exist, the ID transaction will failed in the future
+		}
+
+		DIDDocument.Builder db = new DIDDocument.Builder(did, controllerDoc, this);
+		try {
+			for (DID ctrl : controllers)
+				db.addController(ctrl);
+
+			db.setMultiSignature(multisig);
+
+			DIDDocument doc = db.seal(self, storepass);
+			storeDid(doc);
+			return doc;
+		} catch (MalformedDocumentException | InvalidKeyException ignore) {
+			log.error("INTERNAL - Seal DID document", ignore);
+			throw new DIDStoreException(ignore);
+		}
+	}
+
+	public DIDDocument newDid(String did, String controllers[], String self, int multisig, String storepass)
+			throws DIDStoreException, DIDResolveException {
+		if (did == null || controllers == null || controllers.length == 0 ||
+				self == null ||storepass.isEmpty())
+			throw new IllegalArgumentException();
+
+		try {
+			List<DID> _controllers = new ArrayList<DID>();
+			for (String ctrl : controllers)
+				_controllers.add(new DID(ctrl));
+
+
+			return newDid(new DID(did), _controllers.toArray(new DID[0]), new DID(self), multisig, storepass);
+		} catch (MalformedDIDException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
 	/**
 	 * Publish DID content(DIDDocument) to chain.
 	 *
