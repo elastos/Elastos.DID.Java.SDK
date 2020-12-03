@@ -23,6 +23,7 @@
 package org.elastos.did.exception;
 
 import org.elastos.did.DIDDocument;
+import org.elastos.did.TransferTicket;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 
@@ -78,6 +79,8 @@ public class DIDSyntaxException extends DIDException {
 			ex = new MalformedCredentialException(message, cause);
 		else if (fqn.equals(VerifiablePresentation.class.getCanonicalName()))
 			ex = new MalformedPresentationException(message, cause);
+		else if (fqn.equals(TransferTicket.class.getCanonicalName()))
+			ex = new MalformedTransferTicketException(message, cause);
 		else if (fqn.endsWith("Metadata"))
 			ex = new MalformedMetadataException(message, cause);
 		else if (fqn.endsWith("IDChainRequest"))

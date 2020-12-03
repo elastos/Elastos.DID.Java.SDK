@@ -382,8 +382,7 @@ public class DIDStoreTest {
     			ctrl1.getSubject(), 2, TestConfig.storePass);
     	assertFalse(doc.isValid());
 
-    	DIDDocument.Builder db = doc.edit();
-    	doc = db.seal(ctrl2.getSubject(), TestConfig.storePass);
+    	doc = ctrl2.sign(doc, TestConfig.storePass);
     	assertTrue(doc.isValid());
 
     	assertEquals(did, doc.getSubject());
