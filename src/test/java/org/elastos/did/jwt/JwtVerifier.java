@@ -1,22 +1,24 @@
 package org.elastos.did.jwt;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 
 import org.elastos.did.DIDBackend;
-import org.elastos.did.TestConfig;
+import org.elastos.did.DIDDocument;
 import org.elastos.did.TestData;
+import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.exception.DIDException;
-import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.Test;
 
 public class JwtVerifier {
-	// @Test
+	//@Test
 	public void jwsTestSignWithDefaultKey()
 			throws DIDException, IOException, JwtException {
-		DIDBackend.initialize(TestConfig.resolver, TestData.getResolverCacheDir());
+		DIDBackend.initialize("http://api.elastos.io:21606", TestData.getResolverCacheDir());
 
-		String token = "eyJ0eXAiOiJKV1QiLCJjdHkiOiJqc29uIiwibGlicmFyeSI6IkVsYXN0b3MgRElEIiwidmVyc2lvbiI6IjEuMCIsImFsZyI6IkVTMjU2In0.eyJpc3MiOiJkaWQ6ZWxhc3RvczppVHd1MTU1b2JZcWh3R2tibWhlSEJjODFaaVpCWHhud2IxIiwic3ViIjoiSnd0VGVzdCIsImp0aSI6IjAiLCJhdWQiOiJUZXN0IGNhc2VzIiwiaWF0IjoxNjA2MTEwOTUyLCJleHAiOjE2MTQwNTk3NTIsIm5iZiI6MTYwMzQzMjU1MiwiZm9vIjoiYmFyIn0.B9779Cpr0H8yYNeRjaTmHxqIWdvkDMR9owWmyORwmr2hNYy6JV_EUD93QAkOfRhl9votyreDhl0sYgh8bYe12A";
+		String token = "eyJ0eXAiOiJKV1QiLCJjdHkiOiJqc29uIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJkaWQ6ZWxhc3RvczppcDVudEVXanl0N0d5aEJaWVFCUEhQc3FhQ1phTUJZb0Z1IiwiaWF0IjoxNjA2NzQ0NjA5LCJleHAiOjE2MDY5MTc0MDksInByZXNlbnRhdGlvbiI6eyJ0eXBlIjoiVmVyaWZpYWJsZVByZXNlbnRhdGlvbiIsImNyZWF0ZWQiOiIyMDIwLTExLTMwVDEzOjU2OjQ5WiIsInZlcmlmaWFibGVDcmVkZW50aWFsIjpbeyJpZCI6ImRpZDplbGFzdG9zOmlwNW50RVdqeXQ3R3loQlpZUUJQSFBzcWFDWmFNQllvRnUjYXBwLWlkLWNyZWRlbnRpYWwiLCJ0eXBlIjpbIkFwcElkQ3JlZGVudGlhbCJdLCJpc3N1ZXIiOiJkaWQ6ZWxhc3RvczppbnNUbXhkRER1Uzl3SEhmZVlEMWg1QzJvbkVIaDNEOFZxIiwiaXNzdWFuY2VEYXRlIjoiMjAyMC0xMS0zMFQxMTo1MzoyMloiLCJleHBpcmF0aW9uRGF0ZSI6IjIwMjAtMTItMzBUMTE6NTM6NTZaIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6ZWxhc3RvczppcDVudEVXanl0N0d5aEJaWVFCUEhQc3FhQ1phTUJZb0Z1IiwiYXBwRGlkIjoiZGlkOmVsYXN0b3M6aXAzd2lGMnJ2dXBxc3VlYnMxdW5HeW51YWluZXhUcWNjVCIsImFwcEluc3RhbmNlRGlkIjoiZGlkOmVsYXN0b3M6aXA1bnRFV2p5dDdHeWhCWllRQlBIUHNxYUNaYU1CWW9GdSJ9LCJwcm9vZiI6eyJ0eXBlIjoiRUNEU0FzZWNwMjU2cjEiLCJ2ZXJpZmljYXRpb25NZXRob2QiOiJkaWQ6ZWxhc3RvczppbnNUbXhkRER1Uzl3SEhmZVlEMWg1QzJvbkVIaDNEOFZxI3ByaW1hcnkiLCJzaWduYXR1cmUiOiJfZ19BRjFlUHRwNkFsUWtJX0gzMS1lb1AtcnlwOU84SDZvZ19nZXdIcUNYbkVYMEtsSFlHX0FiQXpfMnhWeEE1Mk13QzZ6YVJ2eEpmSlRoTndQYnpTdyJ9fV0sInByb29mIjp7InR5cGUiOiJFQ0RTQXNlY3AyNTZyMSIsInZlcmlmaWNhdGlvbk1ldGhvZCI6ImRpZDplbGFzdG9zOmlwNW50RVdqeXQ3R3loQlpZUUJQSFBzcWFDWmFNQllvRnUjcHJpbWFyeSIsInJlYWxtIjoiZGlkOmVsYXN0b3M6aW9Kb3dOMjNjSEJWQXBTUVhtTUVhc3VmSjZqanphUHQ3QyIsIm5vbmNlIjoiZTNkN2M3ZjgtMzMxMy0xMWViLTljODgtMDI0MmMwYTg2MDAzIiwic2lnbmF0dXJlIjoibDRRY0Z1a3BrZlNGdXNEOW1leGtMY3BsSjh1MUxIOVNjalktV1lUYlBJZXJ6MjhjREpkbzRpQ1E3WHV4WE11dWdMSWhEUURfeVlNV0dpZ2pHNlM1c0EifX19.B1BO4X3GR0TqRS-_rv5a2DdfmUxeX1muNypY7V8IohXw8_ngwuUCxm_iwIrc4kJisGp6kuCHO0KvsdhKYP400w";
 		JwtTest.printJwt(token);
 
 		JwtParser jp = new JwtParserBuilder().build();
@@ -27,4 +29,32 @@ public class JwtVerifier {
 		assertNotNull(s);
 	}
 
+	//@Test
+	public void jwsTestSignWithDefaultKeyLocal()
+			throws DIDException, IOException, JwtException {
+		DIDBackend.initialize("http://api.elastos.io:20606", TestData.getResolverCacheDir());
+
+		String docjson = "{\"id\":\"did:elastos:ip5ntEWjyt7GyhBZYQBPHPsqaCZaMBYoFu\",\"publicKey\":[{\"id\":\"#primary\",\"publicKeyBase58\":\"kiv5KKs64mcmmQLFDs1KhnE7k15AjEEu2abBeoRjkq17\"}],\"authentication\":[\"#primary\"],\"expires\":\"2025-11-30T11:53:20Z\",\"proof\":{\"created\":\"2020-11-30T11:53:20Z\",\"signatureValue\":\"SEpv8xYFK5-i8Kuf01bF9_xZ1M62OoKrf9LTYG8-CLIM31xY9XlPx_yPL2m7RVFaZfOc8C8BypJYOIczpIAbEg\"}}";
+		String token = "eyJ0eXAiOiJKV1QiLCJjdHkiOiJqc29uIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJkaWQ6ZWxhc3RvczppcDVudEVXanl0N0d5aEJaWVFCUEhQc3FhQ1phTUJZb0Z1IiwiaWF0IjoxNjA2NzQ0NjA5LCJleHAiOjE2MDY5MTc0MDksInByZXNlbnRhdGlvbiI6eyJ0eXBlIjoiVmVyaWZpYWJsZVByZXNlbnRhdGlvbiIsImNyZWF0ZWQiOiIyMDIwLTExLTMwVDEzOjU2OjQ5WiIsInZlcmlmaWFibGVDcmVkZW50aWFsIjpbeyJpZCI6ImRpZDplbGFzdG9zOmlwNW50RVdqeXQ3R3loQlpZUUJQSFBzcWFDWmFNQllvRnUjYXBwLWlkLWNyZWRlbnRpYWwiLCJ0eXBlIjpbIkFwcElkQ3JlZGVudGlhbCJdLCJpc3N1ZXIiOiJkaWQ6ZWxhc3RvczppbnNUbXhkRER1Uzl3SEhmZVlEMWg1QzJvbkVIaDNEOFZxIiwiaXNzdWFuY2VEYXRlIjoiMjAyMC0xMS0zMFQxMTo1MzoyMloiLCJleHBpcmF0aW9uRGF0ZSI6IjIwMjAtMTItMzBUMTE6NTM6NTZaIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6ZWxhc3RvczppcDVudEVXanl0N0d5aEJaWVFCUEhQc3FhQ1phTUJZb0Z1IiwiYXBwRGlkIjoiZGlkOmVsYXN0b3M6aXAzd2lGMnJ2dXBxc3VlYnMxdW5HeW51YWluZXhUcWNjVCIsImFwcEluc3RhbmNlRGlkIjoiZGlkOmVsYXN0b3M6aXA1bnRFV2p5dDdHeWhCWllRQlBIUHNxYUNaYU1CWW9GdSJ9LCJwcm9vZiI6eyJ0eXBlIjoiRUNEU0FzZWNwMjU2cjEiLCJ2ZXJpZmljYXRpb25NZXRob2QiOiJkaWQ6ZWxhc3RvczppbnNUbXhkRER1Uzl3SEhmZVlEMWg1QzJvbkVIaDNEOFZxI3ByaW1hcnkiLCJzaWduYXR1cmUiOiJfZ19BRjFlUHRwNkFsUWtJX0gzMS1lb1AtcnlwOU84SDZvZ19nZXdIcUNYbkVYMEtsSFlHX0FiQXpfMnhWeEE1Mk13QzZ6YVJ2eEpmSlRoTndQYnpTdyJ9fV0sInByb29mIjp7InR5cGUiOiJFQ0RTQXNlY3AyNTZyMSIsInZlcmlmaWNhdGlvbk1ldGhvZCI6ImRpZDplbGFzdG9zOmlwNW50RVdqeXQ3R3loQlpZUUJQSFBzcWFDWmFNQllvRnUjcHJpbWFyeSIsInJlYWxtIjoiZGlkOmVsYXN0b3M6aW9Kb3dOMjNjSEJWQXBTUVhtTUVhc3VmSjZqanphUHQ3QyIsIm5vbmNlIjoiZTNkN2M3ZjgtMzMxMy0xMWViLTljODgtMDI0MmMwYTg2MDAzIiwic2lnbmF0dXJlIjoibDRRY0Z1a3BrZlNGdXNEOW1leGtMY3BsSjh1MUxIOVNjalktV1lUYlBJZXJ6MjhjREpkbzRpQ1E3WHV4WE11dWdMSWhEUURfeVlNV0dpZ2pHNlM1c0EifX19.B1BO4X3GR0TqRS-_rv5a2DdfmUxeX1muNypY7V8IohXw8_ngwuUCxm_iwIrc4kJisGp6kuCHO0KvsdhKYP400w";
+		JwtTest.printJwt(token);
+
+		DIDDocument doc = DIDDocument.parse(docjson);
+		JwtParser jp = doc.jwtParserBuilder().build();
+		Jws<Claims> jwt = jp.parseClaimsJws(token);
+		assertNotNull(jwt);
+
+		String s = jwt.getSignature();
+		assertNotNull(s);
+
+		String vpjson = jwt.getBody().getAsJson("presentation");
+		System.out.println(vpjson);
+		DIDBackend.setResolveHandle((did) -> {
+			if (did.equals(doc.getSubject()))
+				return doc;
+			else
+				return null;
+		});
+		VerifiablePresentation vp = VerifiablePresentation.parse(vpjson);
+		assertTrue(vp.isGenuine());
+	}
 }

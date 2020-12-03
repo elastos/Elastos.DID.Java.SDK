@@ -622,7 +622,7 @@ public final class DIDStore {
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 			try {
 				doc = db.seal(storepass);
-			} catch (MalformedDocumentException | InvalidKeyException ignore) {
+			} catch (MalformedDocumentException ignore) {
 				log.error("INTERNAL - Seal DID document", ignore);
 				throw new DIDStoreException(ignore);
 			}
@@ -723,7 +723,7 @@ public final class DIDStore {
 			DIDDocument doc = db.seal(storepass);
 			storeDid(doc);
 			return doc;
-		} catch (MalformedDocumentException | InvalidKeyException ignore) {
+		} catch (MalformedDocumentException ignore) {
 			log.error("INTERNAL - Seal DID document", ignore);
 			throw new DIDStoreException(ignore);
 		}
@@ -765,15 +765,19 @@ public final class DIDStore {
 
 		DIDDocument.Builder db = new DIDDocument.Builder(did, controllerDoc, this);
 		try {
-			for (DID ctrl : controllers)
+			for (DID ctrl : controllers) {
+				if (ctrl.equals(self))
+					continue;
+
 				db.addController(ctrl);
+			}
 
 			db.setMultiSignature(multisig);
 
-			DIDDocument doc = db.seal(self, storepass);
+			DIDDocument doc = db.seal(storepass);
 			storeDid(doc);
 			return doc;
-		} catch (MalformedDocumentException | InvalidKeyException ignore) {
+		} catch (MalformedDocumentException ignore) {
 			log.error("INTERNAL - Seal DID document", ignore);
 			throw new DIDStoreException(ignore);
 		}

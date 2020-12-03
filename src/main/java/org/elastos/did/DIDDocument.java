@@ -45,6 +45,7 @@ import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.crypto.EcdsaSigner;
 import org.elastos.did.crypto.HDKey;
+import org.elastos.did.exception.AlreadySignedException;
 import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDNotFoundException;
 import org.elastos.did.exception.DIDObjectAlreadyExistException;
@@ -56,6 +57,7 @@ import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDocumentException;
+import org.elastos.did.exception.NotControllerException;
 import org.elastos.did.jwt.JwtBuilder;
 import org.elastos.did.jwt.JwtParserBuilder;
 import org.elastos.did.jwt.KeyProvider;
@@ -1918,7 +1920,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if the did document is not genuine.
 	 */
 	public boolean isGenuine() {
-		// Proofs count should metch multisig
+		// Proofs count should match with multisig
 		if ((getControllerCount() > 1 && proofs.size() != multisig.m()) ||
 				(getControllerCount() <= 1 && proofs.size() != 1))
 			return false;
@@ -1949,13 +1951,19 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 			return true;
 		} else {
-			for (Proof proof : proofs.values()) {
+			List<DID> checkedControllers = new ArrayList<DID>(_proofs.size());
+
+			for (Proof proof : _proofs) {
 				// Unsupported public key type;
 				if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 					return false;
 
 				DIDDocument controllerDoc = getControllerDocument(proof.getCreator().getDid());
 				if (controllerDoc == null)
+					return false;
+
+				// if already checked this controller
+				if (checkedControllers.contains(proof.getCreator().getDid()))
 					return false;
 
 				if (!controllerDoc.isGenuine())
@@ -1990,6 +1998,20 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public boolean isDeactivated() {
 		return getMetadata().isDeactivated();
+	}
+
+	/**
+	 * Check whether the ticket is qualified.
+	 * Qualified check will only check the number of signatures meet the
+	 * requirement.
+	 *
+	 * @return true is the ticket is qualified else false
+	 */
+	public boolean isQualified() {
+		if (_proofs == null || _proofs.isEmpty())
+			return false;
+
+		return _proofs.size() == (multisig == null ? 1 : multisig.m());
 	}
 
 	/**
@@ -2041,9 +2063,23 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * Get DID Document Builder object.
 	 *
 	 * @return the Builder object
+	 * @throws DIDStoreException
 	 */
 	public Builder edit() {
+		if (getControllerCount() > 1)
+			throw new UnsupportedOperationException("Can not determin current identity");
+
 		return new Builder(copy());
+	}
+
+	public Builder edit(DIDDocument controller) throws NotControllerException {
+		if (!hasController())
+			throw new UnsupportedOperationException("This method only applies on cutomized DID document");
+
+		if (!hasController(controller.getSubject()))
+			throw new NotControllerException();
+
+		return new Builder(copy(), controller);
 	}
 
 	/**
@@ -2087,12 +2123,17 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @param data the data be signed
 	 * @return the signature string
-	 * @throws InvalidKeyException if no valid sign key
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
 	public String sign(String storepass, byte[] ... data)
-			throws InvalidKeyException, DIDStoreException {
-		return sign((DIDURL)null, storepass, data);
+			throws DIDStoreException {
+		try {
+			return sign((DIDURL)null, storepass, data);
+		} catch (InvalidKeyException ignore) {
+			// should never happen
+			log.error("INTERNAL - Default key error", ignore);
+			return null;
+		}
 	}
 
 	/**
@@ -2152,12 +2193,17 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @param digest the digest data to be signed
 	 * @return the signature string
-	 * @throws InvalidKeyException if no valid sign key
 	 * @throws DIDStoreException there is no DIDStore to get private key.
 	 */
 	public String signDigest(String storepass, byte[] digest)
-			throws InvalidKeyException, DIDStoreException {
-		return signDigest((DIDURL)null, storepass, digest);
+			throws DIDStoreException {
+		try {
+			return signDigest((DIDURL)null, storepass, digest);
+		} catch (InvalidKeyException ignore) {
+			// should never happen
+			log.error("INTERNAL - Default key error", ignore);
+			return null;
+		}
 	}
 
 	/**
@@ -2302,6 +2348,43 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		return jpb;
 	}
 
+	public TransferTicket createTransferTicket(DID did, DID to, String storepass)
+			throws DIDResolveException, NotControllerException, DIDStoreException {
+		if (did == null || to == null || storepass == null || storepass.isEmpty())
+			throw new IllegalArgumentException();
+
+		TransferTicket ticket = new TransferTicket(did, to);
+		try {
+			ticket.seal(this, storepass);
+		} catch (AlreadySignedException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Seal the transfer ticket", ignore);
+			return null;
+		}
+
+		return ticket;
+	}
+
+	public TransferTicket sign(TransferTicket ticket, String storepass)
+			throws NotControllerException, AlreadySignedException, DIDStoreException {
+		if (ticket == null || storepass == null || storepass.isEmpty())
+			throw new IllegalArgumentException();
+
+		ticket.seal(this, storepass);
+		return ticket;
+	}
+
+	public DIDDocument sign(DIDDocument doc, String storepass)
+			throws NotControllerException, DIDStoreException {
+		Builder builder = doc.edit(this);
+		try {
+			return builder.seal(storepass);
+		} catch (MalformedDocumentException ignore) {
+			log.error("INTERNAL - sign customized did document", ignore);
+			return null;
+		}
+	}
+
 	/**
 	 * Parse a DIDDocument object from from a string JSON representation.
 	 *
@@ -2415,6 +2498,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public static class Builder {
 		private DIDDocument document;
+		private DIDDocument controllerDoc;
 
 		/**
 		 * Constructs DID Document Builder with given DID and DIDStore.
@@ -2436,6 +2520,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		protected Builder(DID did, DIDDocument controller, DIDStore store) {
 			this.document = new DIDDocument(did, controller);
 			this.document.getMetadata().setStore(store);
+			this.controllerDoc = controller;
 		}
 
 		/**
@@ -2445,6 +2530,13 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 */
 		protected Builder(DIDDocument doc) {
 			this.document = doc;
+		}
+
+		public Builder(DIDDocument doc, DIDDocument controller) {
+			this.document = doc;
+			// if (controller.getMetadata().attachedStore())
+			//	this.document.getMetadata().setStore(controller.getMetadata().getStore());
+			this.controllerDoc = controller;
 		}
 
 		/**
@@ -3609,8 +3701,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @throws MalformedDocumentException if the DIDDocument is malformed
 		 * @throws DIDStoreException if an error occurs when access DID store
 		 */
-		public DIDDocument seal(DID signer, String storepass)
-				throws InvalidKeyException, MalformedDocumentException, DIDStoreException {
+		public DIDDocument seal(String storepass)
+				throws MalformedDocumentException, DIDStoreException {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
 
@@ -3629,22 +3721,17 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 			document.sanitize(false);
 
-			DIDDocument signerDoc;
+			DIDDocument	signerDoc;
 			if (!document.hasController()) {
-				if (signer != null && !document.getSubject().equals(signer))
-					throw new InvalidKeyException("Invalid signer to seal the document");
-
 				signerDoc = document;
 			} else {
-				if (signer == null)
-					signer = document.getController(); // if only one controller
-
-				if (signer == null) // still null
-					throw new InvalidKeyException("No valid signer to seal the document");
-
-				signerDoc = document.getControllerDocument(signer);
-				if (signerDoc == null)
-					throw new InvalidKeyException("Invalid signer to seal the document");
+				if (controllerDoc != null)
+					signerDoc = controllerDoc;
+				else {
+					// edit() call on one controller document
+					signerDoc = document.getControllerDocument(document.getControllers().get(0));
+					signerDoc.getMetadata().setStore(document.getMetadata().getStore());
+				}
 			}
 
 			DIDURL signKey = signerDoc.getDefaultPublicKeyId();
@@ -3667,21 +3754,6 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			this.document = null;
 
 			return doc;
-		}
-
-		/**
-		 * Seal the document object, attach the generated proof to the
-		 * document.
-		 *
-		 * @param storepass the password for DIDStore
-		 * @return the DIDDocument object
-		 * @throws InvalidKeyException if no valid sign key to seal the document
-		 * @throws MalformedDocumentException if the DIDDocument is malformed
-		 * @throws DIDStoreException if an error occurs when access DID store
-		 */
-		public DIDDocument seal(String storepass)
-				throws InvalidKeyException, MalformedDocumentException, DIDStoreException {
-			return seal(null, storepass);
 		}
 	}
 }
