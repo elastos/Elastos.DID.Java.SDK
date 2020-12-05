@@ -485,13 +485,14 @@ public class DIDBackend {
 	 * @param doc the DIDDocument object
 	 * @param signKey the key to sign
 	 * @param storepass the password for DIDStore
+     * @throws DIDResolveException publishing did failed because of resolve target did error.
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
      * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
 	protected void deactivate(DID target, DIDURL targetSignKey,
 			DIDDocument doc, DIDURL signKey, String storepass)
-			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+			throws DIDResolveException, DIDTransactionException, DIDStoreException, InvalidKeyException {
 		IDChainRequest request = IDChainRequest.deactivate(target,
 				targetSignKey, doc, signKey, storepass);
 		String json = request.toString(true);
