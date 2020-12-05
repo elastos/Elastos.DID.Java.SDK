@@ -27,10 +27,12 @@ import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDObject;
 import org.elastos.did.DIDURL;
+import org.elastos.did.TransferTicket;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
+import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
@@ -42,6 +44,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
@@ -62,6 +65,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	private static final String SPECIFICATION = "specification";
 	private static final String OPERATION = "operation";
 	private static final String PREVIOUS_TXID = "previousTxid";
+	private static final String TICKET = "ticket";
 	private static final String TYPE = "type";
 	private static final String VERIFICATION_METHOD = "verificationMethod";
 	private static final String SIGNATURE = "signature";
@@ -77,7 +81,6 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 
 	private DID did;
 	private DIDDocument doc;
-	private DIDDocument effectiveDoc;
 
 	/**
      * The IDChain Request Operation
@@ -112,7 +115,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		}
 	}
 
-	@JsonPropertyOrder({ SPECIFICATION, OPERATION, PREVIOUS_TXID })
+	@JsonPropertyOrder({ SPECIFICATION, OPERATION, PREVIOUS_TXID, TICKET })
 	@JsonInclude(Include.NON_NULL)
 	protected static class Header {
 		@JsonProperty(SPECIFICATION)
@@ -120,21 +123,37 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		@JsonProperty(OPERATION)
 		private Operation operation;
 		@JsonProperty(PREVIOUS_TXID)
+		@JsonInclude(Include.NON_NULL)
 		private String previousTxid;
+		@JsonProperty(TICKET)
+		@JsonInclude(Include.NON_NULL)
+		private String ticket;
+		private TransferTicket transferTicket;
 
 		@JsonCreator
-		protected Header(@JsonProperty(value = SPECIFICATION, required = true) String spec) {
+		private Header(@JsonProperty(value = SPECIFICATION, required = true) String spec) {
 			this.specification = spec;
 		}
 
-		protected Header(Operation operation, String previousTxid) {
+		private Header(Operation operation, String previousTxid) {
 			this(CURRENT_SPECIFICATION);
 			this.operation = operation;
 			this.previousTxid = previousTxid;
 		}
 
-		protected Header(Operation operation) {
-			this(operation, null);
+		private Header(Operation operation, TransferTicket ticket) {
+			this(CURRENT_SPECIFICATION);
+			this.operation = operation;
+
+			String json = ticket.toString(true);
+			this.ticket = Base64.encodeToString(json.getBytes(),
+					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+			this.transferTicket = ticket;
+		}
+
+		private Header(Operation operation) {
+			this(CURRENT_SPECIFICATION);
+			this.operation = operation;
 		}
 
 		public String getSpecification() {
@@ -145,16 +164,33 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 			return operation;
 		}
 
-		protected void setOperation(Operation operation) {
-			this.operation = operation;
-		}
-
 		public String getPreviousTxid() {
 			return previousTxid;
 		}
 
-		protected void setPreviousTxid(String previousTxid) {
-			this.previousTxid = previousTxid;
+		public String getTicket() {
+			return ticket;
+		}
+
+		@JsonSetter(TICKET)
+		private void setTicket(String ticket) throws MalformedIDChainRequestException {
+			if (ticket == null || ticket.isEmpty())
+				throw new MalformedIDChainRequestException("Missing ticket");
+
+			String json = new String(Base64.decode(ticket,
+					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
+
+			try {
+				this.transferTicket = TransferTicket.parse(json);
+			} catch (DIDSyntaxException e) {
+				throw new MalformedIDChainRequestException("Invalid ticket", e);
+			}
+
+			this.ticket = ticket;
+		}
+
+		public TransferTicket getTransferTicket()  {
+			return transferTicket;
 		}
 	}
 
@@ -168,7 +204,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		private String signature;
 
 		@JsonCreator
-		protected Proof(@JsonProperty(value = TYPE) String type,
+		private Proof(@JsonProperty(value = TYPE) String type,
 				@JsonProperty(value = VERIFICATION_METHOD, required = true) DIDURL verificationMethod,
 				@JsonProperty(value = SIGNATURE, required = true) String signature) {
 			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
@@ -176,7 +212,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 			this.signature = signature;
 		}
 
-		protected Proof(DIDURL verificationMethod, String signature) {
+		private Proof(DIDURL verificationMethod, String signature) {
 			this(null, verificationMethod, signature);
 		}
 
@@ -204,6 +240,10 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		this.header = new Header(operation, previousTxid);
 	}
 
+	private IDChainRequest(Operation operation, TransferTicket ticket) {
+		this.header = new Header(operation, ticket);
+	}
+
 	/**
 	 * Constructs the 'create' IDChain Request.
 	 *
@@ -223,6 +263,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		} catch (MalformedIDChainRequestException ignore) {
 			// should never happen
 			log.error("INTERNAL - Seal the request", ignore);
+			return null;
 		}
 
 		return request;
@@ -249,10 +290,38 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		} catch (MalformedIDChainRequestException ignore) {
 			// should never happen
 			log.error("INTERNAL - Seal the request", ignore);
+			return null;
 		}
 
 		return request;
 	}
+
+	/**
+	 * Constructs the 'transfer' IDChain Request.
+	 *
+	 * @param doc target DID document
+	 * @param ticket the transfer ticket object
+	 * @param signKey the key to sign Request
+	 * @param storepass the password for DIDStore
+	 * @return the IDChainRequest object
+	 * @throws DIDStoreException there is no store to attach.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
+	public static IDChainRequest transfer(DIDDocument doc, TransferTicket ticket,
+			DIDURL signKey, String storepass) throws DIDStoreException, InvalidKeyException {
+		IDChainRequest request = new IDChainRequest(Operation.TRANSFER, ticket);
+		request.setPayload(doc);
+		try {
+			request.seal(signKey, storepass);
+		} catch (MalformedIDChainRequestException ignore) {
+			// should never happen
+			log.error("INTERNAL - Seal the request", ignore);
+			return null;
+		}
+
+		return request;
+	}
+
 
 	/**
 	 * Constructs the 'deactivate' IDChain Request.
@@ -273,6 +342,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		} catch (MalformedIDChainRequestException ignore) {
 			// should never happen
 			log.error("INTERNAL - Seal the request", ignore);
+			return null;
 		}
 
 		return request;
@@ -287,12 +357,13 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	 * @param signKey the key to sign Request
 	 * @param storepass the password for DIDStore
 	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @throws DIDResolveException the target DID can not resolved
+	 * @throws DIDStoreException there is no store to attach
+	 * @throws InvalidKeyException there is no an authentication key
 	 */
 	public static IDChainRequest deactivate(DID target, DIDURL targetSignKey,
 			DIDDocument doc, DIDURL signKey, String storepass)
-			throws DIDStoreException, InvalidKeyException {
+			throws DIDResolveException, DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.DEACTIVATE);
 		request.setPayload(target);
 		try {
@@ -300,6 +371,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		} catch (MalformedIDChainRequestException ignore) {
 			// should never happen
 			log.error("INTERNAL - Seal the request", ignore);
+			return null;
 		}
 
 		return request;
@@ -320,6 +392,15 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	 */
 	public String getPreviousTxid() {
 		return header.getPreviousTxid();
+	}
+
+	/**
+	 * Get transfer ticket object.
+	 *
+	 * @return the TransferTicket object
+	 */
+	public TransferTicket getTransferTicket() {
+		return header.getTransferTicket();
 	}
 
 	/**
@@ -349,27 +430,9 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		return doc;
 	}
 
-	private DIDDocument getEffectiveDocument() throws DIDTransactionException {
-		if (getOperation() == Operation.CREATE ||
-				(getOperation() == Operation.UPDATE && !getDocument().hasController())) {
-			return getDocument();
-		} else {
-			if (effectiveDoc == null) {
-				try {
-					 // TODO: need resolve specific tx
-					effectiveDoc = getDid().resolve();
-				} catch (DIDResolveException e) {
-					throw new DIDTransactionException(e);
-				}
-			}
-
-			return effectiveDoc;
-		}
-	}
-
-	private void setPayload(DID did) {
+	private void setPayload(DID did) throws DIDResolveException {
 		this.did = did;
-		this.doc = null;
+		this.doc = did.resolve(true);
 		this.payload = did.toString();
 	}
 
@@ -387,6 +450,11 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		}
 	}
 
+	/**
+	 * Get the proof object of the IDChainRequest.
+	 *
+	 * @return the proof object
+	 */
 	public Proof getProof() {
 		return proof;
 	}
@@ -404,10 +472,17 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 				(header.getPreviousTxid() == null || header.getPreviousTxid().isEmpty()))
 			throw new MalformedIDChainRequestException("Missing previousTxid");
 
+		if (header.getOperation() == Operation.TRANSFER &&
+				(header.getTicket() == null || header.getTicket().isEmpty()))
+			throw new MalformedIDChainRequestException("Missing ticket");
+
 		if (payload == null || payload.isEmpty())
 			throw new MalformedIDChainRequestException("Missing payload");
 
 		if (withProof) {
+			if (proof == null)
+				throw new MalformedIDChainRequestException("Missing proof");
+
 			try {
 				if (header.getOperation() != Operation.DEACTIVATE) {
 					String json = new String(Base64.decode(payload,
@@ -417,18 +492,18 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 					did = doc.getSubject();
 				} else {
 					did = new DID(payload);
-					doc = null;
+					try {
+						doc = did.resolve(true);
+					} catch (DIDResolveException ignore) {
+						doc = null;
+					}
 				}
 			} catch (DIDException e) {
 				throw new MalformedIDChainRequestException("Invalid payload", e);
 			}
 
-			if (proof == null)
-				throw new MalformedIDChainRequestException("Missing proof");
-
 			if (proof.verificationMethod.getDid() == null)
 				proof.verificationMethod = new DIDURL(did, proof.verificationMethod.toString());
-				//throw new MalformedIDChainRequestException("Uncanonical verification method.");
 		}
 	}
 
@@ -439,11 +514,13 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 
 	private byte[][] getSigningInputs() {
 		String prevtxid = getOperation() == Operation.UPDATE ? getPreviousTxid() : "";
+		String ticket = getOperation() == Operation.TRANSFER ? header.getTicket() : "";
 
 		byte[][] inputs = new byte[][] {
 			header.getSpecification().getBytes(),
 			header.getOperation().toString().getBytes(),
 			prevtxid.getBytes(),
+			ticket.getBytes(),
 			payload.getBytes()
 		};
 
@@ -464,13 +541,21 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	private void seal(DIDURL targetSignKey, DIDDocument doc,
 			DIDURL signKey, String storepass)
 			throws MalformedIDChainRequestException, DIDStoreException, InvalidKeyException {
+		if (!this.doc.isAuthorizationKey(targetSignKey))
+			throw new InvalidKeyException("Not an authorization key: " + targetSignKey);
+
 		if (!doc.isAuthenticationKey(signKey))
-			throw new InvalidKeyException("Not an authentication key.");
+			throw new InvalidKeyException("Not an authentication key: " + signKey);
+
 
 		sanitize(false);
 
 		String signature = doc.sign(signKey, storepass, getSigningInputs());
 		proof = new Proof(targetSignKey, signature);
+	}
+
+	protected boolean isTicketValid() {
+		return true;
 	}
 
 	/**
@@ -481,73 +566,26 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	 * @throws DIDTransactionException there is no invalid key.
 	 */
 	public boolean isValid() throws DIDTransactionException {
-		DIDDocument doc = getEffectiveDocument();
+		DIDURL signKey = proof.getVerificationMethod();
 
-		if (!doc.hasController()) {
-			DIDURL id = proof.getVerificationMethod();
-			if (!doc.isAuthenticationKey(id) && !doc.isAuthorizationKey(id))
-				return false;
-
-			return doc.verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs());
-		} else {
-			/*
-			if (doc.getControllerCount() == 1) {
-				if (multisig != null)
-					return false;
-
-				if (proofs.size() != 1)
-					return false;
-			} else {
-				if (multisig == null)
-					return false;
-
-				if (multisig.n() != doc.getControllerCount())
-					return false;
-
-				if (proofs.size() != multisig.n())
-					return false;
-			}
-
-			for (Proof proof : proofs.values()) {
-				DIDURL id = proof.getVerificationMethod();
-				if (!doc.hasController(id.getDid()))
-					return false;
-
-				try {
-					DIDDocument controller = id.getDid().resolve(true);
-					if (!id.equals(controller.getDefaultPublicKeyId()))
-						return false;
-
-					if (!controller.verify(id, proof.getSignature(), getSigningInputs()))
-						return false;
-				} catch (DIDBackendException e) {
-					new DIDTransactionException(e);
-				}
-			}
-
-			if (getOperation() == Operation.UPDATE) {
-				multisig = getMultiSignature();
-				doc = getDocument();
-
-				if (doc.getControllerCount() == 1) {
-					if (multisig != null)
-						return false;
-
-					if (proofs.size() != 1)
-						return false;
-				} else {
-					if (multisig == null)
-						return false;
-
-					if (multisig.n() != doc.getControllerCount())
-						return false;
-
-					if (proofs.size() != multisig.n())
-						return false;
-				}
-			}
-		*/
-			return true;
+		try {
+			if (doc == null)
+				doc = did.resolve(true);
+		} catch (DIDResolveException e) {
+			throw new DIDTransactionException("Resolve DID: " + did, e);
 		}
+
+		if (doc == null)
+			throw new DIDTransactionException("Can not resolve DID: " + did);
+
+		if (getOperation() != Operation.DEACTIVATE) {
+			if (!doc.isAuthenticationKey(signKey))
+				return false;
+		} else {
+			if (!doc.isAuthenticationKey(signKey) && !doc.isAuthorizationKey(signKey))
+				return false;
+		}
+
+		return doc.verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs());
 	}
 }
