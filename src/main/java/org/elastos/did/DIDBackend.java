@@ -459,6 +459,16 @@ public class DIDBackend {
 		ResolverCache.invalidate(doc.getSubject());
 	}
 
+	protected void transfer(DIDDocument doc, TransferTicket ticket,
+			DIDURL signKey, String storepass)
+			throws DIDStoreException, InvalidKeyException, DIDTransactionException {
+		IDChainRequest request = IDChainRequest.transfer(doc, ticket,
+				signKey, storepass);
+		String json = request.toString(true);
+		createTransaction(json, null);
+		ResolverCache.invalidate(doc.getSubject());
+	}
+
     /**
      * Publish id transaction to deactivate the existed did.
      *

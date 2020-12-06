@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 import org.elastos.did.Constants;
@@ -116,6 +117,26 @@ public class DummyBackend implements DIDAdapter, DIDResolver {
 
 			if (!request.getPreviousTxid().equals(tx.getTransactionId()))
 				throw new DIDTransactionException("Previous transaction id missmatch.");
+
+			if (tx.getRequest().getDocument().isCustomizedDid()) {
+				List<DID> orgControllers = tx.getRequest().getDocument().getControllers();
+				List<DID> curControllers = request.getDocument().getControllers();
+
+				if (!curControllers.equals(orgControllers))
+					throw new DIDTransactionException("Document controllers changed.");
+			}
+
+			break;
+
+		case TRANSFER:
+			if (tx == null)
+				throw new DIDTransactionException("DID not exist.");
+
+			if (tx.getOperation().equals(IDChainRequest.Operation.DEACTIVATE.toString()))
+				throw new DIDTransactionException("DID already dactivated.");
+
+			if (!request.getTransferTicket().isValid())
+				throw new DIDTransactionException("Invalid transfer ticket.");
 
 			break;
 

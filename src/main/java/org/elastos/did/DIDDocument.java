@@ -704,6 +704,16 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		return subject;
 	}
 
+	public boolean isCustomizedDid() {
+		if (defaultPublicKey == null)
+			return true;
+
+		if (defaultPublicKey.getId().getDid().equals(getSubject()))
+			return false;
+		else
+			return true;
+	}
+
 	/**
 	 * Get contoller's DID.
 	 *
@@ -1926,7 +1936,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			return false;
 
 		// Document should signed(only) by default public key.
-		if (!this.hasController()) {
+		if (!isCustomizedDid()) {
 			Proof proof = getProof();
 
 			// Unsupported public key type;
@@ -2073,11 +2083,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	public Builder edit(DIDDocument controller) throws NotControllerException {
-		if (!hasController())
+		if (!isCustomizedDid())
 			throw new UnsupportedOperationException("This method only applies on cutomized DID document");
 
 		if (!hasController(controller.getSubject()))
-			throw new NotControllerException();
+			throw new NotControllerException("DID no this controller: " + controller.getSubject());
 
 		return new Builder(copy(), controller);
 	}
@@ -3722,7 +3732,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			document.sanitize(false);
 
 			DIDDocument	signerDoc;
-			if (!document.hasController()) {
+			if (!document.isCustomizedDid()) {
 				signerDoc = document;
 			} else {
 				if (controllerDoc != null)
