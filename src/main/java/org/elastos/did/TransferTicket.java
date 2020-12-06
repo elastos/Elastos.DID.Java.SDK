@@ -174,7 +174,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	protected TransferTicket(DID did, DID to) throws DIDResolveException {
 		this.id = did;
 		this.doc = did.resolve(true);
-		if (!doc.hasController())
+		if (!doc.isCustomizedDid())
 			throw new IllegalArgumentException("DID " + did + " is not a customized DID");
 
 		this.to = to;
