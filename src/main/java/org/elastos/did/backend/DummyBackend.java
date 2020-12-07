@@ -32,6 +32,7 @@ import java.util.Random;
 import org.elastos.did.Constants;
 import org.elastos.did.DID;
 import org.elastos.did.DIDAdapter;
+import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDResolver;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDSyntaxException;
@@ -100,6 +101,10 @@ public class DummyBackend implements DIDAdapter, DIDResolver {
 		}
 
 		IDChainTransaction tx = getLastTransaction(request.getDid());
+		if (tx != null) {
+			if (tx.getRequest().getOperation() == IDChainRequest.Operation.DEACTIVATE)
+				throw new DIDTransactionException("DID " + request.getDid() + " already deactivated");
+		}
 
 		switch (request.getOperation()) {
 		case CREATE:
@@ -111,9 +116,6 @@ public class DummyBackend implements DIDAdapter, DIDResolver {
 		case UPDATE:
 			if (tx == null)
 				throw new DIDTransactionException("DID not exist.");
-
-			if (tx.getOperation().equals(IDChainRequest.Operation.DEACTIVATE.toString()))
-				throw new DIDTransactionException("DID already dactivated.");
 
 			if (!request.getPreviousTxid().equals(tx.getTransactionId()))
 				throw new DIDTransactionException("Previous transaction id missmatch.");
@@ -132,20 +134,28 @@ public class DummyBackend implements DIDAdapter, DIDResolver {
 			if (tx == null)
 				throw new DIDTransactionException("DID not exist.");
 
-			if (tx.getOperation().equals(IDChainRequest.Operation.DEACTIVATE.toString()))
-				throw new DIDTransactionException("DID already dactivated.");
-
 			if (!request.getTransferTicket().isValid())
 				throw new DIDTransactionException("Invalid transfer ticket.");
+
+			if (!request.getTransferTicket().getSubject().equals(request.getDid()))
+				throw new DIDTransactionException("Ticket subject mismatched with target DID.");
+
+			if (!request.getDocument().hasController(request.getTransferTicket().getTo()))
+				throw new DIDTransactionException("Ticket owner not a controller of target DID.");
+
+			boolean hasSignature = false;
+			for (DIDDocument.Proof proof : request.getDocument().getProofs()) {
+				if (proof.getCreator().getDid().equals(request.getTransferTicket().getTo()))
+					hasSignature = true;
+			}
+			if (!hasSignature)
+				throw new DIDTransactionException("New document not include the ticket owner's signature.");
 
 			break;
 
 		case DEACTIVATE:
 			if (tx == null)
 				throw new DIDTransactionException("DID not exist.");
-
-			if (tx.getOperation().equals(IDChainRequest.Operation.DEACTIVATE.toString()))
-				throw new DIDTransactionException("DID already dactivated.");
 
 			break;
 		}

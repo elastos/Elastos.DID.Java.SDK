@@ -131,6 +131,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	@JsonInclude(Include.NON_NULL)
 	private List<DID> controllers;
 	private Map<DID, DIDDocument> controllerDocs;
+	private DID effectiveController;
 
 	@JsonProperty(MULTI_SIGNATURE)
 	@JsonInclude(Include.NON_NULL)
@@ -705,13 +706,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	public boolean isCustomizedDid() {
-		if (defaultPublicKey == null)
-			return true;
-
-		if (defaultPublicKey.getId().getDid().equals(getSubject()))
-			return false;
-		else
-			return true;
+		return defaultPublicKey == null;
 	}
 
 	/**
@@ -770,6 +765,29 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	protected DIDDocument getControllerDocument(DID did) {
 		return controllerDocs.get(did);
+	}
+
+	public DID getEffectiveController() {
+		return effectiveController;
+	}
+
+	protected DIDDocument getEffectiveControllerDocument() {
+		return effectiveController == null ? null : getControllerDocument(effectiveController);
+	}
+
+	public void setEffectiveController(DID controller) throws NotControllerException {
+		if (!isCustomizedDid())
+			throw new UnsupportedOperationException("Not customized DID");
+
+		if (!hasController(controller))
+			throw new NotControllerException("No this controller");
+
+		effectiveController = controller;
+
+		// attach to the store if necessary
+		DIDDocument doc = getControllerDocument(effectiveController);
+		if (!doc.getMetadata().attachedStore())
+			doc.getMetadata().setStore(getMetadata().getStore());
 	}
 
 	public boolean isMultiSignature() {
@@ -950,7 +968,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the default key id
 	 */
 	public DIDURL getDefaultPublicKeyId() {
-		return defaultPublicKey != null ? defaultPublicKey.getId() : null;
+		PublicKey pk = getDefaultPublicKey();
+		return pk != null ? pk.getId() : null;
 	}
 
 	/**
@@ -959,7 +978,13 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the default key
 	 */
 	public PublicKey getDefaultPublicKey() {
-		return defaultPublicKey;
+		if (defaultPublicKey != null)
+			return defaultPublicKey;
+
+		if (effectiveController != null)
+			return getControllerDocument(effectiveController).getDefaultPublicKey();
+
+		return null;
 	}
 
 	/**
@@ -1610,15 +1635,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 					_authorizations.add(new WeakPublicKey(pk.getId()));
 			}
 
-			if (!hasController()) {
-				if (defaultPublicKey == null)
-					throw new MalformedDocumentException("Missing default public key.");
-			} else {
-				if (controllers.size() == 1)
-					defaultPublicKey = controllerDocs.get(controllers.get(0)).getDefaultPublicKey();
-				else // other wise, no default public key
-					defaultPublicKey = null;
-			}
+			if (!hasController() && defaultPublicKey == null)
+				throw new MalformedDocumentException("Missing default public key.");
 
 			if (_authentications.size() == 0)
 				this._authentications = null;
@@ -1629,15 +1647,13 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (controllers == null || controllers.isEmpty())
 				throw new MalformedDocumentException("Missing public key.");
 
-			if (controllers.size() == 1)
-				defaultPublicKey = controllerDocs.get(controllers.get(0)).getDefaultPublicKey();
-			else
-				defaultPublicKey = null;
-
 			this._publickeys = null;
 			this._authentications = null;
 			this._authorizations = null;
 		}
+
+		if (controllers != null && controllers.size() == 1)
+			effectiveController = controllers.get(0);
 
 		if (credentials != null && !credentials.isEmpty())
 			this._credentials = new ArrayList<VerifiableCredential>(credentials.values());
@@ -1850,10 +1866,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			Proof proof = _proofs.get(0);
 
 			if (proof.getCreator() == null) {
-				if (defaultPublicKey == null)
+				if (getDefaultPublicKey() == null)
 					throw new MalformedDocumentException("No explict creator key");
 
-				proof.creator = defaultPublicKey.getId();
+				proof.creator = getDefaultPublicKeyId();
 			} else {
 				if (proof.getCreator().getDid() == null)
 					proof.getCreator().setDid(getSubject());
@@ -2358,14 +2374,20 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		return jpb;
 	}
 
-	public TransferTicket createTransferTicket(DID did, DID to, String storepass)
+	public TransferTicket createTransferTicket(DID to, String storepass)
 			throws DIDResolveException, NotControllerException, DIDStoreException {
-		if (did == null || to == null || storepass == null || storepass.isEmpty())
+		if (to == null || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		TransferTicket ticket = new TransferTicket(did, to);
+		if (!isCustomizedDid())
+			throw new UnsupportedOperationException("Not a customized DID");
+
+		if (getEffectiveController() == null)
+			throw new UnsupportedOperationException("No effective controller specified");
+
+		TransferTicket ticket = new TransferTicket(this, to);
 		try {
-			ticket.seal(this, storepass);
+			ticket.seal(getEffectiveControllerDocument(), storepass);
 		} catch (AlreadySignedException ignore) {
 			// Should never happen
 			log.error("INTERNAL - Seal the transfer ticket", ignore);
@@ -2380,12 +2402,27 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (ticket == null || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		ticket.seal(this, storepass);
+		if (!isCustomizedDid())
+			throw new UnsupportedOperationException("Not a customized DID");
+
+		if (ticket.getSubject().equals(getSubject()))
+			throw new IllegalArgumentException("Ticket not belongs to current DID");
+
+		ticket.seal(getEffectiveControllerDocument(), storepass);
 		return ticket;
 	}
 
 	public DIDDocument sign(DIDDocument doc, String storepass)
 			throws NotControllerException, DIDStoreException {
+		if (doc == null || storepass == null || storepass.isEmpty())
+			throw new IllegalArgumentException();
+
+		if (!doc.isCustomizedDid())
+			throw new UnsupportedOperationException("Not a customized DID");
+
+		if (!doc.hasController(getSubject()))
+			throw new NotControllerException();
+
 		Builder builder = doc.edit(this);
 		try {
 			return builder.seal(storepass);
@@ -2761,7 +2798,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	                    + id + "' not exist.");
 
 	        // Can not remove default public key
-	        if (document.getDefaultPublicKeyId().equals(id))
+	        if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
 	            throw new UnsupportedOperationException(
 	                    "Cannot remove the default PublicKey.");
 
@@ -2914,7 +2951,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	                    + id + "' not an authentication key.");
 
 	        // Can not remove default public key
-	        if (document.getDefaultPublicKeyId().equals(id))
+	        if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
 	            throw new UnsupportedOperationException(
 	                    "Cannot remove the default PublicKey from authentication.");
 
