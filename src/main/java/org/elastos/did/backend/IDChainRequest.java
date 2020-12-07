@@ -28,6 +28,7 @@ import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDObject;
 import org.elastos.did.DIDURL;
 import org.elastos.did.TransferTicket;
+import org.elastos.did.VerifiableCredential;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
@@ -55,9 +56,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 	IDChainRequest.PROOF })
 public class IDChainRequest extends DIDObject<IDChainRequest> {
 	/**
-	 * The specification string of IDChain Request
+	 * The specification string of IDChain DID Request
 	 */
-	public static final String CURRENT_SPECIFICATION = "elastos/did/1.0";
+	public static final String DID_SPECIFICATION = "elastos/did/1.0";
+
+	/**
+	 * The specification string of IDChain Credential Request
+	 */
+	public static final String CREDENTIAL_SPECIFICATION = "elastos/credential/1.0";
 
 	protected static final String HEADER = "header";
 	protected static final String PAYLOAD = "payload";
@@ -79,29 +85,52 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	@JsonProperty(PROOF)
 	private Proof proof;
 
+	// fields for DID request
 	private DID did;
 	private DIDDocument doc;
+
+	// fields for credential request
+	private DIDURL id;
+	private VerifiableCredential vc;
 
 	/**
      * The IDChain Request Operation
 	 */
 	public static enum Operation {
 		/**
-		 * the new did operation
+		 * Create a new DID
 		 */
-		CREATE,
+		CREATE(DID_SPECIFICATION),
 		/**
-		 * the update did operation
+		 * Update an exist DID
 		 */
-		UPDATE,
+		UPDATE(DID_SPECIFICATION),
 		/**
-		 * the transfer did operation
+		 * Transfer the DID' ownership
 		 */
-		TRANSFER,
+		TRANSFER(DID_SPECIFICATION),
 		/**
-		 * the deactivate did operation
+		 * Deactivate a DID
 		 */
-		DEACTIVATE;
+		DEACTIVATE(DID_SPECIFICATION),
+		/**
+		 * Declare a credential
+		 */
+		DECLARE(CREDENTIAL_SPECIFICATION),
+		/**
+		 * Revoke a credential
+		 */
+		REVOKE(CREDENTIAL_SPECIFICATION);
+
+		private String specification;
+
+		private Operation(String specification) {
+			this.specification = specification;
+		}
+
+		public String getSpecification() {
+			return specification;
+		}
 
 		@Override
 		@JsonValue
@@ -136,13 +165,13 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		}
 
 		private Header(Operation operation, String previousTxid) {
-			this(CURRENT_SPECIFICATION);
+			this(operation.getSpecification());
 			this.operation = operation;
 			this.previousTxid = previousTxid;
 		}
 
 		private Header(Operation operation, TransferTicket ticket) {
-			this(CURRENT_SPECIFICATION);
+			this(operation.getSpecification());
 			this.operation = operation;
 
 			String json = ticket.toString(true);
@@ -152,7 +181,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		}
 
 		private Header(Operation operation) {
-			this(CURRENT_SPECIFICATION);
+			this(operation.getSpecification());
 			this.operation = operation;
 		}
 
@@ -245,7 +274,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	}
 
 	/**
-	 * Constructs the 'create' IDChain Request.
+	 * Constructs the 'create' DID Request.
 	 *
 	 * @param doc the DID Document be packed into Request
 	 * @param signKey the key to sign Request
@@ -254,7 +283,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 * @throws InvalidKeyException there is no an authentication key.
 	 */
-	public static IDChainRequest create(DIDDocument doc, DIDURL signKey,
+	public static IDChainRequest createDid(DIDDocument doc, DIDURL signKey,
 			String storepass) throws DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.CREATE);
 		request.setPayload(doc);
@@ -270,7 +299,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	}
 
 	/**
-	 * Constructs the 'update' IDChain Request.
+	 * Constructs the 'update' DID Request.
 	 *
 	 * @param doc the DID Document be packed into Request
 	 * @param previousTxid the previous transaction id string
@@ -280,7 +309,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 * @throws InvalidKeyException there is no an authentication key.
 	 */
-	public static IDChainRequest update(DIDDocument doc, String previousTxid,
+	public static IDChainRequest updateDid(DIDDocument doc, String previousTxid,
 			DIDURL signKey, String storepass)
 			throws DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.UPDATE, previousTxid);
@@ -297,7 +326,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	}
 
 	/**
-	 * Constructs the 'transfer' IDChain Request.
+	 * Constructs the 'transfer' DID Request.
 	 *
 	 * @param doc target DID document
 	 * @param ticket the transfer ticket object
@@ -307,7 +336,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 * @throws InvalidKeyException there is no an authentication key.
 	 */
-	public static IDChainRequest transfer(DIDDocument doc, TransferTicket ticket,
+	public static IDChainRequest transferDid(DIDDocument doc, TransferTicket ticket,
 			DIDURL signKey, String storepass) throws DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.TRANSFER, ticket);
 		request.setPayload(doc);
@@ -324,7 +353,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 
 
 	/**
-	 * Constructs the 'deactivate' IDChain Request.
+	 * Constructs the 'deactivate' DID Request.
 	 *
 	 * @param doc the DID Document be packed into Request
 	 * @param signKey the key to sign Request
@@ -333,7 +362,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 * @throws InvalidKeyException there is no an authentication key.
 	 */
-	public static IDChainRequest deactivate(DIDDocument doc, DIDURL signKey,
+	public static IDChainRequest deactivateDid(DIDDocument doc, DIDURL signKey,
 			String storepass) throws DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.DEACTIVATE);
 		request.setPayload(doc);
@@ -349,7 +378,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	}
 
 	/**
-	 * Constructs the 'deactivate' IDChain Request.
+	 * Constructs the 'deactivate' DID Request.
 	 *
 	 * @param target the DID to be deactivated
 	 * @param targetSignKey the target DID's key to sign
@@ -361,13 +390,65 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 	 * @throws DIDStoreException there is no store to attach
 	 * @throws InvalidKeyException there is no an authentication key
 	 */
-	public static IDChainRequest deactivate(DID target, DIDURL targetSignKey,
+	public static IDChainRequest deactivateDid(DID target, DIDURL targetSignKey,
 			DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDResolveException, DIDStoreException, InvalidKeyException {
 		IDChainRequest request = new IDChainRequest(Operation.DEACTIVATE);
 		request.setPayload(target);
 		try {
 			request.seal(targetSignKey, doc, signKey, storepass);
+		} catch (MalformedIDChainRequestException ignore) {
+			// should never happen
+			log.error("INTERNAL - Seal the request", ignore);
+			return null;
+		}
+
+		return request;
+	}
+
+	/**
+	 * Constructs the 'declare' credential Request.
+	 *
+	 * @param vc the VerifiableCredential object needs to be declare
+	 * @param signKey the key to sign Request
+	 * @param storepass the password for DIDStore
+	 * @return the IDChainRequest object
+	 * @throws DIDStoreException there is no store to attach.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
+	public static IDChainRequest declareCredential(VerifiableCredential vc,
+			DIDURL signKey, String storepass) throws DIDStoreException, InvalidKeyException {
+		// TODO:
+		IDChainRequest request = new IDChainRequest(Operation.DECLARE);
+		request.setPayload(vc);
+		try {
+			request.seal(signKey, storepass);
+		} catch (MalformedIDChainRequestException ignore) {
+			// should never happen
+			log.error("INTERNAL - Seal the request", ignore);
+			return null;
+		}
+
+		return request;
+	}
+
+	/**
+	 * Constructs the 'revoke' credential Request.
+	 *
+	 * @param id the VerifiableCredential object needs to be revoke
+	 * @param signKey the key to sign Request
+	 * @param storepass the password for DIDStore
+	 * @return the IDChainRequest object
+	 * @throws DIDStoreException there is no store to attach.
+	 * @throws InvalidKeyException there is no an authentication key.
+	 */
+	public static IDChainRequest RevokeCredential(VerifiableCredential vc,
+			DIDURL signKey, String storepass) throws DIDStoreException, InvalidKeyException {
+		// TODO:
+		IDChainRequest request = new IDChainRequest(Operation.REVOKE);
+		request.setPayload(vc);
+		try {
+			request.seal(signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
 			// should never happen
 			log.error("INTERNAL - Seal the request", ignore);
@@ -430,6 +511,14 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		return doc;
 	}
 
+	public DIDURL getCredentialId() {
+		return id;
+	}
+
+	public VerifiableCredential getCredential() {
+		return vc;
+	}
+
 	private void setPayload(DID did) throws DIDResolveException {
 		this.did = did;
 		this.doc = did.resolve(true);
@@ -450,6 +539,20 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 		}
 	}
 
+	private void setPayload(VerifiableCredential vc) {
+		this.id = vc.getId();
+		this.vc = vc;
+
+		if (header.getOperation() == Operation.DECLARE) {
+			String json = vc.toString(true);
+
+			this.payload = Base64.encodeToString(json.getBytes(),
+					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+		} else {
+			this.payload = vc.getId().toString();
+		}
+	}
+
 	/**
 	 * Get the proof object of the IDChainRequest.
 	 *
@@ -465,7 +568,7 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 			throw new MalformedIDChainRequestException("Missing header");
 
 		if (header.getSpecification() == null ||
-				!header.getSpecification().equals(CURRENT_SPECIFICATION))
+				!header.getSpecification().equals(DID_SPECIFICATION))
 			throw new MalformedIDChainRequestException("Unsupported specification");
 
 		if (header.getOperation() == Operation.UPDATE &&
@@ -577,6 +680,9 @@ public class IDChainRequest extends DIDObject<IDChainRequest> {
 
 		if (doc == null)
 			throw new DIDTransactionException("Can not resolve DID: " + did);
+
+		if (!doc.isValid())
+			return false;
 
 		if (getOperation() != Operation.DEACTIVATE) {
 			if (!doc.isAuthenticationKey(signKey))

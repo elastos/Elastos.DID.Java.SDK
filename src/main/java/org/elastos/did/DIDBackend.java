@@ -433,7 +433,7 @@ public class DIDBackend {
 	 */
 	protected void create(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
-		IDChainRequest request = IDChainRequest.create(doc, signKey, storepass);
+		IDChainRequest request = IDChainRequest.createDid(doc, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
 	}
@@ -452,7 +452,7 @@ public class DIDBackend {
 	protected void update(DIDDocument doc, String previousTxid,
 			DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
-		IDChainRequest request = IDChainRequest.update(doc, previousTxid,
+		IDChainRequest request = IDChainRequest.updateDid(doc, previousTxid,
 				signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
@@ -462,7 +462,7 @@ public class DIDBackend {
 	protected void transfer(DIDDocument doc, TransferTicket ticket,
 			DIDURL signKey, String storepass)
 			throws DIDStoreException, InvalidKeyException, DIDTransactionException {
-		IDChainRequest request = IDChainRequest.transfer(doc, ticket,
+		IDChainRequest request = IDChainRequest.transferDid(doc, ticket,
 				signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
@@ -481,7 +481,7 @@ public class DIDBackend {
      */
 	protected void deactivate(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
-		IDChainRequest request = IDChainRequest.deactivate(doc, signKey, storepass);
+		IDChainRequest request = IDChainRequest.deactivateDid(doc, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
 		ResolverCache.invalidate(doc.getSubject());
@@ -503,7 +503,7 @@ public class DIDBackend {
 	protected void deactivate(DID target, DIDURL targetSignKey,
 			DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDResolveException, DIDTransactionException, DIDStoreException, InvalidKeyException {
-		IDChainRequest request = IDChainRequest.deactivate(target,
+		IDChainRequest request = IDChainRequest.deactivateDid(target,
 				targetSignKey, doc, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
