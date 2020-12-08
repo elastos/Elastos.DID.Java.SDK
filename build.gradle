@@ -44,6 +44,7 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.0'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.0'
     implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'info.picocli:picocli:4.5.2'
 
     // Use JUnit test framework
     testImplementation 'org.junit.jupiter:junit-jupiter:5.6.0'
@@ -51,6 +52,22 @@ dependencies {
 
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
     testRuntime 'org.junit.vintage:junit-vintage-engine:5.6.0'
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "org.elastos.did.util.Main"
+    }
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes "Main-Class": "org.elastos.did.util.Main"
+    }
+    
+    baseName = 'did'
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
 
 javadoc {
