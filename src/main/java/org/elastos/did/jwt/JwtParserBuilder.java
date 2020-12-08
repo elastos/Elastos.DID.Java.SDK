@@ -29,7 +29,9 @@ import java.util.Date;
 import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDURL;
+import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.InvalidKeyException;
+import org.elastos.did.exception.MalformedDIDException;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SigningKeyResolver;
@@ -70,12 +72,19 @@ public class JwtParserBuilder {
 					else {
 						DID did = new DID(claims.getIssuer());
 						DIDDocument doc = did.resolve();
+						if (doc == null)
+							throw new DIDResolveException("Can not resolve the iss's DID");
+
 						DIDURL id = keyid == null ? doc.getDefaultPublicKey()
 								: new DIDURL(doc.getSubject(), keyid);
 						return doc.getKeyPair(id).getPublic();
 					}
-				} catch (Exception e) {
-					return null;
+				} catch (InvalidKeyException e) {
+					throw new IllegalArgumentException("JWT error: Invalid sign key", e);
+				} catch (MalformedDIDException e) {
+					throw new IllegalArgumentException("JWT error: iss field is not a valid DID", e);
+				} catch (org.elastos.did.exception.DIDResolveException e) {
+					throw new IllegalArgumentException("JWT error: Failed to resolve the iss's DID", e);
 				}
 			}
 

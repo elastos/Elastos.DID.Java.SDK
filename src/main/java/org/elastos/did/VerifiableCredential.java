@@ -626,6 +626,8 @@ public class VerifiableCredential extends DIDObject {
 
 	private boolean checkGenuine() throws DIDResolveException, DIDBackendException {
 		DIDDocument issuerDoc = issuer.resolve();
+		if (issuerDoc == null)
+			throw new DIDResolveException("Can not resolve the issuer's DID");
 
 		// Credential should signed by authentication key.
 		if (!issuerDoc.isAuthenticationKey(proof.getVerificationMethod()))
