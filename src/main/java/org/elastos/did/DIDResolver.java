@@ -40,7 +40,16 @@ public interface DIDResolver {
 	 * @return the resolve result
 	 * @throws DIDResolveException resolve did failed.
 	 */
-	public InputStream resolve(String requestId, String did, boolean all)
+	public InputStream resolveDid(String requestId, String did, boolean all)
+			throws DIDResolveException;
+
+	public InputStream resolveCredential(String requestId, String id)
+			throws DIDResolveException;
+
+	public InputStream listCredentials(String requestId, String did, int skip, int limit)
+			throws DIDResolveException;
+
+	public InputStream resolveCredentialRevocation(String requestId, String id, String signer)
 			throws DIDResolveException;
 
 }

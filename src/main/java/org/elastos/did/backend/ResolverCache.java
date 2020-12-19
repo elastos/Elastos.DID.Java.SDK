@@ -41,7 +41,7 @@ public class ResolverCache {
 	private static final int CACHE_MAX_CAPACITY = 32;
 
 	private static File rootDir;
-	private static Map<DID, ResolveResult> cache = LRUCache.createInstance(
+	private static Map<DID, DIDBiography> cache = LRUCache.createInstance(
 			CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 
 	private static final Logger log = LoggerFactory.getLogger(IDChainRequest.class);
@@ -88,15 +88,15 @@ public class ResolverCache {
 	/**
 	 * Store the resolve result(mainly DID Document) in cache.
 	 *
-	 * @param rr the ResolveResult content
+	 * @param rr the DIDBiography content
 	 * @throws IOException write the resolve result to output failed.
 	 */
-	public static void store(ResolveResult rr) throws IOException {
+	public static void store(DIDBiography rr) throws IOException {
 		try {
 			rr.serialize(getFile(rr.getDid().getMethodSpecificId()));
 			cache.put(rr.getDid(), rr);
 		} catch (DIDSyntaxException ignore) {
-			log.error("INTERNAL - Serialize ResolveResult", ignore);
+			log.error("INTERNAL - Serialize DIDBiography", ignore);
 		}
 	}
 
@@ -105,10 +105,10 @@ public class ResolverCache {
 	 *
 	 * @param did the specified DID
 	 * @param ttl the time for cache
-	 * @return the ResolveResult object
+	 * @return the DIDBiography object
 	 * @throws DIDResolveException resolve did failed.
 	 */
-	public static ResolveResult load(DID did, long ttl)
+	public static DIDBiography load(DID did, long ttl)
 			throws DIDResolveException {
 		File file = getFile(did.getMethodSpecificId());
 
@@ -122,7 +122,7 @@ public class ResolverCache {
 			return cache.get(did);
 
 		try {
-			ResolveResult rr = ResolveResult.parse(file, ResolveResult.class);
+			DIDBiography rr = DIDBiography.parse(file, DIDBiography.class);
 			cache.put(rr.getDid(), rr);
 			return rr;
 		} catch (IOException | DIDSyntaxException e) {

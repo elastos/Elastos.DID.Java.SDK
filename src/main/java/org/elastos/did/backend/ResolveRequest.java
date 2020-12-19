@@ -22,65 +22,53 @@
 
 package org.elastos.did.backend;
 
-import org.elastos.did.DID;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.elastos.did.DIDObject;
-import org.elastos.did.exception.MalformedDIDException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "id", "method", "params" })
-public class ResolveRequest extends DIDObject<ResolveRequest> {
-	public static final String METHOD_RESOLVE_DID = "resolvedid";
+@JsonPropertyOrder({ ResolveRequest.ID,
+	ResolveRequest.METHOD,
+	ResolveRequest.PARAMETERS })
+public abstract class ResolveRequest<T> extends DIDObject<T> {
+	protected static final String ID = "id";
+	protected static final String METHOD = "method";
+	protected static final String PARAMETERS = "params";
 
-	@JsonProperty("id")
-	private String id;
-	@JsonProperty("method")
+	@JsonProperty(ID)
+	private String requestId;
+	@JsonProperty(METHOD)
 	private String method;
-	@JsonProperty("params")
-	private Parameters params;
+	@JsonProperty(PARAMETERS)
+	private Map<String, Object> params;
 
-	@JsonPropertyOrder({ "did", "all" })
-	protected static class Parameters {
-		@JsonProperty("did")
-		private DID did;
-		@JsonProperty("all")
-		private boolean all;
-	}
-
-	public ResolveRequest(String id, String method) {
-		this.id = id;
+	protected ResolveRequest(String requestId, String method) {
+		this.requestId = requestId;
 		this.method = method;
-		this.params = new Parameters();
+		this.params = new HashMap<String, Object>();
 	}
 
-	public String getId() {
-		return id;
+	public String getRequestId() {
+		return requestId;
 	}
 
 	public String getMethod() {
 		return method;
 	}
 
-	public void setParameter(DID did, boolean all) {
-		this.params.did = did;
-		this.params.all = all;
+	protected void setParameter(String param, Object value) {
+		params.put(param, value);
 
 	}
 
-	public void setParameter(String did, boolean all) {
-		try {
-			setParameter(new DID(did), all);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
+	protected Object getParameter(String param) {
+		return params.get(param);
 	}
 
-	public DID getDid() {
-		return params.did;
-	}
-
-	public boolean isResolveAll() {
-		return params.all;
+	protected Object getParameter(String param, Object defaultValue) {
+		return params.getOrDefault(param, defaultValue);
 	}
 }

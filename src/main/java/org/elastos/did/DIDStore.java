@@ -890,10 +890,10 @@ public final class DIDStore {
 
 		if (lastTxid == null || lastTxid.isEmpty()) {
 			log.info("Try to publish[create] {}...", did.toString());
-			backend.create(doc, signKey, storepass);
+			backend.createDid(doc, signKey, storepass);
 		} else {
 			log.info("Try to publish[update] {}...", did.toString());
-			backend.update(doc, lastTxid, signKey, storepass);
+			backend.updateDid(doc, lastTxid, signKey, storepass);
 		}
 
 		doc.getMetadata().setPreviousSignature(reolvedSignautre);
@@ -1133,7 +1133,7 @@ public final class DIDStore {
 				throw new InvalidKeyException("Not an authentication key.");
 		}
 
-		backend.deactivate(doc, signKey, storepass);
+		backend.deactivateDid(doc, signKey, storepass);
 
 		// Save deactivated status to DID metadata
 		if (localCopy) {
@@ -1340,7 +1340,7 @@ public final class DIDStore {
 		if (targetSignKey == null)
 			throw new InvalidKeyException("No matched authorization key.");
 
-		backend.deactivate(target, targetSignKey, doc, signKey, storepass);
+		backend.deactivateDid(targetDoc, targetSignKey, doc, signKey, storepass);
 	}
 
 	/**

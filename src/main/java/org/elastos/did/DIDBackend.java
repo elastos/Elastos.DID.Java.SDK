@@ -31,11 +31,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Random;
 
-import org.elastos.did.backend.IDChainRequest;
-import org.elastos.did.backend.IDChainTransaction;
+import org.elastos.did.backend.CredentialListRequest;
+import org.elastos.did.backend.CredentialResolveRequest;
+import org.elastos.did.backend.CredentialResolveRevocation;
+import org.elastos.did.backend.DIDBiography;
+import org.elastos.did.backend.DIDRequest;
+import org.elastos.did.backend.DIDResolveRequest;
+import org.elastos.did.backend.DIDResolveResponse;
+import org.elastos.did.backend.DIDTransaction;
 import org.elastos.did.backend.ResolveRequest;
-import org.elastos.did.backend.ResolveResponse;
-import org.elastos.did.backend.ResolveResult;
 import org.elastos.did.backend.ResolverCache;
 import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDResolveException;
@@ -97,12 +101,9 @@ public class DIDBackend {
 			}
 		}
 
-		@Override
-		public InputStream resolve(String requestId, String did, boolean all)
+		private InputStream resolve(ResolveRequest<?> request)
 				throws DIDResolveException {
 			try {
-				log.debug("Resolving {}...", did.toString());
-
 				HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 				connection.setRequestMethod("POST");
 				connection.setRequestProperty("User-Agent",
@@ -113,28 +114,66 @@ public class DIDBackend {
 				connection.connect();
 
 				OutputStream os = connection.getOutputStream();
-				ResolveRequest request = new ResolveRequest(requestId, ResolveRequest.METHOD_RESOLVE_DID);
-				request.setParameter(did, all);
 				try {
 					request.serialize(os, true);
-				} catch (DIDSyntaxException ignore) {
-					log.error("INTERNAL - Serialize resolve request", ignore);
+				} catch (DIDSyntaxException e) {
+					log.error("INTERNAL - Serialize resolve request", e);
+					throw new DIDResolveException("Can not serialize the request", e);
 				} finally {
 					os.close();
 				}
 
 				int code = connection.getResponseCode();
 				if (code != 200) {
-					log.error("Resolve {} error, status: {}, message: {}",
-							did.toString(), code, connection.getResponseMessage());
+					log.error("HTTP request error, status: {}, message: {}",
+							code, connection.getResponseMessage());
 					throw new DIDResolveException("HTTP error with status: " + code);
 				}
 
 				return connection.getInputStream();
 			} catch (IOException e) {
-				log.error("Resovle " + did + " error", e);
 				throw new NetworkException("Network error.", e);
 			}
+		}
+
+		@Override
+		public InputStream resolveDid(String requestId, String did, boolean all)
+				throws DIDResolveException {
+			log.debug("Resolving DID {}...", did);
+
+			DIDResolveRequest request = new DIDResolveRequest(requestId);
+			request.setParameters(did, all);
+			return resolve(request);
+		}
+
+		@Override
+		public InputStream resolveCredential(String requestId, String id)
+				throws DIDResolveException {
+			log.debug("Resolving credential {}...", id);
+
+			CredentialResolveRequest request = new CredentialResolveRequest(requestId);
+			request.setParameters(id);
+			return resolve(request);
+		}
+
+		@Override
+		public InputStream listCredentials(String requestId, String did,
+				int skip, int limit) throws DIDResolveException {
+			log.debug("List credentials for {}...", did);
+
+			CredentialListRequest request = new CredentialListRequest(requestId);
+			request.setParameters(did, skip, limit);
+			return resolve(request);
+		}
+
+		@Override
+		public InputStream resolveCredentialRevocation(String requestId,
+				String id, String signer) throws DIDResolveException {
+			log.debug("Resolving credential revocation {} from {} ...", id, signer);
+
+			CredentialResolveRevocation request = new CredentialResolveRevocation(requestId);
+			request.setParameters(id, signer);
+			return resolve(request);
 		}
 	}
 
@@ -274,16 +313,16 @@ public class DIDBackend {
 		DIDBackend.resolveHandle = handle;
 	}
 
-	private static ResolveResult resolveFromBackend(DID did, boolean all)
+	private static DIDBiography resolveFromBackend(DID did, boolean all)
 			throws DIDResolveException {
 		if (resolver == null)
 			throw new DIDResolveException("DID resolver not initialized.");
 
 		String requestId = generateRequestId();
-		InputStream is = resolver.resolve(requestId, did.toString(), all);
-		ResolveResponse response;
+		InputStream is = resolver.resolveDid(requestId, did.toString(), all);
+		DIDResolveResponse response;
 		try {
-			response = ResolveResponse.parse(is, ResolveResponse.class);
+			response = DIDResolveResponse.parse(is, DIDResolveResponse.class);
 		} catch (DIDSyntaxException | IOException e) {
 			throw new DIDResolveException(e);
 		} finally {
@@ -293,21 +332,20 @@ public class DIDBackend {
 			}
 		}
 
-		if (response.getId() == null || !response.getId().equals(requestId))
+		if (response.getResponseId() == null || !response.getResponseId().equals(requestId))
 			throw new DIDResolveException("Mismatched resolve result with request.");
 
-		ResolveResult rr = response.getResult();
+		DIDBiography rr = response.getResult();
 		if (rr == null) {
 			throw new DIDResolveException("Resolve DID error("
 					+ response.getErrorCode() + "): " + response.getErrorMessage());
 		}
 
-		if (rr.getStatus() != ResolveResult.STATUS_NOT_FOUND) {
+		if (rr.getStatus() != DIDBiography.STATUS_NOT_FOUND) {
 			try {
 				ResolverCache.store(rr);
 			} catch (IOException e) {
-				System.out.println("!!! Cache resolved resolved result error: "
-						+ e.getMessage());
+				log.error("!!! Cache resolved result error !!!", e);
 			}
 		}
 
@@ -318,14 +356,14 @@ public class DIDBackend {
      * Resolve all DID transactions.
      *
      * @param did the specified DID object
-     * @return the ResolveResult object
+     * @return the DIDBiography object
      * @throws DIDResolveException throw this exception if resolving did transcations failed.
      */
-	protected static ResolveResult resolveHistory(DID did) throws DIDResolveException {
+	protected static DIDBiography resolveHistory(DID did) throws DIDResolveException {
 		log.info("Resolving {}...", did.toString());
 
-		ResolveResult rr = resolveFromBackend(did, true);
-		if (rr.getStatus() == ResolveResult.STATUS_NOT_FOUND)
+		DIDBiography rr = resolveFromBackend(did, true);
+		if (rr.getStatus() == DIDBiography.STATUS_NOT_FOUND)
 			return null;
 
 		return rr;
@@ -350,7 +388,7 @@ public class DIDBackend {
 				return doc;
 		}
 
-		ResolveResult rr = null;
+		DIDBiography rr = null;
 		if (!force) {
 			rr = ResolverCache.load(did, ttl);
 			log.debug("Try load {} from resolver cache: {}.",
@@ -362,17 +400,17 @@ public class DIDBackend {
 
 		switch (rr.getStatus()) {
 		// When DID expired, we should also return the document.
-		// case ResolveResult.STATUS_EXPIRED:
+		// case DIDBiography.STATUS_EXPIRED:
 		// 	throw new DIDExpiredException();
 
-		case ResolveResult.STATUS_DEACTIVATED:
+		case DIDBiography.STATUS_DEACTIVATED:
 			throw new DIDDeactivatedException();
 
-		case ResolveResult.STATUS_NOT_FOUND:
+		case DIDBiography.STATUS_NOT_FOUND:
 			return null;
 
 		default:
-			IDChainTransaction tx = rr.getTransaction(0);
+			DIDTransaction tx = rr.getTransaction(0);
 
 			try {
 				if (!tx.getRequest().isValid())
@@ -416,7 +454,7 @@ public class DIDBackend {
 		log.info("Create ID transaction...");
 		log.trace("Transaction paload: '{}', memo: {}", payload, memo);
 
-		adapter.createIdTransaction(payload, memo);
+		adapter.createDidTransaction(payload, memo);
 
 		log.info("ID transaction complete.");
 	}
@@ -431,9 +469,9 @@ public class DIDBackend {
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
-	protected void create(DIDDocument doc, DIDURL signKey, String storepass)
+	protected void createDid(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
-		IDChainRequest request = IDChainRequest.createDid(doc, signKey, storepass);
+		DIDRequest request = DIDRequest.create(doc, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
 	}
@@ -449,21 +487,19 @@ public class DIDBackend {
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
-	protected void update(DIDDocument doc, String previousTxid,
+	protected void updateDid(DIDDocument doc, String previousTxid,
 			DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
-		IDChainRequest request = IDChainRequest.updateDid(doc, previousTxid,
-				signKey, storepass);
+		DIDRequest request = DIDRequest.update(doc, previousTxid, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
 		ResolverCache.invalidate(doc.getSubject());
 	}
 
-	protected void transfer(DIDDocument doc, TransferTicket ticket,
+	protected void transferDid(DIDDocument doc, TransferTicket ticket,
 			DIDURL signKey, String storepass)
 			throws DIDStoreException, InvalidKeyException, DIDTransactionException {
-		IDChainRequest request = IDChainRequest.transferDid(doc, ticket,
-				signKey, storepass);
+		DIDRequest request = DIDRequest.transfer(doc, ticket, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
 		ResolverCache.invalidate(doc.getSubject());
@@ -479,9 +515,9 @@ public class DIDBackend {
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
      * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
      */
-	protected void deactivate(DIDDocument doc, DIDURL signKey, String storepass)
+	protected void deactivateDid(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
-		IDChainRequest request = IDChainRequest.deactivateDid(doc, signKey, storepass);
+		DIDRequest request = DIDRequest.deactivate(doc, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
 		ResolverCache.invalidate(doc.getSubject());
@@ -500,13 +536,13 @@ public class DIDBackend {
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
      * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
-	protected void deactivate(DID target, DIDURL targetSignKey,
+	protected void deactivateDid(DIDDocument target, DIDURL targetSignKey,
 			DIDDocument doc, DIDURL signKey, String storepass)
-			throws DIDResolveException, DIDTransactionException, DIDStoreException, InvalidKeyException {
-		IDChainRequest request = IDChainRequest.deactivateDid(target,
+			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+		DIDRequest request = DIDRequest.deactivate(target,
 				targetSignKey, doc, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
-		ResolverCache.invalidate(target);
+		ResolverCache.invalidate(target.getSubject());
 	}
 }

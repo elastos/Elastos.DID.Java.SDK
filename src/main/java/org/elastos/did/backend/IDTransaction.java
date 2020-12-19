@@ -24,7 +24,6 @@ package org.elastos.did.backend;
 
 import java.util.Date;
 
-import org.elastos.did.DID;
 import org.elastos.did.DIDObject;
 import org.elastos.did.exception.MalformedIDChainRequestException;
 import org.elastos.did.exception.MalformedIDChainTransactionException;
@@ -33,13 +32,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-/**
- * The class records the information of the specified DID's transaction.
- */
-@JsonPropertyOrder({ IDChainTransaction.TXID,
-	IDChainTransaction.TIMESTAMP,
-	IDChainTransaction.OPERATION })
-public class IDChainTransaction extends DIDObject<IDChainTransaction> {
+@JsonPropertyOrder({ IDTransaction.TXID,
+	IDTransaction.TIMESTAMP,
+	IDTransaction.OPERATION })
+public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDObject<T> {
 	protected final static String TXID = "txid";
 	protected final static String TIMESTAMP = "timestamp";
 	protected final static String OPERATION = "operation";
@@ -49,20 +45,19 @@ public class IDChainTransaction extends DIDObject<IDChainTransaction> {
 	@JsonProperty(TIMESTAMP)
 	private Date timestamp;
 	@JsonProperty(OPERATION)
-	private IDChainRequest request;
+	private R request;
 
 	@JsonCreator
-	protected IDChainTransaction() {}
+	protected IDTransaction() {}
 
 	/**
-	 * Constructs the IDChainTransaction with the given value.
+	 * Constructs the DIDTransaction with the given value.
 	 *
 	 * @param txid the transaction id string
 	 * @param timestamp the time stamp
 	 * @param request the IDChainRequest content
 	 */
-	protected IDChainTransaction(String txid, Date timestamp,
-			IDChainRequest request) {
+	protected IDTransaction(String txid, Date timestamp, R request) {
 		this.txId = txid;
 		this.timestamp = timestamp;
 		this.request = request;
@@ -76,20 +71,16 @@ public class IDChainTransaction extends DIDObject<IDChainTransaction> {
 		return timestamp;
 	}
 
-	public DID getDid() {
-		return request.getDid();
-	}
-
 	public String getOperation() {
 		return request.getOperation().toString();
 	}
 
 	/**
-	 * Get request of IDChainRequest.
+	 * Get request object of transaction.
 	 *
-	 * @return the IDChainRequest object
+	 * @return the IDRequest object
 	 */
-	public IDChainRequest getRequest() {
+	public R getRequest() {
 		return request;
 	}
 

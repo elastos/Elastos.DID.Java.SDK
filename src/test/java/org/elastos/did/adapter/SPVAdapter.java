@@ -74,7 +74,17 @@ public class SPVAdapter implements DIDAdapter {
 	}
 
 	@Override
-	public void createIdTransaction(String payload, String memo)
+	public void createDidTransaction(String payload, String memo)
+			throws DIDTransactionException {
+		String password = passwordCallback.getPassword(walletDir, walletId);
+		if (password == null)
+			password = "";
+
+		createIdTransaction(handle, payload, memo, password);
+	}
+
+	@Override
+	public void createCredentialTransaction(String payload, String memo)
 			throws DIDTransactionException {
 		String password = passwordCallback.getPassword(walletDir, walletId);
 		if (password == null)

@@ -90,7 +90,7 @@ public final class TestData {
 	public DIDStore setup(boolean dummyBackend) throws DIDException {
 		if (dummyBackend) {
 			if (TestData.dummyAdapter == null)
-				TestData.dummyAdapter = new DummyBackend(TestConfig.verbose);
+				TestData.dummyAdapter = new DummyBackend();
 			else
 				TestData.dummyAdapter.reset();
 

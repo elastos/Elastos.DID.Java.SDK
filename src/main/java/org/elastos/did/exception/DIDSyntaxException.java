@@ -22,10 +22,25 @@
 
 package org.elastos.did.exception;
 
+import org.elastos.did.CredentialMetadata;
 import org.elastos.did.DIDDocument;
+import org.elastos.did.DIDMetadata;
 import org.elastos.did.TransferTicket;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
+import org.elastos.did.backend.CredentialBiography;
+import org.elastos.did.backend.CredentialList;
+import org.elastos.did.backend.CredentialListRequest;
+import org.elastos.did.backend.CredentialListResponse;
+import org.elastos.did.backend.CredentialRequest;
+import org.elastos.did.backend.CredentialResolveRequest;
+import org.elastos.did.backend.CredentialResolveResponse;
+import org.elastos.did.backend.CredentialTransaction;
+import org.elastos.did.backend.DIDBiography;
+import org.elastos.did.backend.DIDRequest;
+import org.elastos.did.backend.DIDResolveRequest;
+import org.elastos.did.backend.DIDResolveResponse;
+import org.elastos.did.backend.DIDTransaction;
 
 /**
  * Thrown to indicate that the DID syntax has error.
@@ -81,17 +96,26 @@ public class DIDSyntaxException extends DIDException {
 			ex = new MalformedPresentationException(message, cause);
 		else if (fqn.equals(TransferTicket.class.getCanonicalName()))
 			ex = new MalformedTransferTicketException(message, cause);
-		else if (fqn.endsWith("Metadata"))
+		else if (fqn.equals(DIDMetadata.class.getCanonicalName()) ||
+				fqn.equals(CredentialMetadata.class.getCanonicalName()))
 			ex = new MalformedMetadataException(message, cause);
-		else if (fqn.endsWith("IDChainRequest"))
+		else if (fqn.equals(DIDRequest.class.getCanonicalName()) ||
+				fqn.equals(CredentialRequest.class.getCanonicalName()))
 			ex = new MalformedIDChainRequestException(message, cause);
-		else if (fqn.endsWith("IDChainTransaction"))
+		else if (fqn.equals(DIDTransaction.class.getCanonicalName()) ||
+				fqn.equals(CredentialTransaction.class.getCanonicalName()))
 			ex = new MalformedIDChainTransactionException(message, cause);
-		else if (fqn.endsWith("ResolveResult"))
+		else if (fqn.equals(DIDBiography.class.getCanonicalName()) ||
+				fqn.equals(CredentialBiography.class.getCanonicalName()) ||
+				fqn.equals(CredentialList.class.getCanonicalName()))
 			ex = new MalformedResolveResultException(message, cause);
-		else if (fqn.endsWith("ResolveRequest"))
+		else if (fqn.equals(DIDResolveRequest.class.getCanonicalName()) ||
+				fqn.equals(CredentialResolveRequest.class.getCanonicalName()) ||
+				fqn.equals(CredentialListRequest.class.getCanonicalName()))
 			ex = new MalformedResolveRequestException(message, cause);
-		else if (fqn.endsWith("ResolveResponse"))
+		else if (fqn.equals(DIDResolveResponse.class.getCanonicalName()) ||
+				fqn.equals(CredentialResolveResponse.class.getCanonicalName()) ||
+				fqn.equals(CredentialListResponse.class.getCanonicalName()))
 			ex = new MalformedResolveResponseException(message, cause);
 		else if (fqn.endsWith("Export"))
 			ex = new MalformedExportDataException(message, cause);
