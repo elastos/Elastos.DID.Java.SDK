@@ -20,26 +20,33 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.backend;
 
-import org.elastos.did.exception.DIDTransactionException;
+import org.elastos.did.DIDURL;
+import org.elastos.did.exception.MalformedDIDURLException;
 
-/**
- * The interface to provide DID Adapter method to publish DID Document.
- */
-public interface DIDAdapter {
-	/**
-	 * User need to implement 'createIdTransaction' function.
-	 * An application-defined function that create id transaction to chain.
-	 *
-	 * @param payload the payload string to put into id transaction
-	 * @param memo the memorandum string
-	 * @throws DIDTransactionException throw this exception if publishing id transaction failed.
-	 */
-	public void createDidTransaction(String payload, String memo)
-		throws DIDTransactionException;
+public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRequest> {
+	protected static final String PARAMETER_ID = "id";
 
-	public void createCredentialTransaction(String payload, String memo)
-		throws DIDTransactionException;
+	private static final String METHOD_NAME = "resolvecredential";
 
+	public CredentialResolveRequest(String id) {
+		super(id, METHOD_NAME);
+	}
+
+	public void setParameters(DIDURL id) {
+		setParameter(PARAMETER_ID, id);
+	}
+
+	public void setParameters(String id) {
+		try {
+			setParameters(new DIDURL(id));
+		} catch (MalformedDIDURLException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
+	public DIDURL getId() {
+		return (DIDURL)getParameter(PARAMETER_ID);
+	}
 }

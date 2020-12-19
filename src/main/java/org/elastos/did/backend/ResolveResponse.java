@@ -31,27 +31,38 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "id", "jsonrpc", "result", "error" })
+@JsonPropertyOrder({ ResolveResponse.ID,
+	ResolveResponse.JSON_RPC,
+	ResolveResponse.RESULT,
+	ResolveResponse.ERROR })
 @JsonInclude(Include.NON_NULL)
-public class ResolveResponse extends DIDObject<ResolveResponse> {
+public abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DIDObject<T> {
 	private static final String JSON_RPC_VERSION = "2.0";
 
-	@JsonProperty("id")
-	private String id;
-	@JsonProperty("jsonrpc")
+	protected static final String ID = "id";
+	protected static final String JSON_RPC = "jsonrpc";
+	protected static final String RESULT = "result";
+	protected static final String ERROR = "error";
+	protected static final String ERROR_CODE = "code";
+	protected static final String ERROR_MESSAGE = "message";
+	protected static final String ERROR_DATA = "data";
+
+	@JsonProperty(ID)
+	private String responseId;
+	@JsonProperty(JSON_RPC)
 	private String jsonRpcVersion;
-	@JsonProperty("result")
-	private ResolveResult result;
-	@JsonProperty("error")
+	@JsonProperty(RESULT)
+	private R result;
+	@JsonProperty(ERROR)
 	private JsonRpcError error;
 
-	@JsonPropertyOrder({ "code", "message", "data" })
+	@JsonPropertyOrder({ ERROR_CODE, ERROR_MESSAGE, ERROR_DATA })
 	public static class JsonRpcError {
-		@JsonProperty("code")
+		@JsonProperty(ERROR_CODE)
 		private int code;
-		@JsonProperty("message")
+		@JsonProperty(ERROR_MESSAGE)
 		private String message;
-		@JsonProperty("data")
+		@JsonProperty(ERROR_DATA)
 		private String data;
 
 		@JsonCreator
@@ -75,27 +86,26 @@ public class ResolveResponse extends DIDObject<ResolveResponse> {
 		}
 	}
 
-	@JsonCreator
 	protected ResolveResponse() {
 	}
 
-	protected ResolveResponse(String id, ResolveResult result) {
-		this.id = id;
+	protected ResolveResponse(String responseId, R result) {
+		this.responseId = responseId;
 		this.jsonRpcVersion = JSON_RPC_VERSION;
 		this.result = result;
 	}
 
-	protected ResolveResponse(String id, int code, String message) {
-		this.id = id;
+	protected ResolveResponse(String responseId, int code, String message) {
+		this.responseId = responseId;
 		this.jsonRpcVersion = JSON_RPC_VERSION;
 		this.error = new JsonRpcError();
 	}
 
-	public String getId() {
-		return id;
+	public String getResponseId() {
+		return responseId;
 	}
 
-	public ResolveResult getResult() {
+	public R getResult() {
 		return result;
 	}
 
@@ -118,4 +128,5 @@ public class ResolveResponse extends DIDObject<ResolveResponse> {
 		if (result != null)
 			result.sanitize();
 	}
+
 }

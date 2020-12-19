@@ -2374,20 +2374,14 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		return jpb;
 	}
 
-	public TransferTicket createTransferTicket(DID to, String storepass)
+	public TransferTicket createTransferTicket(DID did, DID to, String storepass)
 			throws DIDResolveException, NotControllerException, DIDStoreException {
-		if (to == null || storepass == null || storepass.isEmpty())
+		if (did == null || to == null || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		if (!isCustomizedDid())
-			throw new UnsupportedOperationException("Not a customized DID");
-
-		if (getEffectiveController() == null)
-			throw new UnsupportedOperationException("No effective controller specified");
-
-		TransferTicket ticket = new TransferTicket(this, to);
+		TransferTicket ticket = new TransferTicket(did, to);
 		try {
-			ticket.seal(getEffectiveControllerDocument(), storepass);
+			ticket.seal(this, storepass);
 		} catch (AlreadySignedException ignore) {
 			// Should never happen
 			log.error("INTERNAL - Seal the transfer ticket", ignore);
@@ -2402,13 +2396,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (ticket == null || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		if (!isCustomizedDid())
-			throw new UnsupportedOperationException("Not a customized DID");
-
-		if (ticket.getSubject().equals(getSubject()))
-			throw new IllegalArgumentException("Ticket not belongs to current DID");
-
-		ticket.seal(getEffectiveControllerDocument(), storepass);
+		ticket.seal(this, storepass);
 		return ticket;
 	}
 
@@ -3735,6 +3723,31 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			document.expires = expires;
 			invalidateProof();
 
+			return this;
+		}
+
+		/**
+		 * Remove the proof that created by the specific controller.
+		 *
+		 * @param controller the controller's DID
+		 * @return the DID Document Builder
+		 */
+		public Builder removeProof(DID controller) {
+			if (document == null)
+				throw new IllegalStateException("Document already sealed.");
+
+			if (document.proofs == null || document.proofs.isEmpty())
+				return this;
+
+			Proof matched = null;
+			for (Proof proof : document.proofs.values()) {
+				if (proof.getCreator().getDid().equals(controller)) {
+					matched = proof;
+					break;
+				}
+			}
+
+			document.proofs.remove(matched.getCreator());
 			return this;
 		}
 

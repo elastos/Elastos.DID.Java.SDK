@@ -167,15 +167,15 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	/**
 	 * Transfer ticket constructor.
 	 *
-	 * @param did the DID's document that need transfer
+	 * @param did the subject did
 	 * @param to (one of ) the new owner's DID
+	 * @throws DIDResolveException if failed resolve the subject DID
 	 */
-	protected TransferTicket(DIDDocument doc, DID to) {
+	protected TransferTicket(DID did, DID to) throws DIDResolveException {
+		this.id = did;
+		this.doc = did.resolve(true);
 		if (!doc.isCustomizedDid())
-			throw new IllegalArgumentException("DID " + doc.getSubject() + " is not a customized DID");
-
-		this.id = doc.getSubject();
-		this.doc = doc;
+			throw new IllegalArgumentException("DID " + did + " is not a customized DID");
 
 		this.to = to;
 		this.txid = this.doc.getMetadata().getTransactionId();

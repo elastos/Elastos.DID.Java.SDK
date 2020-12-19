@@ -20,26 +20,39 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.backend;
 
-import org.elastos.did.exception.DIDTransactionException;
+import org.elastos.did.DID;
+import org.elastos.did.exception.MalformedDIDException;
 
-/**
- * The interface to provide DID Adapter method to publish DID Document.
- */
-public interface DIDAdapter {
-	/**
-	 * User need to implement 'createIdTransaction' function.
-	 * An application-defined function that create id transaction to chain.
-	 *
-	 * @param payload the payload string to put into id transaction
-	 * @param memo the memorandum string
-	 * @throws DIDTransactionException throw this exception if publishing id transaction failed.
-	 */
-	public void createDidTransaction(String payload, String memo)
-		throws DIDTransactionException;
+public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest> {
+	protected static final String PARAMETER_DID = "did";
+	protected static final String PARAMETER_ALL = "all";
 
-	public void createCredentialTransaction(String payload, String memo)
-		throws DIDTransactionException;
+	private static final String METHOD_NAME = "resolvedid";
 
+	public DIDResolveRequest(String id) {
+		super(id, METHOD_NAME);
+	}
+
+	public void setParameters(DID did, boolean all) {
+		setParameter(PARAMETER_DID, did);
+		setParameter(PARAMETER_ALL, all);
+	}
+
+	public void setParameters(String did, boolean all) {
+		try {
+			setParameters(new DID(did), all);
+		} catch (MalformedDIDException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
+	public DID getDid() {
+		return (DID)getParameter(PARAMETER_DID);
+	}
+
+	public boolean isResolveAll() {
+		return (Boolean)getParameter(PARAMETER_ALL, false);
+	}
 }

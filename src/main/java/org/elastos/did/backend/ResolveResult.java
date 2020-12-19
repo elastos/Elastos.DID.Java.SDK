@@ -22,137 +22,25 @@
 
 package org.elastos.did.backend;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.elastos.did.DID;
 import org.elastos.did.DIDObject;
-import org.elastos.did.exception.MalformedIDChainTransactionException;
+import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.MalformedResolveResultException;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-/**
- * The class records the resolved content.
- */
-@JsonPropertyOrder({ ResolveResult.DID,
-	ResolveResult.STATUS,
-	ResolveResult.TRANSACTION })
-@JsonInclude(Include.NON_NULL)
-public class ResolveResult extends DIDObject<ResolveResult> {
-	protected final static String DID = "did";
-	protected final static String STATUS = "status";
-	protected final static String TRANSACTION = "transaction";
-
+public abstract class ResolveResult<T> extends DIDObject<T> {
 	/**
-	 * The DID is valid.
-	 */
-	public static final int STATUS_VALID = 0;
-	/**
-	 * The DID is expired.
-	 */
-	public static final int STATUS_EXPIRED = 1;
-	/**
-	 * The DID is deactivated.
-	 */
-	public static final int STATUS_DEACTIVATED = 2;
-	/**
-	 * The DID is not published.
-	 */
-	public static final int STATUS_NOT_FOUND = 3;
-
-
-	@JsonProperty(DID)
-	private DID did;
-	@JsonProperty(STATUS)
-	private int status;
-	@JsonProperty(TRANSACTION)
-	private List<IDChainTransaction> idtxs;
-
-	/**
-	 * Constructs the Resolve Result with the given value.
+	 * Post sanitize routine after deserialization.
 	 *
-	 * @param did the specified DID
-	 * @param status the DID's status
+	 * @throws MalformedResolveResultException if the DID object is invalid
 	 */
-	@JsonCreator
-	protected ResolveResult(@JsonProperty(value = DID, required = true)DID did,
-			@JsonProperty(value = STATUS, required = true) int status) {
-		this.did = did;
-		this.status = status;
-	}
-
-	public DID getDid() {
-		return did;
-	}
-
-	public int getStatus() {
-		return status;
-	}
-
-	public int getTransactionCount() {
-		if (idtxs == null)
-			return 0;
-
-		return idtxs.size();
-	}
-
-	/**
-	 * Get the index transaction content.
-	 *
-	 * @param index the index
-	 * @return the index IDChainTransaction content
-	 */
-	public IDChainTransaction getTransaction(int index) {
-		if (idtxs == null)
-			return null;
-
-		return idtxs.get(index);
-	}
-
-	public List<IDChainTransaction> getAllTransactions() {
-		List<IDChainTransaction> txs = new ArrayList<IDChainTransaction>(idtxs.size());
-		txs.addAll(idtxs);
-		return txs;
-	}
-
-	/**
-	 * Add transaction infomation into IDChain Transaction.
-	 * @param tx the IDChainTransaction object
-	 */
-	protected synchronized void addTransaction(IDChainTransaction tx) {
-		if (idtxs == null)
-			idtxs = new LinkedList<IDChainTransaction>();
-
-		idtxs.add(tx);
-	}
-
 	@Override
 	protected void sanitize() throws MalformedResolveResultException {
-		if (did == null)
-			throw new MalformedResolveResultException("Missing did");
-
-		if (status < STATUS_VALID || status > STATUS_NOT_FOUND)
-			throw new MalformedResolveResultException("Unknown status");
-
-		if (status != STATUS_NOT_FOUND) {
-			if (idtxs == null || idtxs.size() == 0)
-				throw new MalformedResolveResultException("Missing transaction");
-
-			try {
-				for (IDChainTransaction tx : idtxs)
-					tx.sanitize();
-			} catch (MalformedIDChainTransactionException e) {
-				throw new MalformedResolveResultException("Invalid transaction", e);
-			}
-		} else {
-			if (idtxs != null)
-				throw new MalformedResolveResultException("Should not include transaction");
+		try {
+			sanitize(true);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedResolveResultException)
+				throw (MalformedResolveResultException)e;
+			else
+				throw new MalformedResolveResultException(e);
 		}
 	}
 }

@@ -20,26 +20,41 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.backend;
 
-import org.elastos.did.exception.DIDTransactionException;
+import org.elastos.did.DID;
+import org.elastos.did.DIDURL;
+import org.elastos.did.exception.MalformedDIDException;
+import org.elastos.did.exception.MalformedDIDURLException;
 
-/**
- * The interface to provide DID Adapter method to publish DID Document.
- */
-public interface DIDAdapter {
-	/**
-	 * User need to implement 'createIdTransaction' function.
-	 * An application-defined function that create id transaction to chain.
-	 *
-	 * @param payload the payload string to put into id transaction
-	 * @param memo the memorandum string
-	 * @throws DIDTransactionException throw this exception if publishing id transaction failed.
-	 */
-	public void createDidTransaction(String payload, String memo)
-		throws DIDTransactionException;
+public class CredentialResolveRevocation extends ResolveRequest<CredentialResolveRevocation> {
+	protected static final String PARAMETER_ID = "id";
+	protected static final String PARAMETER_SIGNER = "signer";
 
-	public void createCredentialTransaction(String payload, String memo)
-		throws DIDTransactionException;
+	private static final String METHOD_NAME = "resolverevocation";
 
+	public CredentialResolveRevocation(String id) {
+		super(id, METHOD_NAME);
+	}
+
+	public void setParameters(DIDURL id, DID signer) {
+		setParameter(PARAMETER_ID, id);
+		setParameter(PARAMETER_SIGNER, signer);
+	}
+
+	public void setParameters(String id, String signer) {
+		try {
+			setParameters(new DIDURL(id), new DID(signer));
+		} catch (MalformedDIDException | MalformedDIDURLException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
+	public DIDURL getId() {
+		return (DIDURL)getParameter(PARAMETER_ID);
+	}
+
+	public DID getSigner() {
+		return (DID)getParameter(PARAMETER_SIGNER);
+	}
 }

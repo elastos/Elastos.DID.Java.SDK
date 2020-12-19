@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-import org.elastos.did.backend.ResolveResult;
+import org.elastos.did.backend.DIDBiography;
 import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
@@ -234,10 +234,10 @@ public class DID implements Comparable<DID> {
 	/**
 	 * Resolve all DID transactions.
 	 *
-	 * @return the ResolveResult object
+	 * @return the DIDBiography object
 	 * @throws DIDResolveException throw this exception if resolving all did transactions failed.
 	 */
-	public ResolveResult resolveHistory() throws DIDResolveException {
+	public DIDBiography getBiography() throws DIDResolveException {
 		return DIDBackend.resolveHistory(this);
 	}
 
@@ -247,10 +247,10 @@ public class DID implements Comparable<DID> {
 	 * @return the new CompletableStage, the result is the DIDHistory interface for
 	 *             resolved transactions if success; null otherwise.
 	 */
-	public CompletableFuture<ResolveResult> resolveHistoryAsync() {
-		CompletableFuture<ResolveResult> future = CompletableFuture.supplyAsync(() -> {
+	public CompletableFuture<DIDBiography> getBiographyAsync() {
+		CompletableFuture<DIDBiography> future = CompletableFuture.supplyAsync(() -> {
 			try {
-				return resolveHistory();
+				return getBiography();
 			} catch (DIDResolveException e) {
 				throw new CompletionException(e);
 			}

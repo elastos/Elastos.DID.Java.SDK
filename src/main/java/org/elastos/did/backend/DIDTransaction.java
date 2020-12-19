@@ -20,26 +20,33 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.backend;
 
-import org.elastos.did.exception.DIDTransactionException;
+import java.util.Date;
+
+import org.elastos.did.DID;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
- * The interface to provide DID Adapter method to publish DID Document.
+ * The class records the information of the specified DID's transaction.
  */
-public interface DIDAdapter {
+public class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
+	@JsonCreator
+	protected DIDTransaction() {}
+
 	/**
-	 * User need to implement 'createIdTransaction' function.
-	 * An application-defined function that create id transaction to chain.
+	 * Constructs the DIDTransaction with the given value.
 	 *
-	 * @param payload the payload string to put into id transaction
-	 * @param memo the memorandum string
-	 * @throws DIDTransactionException throw this exception if publishing id transaction failed.
+	 * @param txid the transaction id string
+	 * @param timestamp the time stamp
+	 * @param request the IDChainRequest content
 	 */
-	public void createDidTransaction(String payload, String memo)
-		throws DIDTransactionException;
+	protected DIDTransaction(String txid, Date timestamp, DIDRequest request) {
+		super(txid, timestamp, request);
+	}
 
-	public void createCredentialTransaction(String payload, String memo)
-		throws DIDTransactionException;
-
+	public DID getDid() {
+		return getRequest().getDid();
+	}
 }
