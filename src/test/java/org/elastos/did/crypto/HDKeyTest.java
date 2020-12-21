@@ -31,8 +31,8 @@ import java.security.KeyPair;
 import java.security.Signature;
 
 import org.bitcoinj.core.Sha256Hash;
-import org.elastos.did.TestData;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.utils.TestData;
 import org.junit.jupiter.api.Test;
 
 import io.jsonwebtoken.Claims;

@@ -33,6 +33,8 @@ import org.elastos.did.util.LRUCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+
 /**
  * The class to store resolved did document in the temporary directory.
  */
@@ -40,36 +42,31 @@ public class ResolverCache {
 	private static final int CACHE_INITIAL_CAPACITY = 16;
 	private static final int CACHE_MAX_CAPACITY = 32;
 
-	private static File rootDir;
-	private static Map<DID, DIDBiography> cache = LRUCache.createInstance(
+	private File rootDir;
+	private Map<DID, DIDBiography> cache = LRUCache.createInstance(
 			CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 
 	private static final Logger log = LoggerFactory.getLogger(IDChainRequest.class);
 
-	private ResolverCache() {
-
-	}
-
 	/**
-	 * Set cache dir to store the DID content.
+	 * Create a resolver cache instance.
 	 *
 	 * @param rootDir the path of cache
 	 */
-	public static void setCacheDir(File rootDir) {
-		ResolverCache.rootDir = rootDir;
+	public ResolverCache(File rootDir) {
+		Preconditions.checkArgument(rootDir != null && !rootDir.isFile(),
+				"Invalid cache directory");
+		this.rootDir = rootDir;
 
 		if (!rootDir.exists())
 			rootDir.mkdirs();
 	}
 
-	private static File getCacheDir() {
-		if (rootDir == null)
-			throw new IllegalStateException("No cache dir specified for ResolverCache");
-
+	private File getCacheDir() {
 		return rootDir;
 	}
 
-	private static File getFile(String id) {
+	private File getFile(String id) {
 		String filename = getCacheDir().getAbsolutePath() + File.separator + id;
 		return new File(filename);
 	}
@@ -77,7 +74,7 @@ public class ResolverCache {
 	/**
 	 * Reset the cache.
 	 */
-	public static void reset() {
+	public void reset() {
 		cache.clear();
 
 		File[] children = getCacheDir().listFiles();
@@ -91,10 +88,10 @@ public class ResolverCache {
 	 * @param rr the DIDBiography content
 	 * @throws IOException write the resolve result to output failed.
 	 */
-	public static void store(DIDBiography rr) throws IOException {
+	public void store(DIDBiography bio) throws IOException {
 		try {
-			rr.serialize(getFile(rr.getDid().getMethodSpecificId()));
-			cache.put(rr.getDid(), rr);
+			bio.serialize(getFile(bio.getDid().getMethodSpecificId()));
+			cache.put(bio.getDid(), bio);
 		} catch (DIDSyntaxException ignore) {
 			log.error("INTERNAL - Serialize DIDBiography", ignore);
 		}
@@ -108,7 +105,7 @@ public class ResolverCache {
 	 * @return the DIDBiography object
 	 * @throws DIDResolveException resolve did failed.
 	 */
-	public static DIDBiography load(DID did, long ttl)
+	public DIDBiography load(DID did, long ttl)
 			throws DIDResolveException {
 		File file = getFile(did.getMethodSpecificId());
 
@@ -122,9 +119,9 @@ public class ResolverCache {
 			return cache.get(did);
 
 		try {
-			DIDBiography rr = DIDBiography.parse(file, DIDBiography.class);
-			cache.put(rr.getDid(), rr);
-			return rr;
+			DIDBiography bio = DIDBiography.parse(file, DIDBiography.class);
+			cache.put(bio.getDid(), bio);
+			return bio;
 		} catch (IOException | DIDSyntaxException e) {
 			throw new DIDResolveException(e);
 		}
@@ -135,7 +132,7 @@ public class ResolverCache {
 	 *
 	 * @param did the specified DID
 	 */
-	static public void invalidate(DID did) {
+	public void invalidate(DID did) {
 		File file = getFile(did.getMethodSpecificId());
 		file.delete();
 		cache.remove(did);

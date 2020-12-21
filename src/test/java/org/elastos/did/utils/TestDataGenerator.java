@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.utils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -29,8 +29,16 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.elastos.did.adapter.SPVAdapter;
-import org.elastos.did.backend.ResolverCache;
+import org.elastos.did.DIDAdapter;
+import org.elastos.did.DIDBackend;
+import org.elastos.did.DIDDocument;
+import org.elastos.did.DIDStore;
+import org.elastos.did.DIDURL;
+import org.elastos.did.Issuer;
+import org.elastos.did.Mnemonic;
+import org.elastos.did.VerifiableCredential;
+import org.elastos.did.VerifiablePresentation;
+import org.elastos.did.backend.SPVAdapter;
 import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
@@ -46,8 +54,8 @@ public class TestDataGenerator {
 	private DIDStore store;
 
 	private String init(String storeRoot) throws IOException, DIDException {
-		adapter = new SPVAdapter(TestConfig.walletDir,
-				TestConfig.walletId, TestConfig.networkConfig,
+		adapter = new SPVAdapter(TestConfig.network,
+				TestConfig.walletDir, TestConfig.walletId,
 				new SPVAdapter.PasswordCallback() {
 					@Override
 					public String getPassword(String walletDir, String walletId) {
@@ -55,11 +63,11 @@ public class TestDataGenerator {
 					}
 				});
 
-		DIDBackend.initialize(TestConfig.resolver, TestData.getResolverCacheDir());
-		ResolverCache.reset();
+		DIDBackend.initialize(adapter, TestConfig.resolverCacheDir);
+		DIDBackend.getInstance().resetCache();
 
 		Utils.deleteFile(new File(storeRoot));
-		store = DIDStore.open("filesystem", storeRoot, adapter);
+		store = DIDStore.open("filesystem", storeRoot);
 
     	String mnemonic =  Mnemonic.getInstance().generate();
     	store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
@@ -98,9 +106,10 @@ public class TestDataGenerator {
 		vc.getMetadata().setAlias("Profile");
 		store.storeCredential(vc);
 
-		DIDURL id = issuer.getDefaultPublicKeyId();
-		HDKey key = HDKey.deserialize(store.loadPrivateKey(issuer.getSubject(), id, TestConfig.storePass));
-		writeTo("issuer." + id.getFragment() + ".sk", key.serializeBase58());
+		// DIDURL id = issuer.getDefaultPublicKeyId();
+		// TODO: fix
+		// HDKey key = HDKey.deserialize(store.loadPrivateKey(issuer.getSubject(), id, TestConfig.storePass));
+		// writeTo("issuer." + id.getFragment() + ".sk", key.serializeBase58());
 
 		String json = issuer.toString(true);
 		writeTo("issuer.normalized.json", json);
@@ -132,7 +141,7 @@ public class TestDataGenerator {
 
 		temp = TestData.generateKeypair();
 		db.addAuthorizationKey("recovery",
-				new DID(DID.METHOD, temp.getAddress()).toString(),
+				"did:elastos:" + temp.getAddress(),
 				temp.getPublicKeyBase58());
 
 		db.addService("openid", "OpenIdConnectVersion1.0Service",
@@ -180,8 +189,9 @@ public class TestDataGenerator {
 		store.storeCredential(vcEmail);
 
 		DIDURL id = test.getDefaultPublicKeyId();
-		HDKey key = HDKey.deserialize(store.loadPrivateKey(test.getSubject(), id, TestConfig.storePass));
-		writeTo("document." + id.getFragment() + ".sk", key.serializeBase58());
+		// TODO: fix
+		// HDKey key = HDKey.deserialize(store.loadPrivateKey(test.getSubject(), id, TestConfig.storePass));
+		// writeTo("document." + id.getFragment() + ".sk", key.serializeBase58());
 
 		String json = test.toString(true);
 		writeTo("document.normalized.json", json);

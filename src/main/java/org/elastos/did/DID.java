@@ -183,7 +183,7 @@ public class DID implements Comparable<DID> {
 	 */
 	public DIDDocument resolve(boolean force)
 			throws DIDResolveException {
-		DIDDocument doc = DIDBackend.resolve(this, force);
+		DIDDocument doc = DIDBackend.getInstance().resolve(this, force);
 		if (doc != null)
 			setMetadata(doc.getMetadata());
 
@@ -238,7 +238,7 @@ public class DID implements Comparable<DID> {
 	 * @throws DIDResolveException throw this exception if resolving all did transactions failed.
 	 */
 	public DIDBiography getBiography() throws DIDResolveException {
-		return DIDBackend.resolveHistory(this);
+		return DIDBackend.getInstance().resolveHistory(this);
 	}
 
 	/**

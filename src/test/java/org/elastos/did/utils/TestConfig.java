@@ -20,30 +20,31 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import org.slf4j.event.Level;
+
 public final class TestConfig {
-	public static String networkConfig;
-	public static String resolver;
-
-	public static boolean dummyBackend;
-
-	public static boolean verbose;
+	public static String network;
 
 	public static String passphrase;
-
-	public static String tempDir;
-
-	public static String storeRoot;
 	public static String storePass;
 
 	public static String walletDir;
 	public static String walletId;
 	public static String walletPassword;
+
+	public static String tempDir;
+	public static String storeRoot;
+
+	public static File resolverCacheDir;
+
+	public static Level level;
 
 	static {
 		InputStream input = TestConfig.class
@@ -58,21 +59,22 @@ public final class TestConfig {
 
 		String sysTemp = System.getProperty("java.io.tmpdir");
 
-		networkConfig = config.getProperty("network");
-		resolver = config.getProperty("resolver");
-
-		dummyBackend = Boolean.valueOf(config.getProperty("backend.dummy"));
-		verbose = Boolean.valueOf(config.getProperty("dummystore.verbose"));
+		network = config.getProperty("network");
+		System.setProperty("org.elastos.did.network", network);
 
 		passphrase = config.getProperty("mnemnoic.passphrase");
+		storePass = config.getProperty("store.pass");
 
 		tempDir = config.getProperty("temp.dir", sysTemp);
-
-		storeRoot = config.getProperty("store.root", sysTemp + "/DIDStore");
-		storePass = config.getProperty("store.pass");
+		storeRoot = config.getProperty("store.root", tempDir + "/DIDStore");
 
 		walletDir = config.getProperty("wallet.dir");
 		walletId = config.getProperty("wallet.id");
 		walletPassword = config.getProperty("wallet.password");
+
+		level = Level.valueOf(config.getProperty("log.level").toUpperCase());
+
+		resolverCacheDir = new File(System.getProperty("user.home") +
+					File.separator + ".elastos/did.cache");
 	}
 }

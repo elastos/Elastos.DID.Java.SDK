@@ -22,18 +22,13 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Random;
 
-import org.elastos.did.backend.CredentialListRequest;
-import org.elastos.did.backend.CredentialResolveRequest;
-import org.elastos.did.backend.CredentialResolveRevocation;
 import org.elastos.did.backend.DIDBiography;
 import org.elastos.did.backend.DIDRequest;
 import org.elastos.did.backend.DIDResolveRequest;
@@ -47,7 +42,6 @@ import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
-import org.elastos.did.exception.NetworkException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,15 +50,19 @@ import org.slf4j.LoggerFactory;
  */
 public class DIDBackend {
 	private static final long DEFAULT_TTL = 24 * 60 * 60 * 1000;
-	private static DIDResolver resolver;
-	private static ResolveHandle resolveHandle;
 
 	private static Random random = new Random();
-	private static long ttl = DEFAULT_TTL; // milliseconds
 
 	private DIDAdapter adapter;
+	private ResolveHandle resolveHandle;
+
+	private ResolverCache cache;
+	private long ttl = DEFAULT_TTL; // milliseconds
 
 	private static final Logger log = LoggerFactory.getLogger(DIDBackend.class);
+
+	// TODO: add application context support
+	private static DIDBackend instance;
 
 	/**
 	 * The interface to indicate how to get local did document, if this did is not published to chain.
@@ -79,17 +77,12 @@ public class DIDBackend {
 		public DIDDocument resolve(DID did);
 	}
 
+	/*
 	static class DefaultResolver implements DIDResolver {
 		private URL url;
 
 		private static final Logger log = LoggerFactory.getLogger(DefaultResolver.class);
 
-		/**
-		 * Set default resolver according to specified url.
-		 *
-		 * @param resolver the resolver url string
-		 * @throws DIDResolveException throw this exception if setting resolver url failed.
-		 */
 		public DefaultResolver(String resolver) throws DIDResolveException {
 			if (resolver == null || resolver.isEmpty())
 				throw new IllegalArgumentException();
@@ -101,8 +94,8 @@ public class DIDBackend {
 			}
 		}
 
-		private InputStream resolve(ResolveRequest<?> request)
-				throws DIDResolveException {
+		@Override
+		public InputStream resolve(String request) throws DIDResolveException {
 			try {
 				HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 				connection.setRequestMethod("POST");
@@ -114,14 +107,8 @@ public class DIDBackend {
 				connection.connect();
 
 				OutputStream os = connection.getOutputStream();
-				try {
-					request.serialize(os, true);
-				} catch (DIDSyntaxException e) {
-					log.error("INTERNAL - Serialize resolve request", e);
-					throw new DIDResolveException("Can not serialize the request", e);
-				} finally {
-					os.close();
-				}
+				os.write(request.getBytes());
+				os.close();
 
 				int code = connection.getResponseCode();
 				if (code != 200) {
@@ -136,7 +123,17 @@ public class DIDBackend {
 			}
 		}
 
-		@Override
+		private InputStream resolve(ResolveRequest<?, ?> request)
+				throws DIDResolveException {
+			try {
+				String requestJson = request.serialize(true);
+				return resolve(requestJson);
+			} catch (DIDSyntaxException e) {
+				log.error("INTERNAL - Serialize resolve request", e);
+				throw new DIDResolveException("Can not serialize the request", e);
+			}
+		}
+
 		public InputStream resolveDid(String requestId, String did, boolean all)
 				throws DIDResolveException {
 			log.debug("Resolving DID {}...", did);
@@ -146,7 +143,6 @@ public class DIDBackend {
 			return resolve(request);
 		}
 
-		@Override
 		public InputStream resolveCredential(String requestId, String id)
 				throws DIDResolveException {
 			log.debug("Resolving credential {}...", id);
@@ -156,7 +152,6 @@ public class DIDBackend {
 			return resolve(request);
 		}
 
-		@Override
 		public InputStream listCredentials(String requestId, String did,
 				int skip, int limit) throws DIDResolveException {
 			log.debug("List credentials for {}...", did);
@@ -166,7 +161,6 @@ public class DIDBackend {
 			return resolve(request);
 		}
 
-		@Override
 		public InputStream resolveCredentialRevocation(String requestId,
 				String id, String signer) throws DIDResolveException {
 			log.debug("Resolving credential revocation {} from {} ...", id, signer);
@@ -176,57 +170,19 @@ public class DIDBackend {
 			return resolve(request);
 		}
 	}
+*/
 
     /**
      * Set DIDAdapter for DIDBackend.
      *
      * @param adapter the DIDAdapter object
      */
-	private DIDBackend(DIDAdapter adapter) {
+	private DIDBackend(DIDAdapter adapter, File cacheDir) {
+		checkArgument(adapter != null, "Invalid adapter");
+		checkArgument(cacheDir != null && !cacheDir.isFile(), "Invalid cache directory");
+
 		this.adapter = adapter;
-	}
-
-	/**
-	 * Initialize DIDBackend to resolve by url and cache path stored the document in ttl time.
-	 * Recommendation for cache dir:
-	 * - Laptop/standard Java
-	 *   System.getProperty("user.home") + "/.cache.did.elastos"
-	 * - Android Java
-	 *   Context.getFilesDir() + "/.cache.did.elastos"
-	 *
-	 * @param resolverURL the url string to resolve did
-	 * @param cacheDir the cache path to store did document
-	 * @throws DIDResolveException throw this exception if initializing backend failed with
-	 *         creating DIDResolver error.
-	 */
-	public static void initialize(String resolverURL, File cacheDir)
-			throws DIDResolveException {
-		if (resolverURL == null || resolverURL.isEmpty() || cacheDir == null)
-			throw new IllegalArgumentException();
-
-		initialize(new DefaultResolver(resolverURL), cacheDir);
-	}
-
-	/**
-	 * Initialize DIDBackend to resolve by url string and cache path stored the document in ttl time.
-	 * Recommendation for cache dir:
-	 * - Laptop/standard Java
-	 *   System.getProperty("user.home") + "/.cache.did.elastos"
-	 * - Android Java
-	 *   Context.getFilesDir() + "/.cache.did.elastos"
-	 *
-	 * @param resolverURL the url string to resolve did
-	 * @param cacheDir the cache path to store did document
-	 * @throws DIDResolveException throw this exception if initializing backend failed with
-	 *         creating DIDResolver error.
-	 **/
-	public static void initialize(String resolverURL, String cacheDir)
-			throws DIDResolveException {
-		if (resolverURL == null || resolverURL.isEmpty() ||
-				cacheDir == null || cacheDir.isEmpty())
-			throw new IllegalArgumentException();
-
-		initialize(resolverURL, new File(cacheDir));
+		this.cache = new ResolverCache(cacheDir);
 	}
 
     /**
@@ -237,15 +193,11 @@ public class DIDBackend {
 	 * - Android Java
 	 *   Context.getFilesDir() + "/.cache.did.elastos"
      *
-     * @param resolver the DIDResolver object
+     * @param adapter the DIDAdapter object
      * @param cacheDir the cache path name
      */
-	public static void initialize(DIDResolver resolver, File cacheDir) {
-		if (resolver == null || cacheDir == null)
-			throw new IllegalArgumentException();
-
-		DIDBackend.resolver = resolver;
-		ResolverCache.setCacheDir(cacheDir);
+	public static void initialize(DIDAdapter adapter, File cacheDir) {
+		instance = new DIDBackend(adapter, cacheDir);
 	}
 
     /**
@@ -256,24 +208,22 @@ public class DIDBackend {
 	 * - Android Java
 	 *   Context.getFilesDir() + "/.cache.did.elastos"
      *
-     * @param resolver the DIDResolver object
+     * @param adapter the DIDAdapter object
      * @param cacheDir the cache path name
      */
-	public static void initialize(DIDResolver resolver, String cacheDir) {
-		if (resolver == null || cacheDir == null || cacheDir.isEmpty())
-			throw new IllegalArgumentException();
+	public static void initialize(DIDAdapter adapter, String cacheDir) {
+		checkArgument(cacheDir != null && !cacheDir.isEmpty(), "Invalid cache directory");
 
-		initialize(resolver, new File(cacheDir));
+		initialize(adapter, new File(cacheDir));
 	}
 
 	/**
 	 * Get DIDBackend instance according to specified DIDAdapter object.
 	 *
-	 * @param adapter the DIDAdapter object
 	 * @return the DIDBackend instance
 	 */
-	protected static DIDBackend getInstance(DIDAdapter adapter) {
-		return new DIDBackend(adapter);
+	public static DIDBackend getInstance() {
+		return instance;
 	}
 
 	/**
@@ -281,7 +231,7 @@ public class DIDBackend {
 	 *
 	 * @param ttl the validate time to store content
 	 */
-	public static void setTTL(long ttl) {
+	public void setTTL(long ttl) {
 		ttl = ttl > 0 ? (ttl * 60 * 1000) : 0;
 	}
 
@@ -290,11 +240,11 @@ public class DIDBackend {
 	 *
 	 * @return the validate time to live
 	 */
-	public static long getTTL() {
+	public long getTTL() {
 		return ttl != 0 ? (ttl / 60 / 1000) : 0;
 	}
 
-	private static String generateRequestId() {
+	private String generateRequestId() {
 		StringBuffer sb = new StringBuffer();
 
 		while(sb.length() < 16)
@@ -309,17 +259,28 @@ public class DIDBackend {
      *
 	 * @param handle the ResolveHandle object
 	 */
-	public static void setResolveHandle(ResolveHandle handle) {
-		DIDBackend.resolveHandle = handle;
+	public void setResolveHandle(ResolveHandle handle) {
+		resolveHandle = handle;
 	}
 
-	private static DIDBiography resolveFromBackend(DID did, boolean all)
+	private InputStream resolve(ResolveRequest<?, ?> request)
 			throws DIDResolveException {
-		if (resolver == null)
-			throw new DIDResolveException("DID resolver not initialized.");
+		try {
+			String requestJson = request.serialize(true);
+			return adapter.resolve(requestJson);
+		} catch (DIDSyntaxException e) {
+			log.error("INTERNAL - Serialize resolve request", e);
+			throw new DIDResolveException("Can not serialize the request", e);
+		}
+	}
 
+	private DIDBiography resolveFromBackend(DID did, boolean all)
+			throws DIDResolveException {
 		String requestId = generateRequestId();
-		InputStream is = resolver.resolveDid(requestId, did.toString(), all);
+		DIDResolveRequest request = new DIDResolveRequest(requestId);
+		request.setParameters(did, all);
+		InputStream is = resolve(request);
+
 		DIDResolveResponse response;
 		try {
 			response = DIDResolveResponse.parse(is, DIDResolveResponse.class);
@@ -335,21 +296,21 @@ public class DIDBackend {
 		if (response.getResponseId() == null || !response.getResponseId().equals(requestId))
 			throw new DIDResolveException("Mismatched resolve result with request.");
 
-		DIDBiography rr = response.getResult();
-		if (rr == null) {
+		DIDBiography bio = response.getResult();
+		if (bio == null) {
 			throw new DIDResolveException("Resolve DID error("
 					+ response.getErrorCode() + "): " + response.getErrorMessage());
 		}
 
-		if (rr.getStatus() != DIDBiography.STATUS_NOT_FOUND) {
+		if (bio.getStatus() != DIDBiography.STATUS_NOT_FOUND) {
 			try {
-				ResolverCache.store(rr);
+				cache.store(bio);
 			} catch (IOException e) {
 				log.error("!!! Cache resolved result error !!!", e);
 			}
 		}
 
-		return rr;
+		return bio;
 	}
 
     /**
@@ -359,7 +320,7 @@ public class DIDBackend {
      * @return the DIDBiography object
      * @throws DIDResolveException throw this exception if resolving did transcations failed.
      */
-	protected static DIDBiography resolveHistory(DID did) throws DIDResolveException {
+	protected DIDBiography resolveHistory(DID did) throws DIDResolveException {
 		log.info("Resolving {}...", did.toString());
 
 		DIDBiography rr = resolveFromBackend(did, true);
@@ -378,27 +339,27 @@ public class DIDBackend {
 	 * @return the DIDDocument object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	protected static DIDDocument resolve(DID did, boolean force)
+	protected DIDDocument resolve(DID did, boolean force)
 			throws DIDResolveException {
 		log.info("Resolving {}...", did.toString());
 
-		if (DIDBackend.resolveHandle != null) {
+		if (resolveHandle != null) {
 			DIDDocument doc = resolveHandle.resolve(did);
 			if (doc != null)
 				return doc;
 		}
 
-		DIDBiography rr = null;
+		DIDBiography bio = null;
 		if (!force) {
-			rr = ResolverCache.load(did, ttl);
+			bio = cache.load(did, ttl);
 			log.debug("Try load {} from resolver cache: {}.",
-					did.toString(), rr == null ? "non" : "matched");
+					did.toString(), bio == null ? "non" : "matched");
 		}
 
-		if (rr == null)
-			rr = resolveFromBackend(did, false);
+		if (bio == null)
+			bio = resolveFromBackend(did, false);
 
-		switch (rr.getStatus()) {
+		switch (bio.getStatus()) {
 		// When DID expired, we should also return the document.
 		// case DIDBiography.STATUS_EXPIRED:
 		// 	throw new DIDExpiredException();
@@ -410,7 +371,7 @@ public class DIDBackend {
 			return null;
 
 		default:
-			DIDTransaction tx = rr.getTransaction(0);
+			DIDTransaction tx = bio.getTransaction(0);
 
 			try {
 				if (!tx.getRequest().isValid())
@@ -429,6 +390,10 @@ public class DIDBackend {
 		}
 	}
 
+	public void resetCache() {
+		cache.reset();
+	}
+
 	/**
 	 * Resolve DID content(DIDDocument).
 	 *
@@ -436,7 +401,7 @@ public class DIDBackend {
 	 * @return the DIDDocument object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	protected static DIDDocument resolve(DID did) throws DIDResolveException {
+	protected DIDDocument resolve(DID did) throws DIDResolveException {
 		return resolve(did, false);
 	}
 
@@ -454,7 +419,7 @@ public class DIDBackend {
 		log.info("Create ID transaction...");
 		log.trace("Transaction paload: '{}', memo: {}", payload, memo);
 
-		adapter.createDidTransaction(payload, memo);
+		adapter.createIdTransaction(payload, memo);
 
 		log.info("ID transaction complete.");
 	}
@@ -493,7 +458,7 @@ public class DIDBackend {
 		DIDRequest request = DIDRequest.update(doc, previousTxid, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
-		ResolverCache.invalidate(doc.getSubject());
+		cache.invalidate(doc.getSubject());
 	}
 
 	protected void transferDid(DIDDocument doc, TransferTicket ticket,
@@ -502,7 +467,7 @@ public class DIDBackend {
 		DIDRequest request = DIDRequest.transfer(doc, ticket, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
-		ResolverCache.invalidate(doc.getSubject());
+		cache.invalidate(doc.getSubject());
 	}
 
     /**
@@ -520,7 +485,7 @@ public class DIDBackend {
 		DIDRequest request = DIDRequest.deactivate(doc, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
-		ResolverCache.invalidate(doc.getSubject());
+		cache.invalidate(doc.getSubject());
 	}
 
 	/**
@@ -543,6 +508,6 @@ public class DIDBackend {
 				targetSignKey, doc, signKey, storepass);
 		String json = request.toString(true);
 		createTransaction(json, null);
-		ResolverCache.invalidate(target.getSubject());
+		cache.invalidate(target.getSubject());
 	}
 }

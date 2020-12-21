@@ -31,15 +31,24 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.utils.DIDTestExtension;
+import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(DIDTestExtension.class)
 public class VerifiableCredentialTest {
-	@Test
-	public void TestKycCredential() throws DIDException, IOException {
-		TestData testData = new TestData();
+	private TestData testData;
 
-		// for integrity check
-		testData.setup(true);
+    @BeforeEach
+    public void beforeEach() throws DIDException {
+    	testData = new TestData();
+    	testData.init(true);
+    }
+
+    @Test
+	public void TestKycCredential() throws DIDException, IOException {
 		DIDDocument issuer = testData.loadTestIssuer();
 		DIDDocument test = testData.loadTestDocument();
 
@@ -66,10 +75,6 @@ public class VerifiableCredentialTest {
 
 	@Test
 	public void TestSelfProclaimedCredential() throws DIDException, IOException {
-		TestData testData = new TestData();
-
-		// for integrity check
-		testData.setup(true);
 		DIDDocument test = testData.loadTestDocument();
 
 		VerifiableCredential vc = testData.loadProfileCredential();
@@ -100,8 +105,6 @@ public class VerifiableCredentialTest {
 	@Test
 	public void testParseAndSerializeKycCredential()
 			throws DIDException, IOException {
-		TestData testData = new TestData();
-
 		String json = testData.loadTwitterVcNormalizedJson();
 		VerifiableCredential normalized = VerifiableCredential.parse(json);
 
@@ -125,8 +128,6 @@ public class VerifiableCredentialTest {
 	@Test
 	public void testParseAndSerializeSelfProclaimedCredential()
 			throws DIDException, IOException {
-		TestData testData = new TestData();
-
 		String json = testData.loadProfileVcNormalizedJson();
 		VerifiableCredential normalized = VerifiableCredential.parse(json);
 
@@ -150,8 +151,6 @@ public class VerifiableCredentialTest {
 	@Test
 	public void testParseAndSerializeJsonCredential()
 			throws DIDException, IOException {
-		TestData testData = new TestData();
-
 		String json = testData.loadJsonVcNormalizedJson();
 		VerifiableCredential normalized = VerifiableCredential.parse(json);
 

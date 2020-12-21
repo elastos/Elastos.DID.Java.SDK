@@ -31,14 +31,27 @@ import java.io.IOException;
 import java.util.List;
 
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.utils.DIDTestExtension;
+import org.elastos.did.utils.TestConfig;
+import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(DIDTestExtension.class)
 public class VerifiablePresentationTest {
-	@Test
-	public void testReadPresentation() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
+	private TestData testData;
+	private DIDStore store;
 
+    @BeforeEach
+    public void beforeEach() throws DIDException {
+    	testData = new TestData();
+    	testData.init(true);
+    	store = testData.getStore();
+    }
+
+    @Test
+	public void testReadPresentation() throws DIDException, IOException {
 		// For integrity check
 		testData.loadTestIssuer();
 		DIDDocument testDoc = testData.loadTestDocument();
@@ -71,9 +84,6 @@ public class VerifiablePresentationTest {
 
 	@Test
 	public void testBuild() throws DIDException, IOException {
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(true);
-
 		// For integrity check
 		testData.loadTestIssuer();
 		DIDDocument testDoc = testData.loadTestDocument();
@@ -117,9 +127,6 @@ public class VerifiablePresentationTest {
 
 	@Test
 	public void testParseAndSerialize() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		// For integrity check
 		testData.loadTestIssuer();
 		testData.loadTestDocument();

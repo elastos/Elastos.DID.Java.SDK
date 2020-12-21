@@ -25,19 +25,43 @@ package org.elastos.did.backend;
 import org.elastos.did.DID;
 import org.elastos.did.exception.MalformedDIDException;
 
-public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest> {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, DIDResolveRequest.Parameters> {
 	protected static final String PARAMETER_DID = "did";
 	protected static final String PARAMETER_ALL = "all";
 
-	private static final String METHOD_NAME = "resolvedid";
+	protected static final String METHOD_NAME = "resolvedid";
 
-	public DIDResolveRequest(String id) {
-		super(id, METHOD_NAME);
+	protected static class Parameters {
+		@JsonProperty(PARAMETER_DID)
+		private DID did;
+
+		@JsonProperty(PARAMETER_ALL)
+		@JsonInclude(Include.NON_NULL)
+		private Boolean all;
+
+		public Parameters(DID did, Boolean all) {
+			this.did = did;
+			this.all = all;
+		}
+
+		@JsonCreator
+		public Parameters(@JsonProperty(value = PARAMETER_DID, required = true)DID did) {
+			this(did, null);
+		}
+	}
+
+	@JsonCreator
+	public DIDResolveRequest(@JsonProperty(value = ID)String requestId) {
+		super(requestId, METHOD_NAME);
 	}
 
 	public void setParameters(DID did, boolean all) {
-		setParameter(PARAMETER_DID, did);
-		setParameter(PARAMETER_ALL, all);
+		setParameters(new Parameters(did, all));
 	}
 
 	public void setParameters(String did, boolean all) {
@@ -49,10 +73,10 @@ public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest> {
 	}
 
 	public DID getDid() {
-		return (DID)getParameter(PARAMETER_DID);
+		return getParameters().did;
 	}
 
 	public boolean isResolveAll() {
-		return (Boolean)getParameter(PARAMETER_ALL, false);
+		return getParameters().all == null ? false : getParameters().all;
 	}
 }

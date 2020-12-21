@@ -20,14 +20,12 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.adapter;
+package org.elastos.did.backend;
 
-import org.elastos.did.DIDAdapter;
-import org.elastos.did.exception.DIDBackendException;
-import org.elastos.did.exception.DIDResolveException;
+import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.exception.DIDTransactionException;
 
-public class SPVAdapter implements DIDAdapter {
+public class SPVAdapter extends DefaultDIDAdapter {
 	private String walletDir;
 	private String walletId;
 	private String network;
@@ -43,9 +41,9 @@ public class SPVAdapter implements DIDAdapter {
 		public String getPassword(String walletDir, String walletId);
 	}
 
-	public SPVAdapter(String walletDir, String walletId, String network,
-			PasswordCallback passwordCallback)
-			throws DIDBackendException, DIDResolveException {
+	public SPVAdapter(String network, String walletDir, String walletId,
+			PasswordCallback passwordCallback) {
+		super(network);
 		handle = create(walletDir, walletId, network);
 		this.walletDir = walletDir;
 		this.walletId = walletId;
@@ -74,17 +72,7 @@ public class SPVAdapter implements DIDAdapter {
 	}
 
 	@Override
-	public void createDidTransaction(String payload, String memo)
-			throws DIDTransactionException {
-		String password = passwordCallback.getPassword(walletDir, walletId);
-		if (password == null)
-			password = "";
-
-		createIdTransaction(handle, payload, memo, password);
-	}
-
-	@Override
-	public void createCredentialTransaction(String payload, String memo)
+	public void createIdTransaction(String payload, String memo)
 			throws DIDTransactionException {
 		String password = passwordCallback.getPassword(walletDir, walletId);
 		if (password == null)

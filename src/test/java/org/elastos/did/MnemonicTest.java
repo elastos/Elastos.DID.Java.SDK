@@ -26,10 +26,24 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.utils.DIDTestExtension;
+import org.elastos.did.utils.TestConfig;
+import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(DIDTestExtension.class)
 public class MnemonicTest {
-	@Test
+	private TestData testData;
+
+    @BeforeEach
+    public void beforeEach() throws DIDException {
+    	testData = new TestData();
+    	testData.init(true);
+    }
+
+    @Test
 	public void testBuiltinWordList() throws DIDException {
 		String[] languages = {
 				Mnemonic.DEFAULT,
@@ -49,9 +63,7 @@ public class MnemonicTest {
 			String mnemonic = mc.generate();
 			assertTrue(mc.isValid(mnemonic));
 
-			// Try to use the mnemonic create root identity.
-			TestData testData = new TestData();
-			DIDStore store = testData.setup(true);
+			DIDStore store = testData.getStore();
 	    	store.initPrivateIdentity(lang, mnemonic,
 	    			TestConfig.passphrase, TestConfig.storePass, true);
 

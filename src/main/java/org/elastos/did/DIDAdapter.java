@@ -22,6 +22,9 @@
 
 package org.elastos.did;
 
+import java.io.InputStream;
+
+import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDTransactionException;
 
 /**
@@ -36,10 +39,17 @@ public interface DIDAdapter {
 	 * @param memo the memorandum string
 	 * @throws DIDTransactionException throw this exception if publishing id transaction failed.
 	 */
-	public void createDidTransaction(String payload, String memo)
+	public void createIdTransaction(String payload, String memo)
 		throws DIDTransactionException;
 
-	public void createCredentialTransaction(String payload, String memo)
-		throws DIDTransactionException;
-
+	/**
+	 * Perform the DID related resolve.
+	 *
+	 * @param requestId the request identifier by user defined
+	 * @param request the resolve request
+	 * @return the resolve result
+	 * @throws DIDResolveException resolve did failed.
+	 */
+	public InputStream resolve(String request)
+			throws DIDResolveException;
 }

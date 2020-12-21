@@ -43,6 +43,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
@@ -207,6 +208,29 @@ public abstract class DIDObject<T> {
 				new SerializeContext(normalized, getSerializeContextDid())));
 
 		return mapper;
+	}
+
+	/**
+	 * Generic method to parse a DID object from a JSON node
+	 * representation into given DIDObject type.
+	 *
+	 * @param <T> the generic DID object type
+	 * @param content the JSON node for building the object
+	 * @param clazz the class object for DID object
+	 * @return the parsed DID object
+	 * @throws DIDSyntaxException if a parse error occurs
+	 */
+	protected static<T extends DIDObject<?>> T parse(JsonNode content, Class<T> clazz)
+			throws DIDSyntaxException {
+		ObjectMapper mapper = getObjectMapper();
+
+		try {
+			T o = mapper.treeToValue(content, clazz);
+			o.sanitize();
+			return o;
+		} catch (IOException e) {
+			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
+		}
 	}
 
 	/**
