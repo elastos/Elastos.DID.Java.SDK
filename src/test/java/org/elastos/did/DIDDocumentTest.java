@@ -44,14 +44,25 @@ import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDObjectAlreadyExistException;
 import org.elastos.did.exception.DIDObjectNotExistException;
+import org.elastos.did.utils.DIDTestExtension;
+import org.elastos.did.utils.TestConfig;
+import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(DIDTestExtension.class)
 public class DIDDocumentTest {
+	private TestData testData;
+
+    @BeforeEach
+    public void beforeEach() throws DIDException {
+    	testData = new TestData();
+    	testData.init(true);
+    }
+
 	@Test
 	public void testGetPublicKey() throws IOException, DIDException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -126,9 +137,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testGetPublicKeyWithEmptyCid() throws IOException, DIDException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument doc = testData.loadEmptyCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -205,9 +213,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testGetPublicKeyWithCid() throws IOException, DIDException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument doc = testData.loadCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -294,8 +299,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testAddPublicKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -333,8 +336,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testAddPublicKeyWithCid() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadCustomizedDidDocument();
@@ -372,8 +373,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testRemovePublicKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -423,8 +422,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testRemovePublicKeyWithCid() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadCustomizedDidDocument();
@@ -477,8 +474,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testGetAuthenticationKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -547,8 +542,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testGetAuthenticationKeyWithCid() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadCustomizedDidDocument();
@@ -630,8 +623,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testAddAuthenticationKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -700,8 +691,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testAddAuthenticationKeyWithCid() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadEmptyCustomizedDidDocument();
@@ -777,8 +766,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testRemoveAuthenticationKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -834,8 +821,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testRemoveAuthenticationKeyWithCid() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadCustomizedDidDocument();
@@ -882,8 +867,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testGetAuthorizationKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -940,8 +923,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testGetAuthorizationKeyWithCid() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadCustomizedDidDocument();
@@ -994,8 +975,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testAddAuthorizationKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1070,8 +1049,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testAddAuthorizationKeyWithCid() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadCustomizedDidDocument();
@@ -1147,8 +1124,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testRemoveAuthorizationKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1200,8 +1175,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testRemoveAuthorizationKeyWithCid() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadCustomizedDidDocument();
@@ -1268,8 +1241,6 @@ public class DIDDocumentTest {
 	/*
 	@Test
 	public void testGetJceKeyPair() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1310,8 +1281,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testGetCredential() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1368,8 +1337,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testAddCredential() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1411,8 +1378,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testAddSelfClaimedCredential() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1460,8 +1425,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testRemoveCredential() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1509,8 +1472,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testGetService() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1571,8 +1532,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testAddService() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1610,8 +1569,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testRemoveService() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1647,8 +1604,6 @@ public class DIDDocumentTest {
 	@Test
 	public void testParseAndSerializeDocument()
 			throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument compact = DIDDocument
@@ -1695,8 +1650,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testSignAndVerify() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1729,8 +1682,6 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testDerive() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
@@ -1753,8 +1704,6 @@ public class DIDDocumentTest {
 	public void testDeriveFromIdentifier() throws DIDException, IOException {
 		String identifier = "org.elastos.did.test";
 
-		TestData testData = new TestData();
-		testData.setup(true);
 		testData.initIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();

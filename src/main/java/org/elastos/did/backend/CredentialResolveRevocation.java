@@ -27,19 +27,36 @@ import org.elastos.did.DIDURL;
 import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDIDURLException;
 
-public class CredentialResolveRevocation extends ResolveRequest<CredentialResolveRevocation> {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class CredentialResolveRevocation extends ResolveRequest<CredentialResolveRevocation, CredentialResolveRevocation.Parameters> {
 	protected static final String PARAMETER_ID = "id";
 	protected static final String PARAMETER_SIGNER = "signer";
 
-	private static final String METHOD_NAME = "resolverevocation";
+	protected static final String METHOD_NAME = "resolverevocation";
 
-	public CredentialResolveRevocation(String id) {
-		super(id, METHOD_NAME);
+	protected static class Parameters {
+		@JsonProperty(PARAMETER_ID)
+		private DIDURL id;
+
+		@JsonProperty(PARAMETER_SIGNER)
+		private DID signer;
+
+		@JsonCreator
+		public Parameters(@JsonProperty(value = PARAMETER_ID, required = true)DIDURL id,
+				@JsonProperty(value = PARAMETER_SIGNER, required = true)DID signer) {
+			this.signer = signer;
+		}
+	}
+
+	@JsonCreator
+	public CredentialResolveRevocation(@JsonProperty(value = ID)String requestId) {
+		super(requestId, METHOD_NAME);
 	}
 
 	public void setParameters(DIDURL id, DID signer) {
-		setParameter(PARAMETER_ID, id);
-		setParameter(PARAMETER_SIGNER, signer);
+		setParameters(new Parameters(id, signer));
 	}
 
 	public void setParameters(String id, String signer) {
@@ -51,10 +68,10 @@ public class CredentialResolveRevocation extends ResolveRequest<CredentialResolv
 	}
 
 	public DIDURL getId() {
-		return (DIDURL)getParameter(PARAMETER_ID);
+		return getParameters().id;
 	}
 
 	public DID getSigner() {
-		return (DID)getParameter(PARAMETER_SIGNER);
+		return getParameters().signer;
 	}
 }

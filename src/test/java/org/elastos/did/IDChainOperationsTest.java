@@ -37,15 +37,21 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-import org.elastos.did.backend.DIDTransaction;
 import org.elastos.did.backend.DIDBiography;
+import org.elastos.did.backend.DIDTransaction;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.utils.DIDTestExtension;
+import org.elastos.did.utils.TestConfig;
+import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 //@RunWith(Parameterized.class)
+@ExtendWith(DIDTestExtension.class)
 public class IDChainOperationsTest {
-	private static final boolean DUMMY_TEST = TestConfig.dummyBackend;
 	/*
 	@Parameterized.Parameters
 	public static Object[][] data() {
@@ -53,13 +59,21 @@ public class IDChainOperationsTest {
 	}
 	*/
 
-	@Test
-	public void testPublishAndResolve() throws DIDException {
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(DUMMY_TEST);
+	private TestData testData;
+	private DIDStore store;
+
+    @BeforeEach
+    public void beforeEach() throws DIDException {
+    	testData = new TestData();
+    	testData.init();
+    	store = testData.getStore();
+
 		testData.initIdentity();
 		testData.waitForWalletAvaliable();
+    }
 
+	@Test
+	public void testPublishAndResolve() throws DIDException {
 		// Create new DID and publish to ID sidechain.
 		DIDDocument doc = store.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
@@ -79,11 +93,6 @@ public class IDChainOperationsTest {
 
 	@Test
 	public void testPublishAndResolveAsync() throws DIDException {
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(DUMMY_TEST);
-		testData.initIdentity();
-		testData.waitForWalletAvaliable();
-
 		// Create new DID and publish to ID sidechain.
 		DIDDocument doc = store.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
@@ -108,11 +117,6 @@ public class IDChainOperationsTest {
 
 	@Test
 	public void testPublishAndResolveAsync2() throws DIDException {
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(DUMMY_TEST);
-		testData.initIdentity();
-		testData.waitForWalletAvaliable();
-
 		// Create new DID and publish to ID sidechain.
 		DIDDocument doc = store.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
@@ -141,11 +145,6 @@ public class IDChainOperationsTest {
 	@Test
 	public void testUpdateAndResolve() throws DIDException {
 		String[] sigs = new String[3];
-
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(DUMMY_TEST);
-		testData.initIdentity();
-		testData.waitForWalletAvaliable();
 
 		// Create new DID and publish to ID sidechain.
 		DIDDocument doc = store.newDid(TestConfig.storePass);
@@ -241,11 +240,6 @@ public class IDChainOperationsTest {
 	@Test
 	public void testUpdateAndResolveAsync() throws DIDException {
 		String[] sigs = new String[3];
-
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(DUMMY_TEST);
-		testData.initIdentity();
-		testData.waitForWalletAvaliable();
 
 		// Create new DID and publish to ID sidechain.
 		DIDDocument doc = store.newDid(TestConfig.storePass);
@@ -354,11 +348,6 @@ public class IDChainOperationsTest {
 
 	@Test
 	public void testUpdateAndResolveWithCredentials() throws DIDException {
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(DUMMY_TEST);
-		testData.initIdentity();
-		testData.waitForWalletAvaliable();
-
 		// Create new DID and publish to ID sidechain.
 		DIDDocument doc = store.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
@@ -483,11 +472,6 @@ public class IDChainOperationsTest {
 
 	@Test
 	public void testUpdateAndResolveWithCredentialsAsync() throws DIDException {
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(DUMMY_TEST);
-		testData.initIdentity();
-		testData.waitForWalletAvaliable();
-
 		// Create new DID and publish to ID sidechain.
 		DIDDocument doc = store.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
@@ -623,13 +607,8 @@ public class IDChainOperationsTest {
 	}
 
 	@Test
+	@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
 	public void testRestore() throws DIDException, IOException {
-		if (DUMMY_TEST)
-			return;
-
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(false);
-
 		String mnemonic = testData.loadRestoreMnemonic();
 
 		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
@@ -675,13 +654,8 @@ public class IDChainOperationsTest {
 	}
 
 	@Test
+	@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
 	public void testRestoreAsync() throws DIDException, IOException {
-		if (DUMMY_TEST)
-			return;
-
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(false);
-
 		String mnemonic = testData.loadRestoreMnemonic();
 
 		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
@@ -731,13 +705,8 @@ public class IDChainOperationsTest {
 	}
 
 	@Test
+	@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
 	public void testSyncWithLocalModification1() throws DIDException, IOException {
-		if (DUMMY_TEST)
-			return;
-
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(false);
-
 		String mnemonic = testData.loadRestoreMnemonic();
 
 		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
@@ -831,13 +800,8 @@ public class IDChainOperationsTest {
 	}
 
 	@Test
+	@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
 	public void testSyncWithLocalModification2() throws DIDException, IOException {
-		if (DUMMY_TEST)
-			return;
-
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(false);
-
 		String mnemonic = testData.loadRestoreMnemonic();
 
 		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
@@ -933,13 +897,8 @@ public class IDChainOperationsTest {
 	}
 
 	@Test
+	@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
 	public void testSyncWithLocalModificationAsync() throws DIDException, IOException {
-		if (DUMMY_TEST)
-			return;
-
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(false);
-
 		String mnemonic = testData.loadRestoreMnemonic();
 
 		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,

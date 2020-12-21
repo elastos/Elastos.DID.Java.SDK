@@ -103,7 +103,6 @@ public final class DIDStore {
 	private Map<DIDURL, VerifiableCredential> vcCache;
 
 	private DIDStorage storage;
-	private DIDBackend backend;
 
 	private static final Logger log = LoggerFactory.getLogger(DIDStore.class);
 
@@ -122,14 +121,12 @@ public final class DIDStore {
 		DIDDocument merge(DIDDocument chainCopy, DIDDocument localCopy);
 	}
 
-	private DIDStore(int initialCacheCapacity, int maxCacheCapacity,
-			DIDAdapter adapter, DIDStorage storage) {
+	private DIDStore(int initialCacheCapacity, int maxCacheCapacity, DIDStorage storage) {
 		if (maxCacheCapacity > 0) {
 			this.didCache = LRUCache.createInstance(initialCacheCapacity, maxCacheCapacity);
 			this.vcCache = LRUCache.createInstance(initialCacheCapacity, maxCacheCapacity);
 		}
 
-		this.backend = DIDBackend.getInstance(adapter);
 		this.storage = storage;
 	}
 
@@ -140,23 +137,20 @@ public final class DIDStore {
 	 * @param location the location of DIDStore
 	 * @param initialCacheCapacity the initial capacity for cache
 	 * @param maxCacheCapacity the max capacity for cache
-	 * @param adapter the DIDAdaper object
 	 * @return the DIDStore object
 	 * @throws DIDStoreException Unsupport the specified store type.
 	 */
 	public static DIDStore open(String type, String location,
-			int initialCacheCapacity, int maxCacheCapacity,
-			DIDAdapter adapter) throws DIDStoreException {
+			int initialCacheCapacity, int maxCacheCapacity) throws DIDStoreException {
 		if (type == null || location == null || location.isEmpty() ||
-				maxCacheCapacity < initialCacheCapacity || adapter == null)
+				maxCacheCapacity < initialCacheCapacity)
 			throw new IllegalArgumentException();
 
 		if (!type.equals("filesystem"))
 			throw new DIDStoreException("Unsupported store type: " + type);
 
 		DIDStorage storage = new FileSystemStorage(location);
-		return new DIDStore(initialCacheCapacity, maxCacheCapacity,
-				adapter, storage);
+		return new DIDStore(initialCacheCapacity, maxCacheCapacity, storage);
 	}
 
 	/**
@@ -164,14 +158,12 @@ public final class DIDStore {
 	 *
 	 * @param type the type for different file system
 	 * @param location the location of DIDStore
-	 * @param adapter the DIDAdaper object
 	 * @return the DIDStore object
 	 * @throws DIDStoreException Unsupport the specified store type.
 	 */
-	public static DIDStore open(String type, String location, DIDAdapter adapter)
+	public static DIDStore open(String type, String location)
 			throws DIDStoreException {
-		return open(type, location, CACHE_INITIAL_CAPACITY,
-				CACHE_MAX_CAPACITY, adapter);
+		return open(type, location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 	}
 
 	/**
@@ -467,7 +459,7 @@ public final class DIDStore {
 				try {
 					DIDDocument chainCopy = null;
 					try {
-						chainCopy = DIDBackend.resolve(did, true);
+						chainCopy = DIDBackend.getInstance().resolve(did, true);
 					} catch (DIDExpiredException | DIDDeactivatedException e) {
 						log.debug("{} is {}, skip.", did.toString(),
 								e instanceof DIDExpiredException ?
@@ -890,10 +882,10 @@ public final class DIDStore {
 
 		if (lastTxid == null || lastTxid.isEmpty()) {
 			log.info("Try to publish[create] {}...", did.toString());
-			backend.createDid(doc, signKey, storepass);
+			DIDBackend.getInstance().createDid(doc, signKey, storepass);
 		} else {
 			log.info("Try to publish[update] {}...", did.toString());
-			backend.updateDid(doc, lastTxid, signKey, storepass);
+			DIDBackend.getInstance().updateDid(doc, lastTxid, signKey, storepass);
 		}
 
 		doc.getMetadata().setPreviousSignature(reolvedSignautre);
@@ -1114,7 +1106,7 @@ public final class DIDStore {
 
 		// Document should use the IDChain's copy
 		boolean localCopy = false;
-		DIDDocument doc = DIDBackend.resolve(did);
+		DIDDocument doc = DIDBackend.getInstance().resolve(did);
 		if (doc == null) {
 			// Fail-back: try to load document from local store
 			doc = loadDid(did);
@@ -1133,7 +1125,7 @@ public final class DIDStore {
 				throw new InvalidKeyException("Not an authentication key.");
 		}
 
-		backend.deactivateDid(doc, signKey, storepass);
+		DIDBackend.getInstance().deactivateDid(doc, signKey, storepass);
 
 		// Save deactivated status to DID metadata
 		if (localCopy) {
@@ -1286,7 +1278,7 @@ public final class DIDStore {
 			throw new IllegalArgumentException();
 
 		// All documents should use the IDChain's copy
-		DIDDocument doc = DIDBackend.resolve(did);
+		DIDDocument doc = DIDBackend.getInstance().resolve(did);
 		if (doc == null) {
 			// Fail-back: try to load document from local store
 			doc = loadDid(did);
@@ -1303,7 +1295,7 @@ public final class DIDStore {
 				throw new InvalidKeyException("Not an authentication key.");
 		}
 
-		DIDDocument targetDoc = DIDBackend.resolve(target);
+		DIDDocument targetDoc = DIDBackend.getInstance().resolve(target);
 		if (targetDoc == null)
 			throw new DIDNotFoundException(target.toString());
 
@@ -1340,7 +1332,7 @@ public final class DIDStore {
 		if (targetSignKey == null)
 			throw new InvalidKeyException("No matched authorization key.");
 
-		backend.deactivateDid(targetDoc, targetSignKey, doc, signKey, storepass);
+		DIDBackend.getInstance().deactivateDid(targetDoc, targetSignKey, doc, signKey, storepass);
 	}
 
 	/**

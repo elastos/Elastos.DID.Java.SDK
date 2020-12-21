@@ -20,36 +20,32 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.backend;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 
-import org.elastos.did.exception.DIDResolveException;
+import org.elastos.did.DefaultDIDAdapter;
+import org.elastos.did.exception.DIDTransactionException;
 
-/**
- * The interface for DIDResolver to support method to resolve did document from chain.
- */
-public interface DIDResolver {
-	/**
-	 * Get the newest DID Document from chain.
-	 *
-	 * @param requestId the request identifier by user defined
-	 * @param did the did string
-	 * @param all all = true, get all did transaction;
-	 *            all = false, get the lastest did transaction.
-	 * @return the resolve result
-	 * @throws DIDResolveException resolve did failed.
-	 */
-	public InputStream resolveDid(String requestId, String did, boolean all)
-			throws DIDResolveException;
+public class SimulatedIDChainAdapter extends DefaultDIDAdapter {
+	private URL idtxEndpoint;
 
-	public InputStream resolveCredential(String requestId, String id)
-			throws DIDResolveException;
+	protected SimulatedIDChainAdapter(URL resolver, URL idtx) {
+		super(resolver.toString());
+		idtxEndpoint = idtx;
+	}
 
-	public InputStream listCredentials(String requestId, String did, int skip, int limit)
-			throws DIDResolveException;
-
-	public InputStream resolveCredentialRevocation(String requestId, String id, String signer)
-			throws DIDResolveException;
-
+	@Override
+	public void createIdTransaction(String payload, String memo)
+			throws DIDTransactionException {
+		try {
+			InputStream is = performRequest(idtxEndpoint, payload);
+			if (is != null)
+				is.close();
+		} catch (IOException e) {
+			throw new DIDTransactionException("Create ID transaction failed.", e);
+		}
+	}
 }

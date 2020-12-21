@@ -39,9 +39,9 @@ import java.security.spec.RSAKeyGenParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 
 import org.bitcoinj.core.Sha256Hash;
-import org.elastos.did.TestData;
-import org.elastos.did.Utils;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.utils.TestData;
+import org.elastos.did.utils.Utils;
 import org.spongycastle.asn1.pkcs.PrivateKeyInfo;
 import org.spongycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;

@@ -25,30 +25,74 @@ package org.elastos.did.backend;
 import org.elastos.did.DID;
 import org.elastos.did.exception.MalformedDIDException;
 
-public class CredentialListRequest extends ResolveRequest<CredentialListRequest> {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class CredentialListRequest extends ResolveRequest<CredentialListRequest, CredentialListRequest.Parameters> {
 	protected static final String PARAMETER_DID = "did";
 	protected static final String PARAMETER_SKIP = "skip";
 	protected static final String PARAMETER_LIMIT = "limit";
 
-	private static final String METHOD_NAME = "listcredential";
+	protected static final String METHOD_NAME = "listcredential";
 
-	public CredentialListRequest(String requestId) {
+	protected static class Parameters {
+		@JsonProperty(PARAMETER_DID)
+		private DID did;
+
+		@JsonProperty(PARAMETER_SKIP)
+		@JsonInclude(Include.NON_NULL)
+		private Integer skip;
+
+		@JsonProperty(PARAMETER_SKIP)
+		@JsonInclude(Include.NON_NULL)
+		private Integer limit;
+
+		public Parameters(DID did, Integer skip, Integer limit) {
+			this.did = did;
+			this.skip = skip;
+			this.limit = limit;
+		}
+
+		public Parameters(DID did, int limit) {
+			this(did, null, limit);
+		}
+
+		@JsonCreator
+		public Parameters(@JsonProperty(value = PARAMETER_DID, required = true)DID did) {
+			this(did, null, null);
+		}
+	}
+
+	@JsonCreator
+	public CredentialListRequest(@JsonProperty(value = ID)String requestId) {
 		super(requestId, METHOD_NAME);
 	}
 
 	public void setParameters(DID did, int skip, int limit) {
-		setParameter(PARAMETER_DID, did);
-		setParameter(PARAMETER_SKIP, skip);
-		setParameter(PARAMETER_LIMIT, limit);
+		setParameters(new Parameters(did, skip, limit));
+	}
+
+	public void setParameters(DID did, int limit) {
+		setParameters(new Parameters(did, limit));
 	}
 
 	public void setParameters(DID did) {
-		setParameter(PARAMETER_DID, did);
+		setParameters(new Parameters(did));
 	}
 
 	public void setParameters(String did, int skip, int limit) {
 		try {
 			setParameters(new DID(did), skip, limit);
+		} catch (MalformedDIDException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
+	public void setParameters(String did, int limit) {
+		try {
+			setParameters(new DID(did), limit);
 		} catch (MalformedDIDException e) {
 			throw new IllegalArgumentException(e);
 		}
@@ -63,14 +107,14 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest>
 	}
 
 	public DID getDid() {
-		return (DID)getParameter(PARAMETER_DID);
+		return getParameters().did;
 	}
 
 	public int getSkip() {
-		return (Integer)getParameter(PARAMETER_SKIP, 0);
+		return getParameters().skip == null ? 0 : getParameters().skip;
 	}
 
 	public int getLimit() {
-		return (Integer)getParameter(PARAMETER_LIMIT, 0);
+		return getParameters().limit == null ? 0 : getParameters().limit;
 	}
 }

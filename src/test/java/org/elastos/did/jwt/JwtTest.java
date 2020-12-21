@@ -33,20 +33,33 @@ import java.util.Date;
 import java.util.Map;
 
 import org.elastos.did.DIDDocument;
-import org.elastos.did.TestConfig;
-import org.elastos.did.TestData;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.utils.DIDTestExtension;
+import org.elastos.did.utils.TestConfig;
+import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@ExtendWith(DIDTestExtension.class)
 public class JwtTest {
 	private static final int OPT = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 
-	public static void printJwt(String token) {
+	private TestData testData;
+
+    @BeforeEach
+    public void beforeEach() throws DIDException {
+    	testData = new TestData();
+    	testData.init(true);
+		testData.initIdentity();
+    }
+
+    public static void printJwt(String token) {
 		String [] toks = token.split("\\.");
 
 		if (toks.length != 2 && toks.length != 3) {
@@ -67,10 +80,6 @@ public class JwtTest {
 	@Test
 	public void jwtTest()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -132,10 +141,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestSignWithDefaultKey()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -201,10 +206,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestSignWithSpecificKey()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -264,10 +265,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestAutoVerify()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -328,10 +325,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestClaimJsonNode()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -408,10 +401,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestClaimJsonText()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -490,10 +479,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestSetClaimWithJsonNode()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -575,10 +560,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestSetClaimWithJsonText()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -658,10 +639,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestAddClaimWithJsonNode()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -743,10 +720,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestAddClaimWithJsonText()
 			throws DIDException, IOException, JwtException {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -825,10 +798,6 @@ public class JwtTest {
 
 	@Test
 	public void jwsTestExpiration() throws Exception {
-		TestData testData = new TestData();
-		testData.setup(true);
-		testData.initIdentity();
-
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());

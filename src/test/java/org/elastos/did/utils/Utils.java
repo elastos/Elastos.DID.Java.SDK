@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.utils;
 
 import java.io.BufferedInputStream;
 import java.io.File;

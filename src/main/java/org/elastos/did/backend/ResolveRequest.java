@@ -22,18 +22,17 @@
 
 package org.elastos.did.backend;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.elastos.did.DIDObject;
+import org.elastos.did.exception.DIDSyntaxException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @JsonPropertyOrder({ ResolveRequest.ID,
 	ResolveRequest.METHOD,
 	ResolveRequest.PARAMETERS })
-public abstract class ResolveRequest<T> extends DIDObject<T> {
+public abstract class ResolveRequest<T, P> extends DIDObject<T> {
 	protected static final String ID = "id";
 	protected static final String METHOD = "method";
 	protected static final String PARAMETERS = "params";
@@ -43,12 +42,11 @@ public abstract class ResolveRequest<T> extends DIDObject<T> {
 	@JsonProperty(METHOD)
 	private String method;
 	@JsonProperty(PARAMETERS)
-	private Map<String, Object> params;
+	private P params;
 
 	protected ResolveRequest(String requestId, String method) {
 		this.requestId = requestId;
 		this.method = method;
-		this.params = new HashMap<String, Object>();
 	}
 
 	public String getRequestId() {
@@ -59,16 +57,17 @@ public abstract class ResolveRequest<T> extends DIDObject<T> {
 		return method;
 	}
 
-	protected void setParameter(String param, Object value) {
-		params.put(param, value);
+	protected void setParameters(P params) {
+		this.params = params;
 
 	}
 
-	protected Object getParameter(String param) {
-		return params.get(param);
+	protected P getParameters() {
+		return params;
 	}
 
-	protected Object getParameter(String param, Object defaultValue) {
-		return params.getOrDefault(param, defaultValue);
+	protected static<T extends DIDObject<?>> T parse(JsonNode content, Class<T> clazz)
+			throws DIDSyntaxException {
+		return DIDObject.parse(content, clazz);
 	}
 }

@@ -35,21 +35,28 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-import org.elastos.did.backend.ResolverCache;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.MalformedDIDException;
+import org.elastos.did.utils.DIDTestExtension;
+import org.elastos.did.utils.TestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(DIDTestExtension.class)
 public class DIDTest {
 	private static final String testMethodSpecificID = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
 	private static final String testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
 
 	private DID did;
+	private TestData testData;
 
     @BeforeEach
-    public void setup() throws MalformedDIDException {
+    public void beforeEach() throws DIDException {
     	did = new DID(testDID);
+    	testData = new TestData();
+    	testData.init();
     }
 
 	@Test
@@ -119,10 +126,8 @@ public class DIDTest {
 	}
 
 	@Test
+	@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
 	public void testResolve() throws DIDException, IOException {
-		DIDBackend.initialize(TestConfig.resolver, TestData.getResolverCacheDir());
-		ResolverCache.reset();
-
 		ArrayList<DID> dids = new ArrayList<DID>(16);
 
 		BufferedReader input = new BufferedReader(new InputStreamReader(
@@ -162,13 +167,10 @@ public class DIDTest {
 		String json = "{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKey\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"type\":\"ECDSAsecp256r1\",\"controller\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKeyBase58\":\"21YM84C9hbap4GfFSB3QbjauUfhAN4ETKg2mn4bSqx4Kp\"}],\"authentication\":[\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\"],\"verifiableCredential\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#name\",\"type\":[\"BasicProfileCredential\",\"SelfProclaimedCredential\"],\"issuer\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"issuanceDate\":\"2020-07-01T00:46:40Z\",\"expirationDate\":\"2025-06-30T00:46:40Z\",\"credentialSubject\":{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"name\":\"KP Test\"},\"proof\":{\"type\":\"ECDSAsecp256r1\",\"verificationMethod\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signature\":\"jQ1OGwpkYqjxooyaPseqyr_1MncOZDrMS_SvwYzqkCHVrRfjv_b7qfGCjxy7Gbx-LS3bvxZKeMxU1B-k3Ysb3A\"}}],\"expires\":\"2025-07-01T00:46:40Z\",\"proof\":{\"type\":\"ECDSAsecp256r1\",\"created\":\"2020-07-01T00:47:20Z\",\"creator\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signatureValue\":\"TOpNt-pWeQDJFaS5EkpMOuCqnZKhPCizf7LYQQDBrNLVIZ_7AR73m-KJk7Aja0wmZWXd7S4n7SC2W4ZQayJlMA\"}}";
 		DID did = new DID("did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab");
 
-		DIDBackend.initialize(TestConfig.resolver, TestData.getResolverCacheDir());
-		ResolverCache.reset();
-
 		DIDDocument doc = did.resolve();
 		assertNull(doc);
 
-		DIDBackend.setResolveHandle((d) -> {
+		DIDBackend.getInstance().setResolveHandle((d) -> {
 			try {
 				if (d.equals(did))
 					return DIDDocument.parse(json);
@@ -182,7 +184,7 @@ public class DIDTest {
 		assertNotNull(doc);
 		assertEquals(did, doc.getSubject());
 
-		DIDBackend.setResolveHandle(null);
+		DIDBackend.getInstance().setResolveHandle(null);
 		doc = did.resolve();
 		assertNull(doc);
 	}

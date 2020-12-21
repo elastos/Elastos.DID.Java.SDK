@@ -36,14 +36,27 @@ import java.util.Map;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.InvalidKeyException;
+import org.elastos.did.utils.DIDTestExtension;
+import org.elastos.did.utils.TestConfig;
+import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(DIDTestExtension.class)
 public class IssuerTest {
+	private TestData testData;
+	private DIDStore store;
+
+    @BeforeEach
+    public void beforeEach() throws DIDException {
+    	testData = new TestData();
+    	testData.init(true);
+    	store = testData.getStore();
+    }
+
 	@Test
 	public void newIssuerTestWithSignKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 
 		DIDURL signKey = issuerDoc.getDefaultPublicKeyId();
@@ -56,9 +69,6 @@ public class IssuerTest {
 
 	@Test
 	public void newIssuerTestWithoutSignKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		DIDStore store = testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 
 		Issuer issuer = new Issuer(issuerDoc.getSubject(), store);
@@ -69,9 +79,6 @@ public class IssuerTest {
 
 	@Test
 	public void newIssuerTestWithInvalidKey() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 		DIDDocument.Builder db = issuerDoc.edit();
 
@@ -91,9 +98,6 @@ public class IssuerTest {
 
 	@Test
 	public void newIssuerTestWithInvalidKey2() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 		DIDURL signKey = new DIDURL(issuerDoc.getSubject(), "recovery");
 
@@ -106,9 +110,6 @@ public class IssuerTest {
 
 	@Test
 	public void IssueKycCredentialTest() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 		DIDDocument testDoc = testData.loadTestDocument();
 
@@ -153,9 +154,6 @@ public class IssuerTest {
 
 	@Test
 	public void IssueSelfProclaimedCredentialTest() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 
 		Map<String, Object> props= new HashMap<String, Object>();
@@ -195,9 +193,6 @@ public class IssuerTest {
 
 	@Test
 	public void IssueKycCredentialForCidTest() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 		DIDDocument testDoc = testData.loadCustomizedDidDocument();
 
@@ -242,9 +237,6 @@ public class IssuerTest {
 
 	@Test
 	public void IssueKycCredentialFromCidTest() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadCustomizedDidDocument();
 		DIDDocument testDoc = testData.loadTestDocument();
 
@@ -289,9 +281,6 @@ public class IssuerTest {
 
 	@Test
 	public void IssueSelfProclaimedCredentialFromCidTest() throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadCustomizedDidDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
@@ -332,9 +321,6 @@ public class IssuerTest {
 	@Test
 	public void IssueJsonPropsCredentialTest()
 			throws DIDException, IOException {
-		TestData testData = new TestData();
-		testData.setup(true);
-
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 
 		String props = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";

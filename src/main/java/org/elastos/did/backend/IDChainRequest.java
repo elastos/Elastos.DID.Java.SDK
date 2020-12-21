@@ -41,6 +41,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * The class records the information of IDChain Request.
@@ -63,7 +64,7 @@ public abstract class IDChainRequest<T> extends DIDObject<T> {
 	protected static final String PAYLOAD = "payload";
 	protected static final String PROOF = "proof";
 
-	private static final String SPECIFICATION = "specification";
+	protected static final String SPECIFICATION = "specification";
 	private static final String OPERATION = "operation";
 	private static final String PREVIOUS_TXID = "previousTxid";
 	private static final String TICKET = "ticket";
@@ -357,5 +358,10 @@ public abstract class IDChainRequest<T> extends DIDObject<T> {
 		}
 
 		return doc.verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs());
+	}
+
+	protected static<T extends DIDObject<?>> T parse(JsonNode content, Class<T> clazz)
+			throws DIDSyntaxException {
+		return DIDObject.parse(content, clazz);
 	}
 }

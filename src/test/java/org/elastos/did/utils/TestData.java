@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,17 +28,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import org.elastos.did.adapter.SPVAdapter;
-import org.elastos.did.backend.DummyBackend;
-import org.elastos.did.backend.ResolverCache;
+import org.elastos.did.DIDAdapter;
+import org.elastos.did.DIDBackend;
+import org.elastos.did.DIDDocument;
+import org.elastos.did.DIDStore;
+import org.elastos.did.DIDURL;
+import org.elastos.did.Mnemonic;
+import org.elastos.did.VerifiableCredential;
+import org.elastos.did.VerifiablePresentation;
+import org.elastos.did.backend.SPVAdapter;
 import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 
 public final class TestData {
-	private static DummyBackend dummyAdapter;
-	private static DIDAdapter spvAdapter;
-
 	private static HDKey rootKey;
 	private static int index;
 
@@ -82,45 +85,24 @@ public final class TestData {
 
 	private DIDStore store;
 
-	public static File getResolverCacheDir() {
-		return new File(System.getProperty("user.home") +
-				File.separator + ".cache.did.elastos");
-	}
+	public void init(boolean simulated) throws DIDException {
+		adapter = simulated ? DIDTestExtension.getSimChain().getAdapter() :
+			DIDTestExtension.getSpvAdapter();
 
-	public DIDStore setup(boolean dummyBackend) throws DIDException {
-		if (dummyBackend) {
-			if (TestData.dummyAdapter == null)
-				TestData.dummyAdapter = new DummyBackend();
-			else
-				TestData.dummyAdapter.reset();
+		DIDBackend.initialize(adapter, TestConfig.resolverCacheDir);
 
-			adapter = TestData.dummyAdapter;
-
-			DIDBackend.initialize((DIDResolver)adapter, getResolverCacheDir());
-		} else {
-			if (TestData.spvAdapter == null)
-				TestData.spvAdapter = new SPVAdapter(TestConfig.walletDir,
-						TestConfig.walletId, TestConfig.networkConfig,
-						new SPVAdapter.PasswordCallback() {
-							@Override
-							public String getPassword(String walletDir, String walletId) {
-								return TestConfig.walletPassword;
-							}
-						});
-
-			adapter = TestData.spvAdapter;
-
-			DIDBackend.initialize(TestConfig.resolver, getResolverCacheDir());
-		}
-
-		ResolverCache.reset();
+		DIDTestExtension.getSimChain().reset();
+		DIDBackend.getInstance().resetCache();
     	Utils.deleteFile(new File(TestConfig.storeRoot));
-    	store = DIDStore.open("filesystem", TestConfig.storeRoot, adapter);
-    	return store;
+		store = DIDStore.open("filesystem", TestConfig.storeRoot);
 	}
 
-	public DIDAdapter getAdapter() {
-		return adapter;
+	public void init() throws DIDException {
+		init(TestConfig.network.equalsIgnoreCase("simnet"));
+	}
+
+	public DIDStore getStore() {
+    	return store;
 	}
 
 	public void waitForWalletAvaliable() throws DIDException {

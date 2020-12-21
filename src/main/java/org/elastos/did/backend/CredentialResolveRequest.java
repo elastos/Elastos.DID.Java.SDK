@@ -25,17 +25,31 @@ package org.elastos.did.backend;
 import org.elastos.did.DIDURL;
 import org.elastos.did.exception.MalformedDIDURLException;
 
-public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRequest> {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRequest, CredentialResolveRequest.Parameters> {
 	protected static final String PARAMETER_ID = "id";
 
-	private static final String METHOD_NAME = "resolvecredential";
+	protected static final String METHOD_NAME = "resolvecredential";
 
-	public CredentialResolveRequest(String id) {
-		super(id, METHOD_NAME);
+	protected static class Parameters {
+		@JsonProperty(PARAMETER_ID)
+		private DIDURL id;
+
+		@JsonCreator
+		public Parameters(@JsonProperty(value = PARAMETER_ID, required = true)DIDURL id) {
+			this.id = id;
+		}
+	}
+
+	@JsonCreator
+	public CredentialResolveRequest(@JsonProperty(value = ID)String requestId) {
+		super(requestId, METHOD_NAME);
 	}
 
 	public void setParameters(DIDURL id) {
-		setParameter(PARAMETER_ID, id);
+		setParameters(new Parameters(id));
 	}
 
 	public void setParameters(String id) {
@@ -47,6 +61,6 @@ public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 	}
 
 	public DIDURL getId() {
-		return (DIDURL)getParameter(PARAMETER_ID);
+		return getParameters().id;
 	}
 }
