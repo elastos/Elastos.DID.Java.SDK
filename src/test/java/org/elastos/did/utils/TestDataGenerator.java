@@ -427,7 +427,7 @@ public class TestDataGenerator {
 			store.storeDid(doc);
 
     		System.out.print("******** Publishing DID: " + doc.getSubject());
-	    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+	    	doc.publish(TestConfig.storePass);
 	    	while (true) {
 	    		Thread.sleep(30000);
 	    		try {

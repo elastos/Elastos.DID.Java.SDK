@@ -31,7 +31,6 @@ import org.elastos.did.TransferTicket;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -264,6 +263,12 @@ public abstract class IDChainRequest<T> extends DIDObject<T> {
 		this.header = new Header(operation, ticket);
 	}
 
+	protected IDChainRequest(IDChainRequest<?> request) {
+		this.header = request.header;
+		this.payload = request.payload;
+		this.proof = request.proof;
+	}
+
 	protected Header getHeader() {
 		return header;
 	}
@@ -339,7 +344,7 @@ public abstract class IDChainRequest<T> extends DIDObject<T> {
 	 * @throws DIDTransactionException there is no invalid key.
 	 * @throws
 	 */
-	public boolean isValid() throws DIDResolveException, DIDTransactionException {
+	public boolean isValid() throws DIDResolveException {
 		DIDURL signKey = proof.getVerificationMethod();
 
 		DIDDocument doc = getSignerDocument();

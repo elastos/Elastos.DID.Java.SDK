@@ -166,7 +166,7 @@ public final class TestData {
 
 			importPrivateKey(testIssuer.getDefaultPublicKeyId(), "issuer.primary.sk");
 
-			store.publishDid(testIssuer.getSubject(), TestConfig.storePass);
+			testIssuer.publish(TestConfig.storePass);
 		}
 
 		return testIssuer;
@@ -182,7 +182,7 @@ public final class TestData {
 			importPrivateKey(testDocument.getPublicKey("key2").getId(), "document.key2.sk");
 			importPrivateKey(testDocument.getPublicKey("key3").getId(), "document.key3.sk");
 
-			store.publishDid(testDocument.getSubject(), TestConfig.storePass);
+			testDocument.publish(TestConfig.storePass);
 		}
 
 		return testDocument;
@@ -195,7 +195,7 @@ public final class TestData {
 		if (emptyCustomizedDidDocument == null) {
 			emptyCustomizedDidDocument = loadDIDDocument("customized-did-empty.json");
 
-			store.publishDid(emptyCustomizedDidDocument.getSubject(), TestConfig.storePass);
+			emptyCustomizedDidDocument.publish(TestConfig.storePass);
 		}
 
 		return emptyCustomizedDidDocument;
@@ -208,7 +208,7 @@ public final class TestData {
 		if (customizedDidDocument == null) {
 			customizedDidDocument = loadDIDDocument("customized-did.json");
 
-			store.publishDid(customizedDidDocument.getSubject(), TestConfig.storePass);
+			customizedDidDocument.publish(TestConfig.storePass);
 		}
 
 		return customizedDidDocument;

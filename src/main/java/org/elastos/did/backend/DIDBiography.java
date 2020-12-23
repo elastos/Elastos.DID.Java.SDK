@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * The class records the resolved content.
@@ -48,28 +49,62 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 	protected final static String STATUS = "status";
 	protected final static String TRANSACTION = "transaction";
 
-	/**
-	 * The DID is valid.
-	 */
-	public static final int STATUS_VALID = 0;
-	/**
-	 * The DID is expired.
-	 */
-	public static final int STATUS_EXPIRED = 1;
-	/**
-	 * The DID is deactivated.
-	 */
-	public static final int STATUS_DEACTIVATED = 2;
-	/**
-	 * The DID is not published.
-	 */
-	public static final int STATUS_NOT_FOUND = 3;
+	public static enum Status {
+		/**
+		 * The credential is valid.
+		 */
+		VALID(0),
+		/**
+		 * The credential is expired.
+		 */
+		// EXPIRED,
+		/**
+		 * The credential is deactivated.
+		 */
+		DEACTIVATED(2),
+		/**
+		 * The credential is not published.
+		 */
+		NOT_FOUND(3);
 
+		private int value;
+
+		private Status(int value) {
+			this.value = value;
+		}
+
+		@JsonValue
+		public int getValue() {
+			return value;
+		}
+
+		@JsonCreator
+		public static Status valueOf(int value) {
+			switch (value) {
+			case 0:
+				return VALID;
+
+			case 2:
+				return DEACTIVATED;
+
+			case 3:
+				return NOT_FOUND;
+
+			default:
+				throw new IllegalArgumentException("Invalid status value: " + value);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return name().toLowerCase();
+		}
+	}
 
 	@JsonProperty(DID)
 	private DID did;
 	@JsonProperty(STATUS)
-	private int status;
+	private Status status;
 	@JsonProperty(TRANSACTION)
 	private List<DIDTransaction> txs;
 
@@ -81,7 +116,7 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 	 */
 	@JsonCreator
 	protected DIDBiography(@JsonProperty(value = DID, required = true)DID did,
-			@JsonProperty(value = STATUS, required = true) int status) {
+			@JsonProperty(value = STATUS, required = true) Status status) {
 		this.did = did;
 		this.status = status;
 	}
@@ -94,11 +129,11 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 		return did;
 	}
 
-	protected void setStatus(int status) {
+	protected void setStatus(Status status) {
 		this.status = status;
 	}
 
-	public int getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 
@@ -136,10 +171,7 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 		if (did == null)
 			throw new MalformedResolveResultException("Missing did");
 
-		if (status < STATUS_VALID || status > STATUS_NOT_FOUND)
-			throw new MalformedResolveResultException("Unknown status");
-
-		if (status != STATUS_NOT_FOUND) {
+		if (status != Status.NOT_FOUND) {
 			if (txs == null || txs.size() == 0)
 				throw new MalformedResolveResultException("Missing transaction");
 
