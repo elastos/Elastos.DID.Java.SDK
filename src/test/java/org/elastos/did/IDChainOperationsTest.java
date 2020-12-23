@@ -80,7 +80,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Publishing new DID: " + did + "...");
 		long start = System.currentTimeMillis();
-		store.publishDid(did, TestConfig.storePass);
+		doc.publish(TestConfig.storePass);
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		System.out.println("OK(" + duration + "s)");
 
@@ -99,7 +99,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Publishing new DID: " + did + "...");
 		long start = System.currentTimeMillis();
-		CompletableFuture<Void> tf = store.publishDidAsync(did, TestConfig.storePass)
+		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
 				.thenApply((tx) -> {
 					long duration = (System.currentTimeMillis() - start + 500) / 1000;
 					System.out.println("OK(" + duration + "s)");
@@ -123,7 +123,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Publishing new DID and resolve: " + did + "...");
 		long start = System.currentTimeMillis();
-		CompletableFuture<DIDDocument> tf = store.publishDidAsync(did, TestConfig.storePass)
+		CompletableFuture<DIDDocument> tf = doc.publishAsync(TestConfig.storePass)
 				.thenCompose((Void) -> {
 					try {
 						testData.waitForWalletAvaliable();
@@ -152,7 +152,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Publishing new DID: " + did + "...");
 		long start = System.currentTimeMillis();
-		store.publishDid(did, TestConfig.storePass);
+		doc.publish(TestConfig.storePass);
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		System.out.println("OK(" + duration + "s)");
 
@@ -178,7 +178,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Updating DID: " + did + "...");
 		start = System.currentTimeMillis();
-		store.publishDid(did, TestConfig.storePass);
+		doc.publish(TestConfig.storePass);
 		duration = (System.currentTimeMillis() - start + 500) / 1000;
 		System.out.println("OK(" + duration + "s)");
 
@@ -205,7 +205,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Updating DID: " + did + "...");
 		start = System.currentTimeMillis();
-		store.publishDid(did, TestConfig.storePass);
+		doc.publish(TestConfig.storePass);
 		duration = (System.currentTimeMillis() - start + 500) / 1000;
 		System.out.println("OK(" + duration + "s)");
 
@@ -224,7 +224,7 @@ public class IDChainOperationsTest {
 		DIDBiography rr = did.getBiography();
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.STATUS_VALID, rr.getStatus());
+		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
 		assertEquals(3, rr.getTransactionCount());
 		List<DIDTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
@@ -247,7 +247,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Publishing new DID: " + did + "...");
 		long s1 = System.currentTimeMillis();
-		CompletableFuture<Void> tf = store.publishDidAsync(did, TestConfig.storePass)
+		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - s1 + 500) / 1000;
 					System.out.println("OK(" + duration + "s)");
@@ -277,7 +277,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Updating DID: " + did + "...");
 		long s2 = System.currentTimeMillis();
-		tf = store.publishDidAsync(did, TestConfig.storePass)
+		tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - s2 + 500) / 1000;
 					System.out.println("OK(" + duration + "s)");
@@ -308,7 +308,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Updating DID: " + did + "...");
 		long s3 = System.currentTimeMillis();
-		tf = store.publishDidAsync(did, TestConfig.storePass)
+		tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - s3 + 500) / 1000;
 					System.out.println("OK(" + duration + "s)");
@@ -332,7 +332,7 @@ public class IDChainOperationsTest {
 		DIDBiography rr = rhf.join();
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.STATUS_VALID, rr.getStatus());
+		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
 		assertEquals(3, rr.getTransactionCount());
 		List<DIDTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
@@ -378,7 +378,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Publishing new DID: " + did + "...");
 		long start = System.currentTimeMillis();
-		store.publishDid(did, TestConfig.storePass);
+		doc.publish(TestConfig.storePass);
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		System.out.println("OK(" + duration + "s)");
 
@@ -414,7 +414,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Updating DID: " + did + "...");
 		start = System.currentTimeMillis();
-		store.publishDid(did, TestConfig.storePass);
+		doc.publish(TestConfig.storePass);
 		duration = (System.currentTimeMillis() - start + 500) / 1000;
 		System.out.println("OK(" + duration + "s)");
 
@@ -455,7 +455,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Updating DID: " + did + "...");
 		start = System.currentTimeMillis();
-		store.publishDid(did, TestConfig.storePass);
+		doc.publish(TestConfig.storePass);
 		duration = (System.currentTimeMillis() - start + 500) / 1000;
 		System.out.println("OK(" + duration + "s)");
 
@@ -502,7 +502,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Publishing new DID: " + did + "...");
 		long s1 = System.currentTimeMillis();
-		CompletableFuture<Void> tf = store.publishDidAsync(did, TestConfig.storePass)
+		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - s1 + 500) / 1000;
 					System.out.println("OK(" + duration + "s)");
@@ -542,7 +542,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Updating DID: " + did + "...");
 		long s2 = System.currentTimeMillis();
-		tf = store.publishDidAsync(did, TestConfig.storePass)
+		tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - s2 + 500) / 1000;
 					System.out.println("OK(" + duration + "s)");
@@ -587,7 +587,7 @@ public class IDChainOperationsTest {
 
 		System.out.print("Updating DID: " + did + "...");
 		long s3 = System.currentTimeMillis();
-		tf = store.publishDidAsync(did, TestConfig.storePass)
+		tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - s3 + 500) / 1000;
 					System.out.println("OK(" + duration + "s)");

@@ -34,9 +34,9 @@ import org.elastos.did.backend.DIDRequest;
 import org.elastos.did.backend.DIDResolveRequest;
 import org.elastos.did.backend.DIDResolveResponse;
 import org.elastos.did.backend.DIDTransaction;
+import org.elastos.did.backend.IDChainRequest;
 import org.elastos.did.backend.ResolveRequest;
 import org.elastos.did.backend.ResolverCache;
-import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
@@ -302,7 +302,7 @@ public class DIDBackend {
 					+ response.getErrorCode() + "): " + response.getErrorMessage());
 		}
 
-		if (bio.getStatus() != DIDBiography.STATUS_NOT_FOUND) {
+		if (bio.getStatus() != DIDBiography.Status.NOT_FOUND) {
 			try {
 				cache.store(bio);
 			} catch (IOException e) {
@@ -324,7 +324,7 @@ public class DIDBackend {
 		log.info("Resolving {}...", did.toString());
 
 		DIDBiography rr = resolveFromBackend(did, true);
-		if (rr.getStatus() == DIDBiography.STATUS_NOT_FOUND)
+		if (rr.getStatus() == DIDBiography.Status.NOT_FOUND)
 			return null;
 
 		return rr;
@@ -359,35 +359,59 @@ public class DIDBackend {
 		if (bio == null)
 			bio = resolveFromBackend(did, false);
 
+		DIDTransaction tx = null;
 		switch (bio.getStatus()) {
-		// When DID expired, we should also return the document.
-		// case DIDBiography.STATUS_EXPIRED:
-		// 	throw new DIDExpiredException();
+		case VALID:
+			tx = bio.getTransaction(0);
+			break;
 
-		case DIDBiography.STATUS_DEACTIVATED:
-			throw new DIDDeactivatedException();
+		case DEACTIVATED:
+			if (bio.getTransactionCount() != 2)
+				throw new DIDResolveException("Invalid DID biography, wrong transaction count.");
 
-		case DIDBiography.STATUS_NOT_FOUND:
+			tx = bio.getTransaction(0);
+			if (tx.getRequest().getOperation() != IDChainRequest.Operation.DEACTIVATE)
+				throw new DIDResolveException("Invalid DID biography, wrong status.");
+
+			DIDDocument doc = bio.getTransaction(1).getRequest().getDocument();
+			if (doc == null)
+				throw new DIDResolveException("Invalid DID biography, invalid trancations.");
+
+			// Avoid resolve current DID recursively
+			DIDRequest request = new DIDRequest(tx.getRequest()) {
+				@Override
+				protected DIDDocument getSignerDocument() throws DIDResolveException {
+					return getDocument() == null ? doc : getDocument();
+				}
+			};
+
+			if (!request.isValid())
+				throw new DIDResolveException("Invalid ID biography, transaction signature mismatch.");
+
+			tx = bio.getTransaction(1);
+			break;
+
+		case NOT_FOUND:
 			return null;
-
-		default:
-			DIDTransaction tx = bio.getTransaction(0);
-
-			try {
-				if (!tx.getRequest().isValid())
-					throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
-			} catch (DIDTransactionException | DIDResolveException e) {
-				throw new DIDResolveException("Can not verify the transaction", e);
-			}
-
-			DIDDocument doc = tx.getRequest().getDocument();
-			DIDMetadata metadata = new DIDMetadata();
-			metadata.setTransactionId(tx.getTransactionId());
-			metadata.setSignature(doc.getProof().getSignature());
-			metadata.setPublished(tx.getTimestamp());
-			doc.setMetadata(metadata);
-			return doc;
 		}
+
+		if (tx.getRequest().getOperation() != IDChainRequest.Operation.CREATE &&
+				tx.getRequest().getOperation() != IDChainRequest.Operation.UPDATE &&
+				tx.getRequest().getOperation() != IDChainRequest.Operation.TRANSFER)
+			throw new DIDResolveException("Invalid ID transaction, unknown operation.");
+
+		if (!tx.getRequest().isValid())
+			throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
+
+		DIDDocument doc = tx.getRequest().getDocument();
+		DIDMetadata metadata = new DIDMetadata();
+		metadata.setTransactionId(tx.getTransactionId());
+		metadata.setSignature(doc.getProof().getSignature());
+		metadata.setPublished(tx.getTimestamp());
+		if (bio.getStatus() == DIDBiography.Status.DEACTIVATED)
+			metadata.setDeactivated(true);
+		doc.setMetadata(metadata);
+		return doc;
 	}
 
 	public void resetCache() {

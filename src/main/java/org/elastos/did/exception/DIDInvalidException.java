@@ -22,44 +22,41 @@
 
 package org.elastos.did.exception;
 
-/**
- * Thrown to indicate that the DID is expired.
- */
-public class DIDExpiredException extends DIDInvalidException {
-	private static final long serialVersionUID = 7370450942574972182L;
+public class DIDInvalidException extends DIDException {
+	private static final long serialVersionUID = -1722646147124938447L;
 
 	/**
-	 * Constructs the DIDExpiredException.
+	 * Constructs the DIDInvalidException.
 	 */
-	public DIDExpiredException() {
+	public DIDInvalidException() {
         super();
     }
 
 	/**
-	 * Constructs the DIDExpiredException with the given message.
+	 * Constructs the DIDInvalidException with the given message.
 	 *
 	 * @param message the message string
 	 */
-    public DIDExpiredException(String message) {
+    public DIDInvalidException(String message) {
         super(message);
     }
 
     /**
-     * Constructs the DIDExpiredException with the given message and the reason.
+     * Constructs the DIDInvalidException with the given message and the reason.
      *
      * @param message the message string
      * @param cause the reason
      */
-    public DIDExpiredException(String message, Throwable cause) {
+    public DIDInvalidException(String message, Throwable cause) {
         super(message, cause);
     }
 
     /**
-     * Constructs the DIDExpiredException with the given reason.
+     * Constructs the DIDInvalidException with the given reason.
      *
      * @param cause the reason
      */
-    public DIDExpiredException(Throwable cause) {
+    public DIDInvalidException(Throwable cause) {
         super(cause);
     }
 }

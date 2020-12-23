@@ -61,6 +61,12 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 		super(operation, ticket);
 	}
 
+	protected DIDRequest(DIDRequest request) {
+		super(request);
+		this.did = request.did;
+		this.doc = request.doc;
+	}
+
 	/**
 	 * Constructs the 'create' DID Request.
 	 *

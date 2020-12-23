@@ -203,28 +203,31 @@ public class SimulatedIDChain {
 	private DIDResolveResponse resolveDid(DIDResolveRequest request) {
 		log.info("Resolveing DID {} ...", request.getDid());
 
-		DIDBiography bio = new DIDBiography(request.getDid(), DIDBiography.STATUS_NOT_FOUND);
+		DIDBiography bio = new DIDBiography(request.getDid());
 		DIDTransaction last = getLastDidTransaction(request.getDid());
 		if (last != null) {
-			if (last.getOperation().equals(IDChainRequest.Operation.DEACTIVATE.toString())) {
-				bio.setStatus(DIDBiography.STATUS_DEACTIVATED);
-		    } else {
-				if (last.getRequest().getDocument().isExpired())
-					bio.setStatus(DIDBiography.STATUS_EXPIRED);
-				else
-					bio.setStatus(DIDBiography.STATUS_VALID);
+			int limit;
+			if (last.getRequest().getOperation() == IDChainRequest.Operation.DEACTIVATE) {
+				bio.setStatus(DIDBiography.Status.DEACTIVATED);
+				limit = request.isResolveAll() ? -1 : 2;
+			} else {
+				bio.setStatus(DIDBiography.Status.VALID);
+				limit = request.isResolveAll() ? -1 : 1;
 			}
-		}
 
-		if (bio.getStatus() != DIDBiography.STATUS_NOT_FOUND) {
 			for (DIDTransaction tx : idtxs) {
 				if (tx.getDid().equals(request.getDid())) {
-					bio.addTransaction(tx);;
+					bio.addTransaction(tx);
 
-					if (!request.isResolveAll())
+					if (limit < 0)
+						continue;
+
+					if (--limit == 0)
 						break;
 				}
 			}
+		} else {
+			bio.setStatus(DIDBiography.Status.NOT_FOUND);
 		}
 
 		log.info("Resolve DID {} {}", request.getDid(), bio.getStatus());
@@ -332,27 +335,23 @@ public class SimulatedIDChain {
 				else if (issuerRevokeTx != null)
 					revokeTx = issuerRevokeTx;
 			}
+		} else {
+			revokeTx = getCredentialRevokeTransaction(request.getId(), request.getId().getDid());
 		}
 
-		CredentialBiography bio = new CredentialBiography(request.getId(), CredentialBiography.STATUS_NOT_FOUND);
-		if (declareTx != null) {
-			if (revokeTx != null) {
-				bio.setStatus(CredentialBiography.STATUS_REVOKED);
-				bio.addTransaction(revokeTx);
+		CredentialBiography bio = new CredentialBiography(request.getId());
+		if (revokeTx != null) {
+			bio.setStatus(CredentialBiography.Status.REVOKED);
+			bio.addTransaction(revokeTx);
+			if (declareTx != null)
+				bio.addTransaction(declareTx);
+		} else {
+			if (declareTx != null) {
+				bio.setStatus(CredentialBiography.Status.VALID);
+				bio.addTransaction(declareTx);
 			} else {
-				try {
-					if (declareTx.getRequest().getCredential().isExpired())
-						bio.setStatus(CredentialBiography.STATUS_EXPIRED);
-					else
-						bio.setStatus(CredentialBiography.STATUS_VALID);
-				} catch (DIDResolveException e) {
-					log.error("Resolve VC failed", e);
-					return new CredentialResolveResponse(request.getRequestId(),
-							10000, e.getMessage());
-				}
+				bio.setStatus(CredentialBiography.Status.NOT_FOUND);
 			}
-
-			bio.addTransaction(declareTx);
 		}
 
 		log.info("Resolve VC {} {}", request.getId(), bio.getStatus());
@@ -369,15 +368,12 @@ public class SimulatedIDChain {
 		CredentialList cl = new CredentialList(request.getDid());
 		for (CredentialTransaction tx : vctxs) {
 			if (tx.getRequest().getCredential().getSubject().getId().equals(request.getDid())) {
-				if (skip > 0) {
-					--skip;
+				if (--skip > 0)
 					continue;
-				}
 
-				if (limit > 0) {
-					--limit;
+				if (--limit > 0)
 					cl.addCredentialId(tx.getId());
-				} else
+				else
 					break;
 			}
 		}
@@ -389,11 +385,17 @@ public class SimulatedIDChain {
 	private CredentialResolveResponse resolveCredentialRevocation(CredentialResolveRevocation request) {
 		log.info("Resolve revocation for {} from {}...", request.getId(), request.getSigner());
 
-		CredentialBiography bio = new CredentialBiography(request.getId(), CredentialBiography.STATUS_VALID);
+		CredentialBiography bio = new CredentialBiography(request.getId());
 		CredentialTransaction tx = getCredentialRevokeTransaction(request.getId(), request.getSigner());
 		if (tx != null) {
-			bio.setStatus(CredentialBiography.STATUS_REVOKED);
+			bio.setStatus(CredentialBiography.Status.REVOKED);
 			bio.addTransaction(tx);
+		} else {
+			tx = getCredentialRevokeTransaction(request.getId(), request.getId().getDid());
+			if (tx != null)
+				bio.setStatus(CredentialBiography.Status.REVOKED);
+			else
+				bio.setStatus(CredentialBiography.Status.VALID);
 		}
 
 		log.info("Resolve revocation {} {}", request.getId(), bio.getStatus());

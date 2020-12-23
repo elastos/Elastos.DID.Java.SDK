@@ -41,8 +41,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.elastos.did.crypto.HDKey;
-import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.exception.DIDNotUpToDateException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.WrongPasswordException;
 import org.elastos.did.utils.DIDTestExtension;
@@ -194,7 +194,7 @@ public class DIDStoreTest {
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNull(resolved);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	File file = new File(TestConfig.storeRoot + File.separator + "ids"
     			+ File.separator + doc.getSubject().getMethodSpecificId()
@@ -231,7 +231,7 @@ public class DIDStoreTest {
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNull(resolved);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	File file = new File(TestConfig.storeRoot + File.separator + "ids"
     			+ File.separator + doc.getSubject().getMethodSpecificId()
@@ -283,7 +283,7 @@ public class DIDStoreTest {
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNull(resolved);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	File file = new File(TestConfig.storeRoot + File.separator + "ids"
     			+ File.separator + doc.getSubject().getMethodSpecificId()
@@ -310,7 +310,7 @@ public class DIDStoreTest {
     	resolved = did.resolve(true);
     	assertNull(resolved);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	file = new File(TestConfig.storeRoot + File.separator + "ids"
     			+ File.separator + doc.getSubject().getMethodSpecificId()
@@ -335,7 +335,7 @@ public class DIDStoreTest {
     	// Create normal DID first
     	DIDDocument ctrl1 = store.newDid(TestConfig.storePass);
     	assertTrue(ctrl1.isValid());
-    	store.publishDid(ctrl1.getSubject(), TestConfig.storePass);
+    	ctrl1.publish(TestConfig.storePass);
 
     	DIDDocument resolved = ctrl1.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -347,7 +347,7 @@ public class DIDStoreTest {
 
        	DIDDocument ctrl2 = store.newDid(TestConfig.storePass);
     	assertTrue(ctrl2.isValid());
-    	store.publishDid(ctrl2.getSubject(), TestConfig.storePass);
+    	ctrl2.publish(TestConfig.storePass);
 
     	resolved = ctrl2.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -359,7 +359,7 @@ public class DIDStoreTest {
 
        	DIDDocument ctrl3 = store.newDid(TestConfig.storePass);
     	assertTrue(ctrl3.isValid());
-    	store.publishDid(ctrl3.getSubject(), TestConfig.storePass);
+    	ctrl3.publish(TestConfig.storePass);
 
     	resolved = ctrl3.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -437,7 +437,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -452,7 +452,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -467,7 +467,7 @@ public class DIDStoreTest {
     	assertEquals(3, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -486,7 +486,7 @@ public class DIDStoreTest {
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNull(resolved);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	File file = new File(TestConfig.storeRoot + File.separator + "ids"
     			+ File.separator + doc.getSubject().getMethodSpecificId()
@@ -513,7 +513,7 @@ public class DIDStoreTest {
     	resolved = did.resolve(true);
     	assertNull(resolved);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	file = new File(TestConfig.storeRoot + File.separator + "ids"
     			+ File.separator + doc.getSubject().getMethodSpecificId()
@@ -539,7 +539,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -554,7 +554,7 @@ public class DIDStoreTest {
     	assertEquals(3, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -569,7 +569,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -584,7 +584,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -602,7 +602,7 @@ public class DIDStoreTest {
     	assertEquals(3, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -617,7 +617,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -632,7 +632,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -650,11 +650,11 @@ public class DIDStoreTest {
     	assertEquals(3, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	DID did = doc.getSubject();
-    	Exception e = assertThrows(DIDStoreException.class, () -> {
-    		store.publishDid(did, TestConfig.storePass);
+    	DIDDocument d = doc;
+    	Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
+    		d.publish(TestConfig.storePass);
     	});
-    	assertEquals("DID document not up-to-date", e.getMessage());
+    	assertEquals(d.getSubject().toString(), e.getMessage());
 	}
 
 	@Test
@@ -664,7 +664,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -683,11 +683,11 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	DID did = doc.getSubject();
-    	Exception e = assertThrows(DIDStoreException.class, () -> {
-    		store.publishDid(did, TestConfig.storePass);
+    	DIDDocument d = doc;
+    	Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
+    		d.publish(TestConfig.storePass);
     	});
-    	assertEquals("DID document not up-to-date", e.getMessage());
+    	assertEquals(d.getSubject().toString(), e.getMessage());
 	}
 
 	@Test
@@ -697,7 +697,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -716,8 +716,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), doc.getDefaultPublicKeyId(),
-    			true, TestConfig.storePass);
+    	doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -731,7 +730,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -746,7 +745,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-		store.publishDid(doc.getSubject(), TestConfig.storePass);
+		doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -764,7 +763,7 @@ public class DIDStoreTest {
     	assertEquals(3, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-		store.publishDid(doc.getSubject(), TestConfig.storePass);
+		doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -778,7 +777,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -793,7 +792,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-   		store.publishDid(doc.getSubject(), TestConfig.storePass);
+   		doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -811,11 +810,11 @@ public class DIDStoreTest {
     	assertEquals(3, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	DID did = doc.getSubject();
-    	Exception e = assertThrows(DIDStoreException.class, () -> {
-    		store.publishDid(did, TestConfig.storePass);
+    	DIDDocument d = doc;
+    	Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
+    		d.publish(TestConfig.storePass);
     	});
-    	assertEquals("DID document not up-to-date", e.getMessage());
+    	assertEquals(d.getSubject().toString(), e.getMessage());
 	}
 
 	@Test
@@ -825,7 +824,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -843,8 +842,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), doc.getDefaultPublicKeyId(),
-    			true, TestConfig.storePass);
+    	doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -858,7 +856,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -876,8 +874,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), doc.getDefaultPublicKeyId(),
-    			true, TestConfig.storePass);
+    	doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -891,17 +888,16 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	store.deactivateDid(doc.getSubject(), TestConfig.storePass);
+    	doc.deactivate(TestConfig.storePass);
 
-    	assertThrows(DIDDeactivatedException.class, () -> {
-    		doc.getSubject().resolve(true);
-    	});
+    	doc = doc.getSubject().resolve(true);
+    	assertTrue(doc.isDeactivated());
 	}
 
 	@Test
@@ -911,7 +907,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -926,18 +922,15 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
-    	store.deactivateDid(doc.getSubject(), TestConfig.storePass);
-
-    	DID did = doc.getSubject();
-    	assertThrows(DIDDeactivatedException.class, () -> {
-    		did.resolve(true);
-    	});
+    	doc.deactivate(TestConfig.storePass);
+    	doc = doc.getSubject().resolve(true);
+    	assertTrue(doc.isDeactivated());
 	}
 
 	@Test
@@ -947,7 +940,7 @@ public class DIDStoreTest {
     	DIDDocument doc = store.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -962,18 +955,18 @@ public class DIDStoreTest {
     	assertEquals(doc.getSubject(), target.getAuthorizationKeys().get(0).getController());
     	store.storeDid(target);
 
-    	store.publishDid(target.getSubject(), TestConfig.storePass);
+    	target.publish(TestConfig.storePass);
 
     	resolved = target.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(target.toString(), resolved.toString());
 
-    	store.deactivateDid(target.getSubject(), doc.getSubject(), TestConfig.storePass);
+    	doc.deactivate(target.getSubject(), TestConfig.storePass);
+    	target = target.getSubject().resolve(true);
+    	assertTrue(target.isDeactivated());
 
-    	DID did = target.getSubject();
-    	assertThrows(DIDDeactivatedException.class, () -> {
-    		did.resolve(true);
-    	});
+    	doc = doc.getSubject().resolve(true);
+    	assertFalse(doc.isDeactivated());
 	}
 
 	@Test
@@ -992,7 +985,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -1008,18 +1001,18 @@ public class DIDStoreTest {
     	assertEquals(doc.getSubject(), target.getAuthorizationKeys().get(0).getController());
     	store.storeDid(target);
 
-    	store.publishDid(target.getSubject(), TestConfig.storePass);
+    	target.publish(TestConfig.storePass);
 
     	resolved = target.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(target.toString(), resolved.toString());
 
-    	store.deactivateDid(target.getSubject(), doc.getSubject(), id, TestConfig.storePass);
+    	doc.deactivate(target.getSubject(), id, TestConfig.storePass);
+    	target = target.getSubject().resolve(true);
+    	assertTrue(target.isDeactivated());
 
-    	DID did = target.getSubject();
-    	assertThrows(DIDDeactivatedException.class, () -> {
-    		did.resolve(true);
-    	});
+    	doc = doc.getSubject().resolve(true);
+    	assertFalse(doc.isDeactivated());
 	}
 
 	@Test
@@ -1038,7 +1031,7 @@ public class DIDStoreTest {
     	assertEquals(2, doc.getAuthenticationKeyCount());
     	store.storeDid(doc);
 
-    	store.publishDid(doc.getSubject(), TestConfig.storePass);
+    	doc.publish(TestConfig.storePass);
 
     	DIDDocument resolved = doc.getSubject().resolve(true);
     	assertNotNull(resolved);
@@ -1054,18 +1047,18 @@ public class DIDStoreTest {
     	assertEquals(doc.getSubject(), target.getAuthorizationKeys().get(0).getController());
     	store.storeDid(target);
 
-    	store.publishDid(target.getSubject(), TestConfig.storePass);
+    	target.publish(TestConfig.storePass);
 
     	resolved = target.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(target.toString(), resolved.toString());
 
-    	store.deactivateDid(target.getSubject(), doc.getSubject(), TestConfig.storePass);
+    	doc.deactivate(target.getSubject(), TestConfig.storePass);
+    	target = target.getSubject().resolve(true);
+    	assertTrue(target.isDeactivated());
 
-    	DID did = target.getSubject();
-    	assertThrows(DIDDeactivatedException.class, () -> {
-    		did.resolve(true);
-    	});
+    	doc = doc.getSubject().resolve(true);
+    	assertFalse(doc.isDeactivated());
 	}
 
 	@Test
@@ -1080,7 +1073,7 @@ public class DIDStoreTest {
         	DIDDocument resolved = doc.getSubject().resolve(true);
         	assertNull(resolved);
 
-        	store.publishDid(doc.getSubject(), TestConfig.storePass);
+        	doc.publish(TestConfig.storePass);
 
         	File file = new File(TestConfig.storeRoot + File.separator + "ids"
         			+ File.separator + doc.getSubject().getMethodSpecificId()
@@ -1124,7 +1117,7 @@ public class DIDStoreTest {
 		for (int i = 0; i < 100; i++) {
     		String alias = "my did " + i;
         	DIDDocument doc = store.newDid(alias, TestConfig.storePass);
-         	store.publishDid(doc.getSubject(), TestConfig.storePass);
+         	doc.publish(TestConfig.storePass);
          	dids.add(doc.getSubject());
     	}
 
@@ -1348,7 +1341,7 @@ public class DIDStoreTest {
         	DIDDocument resolved = doc.getSubject().resolve(true);
         	assertNull(resolved);
 
-        	store.publishDid(doc.getSubject(), TestConfig.storePass);
+        	doc.publish(TestConfig.storePass);
 
         	File file = new File(TestConfig.storeRoot + File.separator + "ids"
         			+ File.separator + doc.getSubject().getMethodSpecificId()
@@ -1409,7 +1402,7 @@ public class DIDStoreTest {
         	DIDDocument resolved = doc.getSubject().resolve(true);
         	assertNull(resolved);
 
-        	store.publishDid(doc.getSubject(), TestConfig.storePass);
+        	doc.publish(TestConfig.storePass);
 
         	File file = new File(TestConfig.storeRoot + File.separator + "ids"
         			+ File.separator + doc.getSubject().getMethodSpecificId()

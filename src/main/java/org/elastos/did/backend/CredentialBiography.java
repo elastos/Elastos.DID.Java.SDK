@@ -33,6 +33,7 @@ import org.elastos.did.exception.MalformedResolveResultException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 @JsonPropertyOrder({ CredentialBiography.ID,
 	CredentialBiography.STATUS,
@@ -42,28 +43,62 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 	protected final static String STATUS = "status";
 	protected final static String TRANSACTION = "transaction";
 
-	/**
-	 * The credential is valid.
-	 */
-	public static final int STATUS_VALID = 0;
-	/**
-	 * The credential is expired.
-	 */
-	public static final int STATUS_EXPIRED = 1;
-	/**
-	 * The credential is revoked.
-	 */
-	public static final int STATUS_REVOKED = 2;
-	/**
-	 * The credential is not published.
-	 */
-	public static final int STATUS_NOT_FOUND = 3;
+	public static enum Status {
+		/**
+		 * The credential is valid.
+		 */
+		VALID(0),
+		/**
+		 * The credential is expired.
+		 */
+		// EXPIRED,
+		/**
+		 * The credential is revoked.
+		 */
+		REVOKED(2),
+		/**
+		 * The credential is not published.
+		 */
+		NOT_FOUND(3);
 
+		private int value;
+
+		private Status(int value) {
+			this.value = value;
+		}
+
+		@JsonValue
+		public int getValue() {
+			return value;
+		}
+
+		@JsonCreator
+		public static Status valueOf(int value) {
+			switch (value) {
+			case 0:
+				return VALID;
+
+			case 2:
+				return REVOKED;
+
+			case 3:
+				return NOT_FOUND;
+
+			default:
+				throw new IllegalArgumentException("Invalid status value: " + value);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return name().toLowerCase();
+		}
+	}
 
 	@JsonProperty(ID)
 	private DIDURL id;
 	@JsonProperty(STATUS)
-	private int status;
+	private Status status;
 	@JsonProperty(TRANSACTION)
 	private List<CredentialTransaction> txs;
 
@@ -75,7 +110,7 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 	 */
 	@JsonCreator
 	protected CredentialBiography(@JsonProperty(value = ID, required = true)DIDURL id,
-			@JsonProperty(value = STATUS, required = true) int status) {
+			@JsonProperty(value = STATUS, required = true) Status status) {
 		this.id = id;
 		this.status = status;
 	}
@@ -88,11 +123,11 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 		return id;
 	}
 
-	protected void setStatus(int status) {
+	protected void setStatus(Status status) {
 		this.status = status;
 	}
 
-	public int getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 
@@ -130,10 +165,7 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 		if (id == null)
 			throw new MalformedResolveResultException("Missing id");
 
-		if (status < STATUS_VALID || status > STATUS_NOT_FOUND)
-			throw new MalformedResolveResultException("Unknown status");
-
-		if (status != STATUS_NOT_FOUND) {
+		if (status != Status.NOT_FOUND) {
 			if (txs == null || txs.size() == 0)
 				throw new MalformedResolveResultException("Missing transaction");
 
