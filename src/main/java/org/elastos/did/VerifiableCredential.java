@@ -22,6 +22,9 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,10 +38,14 @@ import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import org.elastos.did.backend.CredentialBiography;
 import org.elastos.did.exception.DIDBackendException;
+import org.elastos.did.exception.DIDInvalidException;
+import org.elastos.did.exception.DIDNotFoundException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
+import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedDIDURLException;
 import org.slf4j.Logger;
@@ -500,6 +507,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		return metadata;
 	}
 
+	private DIDStore getStore() {
+		return metadata == null ? null : metadata.getStore();
+	}
+
 	/**
 	 * Store Meta data of Credential.
 	 *
@@ -631,6 +642,12 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		return future;
 	}
 
+	public boolean isRevoked() throws DIDResolveException {
+		CredentialBiography bio = DIDBackend.getInstance().resolveCredentialBiography(
+				getId(), getIssuer());
+		return bio.getStatus() == CredentialBiography.Status.REVOKED;
+	}
+
 	/**
 	 * Check whether the Credential is valid or not.
 	 *
@@ -701,6 +718,158 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		});
 
 		return future;
+	}
+
+	public void declare(DIDURL signKey, String storepass)
+			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDResolveException {
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkState(getMetadata().attachedStore(), "Not attached with a store");
+
+		DIDDocument owner = getStore().loadDid(getSubject().getId());
+		if (owner == null) {
+			// Fail-back: resolve the owner's document
+			owner = getSubject().getId().resolve();
+			if (owner == null)
+				throw new DIDNotFoundException(getSubject().getId().toString());
+
+			owner.getMetadata().setStore(getStore());
+		}
+
+		checkState(signKey != null || owner.getDefaultPublicKeyId() != null, "No effective controller");
+
+		if (!owner.isAuthenticationKey(signKey))
+			throw new InvalidKeyException(signKey.toString());
+
+	}
+
+	/**
+	 * Resolve VerifiableCredential object.
+	 *
+	 * @param id the credential id
+	 * @param force if true ignore local cache and try to resolve from ID chain
+	 * @return the VerifiableCredential object
+	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 */
+	public static VerifiableCredential resolve(DIDURL id, boolean force)
+			throws DIDResolveException {
+		if (id == null)
+			throw new IllegalArgumentException();
+
+		VerifiableCredential vc = DIDBackend.getInstance().resolveCredential(id, force);
+		if (vc != null)
+			id.setMetadata(vc.getMetadata());
+
+		return vc;
+	}
+
+	/**
+	 * Resolve VerifiableCredential object.
+	 *
+	 * @param id the credential id
+	 * @param force if true ignore local cache and try to resolve from ID chain
+	 * @return the VerifiableCredential object
+	 * @throws MalformedDIDURLException if the DID string is malformed
+	 * @throws DIDResolveException throw this exception if resolving did failed
+	 */
+	public static VerifiableCredential resolve(String id, boolean force)
+			throws MalformedDIDURLException, DIDResolveException {
+		if (id == null || id.isEmpty())
+			throw new IllegalArgumentException();
+
+		return resolve(new DIDURL(id), force);
+	}
+
+	/**
+	 * Resolve VerifiableCredential object.
+	 *
+	 * @param id the credential id
+	 * @return the VerifiableCredential object
+	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 */
+	public static VerifiableCredential resolve(DIDURL id)
+			throws DIDResolveException {
+		if (id == null)
+			throw new IllegalArgumentException();
+
+		return resolve(id, false);
+	}
+
+	/**
+	 * Resolve VerifiableCredential object.
+	 *
+	 * @param id the credential id
+	 * @return the VerifiableCredential object
+	 * @throws MalformedDIDURLException if the DID string is malformed
+	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 */
+	public static VerifiableCredential resolve(String id)
+			throws MalformedDIDURLException, DIDResolveException {
+		if (id == null || id.isEmpty())
+			throw new IllegalArgumentException();
+
+		return resolve(new DIDURL(id));
+	}
+
+	/**
+	 * Resolve VerifiableCredential object.
+	 *
+	 * @param id the credential id
+	 * @param force if true ignore local cache and try to resolve from ID chain
+	 * @return the new CompletableStage, the result is the DIDDocument interface for
+	 *             resolved DIDDocument if success; null otherwise.
+	 */
+	public static CompletableFuture<VerifiableCredential> resolveAsync(DIDURL id, boolean force) {
+		CompletableFuture<VerifiableCredential> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return VerifiableCredential.resolve(id, force);
+			} catch (DIDBackendException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	/**
+	 * Resolve VerifiableCredential object.
+	 *
+	 * @param id the credential id
+	 * @param force if true ignore local cache and try to resolve from ID chain
+	 * @return the new CompletableStage, the result is the DIDDocument interface for
+	 *             resolved DIDDocument if success; null otherwise.
+	 */
+	public static CompletableFuture<VerifiableCredential> resolveAsync(String id, boolean force) {
+		CompletableFuture<VerifiableCredential> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return VerifiableCredential.resolve(id, force);
+			} catch (DIDBackendException | MalformedDIDURLException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	/**
+	 * Resolve VerifiableCredential object.
+	 *
+	 * @param id the credential id
+	 * @return the new CompletableStage, the result is the DIDDocument interface for
+	 *             resolved DIDDocument if success; null otherwise.
+	 */
+	public static CompletableFuture<VerifiableCredential> resolveAsync(DIDURL id) {
+		return VerifiableCredential.resolveAsync(id, false);
+	}
+
+	/**
+	 * Resolve VerifiableCredential object.
+	 *
+	 * @param id the credential id
+	 * @return the new CompletableStage, the result is the DIDDocument interface for
+	 *             resolved DIDDocument if success; null otherwise.
+	 */
+	public static CompletableFuture<VerifiableCredential> resolveAsync(String id) {
+		return VerifiableCredential.resolveAsync(id, false);
 	}
 
 	/**
@@ -1038,137 +1207,5 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 
 			return vc;
 		}
-	}
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
-	 */
-	public static VerifiableCredential resolve(DIDURL id, boolean force)
-			throws DIDResolveException {
-		if (id == null)
-			throw new IllegalArgumentException();
-
-		// TODO:
-		// VerifiableCredential vc = DIDBackend.resolveCredential(id, force);
-		VerifiableCredential vc = null;
-		if (vc != null)
-			id.setMetadata(vc.getMetadata());
-
-		return vc;
-	}
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the VerifiableCredential object
-	 * @throws MalformedDIDURLException if the DID string is malformed
-	 * @throws DIDResolveException throw this exception if resolving did failed
-	 */
-	public static VerifiableCredential resolve(String id, boolean force)
-			throws MalformedDIDURLException, DIDResolveException {
-		if (id == null || id.isEmpty())
-			throw new IllegalArgumentException();
-
-		return resolve(new DIDURL(id), force);
-	}
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
-	 */
-	public static VerifiableCredential resolve(DIDURL id)
-			throws DIDResolveException {
-		if (id == null)
-			throw new IllegalArgumentException();
-
-		return resolve(id, false);
-	}
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @return the VerifiableCredential object
-	 * @throws MalformedDIDURLException if the DID string is malformed
-	 * @throws DIDResolveException throw this exception if resolving did failed.
-	 */
-	public static VerifiableCredential resolve(String id)
-			throws MalformedDIDURLException, DIDResolveException {
-		if (id == null || id.isEmpty())
-			throw new IllegalArgumentException();
-
-		return resolve(new DIDURL(id));
-	}
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
-	 */
-	public static CompletableFuture<VerifiableCredential> resolveAsync(DIDURL id, boolean force) {
-		CompletableFuture<VerifiableCredential> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return VerifiableCredential.resolve(id, force);
-			} catch (DIDBackendException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	}
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
-	 */
-	public static CompletableFuture<VerifiableCredential> resolveAsync(String id, boolean force) {
-		CompletableFuture<VerifiableCredential> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return VerifiableCredential.resolve(id, force);
-			} catch (DIDBackendException | MalformedDIDURLException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	}
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
-	 */
-	public static CompletableFuture<VerifiableCredential> resolveAsync(DIDURL id) {
-		return VerifiableCredential.resolveAsync(id, false);
-	}
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
-	 */
-	public static CompletableFuture<VerifiableCredential> resolveAsync(String id) {
-		return VerifiableCredential.resolveAsync(id, false);
 	}
 }

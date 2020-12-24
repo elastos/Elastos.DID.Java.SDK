@@ -454,7 +454,7 @@ public final class DIDStore {
 
 				try {
 					DIDDocument chainCopy = null;
-					chainCopy = DIDBackend.getInstance().resolve(did, true);
+					chainCopy = DIDBackend.getInstance().resolveDid(did, true);
 					if (chainCopy != null) {
 						log.debug("{} exists, got the on-chain copy.", did.toString());
 

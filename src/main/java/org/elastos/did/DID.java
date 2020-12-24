@@ -183,7 +183,7 @@ public class DID implements Comparable<DID> {
 	 */
 	public DIDDocument resolve(boolean force)
 			throws DIDResolveException {
-		DIDDocument doc = DIDBackend.getInstance().resolve(this, force);
+		DIDDocument doc = DIDBackend.getInstance().resolveDid(this, force);
 		if (doc != null)
 			setMetadata(doc.getMetadata());
 
@@ -237,8 +237,8 @@ public class DID implements Comparable<DID> {
 	 * @return the DIDBiography object
 	 * @throws DIDResolveException throw this exception if resolving all did transactions failed.
 	 */
-	public DIDBiography getBiography() throws DIDResolveException {
-		return DIDBackend.getInstance().resolveHistory(this);
+	public DIDBiography resolveBiography() throws DIDResolveException {
+		return DIDBackend.getInstance().resolveDidBiography(this);
 	}
 
 	/**
@@ -247,10 +247,10 @@ public class DID implements Comparable<DID> {
 	 * @return the new CompletableStage, the result is the DIDHistory interface for
 	 *             resolved transactions if success; null otherwise.
 	 */
-	public CompletableFuture<DIDBiography> getBiographyAsync() {
+	public CompletableFuture<DIDBiography> resolveBiographyAsync() {
 		CompletableFuture<DIDBiography> future = CompletableFuture.supplyAsync(() -> {
 			try {
-				return getBiography();
+				return resolveBiography();
 			} catch (DIDResolveException e) {
 				throw new CompletionException(e);
 			}

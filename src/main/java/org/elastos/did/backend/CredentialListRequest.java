@@ -51,8 +51,12 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 
 		public Parameters(DID did, Integer skip, Integer limit) {
 			this.did = did;
-			this.skip = skip;
-			this.limit = limit;
+
+			if (skip > 0)
+				this.skip = skip;
+
+			if (limit > 0)
+				this.limit = limit;
 		}
 
 		public Parameters(DID did, int limit) {

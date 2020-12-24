@@ -316,27 +316,25 @@ public class SimulatedIDChain {
 		log.info("Resolveing credential {} ...", request.getId());
 
 		CredentialTransaction declareTx = getCredentialDeclareTransaction(request.getId());
+		CredentialTransaction controllerRevokeTx = getCredentialRevokeTransaction(request.getId(),
+				request.getId().getDid());
+
+		DID issuer = declareTx != null ? declareTx.getRequest().getCredential().getIssuer()
+				: request.getIssuer();
+		CredentialTransaction issuerRevokeTx = issuer != null ? getCredentialRevokeTransaction(
+				request.getId(), issuer) : null;
+
 		CredentialTransaction revokeTx = null;
-		if (declareTx != null)  {
-			CredentialTransaction controllerRevokeTx = getCredentialRevokeTransaction(request.getId(),
-					declareTx.getRequest().getCredential().getSubject().getId());
-
-			CredentialTransaction issuerRevokeTx = getCredentialRevokeTransaction(request.getId(),
-					declareTx.getRequest().getCredential().getIssuer());
-
-			if (controllerRevokeTx != null && issuerRevokeTx != null) {
-				if (issuerRevokeTx.getTimestamp().after(controllerRevokeTx.getTimestamp()))
-					revokeTx = controllerRevokeTx;
-				else
-					revokeTx = issuerRevokeTx;
-			} else {
-				if (controllerRevokeTx != null)
-					revokeTx = controllerRevokeTx;
-				else if (issuerRevokeTx != null)
-					revokeTx = issuerRevokeTx;
-			}
+		if (controllerRevokeTx != null && issuerRevokeTx != null) {
+			if (issuerRevokeTx.getTimestamp().after(controllerRevokeTx.getTimestamp()))
+				revokeTx = controllerRevokeTx;
+			else
+				revokeTx = issuerRevokeTx;
 		} else {
-			revokeTx = getCredentialRevokeTransaction(request.getId(), request.getId().getDid());
+			if (controllerRevokeTx != null)
+				revokeTx = controllerRevokeTx;
+			else if (issuerRevokeTx != null)
+				revokeTx = issuerRevokeTx;
 		}
 
 		CredentialBiography bio = new CredentialBiography(request.getId());
@@ -380,26 +378,6 @@ public class SimulatedIDChain {
 
 		log.info("List credentials {} total {}", request.getDid(), cl.size());
 		return new CredentialListResponse(request.getRequestId(), cl);
-	}
-
-	private CredentialResolveResponse resolveCredentialRevocation(CredentialResolveRevocation request) {
-		log.info("Resolve revocation for {} from {}...", request.getId(), request.getSigner());
-
-		CredentialBiography bio = new CredentialBiography(request.getId());
-		CredentialTransaction tx = getCredentialRevokeTransaction(request.getId(), request.getSigner());
-		if (tx != null) {
-			bio.setStatus(CredentialBiography.Status.REVOKED);
-			bio.addTransaction(tx);
-		} else {
-			tx = getCredentialRevokeTransaction(request.getId(), request.getId().getDid());
-			if (tx != null)
-				bio.setStatus(CredentialBiography.Status.REVOKED);
-			else
-				bio.setStatus(CredentialBiography.Status.VALID);
-		}
-
-		log.info("Resolve revocation {} {}", request.getId(), bio.getStatus());
-		return new CredentialResolveResponse(request.getRequestId(), bio);
 	}
 
 	private static class HttpServerThreadFactory implements ThreadFactory {
@@ -495,11 +473,6 @@ public class SimulatedIDChain {
 				case CredentialResolveRequest.METHOD_NAME:
 					CredentialResolveRequest crr = CredentialResolveRequest.parse(requestJson, CredentialResolveRequest.class);
 					response = resolveCredential(crr);
-					break;
-
-				case CredentialResolveRevocation.METHOD_NAME:
-					CredentialResolveRevocation crrv = CredentialResolveRevocation.parse(requestJson, CredentialResolveRevocation.class);
-					response = resolveCredentialRevocation(crrv);
 					break;
 
 				case CredentialListRequest.METHOD_NAME:

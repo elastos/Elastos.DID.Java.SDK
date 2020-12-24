@@ -22,24 +22,37 @@
 
 package org.elastos.did.backend;
 
+import org.elastos.did.DID;
 import org.elastos.did.DIDURL;
+import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDIDURLException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRequest, CredentialResolveRequest.Parameters> {
 	protected static final String PARAMETER_ID = "id";
+	protected static final String PARAMETER_ISSUER = "issuer";
 
 	protected static final String METHOD_NAME = "resolvecredential";
 
 	protected static class Parameters {
 		@JsonProperty(PARAMETER_ID)
 		private DIDURL id;
+		@JsonProperty(PARAMETER_ISSUER)
+		@JsonInclude(Include.NON_NULL)
+		private DID issuer;
 
 		@JsonCreator
 		public Parameters(@JsonProperty(value = PARAMETER_ID, required = true)DIDURL id) {
+			this(id, null);
+		}
+
+		public Parameters(DIDURL id, DID issuer) {
 			this.id = id;
+			this.issuer = issuer;
 		}
 	}
 
@@ -48,19 +61,31 @@ public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 		super(requestId, METHOD_NAME);
 	}
 
-	public void setParameters(DIDURL id) {
-		setParameters(new Parameters(id));
+	public void setParameters(DIDURL id, DID issuer) {
+		setParameters(new Parameters(id, issuer));
 	}
 
-	public void setParameters(String id) {
+	public void setParameters(DIDURL id) {
+		setParameters(id, null);
+	}
+
+	public void setParameters(String id, String issuer) {
 		try {
-			setParameters(new DIDURL(id));
-		} catch (MalformedDIDURLException e) {
+			setParameters(new DIDURL(id), new DID(issuer));
+		} catch (MalformedDIDException | MalformedDIDURLException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
 
+	public void setParameters(String id) {
+		setParameters(id, null);
+	}
+
 	public DIDURL getId() {
 		return getParameters().id;
+	}
+
+	public DID getIssuer() {
+		return getParameters().issuer;
 	}
 }

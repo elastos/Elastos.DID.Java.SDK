@@ -221,7 +221,7 @@ public class IDChainOperationsTest {
 		lastTxid = resolved.getMetadata().getTransactionId();
 		System.out.println("Last transaction id: " + lastTxid);
 
-		DIDBiography rr = did.getBiography();
+		DIDBiography rr = did.resolveBiography();
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
 		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
@@ -328,7 +328,7 @@ public class IDChainOperationsTest {
 		lastTxid = resolved.getMetadata().getTransactionId();
 		System.out.println("Last transaction id: " + lastTxid);
 
-		CompletableFuture<DIDBiography> rhf = did.getBiographyAsync();
+		CompletableFuture<DIDBiography> rhf = did.resolveBiographyAsync();
 		DIDBiography rr = rhf.join();
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
