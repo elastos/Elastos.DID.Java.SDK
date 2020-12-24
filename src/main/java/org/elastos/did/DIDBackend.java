@@ -27,8 +27,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Random;
 
+import org.elastos.did.backend.CredentialBiography;
+import org.elastos.did.backend.CredentialList;
+import org.elastos.did.backend.CredentialListRequest;
+import org.elastos.did.backend.CredentialListResponse;
+import org.elastos.did.backend.CredentialRequest;
+import org.elastos.did.backend.CredentialResolveRequest;
+import org.elastos.did.backend.CredentialResolveResponse;
+import org.elastos.did.backend.CredentialTransaction;
 import org.elastos.did.backend.DIDBiography;
 import org.elastos.did.backend.DIDRequest;
 import org.elastos.did.backend.DIDResolveRequest;
@@ -77,102 +86,7 @@ public class DIDBackend {
 		public DIDDocument resolve(DID did);
 	}
 
-	/*
-	static class DefaultResolver implements DIDResolver {
-		private URL url;
-
-		private static final Logger log = LoggerFactory.getLogger(DefaultResolver.class);
-
-		public DefaultResolver(String resolver) throws DIDResolveException {
-			if (resolver == null || resolver.isEmpty())
-				throw new IllegalArgumentException();
-
-			try {
-				this.url = new URL(resolver);
-			} catch (MalformedURLException e) {
-				throw new DIDResolveException(e);
-			}
-		}
-
-		@Override
-		public InputStream resolve(String request) throws DIDResolveException {
-			try {
-				HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-				connection.setRequestMethod("POST");
-				connection.setRequestProperty("User-Agent",
-						"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
-				connection.setRequestProperty("Content-Type", "application/json");
-				connection.setRequestProperty("Accept", "application/json");
-				connection.setDoOutput(true);
-				connection.connect();
-
-				OutputStream os = connection.getOutputStream();
-				os.write(request.getBytes());
-				os.close();
-
-				int code = connection.getResponseCode();
-				if (code != 200) {
-					log.error("HTTP request error, status: {}, message: {}",
-							code, connection.getResponseMessage());
-					throw new DIDResolveException("HTTP error with status: " + code);
-				}
-
-				return connection.getInputStream();
-			} catch (IOException e) {
-				throw new NetworkException("Network error.", e);
-			}
-		}
-
-		private InputStream resolve(ResolveRequest<?, ?> request)
-				throws DIDResolveException {
-			try {
-				String requestJson = request.serialize(true);
-				return resolve(requestJson);
-			} catch (DIDSyntaxException e) {
-				log.error("INTERNAL - Serialize resolve request", e);
-				throw new DIDResolveException("Can not serialize the request", e);
-			}
-		}
-
-		public InputStream resolveDid(String requestId, String did, boolean all)
-				throws DIDResolveException {
-			log.debug("Resolving DID {}...", did);
-
-			DIDResolveRequest request = new DIDResolveRequest(requestId);
-			request.setParameters(did, all);
-			return resolve(request);
-		}
-
-		public InputStream resolveCredential(String requestId, String id)
-				throws DIDResolveException {
-			log.debug("Resolving credential {}...", id);
-
-			CredentialResolveRequest request = new CredentialResolveRequest(requestId);
-			request.setParameters(id);
-			return resolve(request);
-		}
-
-		public InputStream listCredentials(String requestId, String did,
-				int skip, int limit) throws DIDResolveException {
-			log.debug("List credentials for {}...", did);
-
-			CredentialListRequest request = new CredentialListRequest(requestId);
-			request.setParameters(did, skip, limit);
-			return resolve(request);
-		}
-
-		public InputStream resolveCredentialRevocation(String requestId,
-				String id, String signer) throws DIDResolveException {
-			log.debug("Resolving credential revocation {} from {} ...", id, signer);
-
-			CredentialResolveRevocation request = new CredentialResolveRevocation(requestId);
-			request.setParameters(id, signer);
-			return resolve(request);
-		}
-	}
-*/
-
-    /**
+	/**
      * Set DIDAdapter for DIDBackend.
      *
      * @param adapter the DIDAdapter object
@@ -253,6 +167,19 @@ public class DIDBackend {
 		return sb.toString();
 	}
 
+	public void resetCache() {
+		cache.reset();
+	}
+
+	/**
+	 * Get DIDAdapter object.
+	 *
+	 * @return the DIDAdapter object from DIDBackend.
+	 */
+	protected DIDAdapter getAdapter() {
+		return adapter;
+	}
+
 	/**
      * Set DID Local Resolve handle in order to give the method handle which did document to verify.
      * If handle != NULL, set DID Local Resolve Handle; If handle == NULL, clear this handle.
@@ -267,14 +194,14 @@ public class DIDBackend {
 			throws DIDResolveException {
 		try {
 			String requestJson = request.serialize(true);
-			return adapter.resolve(requestJson);
+			return getAdapter().resolve(requestJson);
 		} catch (DIDSyntaxException e) {
 			log.error("INTERNAL - Serialize resolve request", e);
 			throw new DIDResolveException("Can not serialize the request", e);
 		}
 	}
 
-	private DIDBiography resolveFromBackend(DID did, boolean all)
+	private DIDBiography resolveDidFromBackend(DID did, boolean all)
 			throws DIDResolveException {
 		String requestId = generateRequestId();
 		DIDResolveRequest request = new DIDResolveRequest(requestId);
@@ -320,10 +247,10 @@ public class DIDBackend {
      * @return the DIDBiography object
      * @throws DIDResolveException throw this exception if resolving did transcations failed.
      */
-	protected DIDBiography resolveHistory(DID did) throws DIDResolveException {
+	protected DIDBiography resolveDidBiography(DID did) throws DIDResolveException {
 		log.info("Resolving {}...", did.toString());
 
-		DIDBiography rr = resolveFromBackend(did, true);
+		DIDBiography rr = resolveDidFromBackend(did, true);
 		if (rr.getStatus() == DIDBiography.Status.NOT_FOUND)
 			return null;
 
@@ -339,9 +266,9 @@ public class DIDBackend {
 	 * @return the DIDDocument object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	protected DIDDocument resolve(DID did, boolean force)
+	protected DIDDocument resolveDid(DID did, boolean force)
 			throws DIDResolveException {
-		log.info("Resolving {}...", did.toString());
+		log.info("Resolving DID {}...", did.toString());
 
 		if (resolveHandle != null) {
 			DIDDocument doc = resolveHandle.resolve(did);
@@ -357,7 +284,7 @@ public class DIDBackend {
 		}
 
 		if (bio == null)
-			bio = resolveFromBackend(did, false);
+			bio = resolveDidFromBackend(did, false);
 
 		DIDTransaction tx = null;
 		switch (bio.getStatus()) {
@@ -386,7 +313,7 @@ public class DIDBackend {
 			};
 
 			if (!request.isValid())
-				throw new DIDResolveException("Invalid ID biography, transaction signature mismatch.");
+				throw new DIDResolveException("Invalid DID biography, transaction signature mismatch.");
 
 			tx = bio.getTransaction(1);
 			break;
@@ -414,10 +341,6 @@ public class DIDBackend {
 		return doc;
 	}
 
-	public void resetCache() {
-		cache.reset();
-	}
-
 	/**
 	 * Resolve DID content(DIDDocument).
 	 *
@@ -425,25 +348,169 @@ public class DIDBackend {
 	 * @return the DIDDocument object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	protected DIDDocument resolve(DID did) throws DIDResolveException {
-		return resolve(did, false);
+	protected DIDDocument resolveDid(DID did) throws DIDResolveException {
+		return resolveDid(did, false);
 	}
 
-	/**
-	 * Get DIDAdapter object.
-	 *
-	 * @return the DIDAdapter object from DIDBackend.
-	 */
-	protected DIDAdapter getAdapter() {
-		return adapter;
+	protected CredentialBiography resolveCredentialBiography(DIDURL id, DID issuer)
+			throws DIDResolveException {
+		String requestId = generateRequestId();
+		CredentialResolveRequest request = new CredentialResolveRequest(requestId);
+		request.setParameters(id, issuer);
+		InputStream is = resolve(request);
+
+		CredentialResolveResponse response;
+		try {
+			response = CredentialResolveResponse.parse(is, CredentialResolveResponse.class);
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDResolveException(e);
+		} finally {
+			try {
+				is.close();
+			} catch (IOException ignore) {
+			}
+		}
+
+		if (response.getResponseId() == null || !response.getResponseId().equals(requestId))
+			throw new DIDResolveException("Mismatched resolve result with request.");
+
+		CredentialBiography bio = response.getResult();
+		if (bio == null) {
+			throw new DIDResolveException("Resolve credential error("
+					+ response.getErrorCode() + "): " + response.getErrorMessage());
+		}
+
+		if (bio.getStatus() != CredentialBiography.Status.NOT_FOUND) {
+			try {
+				cache.store(bio);
+			} catch (IOException e) {
+				log.error("!!! Cache resolved result error !!!", e);
+			}
+		}
+
+		return bio;
+
 	}
 
-	private void createTransaction(String payload, String memo)
+	protected VerifiableCredential resolveCredential(DIDURL id, DID issuer, boolean force)
+			throws DIDResolveException {
+		log.info("Resolving credential {}...", id);
+
+		CredentialBiography bio = null;
+		if (!force) {
+			bio = cache.load(id, ttl);
+			log.debug("Try load {} from resolver cache: {}.",
+					id.toString(), bio == null ? "non" : "matched");
+		}
+
+		if (bio == null)
+			bio = resolveCredentialBiography(id, issuer);
+
+		CredentialTransaction tx = null;
+		switch (bio.getStatus()) {
+		case VALID:
+			tx = bio.getTransaction(0);
+			break;
+
+		case REVOKED:
+			tx = bio.getTransaction(0);
+			if (tx.getRequest().getOperation() != IDChainRequest.Operation.REVOKE)
+				throw new DIDResolveException("Invalid credential biography, wrong status.");
+
+			if (!tx.getRequest().isValid())
+				throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
+
+			if (bio.getTransactionCount() == 1)
+				return null;
+
+			tx = bio.getTransaction(1);
+			break;
+
+		case NOT_FOUND:
+			return null;
+		}
+
+		if (tx.getRequest().getOperation() != IDChainRequest.Operation.DECLARE)
+			throw new DIDResolveException("Invalid credential transaction, unknown operation.");
+
+		if (!tx.getRequest().isValid())
+			throw new DIDResolveException("Invalid credential transaction, signature mismatch.");
+
+		VerifiableCredential vc = tx.getRequest().getCredential();
+		CredentialMetadata metadata = new CredentialMetadata();
+		metadata.setPublished(tx.getTimestamp());
+		if (bio.getStatus() == CredentialBiography.Status.REVOKED)
+			metadata.setRevoked(true);
+		vc.setMetadata(metadata);
+		return vc;
+	}
+
+	protected VerifiableCredential resolveCredential(DIDURL id, boolean force)
+			throws DIDResolveException {
+		return resolveCredential(id, null, force);
+	}
+
+	protected VerifiableCredential resolveCredential(DIDURL id, DID issuer)
+			throws DIDResolveException {
+		return resolveCredential(id, issuer, false);
+	}
+
+	protected VerifiableCredential resolveCredential(DIDURL id)
+			throws DIDResolveException {
+		return resolveCredential(id, false);
+	}
+
+	protected boolean resolveCredentialRevocation(DIDURL id, DID signer)
+		throws DIDResolveException {
+		log.info("Resolving credential revocation {}...", id);
+
+		CredentialBiography bio = resolveCredentialBiography(id, signer);
+		return bio.getStatus() == CredentialBiography.Status.REVOKED;
+	}
+
+	protected List<DIDURL> listCredentials(DID did, int skip, int limit)
+			throws DIDResolveException {
+		log.info("List credentials for {}", did);
+
+		String requestId = generateRequestId();
+		CredentialListRequest request = new CredentialListRequest(requestId);
+		request.setParameters(did, skip, limit);
+		InputStream is = resolve(request);
+
+		CredentialListResponse response;
+		try {
+			response = CredentialListResponse.parse(is, CredentialListResponse.class);
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDResolveException(e);
+		} finally {
+			try {
+				is.close();
+			} catch (IOException ignore) {
+			}
+		}
+
+		if (response.getResponseId() == null || !response.getResponseId().equals(requestId))
+			throw new DIDResolveException("Mismatched resolve result with request.");
+
+		CredentialList list = response.getResult();
+		if (list == null || list.size() == 0)
+			return null;
+
+		return list.getCredentialIds();
+	}
+
+	private void createTransaction(IDChainRequest<?> request)
 			throws DIDTransactionException {
 		log.info("Create ID transaction...");
-		log.trace("Transaction paload: '{}', memo: {}", payload, memo);
 
-		adapter.createIdTransaction(payload, memo);
+		try {
+			String payload = request.serialize(true);
+			log.trace("Transaction paload: '{}', memo: {}", payload, "");
+			getAdapter().createIdTransaction(payload, null);
+		} catch (DIDSyntaxException e) {
+			log.error("INTERNAL - Serialize IDChainRequest failed", e);
+			throw new DIDTransactionException("Serialize IDChainRequest failed", e);
+		}
 
 		log.info("ID transaction complete.");
 	}
@@ -461,8 +528,7 @@ public class DIDBackend {
 	protected void createDid(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.create(doc, signKey, storepass);
-		String json = request.toString(true);
-		createTransaction(json, null);
+		createTransaction(request);
 	}
 
 	/**
@@ -480,8 +546,7 @@ public class DIDBackend {
 			DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.update(doc, previousTxid, signKey, storepass);
-		String json = request.toString(true);
-		createTransaction(json, null);
+		createTransaction(request);
 		cache.invalidate(doc.getSubject());
 	}
 
@@ -489,8 +554,7 @@ public class DIDBackend {
 			DIDURL signKey, String storepass)
 			throws DIDStoreException, InvalidKeyException, DIDTransactionException {
 		DIDRequest request = DIDRequest.transfer(doc, ticket, signKey, storepass);
-		String json = request.toString(true);
-		createTransaction(json, null);
+		createTransaction(request);
 		cache.invalidate(doc.getSubject());
 	}
 
@@ -507,8 +571,7 @@ public class DIDBackend {
 	protected void deactivateDid(DIDDocument doc, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.deactivate(doc, signKey, storepass);
-		String json = request.toString(true);
-		createTransaction(json, null);
+		createTransaction(request);
 		cache.invalidate(doc.getSubject());
 	}
 
@@ -517,7 +580,7 @@ public class DIDBackend {
 	 *
 	 * @param target the DID to be deactivated
 	 * @param targetSignKey the key to sign of specified DID
-	 * @param doc the DIDDocument object
+	 * @param signer the signer's DIDDocument object
 	 * @param signKey the key to sign
 	 * @param storepass the password for DIDStore
      * @throws DIDResolveException publishing did failed because of resolve target did error.
@@ -526,12 +589,35 @@ public class DIDBackend {
      * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
 	protected void deactivateDid(DIDDocument target, DIDURL targetSignKey,
-			DIDDocument doc, DIDURL signKey, String storepass)
+			DIDDocument signer, DIDURL signKey, String storepass)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.deactivate(target,
-				targetSignKey, doc, signKey, storepass);
-		String json = request.toString(true);
-		createTransaction(json, null);
+				targetSignKey, signer, signKey, storepass);
+		createTransaction(request);
 		cache.invalidate(target.getSubject());
+	}
+
+	protected void declareCredential(VerifiableCredential vc, DIDDocument signer,
+			DIDURL signKey, String storepass)
+			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+		CredentialRequest request = CredentialRequest.declare(vc, signer,
+				signKey, storepass);
+		createTransaction(request);
+	}
+
+	protected void revokeCredential(VerifiableCredential vc, DIDDocument signer,
+			DIDURL signKey, String storepass)
+			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+		CredentialRequest request = CredentialRequest.revoke(vc, signer,
+				signKey, storepass);
+		createTransaction(request);
+	}
+
+	protected void revokeCredential(DIDURL vc, DIDDocument signer,
+			DIDURL signKey, String storepass)
+			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+		CredentialRequest request = CredentialRequest.revoke(vc, signer,
+				signKey, storepass);
+		createTransaction(request);
 	}
 }

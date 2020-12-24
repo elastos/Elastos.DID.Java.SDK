@@ -22,6 +22,10 @@
 
 package org.elastos.did;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * The interface for Credential's meta data(include alias name, last modified time for Credential
  * and user's extra element).
@@ -31,6 +35,11 @@ package org.elastos.did;
  */
 public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	private final static String ALIAS = RESERVED_PREFIX + "alias";
+	private final static String PUBLISHED = RESERVED_PREFIX + "published";
+	private final static String REVOKED = RESERVED_PREFIX + "revoked";
+
+	private final static SimpleDateFormat dateFormat =
+			new SimpleDateFormat(Constants.DATE_FORMAT);
 
 	/**
 	 * Construct the empty CredentialMetadataImpl.
@@ -64,6 +73,49 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	 */
 	public String getAlias() {
 		return (String)get(ALIAS);
+	}
+
+	/**
+	 * Set published time into CredentialMetadata.
+	 *
+	 * @param timestamp the time published
+	 */
+	protected void setPublished(Date timestamp) {
+		put(PUBLISHED, dateFormat.format(timestamp));
+	}
+
+	/**
+	 * Get the time of the lastest declare transaction.
+	 *
+	 * @return the published time
+	 */
+	public Date getPublished() {
+		try {
+			String published = (String)get(PUBLISHED);
+			return published == null ? null : dateFormat.parse(published);
+		} catch (ParseException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Set revoked status into CredentialMetadata.
+	 *
+	 * @param revoked the revocation status
+	 */
+	protected void setRevoked(boolean revoked) {
+		put(REVOKED, revoked);
+	}
+
+	/**
+	 * the DID revoked status.
+	 *
+	 * @return the returned value is true if the did is revoked.
+	 *         the returned value is false if the did is not revoked.
+	 */
+	public boolean isRevoked( ) {
+		Boolean v = (Boolean)get(REVOKED);
+		return v == null ? false : v;
 	}
 
     /**

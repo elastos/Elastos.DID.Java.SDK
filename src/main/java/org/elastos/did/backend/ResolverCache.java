@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.elastos.did.DID;
+import org.elastos.did.DIDURL;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.util.LRUCache;
@@ -43,7 +44,7 @@ public class ResolverCache {
 	private static final int CACHE_MAX_CAPACITY = 32;
 
 	private File rootDir;
-	private Map<DID, DIDBiography> cache = LRUCache.createInstance(
+	private Map<Object, Object> cache = LRUCache.createInstance(
 			CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 
 	private static final Logger log = LoggerFactory.getLogger(IDChainRequest.class);
@@ -66,8 +67,15 @@ public class ResolverCache {
 		return rootDir;
 	}
 
-	private File getFile(String id) {
-		String filename = getCacheDir().getAbsolutePath() + File.separator + id;
+	private File getFile(DID did) {
+		String filename = getCacheDir().getAbsolutePath() + File.separator
+				+ did.getMethodSpecificId();
+		return new File(filename);
+	}
+
+	private File getFile(DIDURL id) {
+		String filename = getCacheDir().getAbsolutePath() + File.separator
+				+ id.getDid().getMethodSpecificId() + "_" + id.getFragment();
 		return new File(filename);
 	}
 
@@ -83,15 +91,30 @@ public class ResolverCache {
 	}
 
 	/**
-	 * Store the resolve result(mainly DID Document) in cache.
+	 * Store the resolved DIDBiography in cache.
 	 *
 	 * @param rr the DIDBiography content
 	 * @throws IOException write the resolve result to output failed.
 	 */
 	public void store(DIDBiography bio) throws IOException {
 		try {
-			bio.serialize(getFile(bio.getDid().getMethodSpecificId()));
+			bio.serialize(getFile(bio.getDid()));
 			cache.put(bio.getDid(), bio);
+		} catch (DIDSyntaxException ignore) {
+			log.error("INTERNAL - Serialize DIDBiography", ignore);
+		}
+	}
+
+	/**
+	 * Store the resolved CredentialBiography in cache.
+	 *
+	 * @param rr the DIDBiography content
+	 * @throws IOException write the resolve result to output failed.
+	 */
+	public void store(CredentialBiography bio) throws IOException {
+		try {
+			bio.serialize(getFile(bio.getId()));
+			cache.put(bio.getId(), bio);
 		} catch (DIDSyntaxException ignore) {
 			log.error("INTERNAL - Serialize DIDBiography", ignore);
 		}
@@ -107,7 +130,7 @@ public class ResolverCache {
 	 */
 	public DIDBiography load(DID did, long ttl)
 			throws DIDResolveException {
-		File file = getFile(did.getMethodSpecificId());
+		File file = getFile(did);
 
 		if (!file.exists())
 			return null;
@@ -116,11 +139,41 @@ public class ResolverCache {
 			return null;
 
 		if (cache.containsKey(did))
-			return cache.get(did);
+			return (DIDBiography)cache.get(did);
 
 		try {
 			DIDBiography bio = DIDBiography.parse(file, DIDBiography.class);
 			cache.put(bio.getDid(), bio);
+			return bio;
+		} catch (IOException | DIDSyntaxException e) {
+			throw new DIDResolveException(e);
+		}
+	}
+
+	/**
+	 * Load the specified credential content from cache.
+	 *
+	 * @param id the specified id for credential
+	 * @param ttl the time for cache
+	 * @return the CredentialBiography object
+	 * @throws DIDResolveException resolve did failed.
+	 */
+	public CredentialBiography load(DIDURL id, long ttl)
+			throws DIDResolveException {
+		File file = getFile(id);
+
+		if (!file.exists())
+			return null;
+
+		if (System.currentTimeMillis() > (file.lastModified() + ttl))
+			return null;
+
+		if (cache.containsKey(id))
+			return (CredentialBiography)cache.get(id);
+
+		try {
+			CredentialBiography bio = CredentialBiography.parse(file, CredentialBiography.class);
+			cache.put(bio.getId(), bio);
 			return bio;
 		} catch (IOException | DIDSyntaxException e) {
 			throw new DIDResolveException(e);
@@ -133,7 +186,7 @@ public class ResolverCache {
 	 * @param did the specified DID
 	 */
 	public void invalidate(DID did) {
-		File file = getFile(did.getMethodSpecificId());
+		File file = getFile(did);
 		file.delete();
 		cache.remove(did);
 	}
