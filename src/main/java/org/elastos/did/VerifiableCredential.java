@@ -33,20 +33,28 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import org.elastos.did.backend.CredentialBiography;
+import org.elastos.did.exception.CredentialExpiredException;
+import org.elastos.did.exception.CredentialInvalidException;
+import org.elastos.did.exception.CredentialNotGenuineException;
+import org.elastos.did.exception.CredentialRevokedException;
 import org.elastos.did.exception.DIDBackendException;
+import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDInvalidException;
 import org.elastos.did.exception.DIDNotFoundException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
+import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
+import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDIDURLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -648,6 +656,18 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		return bio.getStatus() == CredentialBiography.Status.REVOKED;
 	}
 
+	public CompletableFuture<Boolean> isRevokedAsync() {
+		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return isRevoked();
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
 	/**
 	 * Check whether the Credential is valid or not.
 	 *
@@ -664,6 +684,9 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 			if (now.after(expireDate))
 				return false;
 		}
+
+		if (isRevoked())
+			return false;
 
 		DIDDocument issuerDoc = issuer.resolve();
 
@@ -721,9 +744,26 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public void declare(DIDURL signKey, String storepass)
-			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDResolveException {
+			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
+
+		if (!isGenuine()) {
+			log.error("Publish failed because document is not genuine.");
+			throw new CredentialNotGenuineException(getId().toString());
+		}
+
+		if (isExpired()) {
+			log.error("Publish failed because document is expired.");
+			log.info("You can publish the expired document using force mode.");
+			throw new CredentialExpiredException(getId().toString());
+		}
+
+		if (isRevoked()) {
+			log.error("Publish failed because DID is deactivated.");
+			throw new CredentialRevokedException(getId().toString());
+		}
 
 		DIDDocument owner = getStore().loadDid(getSubject().getId());
 		if (owner == null) {
@@ -737,9 +777,232 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 
 		checkState(signKey != null || owner.getDefaultPublicKeyId() != null, "No effective controller");
 
-		if (!owner.isAuthenticationKey(signKey))
-			throw new InvalidKeyException(signKey.toString());
+		if (signKey != null) {
+			if (!owner.isAuthenticationKey(signKey))
+				throw new InvalidKeyException(signKey.toString());
+		} else {
+			signKey = owner.getDefaultPublicKeyId();
+		}
 
+		DIDBackend.getInstance().declareCredential(this, owner, signKey, storepass);
+	}
+
+	public void declare(String signKey, String storepass)
+			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
+		DIDURL _signKey = signKey == null ? null : new DIDURL(getSubject().getId(), signKey);
+		declare(_signKey, storepass);
+	}
+
+	public void declare(String storepass)
+			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
+		declare((DIDURL)null, storepass);
+	}
+
+	public CompletableFuture<Void> declareAsync(DIDURL signKey, String storepass) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				declare(signKey, storepass);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public CompletableFuture<Void> declareAsync(String signKey, String storepass) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				declare(signKey, storepass);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public CompletableFuture<Void> declareAsync(String storepass) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				declare(storepass);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public void revoke(DIDURL signKey, String storepass)
+			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkState(getMetadata().attachedStore(), "Not attached with a store");
+
+		if (isRevoked()) {
+			log.error("Publish failed because DID is deactivated.");
+			throw new CredentialRevokedException(getId().toString());
+		}
+
+		DIDDocument owner = getStore().loadDid(getSubject().getId());
+		if (owner == null) {
+			// Fail-back: resolve the owner's document
+			owner = getSubject().getId().resolve();
+			if (owner == null)
+				throw new DIDNotFoundException(getSubject().getId().toString());
+
+			owner.getMetadata().setStore(getStore());
+		}
+
+		checkState(signKey != null || owner.getDefaultPublicKeyId() != null, "No effective controller");
+
+		if (signKey != null) {
+			if (!owner.isAuthenticationKey(signKey))
+				throw new InvalidKeyException(signKey.toString());
+		} else {
+			signKey = owner.getDefaultPublicKeyId();
+		}
+
+		DIDBackend.getInstance().revokeCredential(this, owner, signKey, storepass);
+	}
+
+	public void revoke(String signKey, String storepass)
+			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
+		DIDURL _signKey = signKey == null ? null : new DIDURL(getSubject().getId(), signKey);
+		revoke(_signKey, storepass);
+	}
+
+	public void revoke(String storepass)
+			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
+		revoke((DIDURL)null, storepass);
+	}
+
+	public CompletableFuture<Void> revokeAsync(DIDURL signKey, String storepass) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				revoke(signKey, storepass);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public CompletableFuture<Void> revokeAsync(String signKey, String storepass) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				revoke(signKey, storepass);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public CompletableFuture<Void> revokeAsync(String storepass) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				revoke(storepass);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public static void revoke(DIDURL id, DIDDocument issuer, DIDURL signKey, String storepass)
+			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
+		checkArgument(id != null, "Invalid credential id");
+		checkArgument(issuer != null, "Invalid issuer's document");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkState(issuer.getMetadata().attachedStore(), "Issuer document not attached with a store");
+
+		if (DIDBackend.getInstance().resolveCredentialRevocation(id, issuer.getSubject())) {
+			log.error("Publish failed because DID is deactivated.");
+			throw new CredentialRevokedException(id.toString());
+		}
+
+		checkState(signKey != null || issuer.getDefaultPublicKeyId() != null, "No effective controller for issuer");
+
+		if (signKey != null) {
+			if (!issuer.isAuthenticationKey(signKey))
+				throw new InvalidKeyException(signKey.toString());
+		} else {
+			signKey = issuer.getDefaultPublicKeyId();
+		}
+
+		DIDBackend.getInstance().revokeCredential(id, issuer, signKey, storepass);
+	}
+
+	public static void revoke(String id, DIDDocument issuer, String signKey, String storepass)
+			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
+		DIDURL _id, _signKey;
+		try {
+			_id = new DIDURL(id);
+			_signKey = signKey == null ? null : new DIDURL(issuer.getSubject(), signKey);
+		} catch (MalformedDIDURLException e) {
+			throw new IllegalArgumentException();
+		}
+
+		revoke(_id, issuer, _signKey, storepass);
+	}
+
+	public static void revoke(DIDURL id, DIDDocument issuer, String storepass)
+			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
+		revoke(id, issuer, null, storepass);
+	}
+
+	public static void revoke(String id, DIDDocument issuer, String storepass)
+			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
+			DIDStoreException, DIDResolveException, DIDTransactionException {
+		revoke(id, issuer, null, storepass);
+	}
+
+	public static CompletableFuture<Void> revokeAsync(DIDURL id,
+			DIDDocument issuer, DIDURL signKey, String storepass) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				revoke(id, issuer, signKey, storepass);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public static CompletableFuture<Void> revokeAsync(String id,
+			DIDDocument issuer, String signKey, String storepass) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				revoke(id, issuer, signKey, storepass);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public static CompletableFuture<Void> revokeAsync(DIDURL id,
+			DIDDocument issuer, String storepass) {
+		return revokeAsync(id, issuer, null, storepass);
+	}
+
+	public static CompletableFuture<Void> revokeAsync(String id,
+			DIDDocument issuer, String storepass) {
+		return revokeAsync(id, issuer, null, storepass);
 	}
 
 	/**
@@ -870,6 +1133,125 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 */
 	public static CompletableFuture<VerifiableCredential> resolveAsync(String id) {
 		return VerifiableCredential.resolveAsync(id, false);
+	}
+
+	public static CredentialBiography resolveBiography(DIDURL id, DID issuer)
+			throws DIDResolveException {
+		checkArgument(id != null, "Invalid credential id");
+
+		return DIDBackend.getInstance().resolveCredentialBiography(id, issuer);
+	}
+
+	public static CredentialBiography resolveBiography(DIDURL id)
+			throws DIDResolveException {
+		checkArgument(id != null, "Invalid credential id");
+
+		return DIDBackend.getInstance().resolveCredentialBiography(id);
+	}
+
+	public static CredentialBiography resolveBiography(String id, String issuer)
+			throws DIDResolveException {
+		try {
+			DIDURL _id = new DIDURL(id);
+			DID _issuer = issuer == null ? null : new DID(issuer);
+			return resolveBiography(_id, _issuer);
+		} catch (MalformedDIDException | MalformedDIDURLException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
+	public static CredentialBiography resolveBiography(String id)
+			throws DIDResolveException {
+		return resolveBiography(id, null);
+	}
+
+	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(DIDURL id, DID issuer) {
+		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return resolveBiography(id, issuer);
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(DIDURL id) {
+		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return resolveBiography(id);
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(String id, String issuer) {
+		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return resolveBiography(id, issuer);
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(String id) {
+		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return resolveBiography(id);
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public static List<DIDURL> list(DID did, int skip, int limit)
+			throws DIDResolveException {
+		checkArgument(did != null, "Invalid did");
+
+		return DIDBackend.getInstance().listCredentials(did, skip, limit);
+	}
+
+	public static List<DIDURL> list(DID did, int limit)
+			throws DIDResolveException {
+		checkArgument(did != null, "Invalid did");
+
+		return DIDBackend.getInstance().listCredentials(did, 0, limit);
+	}
+
+	public static List<DIDURL> list(DID did)
+			throws DIDResolveException {
+		checkArgument(did != null, "Invalid did");
+
+		return DIDBackend.getInstance().listCredentials(did, 0, 0);
+	}
+
+	public static CompletableFuture<List<DIDURL>> listAsync(DID did, int skip, int limit) {
+		CompletableFuture<List<DIDURL>> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return list(did, skip, limit);
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public static CompletableFuture<List<DIDURL>> listAsync(DID did, int limit) {
+		return listAsync(did, 0, limit);
+	}
+
+	public static CompletableFuture<List<DIDURL>> listAsync(DID did) {
+		return listAsync(did, 0, 0);
 	}
 
 	/**
