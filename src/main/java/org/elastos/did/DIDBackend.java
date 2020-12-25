@@ -392,6 +392,11 @@ public class DIDBackend {
 
 	}
 
+	protected CredentialBiography resolveCredentialBiography(DIDURL id)
+			throws DIDResolveException {
+		return resolveCredentialBiography(id, null);
+	}
+
 	protected VerifiableCredential resolveCredential(DIDURL id, DID issuer, boolean force)
 			throws DIDResolveException {
 		log.info("Resolving credential {}...", id);
