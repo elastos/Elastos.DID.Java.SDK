@@ -25,7 +25,7 @@ package org.elastos.did.exception;
 /**
  * Thrown to indicate that the DIDURL is malformed.
  */
-public class MalformedDIDURLException extends DIDSyntaxException {
+public class MalformedDIDURLException extends IllegalArgumentException {
 	private static final long serialVersionUID = 7374943863243784610L;
 
 	/**

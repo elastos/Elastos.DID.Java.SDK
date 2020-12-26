@@ -24,8 +24,6 @@ package org.elastos.did.backend;
 
 import org.elastos.did.DID;
 import org.elastos.did.DIDURL;
-import org.elastos.did.exception.MalformedDIDException;
-import org.elastos.did.exception.MalformedDIDURLException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -70,11 +68,7 @@ public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 	}
 
 	public void setParameters(String id, String issuer) {
-		try {
-			setParameters(new DIDURL(id), new DID(issuer));
-		} catch (MalformedDIDException | MalformedDIDURLException e) {
-			throw new IllegalArgumentException(e);
-		}
+		setParameters(DIDURL.valueOf(id), DID.valueOf(issuer));
 	}
 
 	public void setParameters(String id) {

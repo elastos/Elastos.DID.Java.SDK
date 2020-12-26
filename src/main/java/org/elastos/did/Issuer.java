@@ -25,7 +25,6 @@ package org.elastos.did;
 import org.elastos.did.VerifiableCredential.Builder;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
-import org.elastos.did.exception.MalformedDIDException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +64,7 @@ public class Issuer {
 	 */
 	public Issuer(DIDDocument doc, String signKey)
 			throws DIDStoreException, InvalidKeyException {
-		this(doc, signKey != null ? new DIDURL(doc.getSubject(), signKey) : null);
+		this(doc, DIDURL.valueOf(doc.getSubject(), signKey));
 	}
 
 	/**
@@ -107,15 +106,12 @@ public class Issuer {
 	 * @param did the Issuer's DID
 	 * @param signKey the specified issuer's key to sign
 	 * @param store the DIDStore object
-	 * @throws MalformedDIDException if the DID is invalid
 	 * @throws DIDStoreException there is no store to attach
 	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
 	public Issuer(String did, String signKey, DIDStore store)
-			throws MalformedDIDException, DIDStoreException, InvalidKeyException {
-		this(new DID(did),
-				signKey != null ? new DIDURL(new DID(did), signKey) : null,
-				store);
+			throws DIDStoreException, InvalidKeyException {
+		this(DID.valueOf(did), DIDURL.valueOf(did, signKey), store);
 	}
 
 	/**
@@ -136,13 +132,12 @@ public class Issuer {
 	 *
 	 * @param did the Issuer's DID
 	 * @param store the DIDStore object
-	 * @throws MalformedDIDException if the DID is invalid
 	 * @throws DIDStoreException there is no store to attach
 	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
 	public Issuer(String did, DIDStore store)
-			throws MalformedDIDException, DIDStoreException, InvalidKeyException {
-		this(new DID(did), null, store);
+			throws DIDStoreException, InvalidKeyException {
+		this(DID.valueOf(did), null, store);
 	}
 
 	private void init(DIDDocument doc, DIDURL signKey)
@@ -222,13 +217,6 @@ public class Issuer {
 	 * @return the VerifiableCredential builder to issuer Credential
 	 */
 	public Builder issueFor(String did) {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return issueFor(_did);
+		return issueFor(DID.valueOf(did));
 	}
 }

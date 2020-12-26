@@ -22,6 +22,8 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -69,26 +71,20 @@ public class DIDURL implements Comparable<DIDURL> {
 	 * @param base the owner of DIDURL
 	 * @param url the DIDURl string
 	 */
-	public DIDURL(DID base, String url) {
-		if (url == null || url.isEmpty())
-			throw new IllegalArgumentException();
+	public DIDURL(DID baseRef, String url) throws MalformedDIDURLException {
+		checkArgument(url != null && !url.isEmpty(), "Invalid url parameter");
 
-		if (url != null) {
-			if (url.startsWith("did:")) {
+		// TODO: improve implementation, should support partial DIDURL
+		if (url.startsWith("did:")) {
+			try {
 				ParserHelper.parse(url, false, new Listener());
-				// TODO: checkme!!!
-				//if (base != null && !getDid().equals(base))
-				//	throw new IllegalArgumentException("Mismatched arguments");
-
-				return;
+			} catch (Exception e) {
+				throw new MalformedDIDURLException(url, e);
 			}
-
-			if (url.startsWith("#"))
-				url = url.substring(1);
+		} else {
+			this.did = baseRef;
+			this.fragment = url.startsWith("#") ? url.substring(1) : url;
 		}
-
-		this.did = base;
-		this.fragment = url;
 	}
 
 	/**
@@ -98,14 +94,28 @@ public class DIDURL implements Comparable<DIDURL> {
 	 * @throws MalformedDIDURLException DIDURL is malformed.
 	 */
 	public DIDURL(String url) throws MalformedDIDURLException {
-		if (url == null || url.isEmpty())
-			throw new IllegalArgumentException();
+		this(null, url);
+	}
 
-		try {
-			ParserHelper.parse(url, false, new Listener());
-		} catch(IllegalArgumentException e) {
-			throw new MalformedDIDURLException(e.getMessage());
-		}
+	protected DIDURL(DID baseRef, DIDURL url) {
+		this.did = url.did == null ? baseRef : url.did;
+		this.parameters = url.parameters;
+		this.path = url.path;
+		this.query = url.query;
+		this.fragment = url.fragment;
+		this.metadata = url.metadata;
+	}
+
+	public static DIDURL valueOf(DID baseRef, String url) throws MalformedDIDURLException {
+		return (url == null || url.isEmpty()) ? null : new DIDURL(baseRef, url);
+	}
+
+	public static DIDURL valueOf(String baseRef, String url) throws MalformedDIDURLException {
+		return (url == null || url.isEmpty()) ? null : new DIDURL(DID.valueOf(baseRef), url);
+	}
+
+	public static DIDURL valueOf(String url) throws MalformedDIDURLException {
+		return (url == null || url.isEmpty()) ? null : new DIDURL(url);
 	}
 
 	/**

@@ -240,6 +240,7 @@ public abstract class IDChainRequest<T> extends DIDObject<T> {
 		}
 
 		protected void qualifyVerificationMethod(DID ref) {
+			// TODO: need improve the impl
 			if (verificationMethod.getDid() == null)
 				verificationMethod = new DIDURL(ref, verificationMethod.toString());
 		}

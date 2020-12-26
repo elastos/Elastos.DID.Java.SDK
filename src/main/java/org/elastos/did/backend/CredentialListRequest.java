@@ -23,7 +23,6 @@
 package org.elastos.did.backend;
 
 import org.elastos.did.DID;
-import org.elastos.did.exception.MalformedDIDException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -87,27 +86,15 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 	}
 
 	public void setParameters(String did, int skip, int limit) {
-		try {
-			setParameters(new DID(did), skip, limit);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
+		setParameters(DID.valueOf(did), skip, limit);
 	}
 
 	public void setParameters(String did, int limit) {
-		try {
-			setParameters(new DID(did), limit);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
+		setParameters(DID.valueOf(did), limit);
 	}
 
 	public void setParameters(String did) {
-		try {
-			setParameters(new DID(did));
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
+		setParameters(DID.valueOf(did));
 	}
 
 	public DID getDid() {

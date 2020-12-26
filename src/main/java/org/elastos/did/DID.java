@@ -22,6 +22,8 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -76,6 +78,9 @@ public class DID implements Comparable<DID> {
 	 * @param methodSpecificId the method specific id string. eg: "i*******"
 	 */
 	protected DID(String method, String methodSpecificId) {
+		checkArgument(method != null && !method.isEmpty(), "Invalid method parameter");
+		checkArgument(methodSpecificId != null && !methodSpecificId.isEmpty(), "Invalid methodSpecificId parameter");
+
 		this.method = method;
 		this.methodSpecificId = methodSpecificId;
 	}
@@ -87,14 +92,17 @@ public class DID implements Comparable<DID> {
 	 * @throws MalformedDIDException if the given did string has wrong format.
 	 */
 	public DID(String did) throws MalformedDIDException {
-		if (did == null || did.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(did != null && !did.isEmpty(), "Invalid DID parameter");
 
 		try {
 			ParserHelper.parse(did, true, new Listener());
 		} catch(IllegalArgumentException e) {
-			throw new MalformedDIDException(e.getMessage());
+			throw new MalformedDIDException(did, e);
 		}
+	}
+
+	public static DID valueOf(String did) throws MalformedDIDException {
+		return (did == null || did.isEmpty()) ? null : new DID(did);
 	}
 
 	/**
@@ -112,6 +120,8 @@ public class DID implements Comparable<DID> {
 	 * @param method the did method string
 	 */
 	protected void setMethod(String method) {
+		checkArgument(method != null && !method.isEmpty(), "Invalid method parameter");
+
 		this.method = method;
 	}
 
@@ -130,6 +140,8 @@ public class DID implements Comparable<DID> {
 	 * @param methodSpecificId the did method specific id string
 	 */
 	protected void setMethodSpecificId(String methodSpecificId) {
+		checkArgument(methodSpecificId != null && !methodSpecificId.isEmpty(), "Invalid methodSpecificId parameter");
+
 		this.methodSpecificId = methodSpecificId;
 	}
 
