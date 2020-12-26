@@ -102,7 +102,7 @@ public class DIDURLTest {
 	@Test
 	public void testConstructorError1() {
 		assertThrows(MalformedDIDURLException.class, () -> {
-			new DIDURL("id:elastos:1234567890" + ";" + params + path + "?" + query + "#" + fragment);
+			new DIDURL("did:elastos:1234567890;" + ";" + params + path + "?" + query + "#" + fragment);
 		});
 	}
 

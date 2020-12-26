@@ -74,9 +74,7 @@ public class JwtParserBuilder {
 						if (doc == null)
 							throw new DIDResolveException("Can not resolve the iss's DID");
 
-						DIDURL id = keyid == null ? doc.getDefaultPublicKeyId()
-								: new DIDURL(doc.getSubject(), keyid);
-						return doc.getKeyPair(id).getPublic();
+						return doc.getKeyPair(DIDURL.valueOf(doc.getSubject(), keyid)).getPublic();
 					}
 				} catch (InvalidKeyException e) {
 					throw new InvalidSignKeyException("Invalid sign key", e);

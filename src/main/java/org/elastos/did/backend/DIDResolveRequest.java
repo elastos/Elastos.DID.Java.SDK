@@ -23,7 +23,6 @@
 package org.elastos.did.backend;
 
 import org.elastos.did.DID;
-import org.elastos.did.exception.MalformedDIDException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -65,11 +64,7 @@ public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, DIDReso
 	}
 
 	public void setParameters(String did, boolean all) {
-		try {
-			setParameters(new DID(did), all);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
+		setParameters(DID.valueOf(did), all);
 	}
 
 	public DID getDid() {

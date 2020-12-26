@@ -25,7 +25,7 @@ package org.elastos.did.exception;
 /**
  * Thrown to indicate that the DID is malformed.
  */
-public class MalformedDIDException extends DIDSyntaxException {
+public class MalformedDIDException extends IllegalArgumentException {
 	private static final long serialVersionUID = -5320577254261002967L;
 
 	/**

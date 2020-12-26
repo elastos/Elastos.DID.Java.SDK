@@ -55,7 +55,6 @@ import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDocumentException;
 import org.elastos.did.exception.MalformedExportDataException;
 import org.elastos.did.exception.WrongPasswordException;
@@ -710,11 +709,7 @@ public final class DIDStore {
 
 	public DIDDocument newDid(String did, String controller, String storepass)
 			throws DIDStoreException {
-		try {
-			return newDid(new DID(did), new DID(controller), storepass);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
+		return newDid(DID.valueOf(did), DID.valueOf(controller), storepass);
 	}
 
 	public DIDDocument newDid(DID did, DID[] controllers, DID self, int multisig, String storepass)
@@ -768,16 +763,12 @@ public final class DIDStore {
 				self == null ||storepass.isEmpty())
 			throw new IllegalArgumentException();
 
-		try {
-			List<DID> _controllers = new ArrayList<DID>();
-			for (String ctrl : controllers)
-				_controllers.add(new DID(ctrl));
+		List<DID> _controllers = new ArrayList<DID>();
+		for (String ctrl : controllers)
+			_controllers.add(new DID(ctrl));
 
-
-			return newDid(new DID(did), _controllers.toArray(new DID[0]), new DID(self), multisig, storepass);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
+		return newDid(DID.valueOf(did), _controllers.toArray(new DID[0]),
+				DID.valueOf(self), multisig, storepass);
 	}
 
     /**
@@ -832,14 +823,7 @@ public final class DIDStore {
 	 */
 	protected void storeDidMetadata(String did, DIDMetadata metadata)
 			throws DIDStoreException{
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		storeDidMetadata(_did, metadata);
+		storeDidMetadata(DID.valueOf(did), metadata);
 	}
 
 	/**
@@ -880,14 +864,7 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	protected DIDMetadata loadDidMetadata(String did) throws DIDStoreException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return loadDidMetadata(_did);
+		return loadDidMetadata(DID.valueOf(did));
 	}
 
 	/**
@@ -930,14 +907,7 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public DIDDocument loadDid(String did) throws DIDStoreException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return loadDid(_did);
+		return loadDid(DID.valueOf(did));
 	}
 
     /**
@@ -964,14 +934,7 @@ public final class DIDStore {
      * @throws DIDStoreException DIDStore error.
      */
 	public boolean containsDid(String did) throws DIDStoreException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return containsDid(_did);
+		return containsDid(DID.valueOf(did));
 	}
 
     /**
@@ -999,14 +962,7 @@ public final class DIDStore {
      * @throws DIDStoreException DIDStore error.
      */
 	public boolean deleteDid(String did) throws DIDStoreException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return deleteDid(_did);
+		return deleteDid(DID.valueOf(did));
 	}
 
 	/**
@@ -1088,16 +1044,7 @@ public final class DIDStore {
      */
 	protected void storeCredentialMetadata(String did, String id,
 			CredentialMetadata metadata) throws DIDStoreException {
-		DID _did = null;
-		DIDURL _id = null;
-		try {
-			_did = new DID(did);
-			_id = new DIDURL(_did, id);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		storeCredentialMetadata(_did, _id, metadata);
+		storeCredentialMetadata(DID.valueOf(did), DIDURL.valueOf(did, id), metadata);
 	}
 
 	/**
@@ -1142,16 +1089,7 @@ public final class DIDStore {
 	 */
 	protected CredentialMetadata loadCredentialMetadata(String did, String id)
 			throws DIDStoreException {
-		DID _did = null;
-		DIDURL _id = null;
-		try {
-			_did = new DID(did);
-			_id = new DIDURL(_did, id);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return loadCredentialMetadata(_did, _id);
+		return loadCredentialMetadata(DID.valueOf(did), DIDURL.valueOf(did, id));
 	}
 
 	/**
@@ -1198,16 +1136,7 @@ public final class DIDStore {
 	 */
 	public VerifiableCredential loadCredential(String did, String id)
 			throws DIDStoreException {
-		DID _did = null;
-		DIDURL _id = null;
-		try {
-			_did = new DID(did);
-			_id = new DIDURL(_did, id);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return loadCredential(_did, _id);
+		return loadCredential(DID.valueOf(did), DIDURL.valueOf(did, id));
 	}
 
 	/**
@@ -1232,14 +1161,7 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public boolean containsCredentials(String did) throws DIDStoreException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return containsCredentials(_did);
+		return containsCredentials(DID.valueOf(did));
 	}
 
 	/**
@@ -1270,16 +1192,7 @@ public final class DIDStore {
 	 */
 	public boolean containsCredential(String did, String id)
 			throws DIDStoreException {
-		DID _did = null;
-		DIDURL _id = null;
-		try {
-			_did = new DID(did);
-			_id = new DIDURL(_did, id);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return containsCredential(_did, _id);
+		return containsCredential(DID.valueOf(did), DIDURL.valueOf(did, id));
 	}
 
 	/**
@@ -1310,16 +1223,7 @@ public final class DIDStore {
 	 */
 	public boolean deleteCredential(String did, String id)
 			throws DIDStoreException {
-		DID _did = null;
-		DIDURL _id = null;
-		try {
-			_did = new DID(did);
-			_id = new DIDURL(_did, id);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return deleteCredential(_did, _id);
+		return deleteCredential(DID.valueOf(did), DIDURL.valueOf(did, id));
 	}
 
 	/**
@@ -1352,14 +1256,7 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public List<DIDURL> listCredentials(String did) throws DIDStoreException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return listCredentials(_did);
+		return listCredentials(DID.valueOf(did));
 	}
 
 	/**
@@ -1399,15 +1296,7 @@ public final class DIDStore {
 		if ((id == null || id.isEmpty()) && type == null || type.length == 0)
 			throw new IllegalArgumentException();
 
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		DIDURL _id = id == null ? null : new DIDURL(_did, id);
-		return selectCredentials(_did, _id, type);
+		return selectCredentials(DID.valueOf(did), DIDURL.valueOf(did, id), type);
 	}
 
 	/**
@@ -1441,16 +1330,8 @@ public final class DIDStore {
 	 */
 	public void storePrivateKey(String did, String id, byte[] privateKey,
 			String storepass) throws DIDStoreException {
-		DID _did = null;
-		DIDURL _id = null;
-		try {
-			_did = new DID(did);
-			_id = new DIDURL(_did, id);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		storePrivateKey(_did, _id, privateKey, storepass);
+		storePrivateKey(DID.valueOf(did), DIDURL.valueOf(did, id),
+				privateKey, storepass);
 	}
 
 	/**
@@ -1519,14 +1400,7 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public boolean containsPrivateKeys(String did) throws DIDStoreException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return containsPrivateKeys(_did);
+		return containsPrivateKeys(DID.valueOf(did));
 	}
 
 	/**
@@ -1557,16 +1431,7 @@ public final class DIDStore {
 	 */
 	public boolean containsPrivateKey(String did, String id)
 			throws DIDStoreException {
-		DID _did = null;
-		DIDURL _id = null;
-		try {
-			_did = new DID(did);
-			_id = new DIDURL(_did, id);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return containsPrivateKey(_did, _id);
+		return containsPrivateKey(DID.valueOf(did), DIDURL.valueOf(did, id));
 	}
 
 	/**
@@ -1596,16 +1461,7 @@ public final class DIDStore {
 	 */
 	public boolean deletePrivateKey(String did, String id)
 			throws DIDStoreException {
-		DID _did = null;
-		DIDURL _id = null;
-		try {
-			_did = new DID(did);
-			_id = new DIDURL(_did, id);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return deletePrivateKey(_did, _id);
+		return deletePrivateKey(DID.valueOf(did), DIDURL.valueOf(did, id));
 	}
 
 	/**
@@ -2000,14 +1856,7 @@ public final class DIDStore {
 	 */
 	public void exportDid(String did, OutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		exportDid(_did, out, password, storepass);
+		exportDid(DID.valueOf(did), out, password, storepass);
 	}
 
 	/**
@@ -2048,14 +1897,7 @@ public final class DIDStore {
 	 */
 	public void exportDid(String did, Writer out, String password, String storepass)
 			throws DIDStoreException, IOException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		exportDid(_did, out, password, storepass);
+		exportDid(DID.valueOf(did), out, password, storepass);
 	}
 
 	/**
@@ -2096,14 +1938,7 @@ public final class DIDStore {
 	 */
 	public void exportDid(String did, File file, String password, String storepass)
 			throws DIDStoreException, IOException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		exportDid(_did, file, password, storepass);
+		exportDid(DID.valueOf(did), file, password, storepass);
 	}
 
 	/**
@@ -2139,14 +1974,7 @@ public final class DIDStore {
 	 */
 	public void exportDid(String did, String file, String password, String storepass)
 			throws DIDStoreException, IOException {
-		DID _did = null;
-		try {
-			_did = new DID(did);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		exportDid(_did, file, password, storepass);
+		exportDid(DID.valueOf(did), file, password, storepass);
 	}
 
 	private void importDid(DIDExport de, String password, String storepass)

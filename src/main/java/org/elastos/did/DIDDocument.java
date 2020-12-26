@@ -66,7 +66,6 @@ import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
-import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDocumentException;
 import org.elastos.did.exception.NotControllerException;
 import org.elastos.did.jwt.JwtBuilder;
@@ -716,6 +715,17 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		return subject;
 	}
 
+	private DIDURL canonicalId(String id) {
+		return DIDURL.valueOf(getSubject(), id);
+	}
+
+	private DIDURL canonicalId(DIDURL id) {
+		if (id == null || id.getDid() != null)
+			return id;
+
+		return new DIDURL(getSubject(), id);
+	}
+
 	public boolean isCustomizedDid() {
 		return defaultPublicKey == null;
 	}
@@ -853,7 +863,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			throw new IllegalArgumentException();
 
 		List<PublicKey> pks = getEntries(publicKeys, (v) -> {
-			if (id != null && !v.getId().equals(id))
+			if (id != null && !v.getId().equals(canonicalId(id)))
 				return false;
 
 			if (type != null && !v.getType().equals(type))
@@ -879,8 +889,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the matched PublicKey array
 	 */
 	public List<PublicKey> selectPublicKeys(String id, String type) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return selectPublicKeys(_id, type);
+		return selectPublicKeys(canonicalId(id), type);
 	}
 
 	/**
@@ -890,8 +899,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the PublicKey object
 	 */
 	public PublicKey getPublicKey(String id) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return getPublicKey(_id);
+		return getPublicKey(canonicalId(id));
 	}
 
 	/**
@@ -904,6 +912,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (id == null)
 			throw new IllegalArgumentException();
 
+		id = canonicalId(id);
 		PublicKey pk = getEntry(publicKeys, id);
 		if (pk != null)
 			return pk;
@@ -937,8 +946,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the key exists or not
 	 */
 	public boolean hasPublicKey(String id) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return hasPublicKey(_id);
+		return hasPublicKey(canonicalId(id));
 	}
 
 	/**
@@ -969,8 +977,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException there is no store
 	 */
 	public boolean hasPrivateKey(String id) throws DIDStoreException {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return hasPrivateKey(_id);
+		return hasPrivateKey(canonicalId(id));
 	}
 
 	/**
@@ -1006,15 +1013,60 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws InvalidKeyException there is no the matched key
 	 */
 	public KeyPair getKeyPair(DIDURL id) throws InvalidKeyException {
-		if (id == null)
-			throw new IllegalArgumentException();
+		checkState(id != null || getDefaultPublicKeyId() != null, "No effective controller");
 
-		if (!hasPublicKey(id))
-			throw new InvalidKeyException("Key no exist");
+		if (id == null) {
+			id = getDefaultPublicKeyId();
+		} else {
+			if (!hasPublicKey(id))
+				throw new InvalidKeyException("Key no exist");
+		}
 
 		HDKey key = HDKey.deserialize(HDKey.paddingToExtendedPublicKey(
 				getPublicKey(id).getPublicKeyBytes()));
 
+		return key.getJCEKeyPair();
+	}
+
+	/**
+	 * Get KeyPair object according to the given key id.
+	 *
+	 * @param id the key id string
+	 * @return the KeyPair object
+	 * @throws InvalidKeyException there is no matched key
+	 */
+	public KeyPair getKeyPair(String id) throws InvalidKeyException {
+		return getKeyPair(canonicalId(id));
+	}
+
+	/**
+	 * Get KeyPair object according to the given key id.
+	 *
+	 * @return the KeyPair object
+	 * @throws InvalidKeyException there is no the matched key
+	 */
+	public KeyPair getKeyPair() throws InvalidKeyException {
+		return getKeyPair((DIDURL)null);
+	}
+
+	private KeyPair getKeyPair(DIDURL id, String storepass)
+			throws InvalidKeyException, DIDStoreException {
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid storepass");
+		checkState(id != null || getDefaultPublicKeyId() != null, "No effective controller");
+		checkState(getMetadata().attachedStore(), "Not attached with a store");
+
+		if (id == null) {
+			id = getDefaultPublicKeyId();
+		} else {
+			if (!hasPublicKey(id))
+				throw new InvalidKeyException("Key no exist");
+		}
+
+		if (!getMetadata().getStore().containsPrivateKey(getSubject(), id))
+			throw new InvalidKeyException("Don't have private key");
+
+		HDKey key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
+				getSubject(), id, storepass));
 		return key.getJCEKeyPair();
 	}
 
@@ -1087,37 +1139,6 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		String path = mapToDerivePath(identifier, securityCode);
 		return key.derive(path).serializeBase58();
-	}
-
-	/**
-	 * Get KeyPair object according to the given key id.
-	 *
-	 * @param id the key id string
-	 * @return the KeyPair object
-	 * @throws InvalidKeyException there is no matched key
-	 */
-	public KeyPair getKeyPair(String id) throws InvalidKeyException {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return getKeyPair(_id);
-	}
-
-	private KeyPair getKeyPair(DIDURL id, String storepass)
-			throws InvalidKeyException, DIDStoreException {
-		if (id == null || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
-
-		if (!hasPublicKey(id))
-			throw new InvalidKeyException("Key no exist");
-
-		if (!getMetadata().attachedStore())
-			throw new DIDStoreException("Not attached with a DID store.");
-
-		if (!getMetadata().getStore().containsPrivateKey(getSubject(), id))
-			throw new InvalidKeyException("Don't have private key");
-
-		HDKey key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
-				getSubject(), id, storepass));
-		return key.getJCEKeyPair();
 	}
 
 	/**
@@ -1194,8 +1215,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the matched authentication key array
 	 */
 	public List<PublicKey> selectAuthenticationKeys(String id, String type) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return selectAuthenticationKeys(_id, type);
+		return selectAuthenticationKeys(canonicalId(id), type);
 	}
 
 	/**
@@ -1222,8 +1242,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the matched authentication key object
 	 */
 	public PublicKey getAuthenticationKey(String id) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return getAuthenticationKey(_id);
+		return getAuthenticationKey(canonicalId(id));
 	}
 
     /**
@@ -1322,8 +1341,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the matched authorization key array
 	 */
 	public List<PublicKey> selectAuthorizationKeys(String id, String type) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return selectAuthorizationKeys(_id, type);
+		return selectAuthorizationKeys(canonicalId(id), type);
 	}
 
 	/**
@@ -1350,8 +1368,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the authorization key object
 	 */
 	public PublicKey getAuthorizationKey(String id) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return getAuthorizationKey(_id);
+		return getAuthorizationKey(canonicalId(id));
 	}
 
 	/**
@@ -1428,8 +1445,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the matched Credential array
 	 */
 	public List<VerifiableCredential> selectCredentials(String id, String type) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return selectCredentials(_id, type);
+		return selectCredentials(canonicalId(id), type);
 	}
 
 	/**
@@ -1452,8 +1468,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the matched Credential object
 	 */
 	public VerifiableCredential getCredential(String id) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return getCredential(_id);
+		return getCredential(canonicalId(id));
 	}
 
 	/**
@@ -1504,8 +1519,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the matched Service array
 	 */
 	public List<Service> selectServices(String id, String type) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return selectServices(_id, type);
+		return selectServices(canonicalId(id), type);
 	}
 
 	/**
@@ -1528,8 +1542,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the matched Service object
 	 */
 	public Service getService(String id) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return getService(_id);
+		return getService(canonicalId(id));
 	}
 
     /**
@@ -2157,8 +2170,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public String sign(String id, String storepass, byte[] ... data)
 			throws InvalidKeyException, DIDStoreException {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return sign(_id, storepass, data);
+		return sign(canonicalId(id), storepass, data);
 	}
 
 	/**
@@ -2227,8 +2239,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public String signDigest(String id, String storepass, byte[] digest)
 			throws InvalidKeyException, DIDStoreException {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return signDigest(_id, storepass, digest);
+		return signDigest(canonicalId(id), storepass, digest);
 	}
 
 	/**
@@ -2277,8 +2288,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if verifing data is not successfully.
 	 */
 	public boolean verify(String id, String signature, byte[] ... data) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return verify(_id, signature, data);
+		return verify(canonicalId(id), signature, data);
 	}
 
 	/**
@@ -2329,8 +2339,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if verifing digest is not successfully.
 	 */
 	public boolean verifyDigest(String id, String signature, byte[] digest) {
-		DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-		return verifyDigest(_id, signature, digest);
+		return verifyDigest(canonicalId(id), signature, digest);
 	}
 
 	/**
@@ -2351,19 +2360,13 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			@Override
 			public java.security.PublicKey getPublicKey(String id)
 					throws InvalidKeyException {
-				DIDURL _id = id == null ? getDefaultPublicKeyId() :
-					new DIDURL(getSubject(), id);
-
-				return getKeyPair(_id).getPublic();
+				return getKeyPair(canonicalId(id)).getPublic();
 			}
 
 			@Override
 			public PrivateKey getPrivateKey(String id, String storepass)
 					throws InvalidKeyException, DIDStoreException {
-				DIDURL _id = id == null ? getDefaultPublicKeyId() :
-					new DIDURL(getSubject(), id);
-
-				return getKeyPair(_id, storepass).getPrivate();
+				return getKeyPair(canonicalId(id), storepass).getPrivate();
 			}
 		});
 
@@ -2376,10 +2379,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			@Override
 			public java.security.PublicKey getPublicKey(String id)
 					throws InvalidKeyException {
-				DIDURL _id = id == null ? getDefaultPublicKeyId() :
-					new DIDURL(getSubject(), id);
-
-				return getKeyPair(_id).getPublic();
+				return getKeyPair(canonicalId(id)).getPublic();
 			}
 
 			@Override
@@ -2562,8 +2562,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public void publish(String signKey, boolean force, String storepass)
 			throws DIDInvalidException, DIDBackendException, DIDStoreException, InvalidKeyException {
-		DIDURL _signKey = signKey == null ? null : new DIDURL(getSubject(), signKey);
-		publish(_signKey, force, storepass);
+		publish(canonicalId(signKey), force, storepass);
 	}
 
 	/**
@@ -2748,8 +2747,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public void deactivate(String signKey, String storepass)
 			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
-		DIDURL _signKey = signKey == null ? null : new DIDURL(getSubject(), signKey);;
-		deactivate(_signKey, storepass);
+		deactivate(canonicalId(signKey), storepass);
 	}
 
 	/**
@@ -2898,16 +2896,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 */
 	public void deactivate(String target, String signKey, String storepass)
 			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
-		DID _target = null;
-		DIDURL _signKey = null;
-		try {
-			_target = new DID(target);
-			_signKey = signKey == null ? null : new DIDURL(getSubject(), signKey);
-		} catch (MalformedDIDException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		deactivate(_target, _signKey, storepass);
+		deactivate(DID.valueOf(target), canonicalId(signKey), storepass);
 	}
 
 	/**
@@ -3155,6 +3144,17 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			return document.getSubject();
 		}
 
+		private DIDURL canonicalId(String id) {
+			return DIDURL.valueOf(getSubject(), id);
+		}
+
+		private DIDURL canonicalId(DIDURL id) {
+			if (id == null || id.getDid() != null)
+				return id;
+
+			return new DIDURL(getSubject(), id);
+		}
+
 		private void invalidateProof() {
 			if (document.proofs != null && !document.proofs.isEmpty())
 				document.proofs.clear();
@@ -3199,11 +3199,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @throws DIDResolveException if failed resolve the new controller's DID
 		 */
 		public Builder addController(String controller) throws DIDResolveException {
-			try {
-				return addController(new DID(controller));
-			} catch (MalformedDIDException e) {
-				throw new IllegalArgumentException();
-			}
+			return addController(DID.valueOf(controller));
 		}
 
 		/**
@@ -3265,11 +3261,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the Builder object
 		 */
 		public Builder removeController(String controller) {
-			try {
-				return removeController(new DID(controller));
-			} catch (MalformedDIDException e) {
-				throw new IllegalArgumentException();
-			}
+			return removeController(DID.valueOf(controller));
 		}
 
 		private void addPublicKey(PublicKey key) {
@@ -3311,7 +3303,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
 
-			addPublicKey(new PublicKey(id, controller, pk));
+			addPublicKey(new PublicKey(canonicalId(id), controller, pk));
 			return this;
 		}
 
@@ -3324,15 +3316,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder object
 		 */
 		public Builder addPublicKey(String id, String controller, String pk) {
-			DID _controller = null;
-			try {
-				_controller = new DID(controller);
-			} catch (MalformedDIDException e) {
-				throw new IllegalArgumentException();
-			}
-
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addPublicKey(_id, _controller, pk);
+			return addPublicKey(canonicalId(id), DID.valueOf(controller), pk);
 		}
 
 		/**
@@ -3389,8 +3373,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder object
 		 */
 		public Builder removePublicKey(String id, boolean force) {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return removePublicKey(_id, force);
+			return removePublicKey(canonicalId(id), force);
 		}
 
 		/**
@@ -3449,8 +3432,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder object
 		 */
 		public Builder addAuthenticationKey(String id) {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addAuthenticationKey(_id);
+			return addAuthenticationKey(canonicalId(id));
 		}
 
 		/**
@@ -3481,8 +3463,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder
 		 */
 		public Builder addAuthenticationKey(String id, String pk) {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addAuthenticationKey(_id, pk);
+			return addAuthenticationKey(canonicalId(id), pk);
 		}
 
 		/**
@@ -3527,8 +3508,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder
 		 */
 		public Builder removeAuthenticationKey(String id) {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return removeAuthenticationKey(_id);
+			return removeAuthenticationKey(canonicalId(id));
 		}
 
 		/**
@@ -3567,8 +3547,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder
 		 */
 		public Builder addAuthorizationKey(String id) {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addAuthorizationKey(_id);
+			return addAuthorizationKey(canonicalId(id));
 		}
 
 		/**
@@ -3605,15 +3584,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder
 		 */
 		public Builder addAuthorizationKey(String id, String controller, String pk) {
-			DID _controller = null;
-			try {
-				_controller = new DID(controller);
-			} catch (MalformedDIDException e) {
-				throw new IllegalArgumentException();
-			}
-
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addAuthorizationKey(_id, _controller, pk);
+			return addAuthorizationKey(canonicalId(id), DID.valueOf(controller), pk);
 		}
 
 		/**
@@ -3694,16 +3665,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 */
 		public Builder authorizationDid(String id, String controller, String key)
 				throws DIDNotFoundException, DIDResolveException, DIDBackendException, InvalidKeyException {
-			DID controllerId = null;
-			try {
-				controllerId = new DID(controller);
-			} catch (MalformedDIDException e) {
-				throw new IllegalArgumentException(e);
-			}
-
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			DIDURL _key = key == null ? null : new DIDURL(controllerId, key);
-			return authorizationDid(_id, controllerId, _key);
+			return authorizationDid(canonicalId(id),
+					DID.valueOf(controller), DIDURL.valueOf(controller, key));
 		}
 
 		/**
@@ -3760,8 +3723,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder
 		 */
 		public Builder removeAuthorizationKey(String id) {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return removeAuthorizationKey(_id);
+			return removeAuthorizationKey(canonicalId(id));
 		}
 
 		/**
@@ -3856,8 +3818,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		public Builder addCredential(String id, String[] types,
 				Map<String, Object> subject, Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addCredential(_id, types, subject, expirationDate, storepass);
+			return addCredential(canonicalId(id), types, subject,
+					expirationDate, storepass);
 		}
 
 		/**
@@ -3891,8 +3853,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		public Builder addCredential(String id, Map<String, Object> subject,
 				Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addCredential(_id, subject, expirationDate, storepass);
+			return addCredential(canonicalId(id), subject, expirationDate, storepass);
 		}
 
 		/**
@@ -3928,8 +3889,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		public Builder addCredential(String id, String[] types,
 				Map<String, Object> subject, String storepass)
 				throws DIDStoreException, InvalidKeyException {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addCredential(_id, types, subject, storepass);
+			return addCredential(canonicalId(id), types, subject, storepass);
 		}
 
 		/**
@@ -3963,8 +3923,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		public Builder addCredential(String id, Map<String, Object> subject,
 				String storepass)
 				throws DIDStoreException, InvalidKeyException {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addCredential(_id, subject, storepass);
+			return addCredential(canonicalId(id), subject, storepass);
 		}
 
 		/**
@@ -4030,8 +3989,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		public Builder addCredential(String id, String[] types,
 				String json, Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addCredential(_id, types, json, expirationDate, storepass);
+			return addCredential(canonicalId(id), types, json, expirationDate, storepass);
 		}
 
 		/**
@@ -4067,8 +4025,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		public Builder addCredential(String id, String json,
 				Date expirationDate, String storepass)
 				throws DIDStoreException, InvalidKeyException {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addCredential(_id, json, expirationDate, storepass);
+			return addCredential(canonicalId(id), json, expirationDate, storepass);
 		}
 
 		/**
@@ -4106,8 +4063,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		public Builder addCredential(String id, String[] types,
 				String json, String storepass)
 				throws DIDStoreException, InvalidKeyException {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addCredential(_id, types, json, storepass);
+			return addCredential(canonicalId(id), types, json, storepass);
 		}
 
 		/**
@@ -4141,8 +4097,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 */
 		public Builder addCredential(String id, String json, String storepass)
 				throws DIDStoreException, InvalidKeyException {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addCredential(_id, json, storepass);
+			return addCredential(canonicalId(id), json, storepass);
 		}
 
 		/**
@@ -4171,8 +4126,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder
 		 */
 		public Builder removeCredential(String id) {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return removeCredential(_id);
+			return removeCredential(canonicalId(id));
 		}
 
 		/**
@@ -4215,8 +4169,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @return the DID Document Builder
 		 */
 		public Builder addService(String id, String type, String endpoint) {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return addService(_id, type, endpoint);
+			return addService(canonicalId(id), type, endpoint);
 		}
 
         /**
@@ -4245,8 +4198,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
          * @return the DID Document Builder
          */
 		public Builder removeService(String id) {
-			DIDURL _id = id == null ? null : new DIDURL(getSubject(), id);
-			return removeService(_id);
+			return removeService(canonicalId(id));
 		}
 
 		private Calendar getMaxExpires() {

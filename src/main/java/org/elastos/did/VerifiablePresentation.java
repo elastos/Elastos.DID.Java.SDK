@@ -267,8 +267,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 	 * @return the Credential object
 	 */
 	public VerifiableCredential getCredential(String id) {
-		DIDURL _id = id == null ? null : new DIDURL(getSigner(), id);
-		return getCredential(_id);
+		return getCredential(DIDURL.valueOf(getSigner(), id));
 	}
 
 	/**

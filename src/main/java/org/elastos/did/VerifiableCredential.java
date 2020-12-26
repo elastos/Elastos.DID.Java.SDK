@@ -54,7 +54,6 @@ import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
-import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDIDURLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -790,8 +789,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	public void declare(String signKey, String storepass)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		DIDURL _signKey = signKey == null ? null : new DIDURL(getSubject().getId(), signKey);
-		declare(_signKey, storepass);
+		declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass);
 	}
 
 	public void declare(String storepass)
@@ -872,8 +870,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	public void revoke(String signKey, String storepass)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		DIDURL _signKey = signKey == null ? null : new DIDURL(getSubject().getId(), signKey);
-		revoke(_signKey, storepass);
+		revoke(DIDURL.valueOf(getSubject().getId(), signKey), storepass);
 	}
 
 	public void revoke(String storepass)
@@ -946,15 +943,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	public static void revoke(String id, DIDDocument issuer, String signKey, String storepass)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		DIDURL _id, _signKey;
-		try {
-			_id = new DIDURL(id);
-			_signKey = signKey == null ? null : new DIDURL(issuer.getSubject(), signKey);
-		} catch (MalformedDIDURLException e) {
-			throw new IllegalArgumentException();
-		}
-
-		revoke(_id, issuer, _signKey, storepass);
+		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey), storepass);
 	}
 
 	public static void revoke(DIDURL id, DIDDocument issuer, String storepass)
@@ -1031,15 +1020,14 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * @param id the credential id
 	 * @param force if true ignore local cache and try to resolve from ID chain
 	 * @return the VerifiableCredential object
-	 * @throws MalformedDIDURLException if the DID string is malformed
 	 * @throws DIDResolveException throw this exception if resolving did failed
 	 */
 	public static VerifiableCredential resolve(String id, boolean force)
-			throws MalformedDIDURLException, DIDResolveException {
+			throws DIDResolveException {
 		if (id == null || id.isEmpty())
 			throw new IllegalArgumentException();
 
-		return resolve(new DIDURL(id), force);
+		return resolve(DIDURL.valueOf(id), force);
 	}
 
 	/**
@@ -1062,15 +1050,11 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 *
 	 * @param id the credential id
 	 * @return the VerifiableCredential object
-	 * @throws MalformedDIDURLException if the DID string is malformed
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
 	public static VerifiableCredential resolve(String id)
-			throws MalformedDIDURLException, DIDResolveException {
-		if (id == null || id.isEmpty())
-			throw new IllegalArgumentException();
-
-		return resolve(new DIDURL(id));
+			throws DIDResolveException {
+		return resolve(DIDURL.valueOf(id));
 	}
 
 	/**
@@ -1151,13 +1135,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 
 	public static CredentialBiography resolveBiography(String id, String issuer)
 			throws DIDResolveException {
-		try {
-			DIDURL _id = new DIDURL(id);
-			DID _issuer = issuer == null ? null : new DID(issuer);
-			return resolveBiography(_id, _issuer);
-		} catch (MalformedDIDException | MalformedDIDURLException e) {
-			throw new IllegalArgumentException(e);
-		}
+		return resolveBiography(DIDURL.valueOf(id), DID.valueOf(issuer));
 	}
 
 	public static CredentialBiography resolveBiography(String id)
@@ -1419,8 +1397,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 			if (credential == null)
 				throw new IllegalStateException("Credential already sealed.");
 
-			DIDURL _id = id == null ? null : new DIDURL(target, id);
-			return id(_id);
+			return id(DIDURL.valueOf(target, id));
 		}
 
 		/**
