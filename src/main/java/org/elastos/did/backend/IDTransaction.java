@@ -71,10 +71,6 @@ public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDO
 		return timestamp;
 	}
 
-	public String getOperation() {
-		return request.getOperation().toString();
-	}
-
 	/**
 	 * Get request object of transaction.
 	 *

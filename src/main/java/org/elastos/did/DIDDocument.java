@@ -2394,8 +2394,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 	public TransferTicket createTransferTicket(DID did, DID to, String storepass)
 			throws DIDResolveException, NotControllerException, DIDStoreException {
-		if (did == null || to == null || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
+		checkArgument(to != null, "Invalid to");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkState(getMetadata().attachedStore(), "Not attached with a store");
 
 		TransferTicket ticket = new TransferTicket(did, to);
 		try {
@@ -3172,7 +3174,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				throw new IllegalStateException("Document already sealed.");
 
 			if (!document.isCustomizedDid())
-				throw new UnsupportedOperationException("Not a customized DID document");
+				throw new UnsupportedOperationException("Current DID not a customized DID");
 
 			if (document.controllers.contains(controller))
 				throw new IllegalArgumentException("Controller already exists");
@@ -3183,6 +3185,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 			if (!controllerDoc.isValid())
 				throw new IllegalArgumentException("Controller'd DID document is invalid");
+
+			if (controllerDoc.isCustomizedDid())
+				throw new UnsupportedOperationException("Controller can not be a customized DID");
 
 			document.controllers.add(controller);
 			document.controllerDocs.put(controller, controllerDoc);
@@ -3707,13 +3712,12 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	            throw new DIDObjectNotExistException("PublicKey id '"
 	                    + id + "' not exist.");
 
-	        if (!key.isAuthorizationKey())
-	            throw new DIDObjectNotExistException("PublicKey id '"
-	                    + id + "' not an authorization key.");
-
 	        if (key.isAuthorizationKey()) {
 	        	key.setAuthorizationKey(false);
 	        	invalidateProof();
+	        } else {
+	            throw new DIDObjectNotExistException("PublicKey id '"
+	                    + id + "' not an authorization key.");
 	        }
 
 			return this;
