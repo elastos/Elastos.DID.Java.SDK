@@ -36,9 +36,10 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -53,12 +54,12 @@ import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
+import org.elastos.did.exception.DIDStorageException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.MalformedDocumentException;
 import org.elastos.did.exception.MalformedExportDataException;
 import org.elastos.did.exception.WrongPasswordException;
-import org.elastos.did.util.LRUCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.CryptoException;
@@ -69,13 +70,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 /**
  * DIDStore is local store for all DIDs.
  */
 public final class DIDStore {
 	private static final int CACHE_INITIAL_CAPACITY = 16;
-	private static final int CACHE_MAX_CAPACITY = 32;
+	private static final int CACHE_MAX_CAPACITY = 64;
+
+	private static final Object NULL = new Object();
 
 	/**
 	 * List DIDs that contains private key in DIDStore
@@ -94,8 +99,7 @@ public final class DIDStore {
 
 	private static final String DID_EXPORT = "did.elastos.export/1.0";
 
-	private Map<DID, DIDDocument> didCache;
-	private Map<DIDURL, VerifiableCredential> vcCache;
+	private Cache<Object, Object> cache;
 
 	private DIDStorage storage;
 
@@ -117,10 +121,34 @@ public final class DIDStore {
 	}
 
 	private DIDStore(int initialCacheCapacity, int maxCacheCapacity, DIDStorage storage) {
-		if (maxCacheCapacity > 0) {
-			this.didCache = LRUCache.createInstance(initialCacheCapacity, maxCacheCapacity);
-			this.vcCache = LRUCache.createInstance(initialCacheCapacity, maxCacheCapacity);
-		}
+		if (initialCacheCapacity < 0)
+			initialCacheCapacity = 0;
+
+		if (maxCacheCapacity < 0)
+			maxCacheCapacity = 0;
+
+		// The RemovalListener used for debug purpose.
+		// TODO: comment the RemovalListener
+		/*
+		RemovalListener<Object, Object> listener;
+		listener = new RemovalListener<Object, Object>() {
+			@Override
+			public void onRemoval(RemovalNotification<Object, Object> n) {
+				if (n.wasEvicted()) {
+					String cause = n.getCause().name();
+					log.trace("Cache removed {} cause {}", n.getKey(), cause);
+				}
+			}
+		};
+		*/
+
+		cache = CacheBuilder.newBuilder()
+				.initialCapacity(initialCacheCapacity)
+				.maximumSize(maxCacheCapacity)
+				.softValues()
+				// .removalListener(listener)
+				// .recordStats()
+				.build();
 
 		this.storage = storage;
 	}
@@ -159,6 +187,12 @@ public final class DIDStore {
 	public static DIDStore open(String type, String location)
 			throws DIDStoreException {
 		return open(type, location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
+	}
+
+	public void close() {
+		cache.invalidateAll();
+		cache = null;
+		storage = null;
 	}
 
 	/**
@@ -792,8 +826,7 @@ public final class DIDStore {
 		for (VerifiableCredential vc : doc.getCredentials())
 			storeCredential(vc);
 
-		if (didCache != null)
-			didCache.put(doc.getSubject(), doc);
+		cache.put(doc.getSubject(), doc);
 	}
 
 	/**
@@ -807,10 +840,15 @@ public final class DIDStore {
 			throws DIDStoreException {
 		storage.storeDidMetadata(did, metadata);
 
-		if (didCache != null) {
-			DIDDocument doc = didCache.get(did);
-			if (doc != null)
+		Object value = cache.getIfPresent(did);
+		if (value != null && value != NULL) {
+			if (value instanceof DIDDocument) {
+				DIDDocument doc = (DIDDocument)value;
 				doc.setMetadata(metadata);
+			} else {
+				log.error("INTERNAL - invalid cache entry");
+				cache.invalidate(did);
+			}
 		}
 	}
 
@@ -837,15 +875,18 @@ public final class DIDStore {
 		if (did == null)
 			throw new IllegalArgumentException();
 
-		DIDMetadata metadata = null;
 		DIDDocument doc = null;
-
-		if (didCache != null) {
-			doc = didCache.get(did);
-			if (doc != null) {
+		DIDMetadata metadata = null;
+		Object value = cache.getIfPresent(did);
+		if (value != null && value != NULL) {
+			if (value instanceof DIDDocument) {
+				doc = (DIDDocument)value;
 				metadata = doc.getMetadata();
 				if (metadata != null)
 					return metadata;
+			} else {
+				log.error("INTERNAL - invalid cache entry");
+				cache.invalidate(did);
 			}
 		}
 
@@ -878,25 +919,26 @@ public final class DIDStore {
 		if (did == null)
 			throw new IllegalArgumentException();
 
-		DIDDocument doc;
+		try {
+			Object value = cache.get(did, new Callable<Object>() {
+			    @Override
+			    public Object call() throws DIDStorageException {
+					DIDDocument doc = storage.loadDid(did);
+					if (doc != null) {
+						DIDMetadata metadata = storage.loadDidMetadata(did);
+						metadata.setStore(DIDStore.this);
+						doc.setMetadata(metadata);
+						return doc;
+					} else {
+						return NULL;
+					}
+			    }
+			});
 
-		if (didCache != null) {
-			doc = didCache.get(did);
-			if (doc != null)
-				return doc;
+			return value == NULL ? null : (DIDDocument)value;
+		} catch (ExecutionException e) {
+			throw new DIDStoreException("Load did document failed: " + did, e);
 		}
-
-		doc = storage.loadDid(did);
-		if (doc != null) {
-			DIDMetadata metadata = storage.loadDidMetadata(did);
-			metadata.setStore(this);
-			doc.setMetadata(metadata);
-		}
-
-		if (doc != null && didCache != null)
-			didCache.put(doc.getSubject(), doc);
-
-		return doc;
 	}
 
 	/**
@@ -949,7 +991,7 @@ public final class DIDStore {
 		if (did == null)
 			throw new IllegalArgumentException();
 
-		didCache.remove(did);
+		cache.invalidate(did);
 		return storage.deleteDid(did);
 	}
 
@@ -1007,8 +1049,7 @@ public final class DIDStore {
 		storage.storeCredentialMetadata(credential.getSubject().getId(),
 				credential.getId(), credential.getMetadata());
 
-		if (vcCache != null)
-			vcCache.put(credential.getId(), credential);
+		cache.put(credential.getId(), credential);
 	}
 
     /**
@@ -1026,10 +1067,14 @@ public final class DIDStore {
 
 		storage.storeCredentialMetadata(did, id, metadata);
 
-		if (vcCache != null) {
-			VerifiableCredential vc = vcCache.get(id);
-			if (vc != null) {
+		Object value = cache.getIfPresent(id);
+		if (value != null && value != NULL) {
+			if (value instanceof VerifiableCredential) {
+				VerifiableCredential vc = (VerifiableCredential)value;
 				vc.setMetadata(metadata);
+			} else {
+				log.error("INTERNAL - invalid cache entry");
+				cache.invalidate(id);
 			}
 		}
 	}
@@ -1060,15 +1105,18 @@ public final class DIDStore {
 		if (did == null || id == null)
 			throw new IllegalArgumentException();
 
-		CredentialMetadata metadata = null;
 		VerifiableCredential vc = null;
-
-		if (vcCache != null) {
-			vc = vcCache.get(id);
-			if (vc != null) {
+		CredentialMetadata metadata = null;
+		Object value = cache.getIfPresent(id);
+		if (value != null && value != NULL) {
+			if (value instanceof VerifiableCredential) {
+				vc = (VerifiableCredential)value;
 				metadata = vc.getMetadata();
 				if (metadata != null)
 					return metadata;
+			} else {
+				log.error("INTERNAL - invalid cache entry");
+				cache.invalidate(id);
 			}
 		}
 
@@ -1105,25 +1153,26 @@ public final class DIDStore {
 		if (did == null || id == null)
 			throw new IllegalArgumentException();
 
-		VerifiableCredential vc;
+		try {
+			Object value = cache.get(id, new Callable<Object>() {
+			    @Override
+			    public Object call() throws DIDStorageException {
+			    	VerifiableCredential vc = storage.loadCredential(did, id);
+					if (vc != null) {
+						CredentialMetadata metadata = storage.loadCredentialMetadata(did, id);
+						metadata.setStore(DIDStore.this);
+						vc.setMetadata(metadata);
+						return vc;
+					} else {
+						return NULL;
+					}
+			    }
+			});
 
-		if (vcCache != null) {
-			vc = vcCache.get(id);
-			if (vc != null)
-				return vc;
+			return value == NULL ? null : (VerifiableCredential)value;
+		} catch (ExecutionException e) {
+			throw new DIDStoreException("Load did document failed: " + did, e);
 		}
-
-		vc = storage.loadCredential(did, id);
-		if (vc != null) {
-			CredentialMetadata metadata = storage.loadCredentialMetadata(did, id);
-			metadata.setStore(this);
-			vc.setMetadata(metadata);
-		}
-
-		if (vc != null && vcCache != null)
-			vcCache.put(vc.getId(), vc);
-
-		return vc;
 	}
 
 	/**
@@ -1208,7 +1257,7 @@ public final class DIDStore {
 		if (did == null || id == null)
 			throw new IllegalArgumentException();
 
-		vcCache.remove(id);
+		cache.invalidate(id);
 		return storage.deleteCredential(did, id);
 	}
 

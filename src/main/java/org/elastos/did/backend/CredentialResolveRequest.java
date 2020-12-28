@@ -34,7 +34,7 @@ public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 	protected static final String PARAMETER_ID = "id";
 	protected static final String PARAMETER_ISSUER = "issuer";
 
-	protected static final String METHOD_NAME = "resolvecredential";
+	public static final String METHOD_NAME = "resolvecredential";
 
 	protected static class Parameters {
 		@JsonProperty(PARAMETER_ID)
@@ -51,6 +51,32 @@ public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 		public Parameters(DIDURL id, DID issuer) {
 			this.id = id;
 			this.issuer = issuer;
+		}
+
+		@Override
+		public int hashCode() {
+			int hash = id.hashCode();
+
+			if (issuer != null)
+				hash += issuer.hashCode();
+
+			return hash;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof Parameters))
+				return false;
+
+			Parameters p = (Parameters)o;
+
+			if (!id.equals(p.id))
+				return false;
+
+			if ((issuer == null || p.issuer == null) && (issuer != p.issuer))
+				return false;
+
+			return issuer.equals(p.issuer);
 		}
 	}
 
@@ -81,5 +107,14 @@ public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 
 	public DID getIssuer() {
 		return getParameters().issuer;
+	}
+
+	@Override
+	public String toString() {
+		DIDURL.Builder builder = new DIDURL.Builder(getParameters().id);
+		if (getParameters().issuer != null)
+			builder.setQueryParameter(PARAMETER_ISSUER, getParameters().issuer.toString());
+
+		return builder.build().toString();
 	}
 }

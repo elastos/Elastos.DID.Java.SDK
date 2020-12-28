@@ -367,7 +367,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 		try {
 			json = vp.serialize(true);
 		} catch (DIDSyntaxException ignore) {
-			log.error("INTERAL - serialize presentation", ignore);
+			log.error("INTERNAL - serialize presentation", ignore);
 			return false;
 		}
 
@@ -431,7 +431,7 @@ public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
 		try {
 			json = vp.serialize(true);
 		} catch (DIDSyntaxException ignore) {
-			log.error("INTERAL - serialize presentation", ignore);
+			log.error("INTERNAL - serialize presentation", ignore);
 			return false;
 		}
 

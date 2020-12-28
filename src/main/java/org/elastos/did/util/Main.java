@@ -52,11 +52,8 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class Main {
-	private static File cacheDir = new File(System.getProperty("user.home") +
-			File.separator + ".elastos/did.cache");
-
 	public static void setupDIDBackend(String network) throws DIDResolveException {
-		DIDBackend.initialize( new DefaultDIDAdapter(network), cacheDir);
+		DIDBackend.initialize( new DefaultDIDAdapter(network));
 	}
 
 	public static void printJson(PrintStream out, boolean compact, String json) throws IOException {

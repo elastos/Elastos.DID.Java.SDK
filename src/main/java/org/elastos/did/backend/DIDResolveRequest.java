@@ -23,6 +23,7 @@
 package org.elastos.did.backend;
 
 import org.elastos.did.DID;
+import org.elastos.did.DIDURL;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,7 +34,7 @@ public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, DIDReso
 	protected static final String PARAMETER_DID = "did";
 	protected static final String PARAMETER_ALL = "all";
 
-	protected static final String METHOD_NAME = "resolvedid";
+	public static final String METHOD_NAME = "resolvedid";
 
 	protected static class Parameters {
 		@JsonProperty(PARAMETER_DID)
@@ -52,6 +53,33 @@ public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, DIDReso
 		public Parameters(@JsonProperty(value = PARAMETER_DID, required = true)DID did) {
 			this(did, null);
 		}
+
+		@Override
+		public int hashCode() {
+			int hash = did.hashCode();
+
+			if (all != null)
+				hash += all.hashCode();
+
+			return hash;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof Parameters))
+				return false;
+
+			Parameters p = (Parameters)o;
+
+			if (!did.equals(p.did))
+				return false;
+
+			if ((all == null || p.all == null) && (all != p.all))
+				return false;
+
+			return all.equals(p.all);
+		}
+
 	}
 
 	@JsonCreator
@@ -73,5 +101,14 @@ public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, DIDReso
 
 	public boolean isResolveAll() {
 		return getParameters().all == null ? false : getParameters().all;
+	}
+
+	@Override
+	public String toString() {
+		DIDURL.Builder builder = new DIDURL.Builder(getParameters().did);
+		if (getParameters().all != null)
+			builder.setQueryParameter(PARAMETER_ALL, String.valueOf(getParameters().all));
+
+		return builder.build().toString();
 	}
 }

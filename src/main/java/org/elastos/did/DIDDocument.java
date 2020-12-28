@@ -2458,7 +2458,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
 		checkState(signKey != null || getDefaultPublicKeyId() != null, "No effective controller");
 
-		log.info("Publishing {}{}...", getSubject(), force ? " in force mode" : "");
+		log.info("Publishing DID {}, force={}...", getSubject(), force);
 
 		if (!isGenuine()) {
 			log.error("Publish failed because document is not genuine.");
@@ -3171,7 +3171,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
 
-			if (document.controllers == null)
+			if (!document.isCustomizedDid())
 				throw new UnsupportedOperationException("Not a customized DID document");
 
 			if (document.controllers.contains(controller))
@@ -3245,6 +3245,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 			if (document.controllers.size() == 1)
 				throw new UnsupportedOperationException("Document should has at least one controller");
+
+			if (controller.equals(controllerDoc.getSubject()))
+				throw new UnsupportedOperationException("Can not remove current effective controller");
 
 			if (document.controllers.remove(controller)) {
 				document.controllerDocs.remove(controller);

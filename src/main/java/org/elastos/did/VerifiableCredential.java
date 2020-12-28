@@ -611,7 +611,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		try {
 			json = vc.serialize(true);
 		} catch (DIDSyntaxException ignore) {
-			log.error("INTERAL - serialize credential", ignore);
+			log.error("INTERNAL - serialize credential", ignore);
 			return false;
 		}
 
@@ -703,7 +703,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		try {
 			json = vc.serialize(true);
 		} catch (DIDSyntaxException ignore) {
-			log.error("INTERAL - serialize credential", ignore);
+			log.error("INTERNAL - serialize credential", ignore);
 			return false;
 		}
 
@@ -749,18 +749,17 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
 
 		if (!isGenuine()) {
-			log.error("Publish failed because document is not genuine.");
+			log.error("Publish failed because the credential is not genuine.");
 			throw new CredentialNotGenuineException(getId().toString());
 		}
 
 		if (isExpired()) {
-			log.error("Publish failed because document is expired.");
-			log.info("You can publish the expired document using force mode.");
+			log.error("Publish failed because the credential is expired.");
 			throw new CredentialExpiredException(getId().toString());
 		}
 
 		if (isRevoked()) {
-			log.error("Publish failed because DID is deactivated.");
+			log.error("Publish failed because the credential is revoked.");
 			throw new CredentialRevokedException(getId().toString());
 		}
 
@@ -841,7 +840,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
 
 		if (isRevoked()) {
-			log.error("Publish failed because DID is deactivated.");
+			log.error("Publish failed because the credential is deactivated.");
 			throw new CredentialRevokedException(getId().toString());
 		}
 
@@ -924,7 +923,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		checkState(issuer.getMetadata().attachedStore(), "Issuer document not attached with a store");
 
 		if (DIDBackend.getInstance().resolveCredentialRevocation(id, issuer.getSubject())) {
-			log.error("Publish failed because DID is deactivated.");
+			log.error("Publish failed because the credential is revoked.");
 			throw new CredentialRevokedException(id.toString());
 		}
 

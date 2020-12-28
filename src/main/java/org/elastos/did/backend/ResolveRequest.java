@@ -59,11 +59,28 @@ public abstract class ResolveRequest<T, P> extends DIDObject<T> {
 
 	protected void setParameters(P params) {
 		this.params = params;
-
 	}
 
 	protected P getParameters() {
 		return params;
+	}
+
+	@Override
+	public int hashCode() {
+		return method.hashCode() + params.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof ResolveRequest<?, ?>))
+			return false;
+
+		ResolveRequest<?, ?> rr = (ResolveRequest<?, ?>)o;
+
+		if (!method.equals(rr.method))
+			return false;
+
+		return params.equals(rr.params);
 	}
 
 	protected static<T extends DIDObject<?>> T parse(JsonNode content, Class<T> clazz)

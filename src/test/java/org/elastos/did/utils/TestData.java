@@ -85,20 +85,24 @@ public final class TestData {
 
 	private DIDStore store;
 
-	public void init(boolean simulated) throws DIDException {
+	public TestData(boolean simulated) throws DIDException {
 		adapter = simulated ? DIDTestExtension.getSimChain().getAdapter() :
 			DIDTestExtension.getSpvAdapter();
 
-		DIDBackend.initialize(adapter, TestConfig.resolverCacheDir);
+		DIDBackend.initialize(adapter);
 
 		DIDTestExtension.getSimChain().reset();
-		DIDBackend.getInstance().resetCache();
     	Utils.deleteFile(new File(TestConfig.storeRoot));
 		store = DIDStore.open("filesystem", TestConfig.storeRoot);
 	}
 
-	public void init() throws DIDException {
-		init(TestConfig.network.equalsIgnoreCase("simnet"));
+	public TestData() throws DIDException {
+		this(TestConfig.network.equalsIgnoreCase("simnet"));
+	}
+
+	public void cleanup() {
+		if (store != null)
+			store.close();
 	}
 
 	public DIDStore getStore() {
