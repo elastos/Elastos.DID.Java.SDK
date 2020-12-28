@@ -39,6 +39,7 @@ import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
@@ -56,7 +57,11 @@ public class DIDTest {
     public void beforeEach() throws DIDException {
     	did = new DID(testDID);
     	testData = new TestData();
-    	testData.init();
+    }
+
+    @AfterEach
+    public void afterEach() {
+    	testData.cleanup();
     }
 
 	@Test

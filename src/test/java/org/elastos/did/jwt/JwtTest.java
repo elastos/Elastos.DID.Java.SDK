@@ -38,9 +38,12 @@ import org.elastos.did.exception.DIDException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestConfig;
 import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,29 +55,37 @@ public class JwtTest {
 
 	private TestData testData;
 
+	private static final Logger log = LoggerFactory.getLogger(JwtTest.class);
+
     @BeforeEach
     public void beforeEach() throws DIDException {
-    	testData = new TestData();
-    	testData.init(true);
-		testData.initIdentity();
+    	testData = new TestData(true);
+ 		testData.initIdentity();
+    }
+
+    @AfterEach
+    public void afterEach() {
+    	testData.cleanup();
     }
 
     public static void printJwt(String token) {
-		String [] toks = token.split("\\.");
+    	if (log.isTraceEnabled()) {
+			String [] toks = token.split("\\.");
 
-		if (toks.length != 2 && toks.length != 3) {
-			System.out.println("Invalid token: " + token);
-			return;
-		}
+			if (toks.length != 2 && toks.length != 3) {
+				System.out.println("Invalid token: " + token);
+				return;
+			}
 
-		StringBuilder sb = new StringBuilder(512);
-		sb.append(new String(Base64.decode(toks[0], OPT))).append(".")
-			.append(new String(Base64.decode(toks[1], OPT))).append(".");
-		if (toks.length == 3)
-			sb.append(toks[2]);
+			StringBuilder sb = new StringBuilder(512);
+			sb.append(new String(Base64.decode(toks[0], OPT))).append(".")
+				.append(new String(Base64.decode(toks[1], OPT))).append(".");
+			if (toks.length == 3)
+				sb.append(toks[2]);
 
-		System.out.println("Token: " + token);
-		System.out.println("Plain: " + sb.toString());
+			log.trace("Token: {}", token);
+			log.trace("Plain: {}", sb.toString());
+    	}
 	}
 
 	@Test
@@ -551,7 +562,6 @@ public class JwtTest {
 		// get as json text
 		String v = c.getAsJson("object");
 		assertNotNull(v);
-		System.out.println(v);
 
 		String s = jwt.getSignature();
 		assertNotNull(s);
@@ -630,7 +640,6 @@ public class JwtTest {
 		// get as json text
 		String v = c.getAsJson("object");
 		assertNotNull(v);
-		System.out.println(v);
 
 		String s = jwt.getSignature();
 		assertNotNull(s);
@@ -711,7 +720,6 @@ public class JwtTest {
 		// get as json text
 		String v = c.getAsJson("object");
 		assertNotNull(v);
-		System.out.println(v);
 
 		String s = jwt.getSignature();
 		assertNotNull(s);
@@ -790,7 +798,6 @@ public class JwtTest {
 		// get as json text
 		String v = c.getAsJson("object");
 		assertNotNull(v);
-		System.out.println(v);
 
 		String s = jwt.getSignature();
 		assertNotNull(s);

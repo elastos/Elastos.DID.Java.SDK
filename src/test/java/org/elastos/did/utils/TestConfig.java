@@ -22,12 +22,14 @@
 
 package org.elastos.did.utils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.slf4j.event.Level;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 
 public final class TestConfig {
 	public static String network;
@@ -41,8 +43,6 @@ public final class TestConfig {
 
 	public static String tempDir;
 	public static String storeRoot;
-
-	public static File resolverCacheDir;
 
 	public static Level level;
 
@@ -72,9 +72,10 @@ public final class TestConfig {
 		walletId = config.getProperty("wallet.id");
 		walletPassword = config.getProperty("wallet.password");
 
-		level = Level.valueOf(config.getProperty("log.level").toUpperCase());
+		level = Level.valueOf(config.getProperty("log.level", "info").toUpperCase());
 
-		resolverCacheDir = new File(System.getProperty("user.home") +
-					File.separator + ".elastos/did.cache");
+		// We use logback as the logging backend
+	    Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+	    root.setLevel(level);
 	}
 }

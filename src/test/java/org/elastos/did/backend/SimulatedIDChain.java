@@ -112,11 +112,11 @@ public class SimulatedIDChain {
 
 	private synchronized void createDidTransaction(DIDRequest request)
 			throws DIDTransactionException {
-		log.info("ID Transaction[{}] - {}", request.getOperation(), request.getDid());
-		log.debug("    payload: {}", request.toString(true));
+		log.debug("ID Transaction[{}] - {}", request.getOperation(), request.getDid());
+		log.trace("    payload: {}", request.toString(true));
 
 		if (request.getOperation() != IDChainRequest.Operation.DEACTIVATE)
-			log.debug("    document: {}", request.getDocument().toString(true));
+			log.trace("    document: {}", request.getDocument().toString(true));
 
 		try {
 			if (!request.isValid())
@@ -197,11 +197,11 @@ public class SimulatedIDChain {
 		tx = new DIDTransaction(generateTxid(),
 				Calendar.getInstance(Constants.UTC).getTime(), request);
 		idtxs.add(0, tx);
-		log.info("ID Transaction[{}] - {} success", request.getOperation(), request.getDid());
+		log.trace("ID Transaction[{}] - {} success", request.getOperation(), request.getDid());
 	}
 
 	private DIDResolveResponse resolveDid(DIDResolveRequest request) {
-		log.info("Resolveing DID {} ...", request.getDid());
+		log.debug("Resolveing DID {} ...", request.getDid());
 
 		DIDBiography bio = new DIDBiography(request.getDid());
 		DIDTransaction last = getLastDidTransaction(request.getDid());
@@ -230,7 +230,7 @@ public class SimulatedIDChain {
 			bio.setStatus(DIDBiography.Status.NOT_FOUND);
 		}
 
-		log.info("Resolve DID {} {}", request.getDid(), bio.getStatus());
+		log.trace("Resolve DID {} {}", request.getDid(), bio.getStatus());
 		return new DIDResolveResponse(request.getRequestId(), bio);
 	}
 
@@ -257,11 +257,11 @@ public class SimulatedIDChain {
 
 	private synchronized void createCredentialTransaction(CredentialRequest request)
 			throws DIDTransactionException {
-		log.info("VC Transaction[{}] - {} ", request.getOperation(), request.getCredentialId());
-		log.debug("    payload: {}", request.toString(true));
+		log.debug("VC Transaction[{}] - {} ", request.getOperation(), request.getCredentialId());
+		log.trace("    payload: {}", request.toString(true));
 
 		if (request.getOperation() == IDChainRequest.Operation.DECLARE)
-			log.debug("    credential: {}", request.getCredential().toString(true));
+			log.trace("    credential: {}", request.getCredential().toString(true));
 
 		try {
 			if (!request.isValid())
@@ -309,11 +309,11 @@ public class SimulatedIDChain {
 		tx = new CredentialTransaction(generateTxid(),
 				Calendar.getInstance(Constants.UTC).getTime(), request);
 		vctxs.add(0, tx);
-		log.info("VC Transaction[{}] - {} success", request.getOperation(), request.getCredentialId());
+		log.trace("VC Transaction[{}] - {} success", request.getOperation(), request.getCredentialId());
 	}
 
 	private CredentialResolveResponse resolveCredential(CredentialResolveRequest request) {
-		log.info("Resolveing credential {} ...", request.getId());
+		log.debug("Resolveing credential {} ...", request.getId());
 
 		CredentialTransaction declareTx = getCredentialDeclareTransaction(request.getId());
 		CredentialTransaction controllerRevokeTx = getCredentialRevokeTransaction(request.getId(),
@@ -352,7 +352,7 @@ public class SimulatedIDChain {
 			}
 		}
 
-		log.info("Resolve VC {} {}", request.getId(), bio.getStatus());
+		log.trace("Resolve VC {} {}", request.getId(), bio.getStatus());
 		return new CredentialResolveResponse(request.getRequestId(), bio);
 	}
 
@@ -361,7 +361,7 @@ public class SimulatedIDChain {
 		int limit = request.getLimit() <= CredentialList.MAX_SIZE ?
 				request.getLimit() : CredentialList.MAX_SIZE;
 
-		log.info("Listing credentials {} {}/{}...", request.getDid(), skip, limit);
+		log.debug("Listing credentials {} {}/{}...", request.getDid(), skip, limit);
 
 		CredentialList cl = new CredentialList(request.getDid());
 		for (CredentialTransaction tx : vctxs) {
@@ -376,7 +376,7 @@ public class SimulatedIDChain {
 			}
 		}
 
-		log.info("List credentials {} total {}", request.getDid(), cl.size());
+		log.trace("List credentials {} total {}", request.getDid(), cl.size());
 		return new CredentialListResponse(request.getRequestId(), cl);
 	}
 

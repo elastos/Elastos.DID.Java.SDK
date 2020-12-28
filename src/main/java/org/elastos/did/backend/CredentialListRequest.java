@@ -23,6 +23,7 @@
 package org.elastos.did.backend;
 
 import org.elastos.did.DID;
+import org.elastos.did.DIDURL;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,7 +35,7 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 	protected static final String PARAMETER_SKIP = "skip";
 	protected static final String PARAMETER_LIMIT = "limit";
 
-	protected static final String METHOD_NAME = "listcredential";
+	public static final String METHOD_NAME = "listcredential";
 
 	protected static class Parameters {
 		@JsonProperty(PARAMETER_DID)
@@ -48,7 +49,7 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 		@JsonInclude(Include.NON_NULL)
 		private Integer limit;
 
-		public Parameters(DID did, Integer skip, Integer limit) {
+		public Parameters(DID did, int skip, int limit) {
 			this.did = did;
 
 			if (skip > 0)
@@ -59,12 +60,45 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 		}
 
 		public Parameters(DID did, int limit) {
-			this(did, null, limit);
+			this(did, 0, limit);
 		}
 
 		@JsonCreator
 		public Parameters(@JsonProperty(value = PARAMETER_DID, required = true)DID did) {
-			this(did, null, null);
+			this(did, 0, 0);
+		}
+
+		@Override
+		public int hashCode() {
+			int hash = did.hashCode();
+
+			if (skip != null)
+				hash += skip.hashCode();
+
+			if (limit != null)
+				hash += limit.hashCode();
+
+			return hash;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof Parameters))
+				return false;
+
+			Parameters p = (Parameters)o;
+
+			if (!did.equals(p.did))
+				return false;
+
+			int lSkip = this.skip == null ? 0 : this.skip.intValue();
+			int rSkip = p.skip == null ? 0 : p.skip.intValue();
+			if (lSkip != rSkip)
+				return false;
+
+			int lLimit = this.limit == null ? 0 : this.limit.intValue();
+			int rLimit = p.limit == null ? 0 : p.limit.intValue();
+			return lLimit == rLimit;
 		}
 	}
 
@@ -108,4 +142,19 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 	public int getLimit() {
 		return getParameters().limit == null ? 0 : getParameters().limit;
 	}
+
+	@Override
+	public String toString() {
+		DIDURL.Builder builder = new DIDURL.Builder(getParameters().did);
+		builder.setPath("/credentials");
+
+		builder.setQueryParameter(PARAMETER_SKIP, getParameters().skip == null ?
+				"0" : getParameters().skip.toString());
+
+		builder.setQueryParameter(PARAMETER_LIMIT, getParameters().limit == null ?
+				"0" : getParameters().limit.toString());
+
+		return builder.build().toString();
+	}
+
 }

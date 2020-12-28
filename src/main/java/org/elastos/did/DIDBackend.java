@@ -24,11 +24,12 @@ package org.elastos.did;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.elastos.did.backend.CredentialBiography;
 import org.elastos.did.backend.CredentialList;
@@ -45,7 +46,8 @@ import org.elastos.did.backend.DIDResolveResponse;
 import org.elastos.did.backend.DIDTransaction;
 import org.elastos.did.backend.IDChainRequest;
 import org.elastos.did.backend.ResolveRequest;
-import org.elastos.did.backend.ResolverCache;
+import org.elastos.did.backend.ResolveResponse;
+import org.elastos.did.backend.ResolveResult;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
@@ -54,19 +56,24 @@ import org.elastos.did.exception.InvalidKeyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+
 /**
  * The class is to provide the backend for resolving DID.
  */
 public class DIDBackend {
-	private static final long DEFAULT_TTL = 24 * 60 * 60 * 1000;
+	private static final int DEFAULT_CACHE_INITIAL_CAPACITY = 16;
+	private static final int DEFAULT_CACHE_MAX_CAPACITY = 64;
+	private static final int DEFAULT_CACHE_TTL = 10 * 60 * 1000;
 
 	private static Random random = new Random();
 
 	private DIDAdapter adapter;
 	private ResolveHandle resolveHandle;
 
-	private ResolverCache cache;
-	private long ttl = DEFAULT_TTL; // milliseconds
+	private LoadingCache<ResolveRequest<?, ?>, ResolveResult<?>> cache;
 
 	private static final Logger log = LoggerFactory.getLogger(DIDBackend.class);
 
@@ -87,48 +94,113 @@ public class DIDBackend {
 	}
 
 	/**
-     * Set DIDAdapter for DIDBackend.
+	 * Create a DIDBackend with the adapter and the cache specification.
      *
      * @param adapter the DIDAdapter object
+     * @param initialCacheCapacity the initial cache size, 0 for default size
+     * @param maxCacheCapacity the maximum cache capacity, 0 for default capacity
+     * @param int cacheTtl the live time for the cached entries, 0 for default
      */
-	private DIDBackend(DIDAdapter adapter, File cacheDir) {
-		checkArgument(adapter != null, "Invalid adapter");
-		checkArgument(cacheDir != null && !cacheDir.isFile(), "Invalid cache directory");
+	private DIDBackend(DIDAdapter adapter, int initialCacheCapacity,
+			int maxCacheCapacity, int cacheTtl) {
+		if (initialCacheCapacity < 0)
+			initialCacheCapacity = 0;
+
+		if (maxCacheCapacity < 0)
+			maxCacheCapacity = 0;
+
+		if (cacheTtl < 0)
+			cacheTtl = 0;
 
 		this.adapter = adapter;
-		this.cache = new ResolverCache(cacheDir);
+
+		CacheLoader<ResolveRequest<?, ?>, ResolveResult<?>> loader;
+		loader = new CacheLoader<ResolveRequest<?, ?>, ResolveResult<?>>() {
+			@Override
+			public ResolveResult<?> load(ResolveRequest<?, ?> key)
+					throws DIDResolveException {
+				log.trace("Cache loading {}...", key);
+				return resolve(key);
+			}
+		};
+
+		// The RemovalListener used for debug purpose.
+		// TODO: comment the RemovalListener
+		/*
+		RemovalListener<ResolveRequest<?, ?>, ResolveResult<?>> listener;
+		listener = new RemovalListener<ResolveRequest<?, ?>, ResolveResult<?>>() {
+			@Override
+			public void onRemoval(
+					RemovalNotification<ResolveRequest<?, ?>, ResolveResult<?>> n) {
+				if (n.wasEvicted()) {
+					String cause = n.getCause().name();
+					log.trace("Cache removed {} cause {}", n.getKey(), cause);
+				}
+			}
+		};
+		*/
+
+		cache = CacheBuilder.newBuilder()
+				.initialCapacity(initialCacheCapacity)
+				.maximumSize(maxCacheCapacity)
+				.expireAfterWrite(cacheTtl, TimeUnit.MILLISECONDS)
+				.softValues()
+				// .removalListener(listener)
+				// .recordStats()
+				.build(loader);
 	}
 
     /**
-	 * Initialize DIDBackend to resolve by url string and cache path stored the document in ttl time.
-	 * Recommendation for cache dir:
-	 * - Laptop/standard Java
-	 *   System.getProperty("user.home") + "/.cache.did.elastos"
-	 * - Android Java
-	 *   Context.getFilesDir() + "/.cache.did.elastos"
+	 * Initialize the DIDBackend with the adapter and the cache specification.
      *
      * @param adapter the DIDAdapter object
-     * @param cacheDir the cache path name
+     * @param initialCacheCapacity the initial cache size, 0 for default size
+     * @param maxCacheCapacity the maximum cache capacity, 0 for default capacity
+     * @param int cacheTtl the live time for the cached entries, 0 for default
      */
-	public static void initialize(DIDAdapter adapter, File cacheDir) {
-		instance = new DIDBackend(adapter, cacheDir);
+	public static synchronized void initialize(DIDAdapter adapter,
+			int initialCacheCapacity, int maxCacheCapacity, int cacheTtl) {
+		checkArgument(adapter != null, "Invalid adapter");
+		//checkArgument(initialCacheCapacity <= maxCacheCapacity, "Invalid cache capacity");
+
+		initialCacheCapacity = initialCacheCapacity < maxCacheCapacity ?
+				initialCacheCapacity : maxCacheCapacity;
+
+		instance = new DIDBackend(adapter, initialCacheCapacity,
+				maxCacheCapacity, cacheTtl);
 	}
 
     /**
-	 * Initialize DIDBackend to resolve by url string and cache path stored the document in ttl time.
-	 * Recommendation for cache dir:
-	 * - Laptop/standard Java
-	 *   System.getProperty("user.home") + "/.cache.did.elastos"
-	 * - Android Java
-	 *   Context.getFilesDir() + "/.cache.did.elastos"
+	 * Initialize the DIDBackend with the adapter and the cache specification.
      *
      * @param adapter the DIDAdapter object
-     * @param cacheDir the cache path name
+     * @param maxCacheCapacity the maximum cache capacity, 0 for default capacity
+     * @param int cacheTtl the live time for the cached entries, 0 for default
      */
-	public static void initialize(DIDAdapter adapter, String cacheDir) {
-		checkArgument(cacheDir != null && !cacheDir.isEmpty(), "Invalid cache directory");
+	public static void initialize(DIDAdapter adapter, int maxCacheCapacity, int cacheTtl) {
 
-		initialize(adapter, new File(cacheDir));
+		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY, maxCacheCapacity, cacheTtl);
+	}
+
+    /**
+	 * Initialize the DIDBackend with the adapter and the cache specification.
+     *
+     * @param adapter the DIDAdapter object
+     * @param int cacheTtl the live time for the cached entries, 0 for default
+     */
+	public static void initialize(DIDAdapter adapter, int cacheTtl) {
+		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY,
+				DEFAULT_CACHE_MAX_CAPACITY, cacheTtl);
+	}
+
+    /**
+	 * Initialize the DIDBackend with the adapter.
+     *
+     * @param adapter the DIDAdapter object
+     */
+	public static void initialize(DIDAdapter adapter) {
+		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY,
+				DEFAULT_CACHE_MAX_CAPACITY, DEFAULT_CACHE_TTL);
 	}
 
 	/**
@@ -140,24 +212,6 @@ public class DIDBackend {
 		return instance;
 	}
 
-	/**
-	 * Set the cache time to live in minutes.
-	 *
-	 * @param ttl the validate time to store content
-	 */
-	public void setTTL(long ttl) {
-		ttl = ttl > 0 ? (ttl * 60 * 1000) : 0;
-	}
-
-	/**
-	 * Get the cache time to live in minutes.
-	 *
-	 * @return the validate time to live
-	 */
-	public long getTTL() {
-		return ttl != 0 ? (ttl / 60 / 1000) : 0;
-	}
-
 	private String generateRequestId() {
 		StringBuffer sb = new StringBuffer();
 
@@ -165,10 +219,6 @@ public class DIDBackend {
 			sb.append(Integer.toHexString(random.nextInt()));
 
 		return sb.toString();
-	}
-
-	public void resetCache() {
-		cache.reset();
 	}
 
 	/**
@@ -190,27 +240,39 @@ public class DIDBackend {
 		resolveHandle = handle;
 	}
 
-	private InputStream resolve(ResolveRequest<?, ?> request)
+	private ResolveResult<?> resolve(ResolveRequest<?, ?> request)
 			throws DIDResolveException {
+		log.debug("Resolving request {}...", request);
+
+		String requestJson = null;
 		try {
-			String requestJson = request.serialize(true);
-			return getAdapter().resolve(requestJson);
+			requestJson = request.serialize(true);
 		} catch (DIDSyntaxException e) {
 			log.error("INTERNAL - Serialize resolve request", e);
 			throw new DIDResolveException("Can not serialize the request", e);
 		}
-	}
 
-	private DIDBiography resolveDidFromBackend(DID did, boolean all)
-			throws DIDResolveException {
-		String requestId = generateRequestId();
-		DIDResolveRequest request = new DIDResolveRequest(requestId);
-		request.setParameters(did, all);
-		InputStream is = resolve(request);
+		InputStream is = getAdapter().resolve(requestJson);
 
-		DIDResolveResponse response;
+		ResolveResponse<?, ?> response = null;
 		try {
-			response = DIDResolveResponse.parse(is, DIDResolveResponse.class);
+			switch (request.getMethod()) {
+			case DIDResolveRequest.METHOD_NAME:
+				response = DIDResolveResponse.parse(is, DIDResolveResponse.class);
+				break;
+
+			case CredentialResolveRequest.METHOD_NAME:
+				response = CredentialResolveResponse.parse(is, CredentialResolveResponse.class);
+				break;
+
+			case CredentialListRequest.METHOD_NAME:
+				response = CredentialListResponse.parse(is, CredentialListResponse.class);
+				break;
+
+			default:
+				log.error("INTERNAL - unknown resolve method '{}'", request.getMethod());
+				throw new DIDResolveException("Unknown resolve method: " + request.getMethod());
+			}
 		} catch (DIDSyntaxException | IOException e) {
 			throw new DIDResolveException(e);
 		} finally {
@@ -220,24 +282,32 @@ public class DIDBackend {
 			}
 		}
 
-		if (response.getResponseId() == null || !response.getResponseId().equals(requestId))
+		if (response.getResponseId() == null ||
+				!response.getResponseId().equals(request.getRequestId()))
 			throw new DIDResolveException("Mismatched resolve result with request.");
 
-		DIDBiography bio = response.getResult();
-		if (bio == null) {
-			throw new DIDResolveException("Resolve DID error("
-					+ response.getErrorCode() + "): " + response.getErrorMessage());
-		}
+		if (response.getResult() != null)
+			return response.getResult();
+		else
+			throw new DIDResolveException("Server error(" + response.getErrorCode()
+					+ "): " + response.getErrorMessage());
+	}
 
-		if (bio.getStatus() != DIDBiography.Status.NOT_FOUND) {
-			try {
-				cache.store(bio);
-			} catch (IOException e) {
-				log.error("!!! Cache resolved result error !!!", e);
-			}
-		}
+	private DIDBiography resolveDidBiography(DID did, boolean all, boolean force)
+			throws DIDResolveException {
+		log.info("Resolving DID {}, all={}...", did.toString(), all);
 
-		return bio;
+		DIDResolveRequest request = new DIDResolveRequest(generateRequestId());
+		request.setParameters(did, all);
+
+		if (force)
+			cache.invalidate(request);
+
+		try {
+			return (DIDBiography)cache.get(request);
+		} catch (ExecutionException e) {
+			throw new DIDResolveException(e);
+		}
 	}
 
     /**
@@ -248,9 +318,7 @@ public class DIDBackend {
      * @throws DIDResolveException throw this exception if resolving did transcations failed.
      */
 	protected DIDBiography resolveDidBiography(DID did) throws DIDResolveException {
-		log.info("Resolving {}...", did.toString());
-
-		DIDBiography rr = resolveDidFromBackend(did, true);
+		DIDBiography rr = resolveDidBiography(did, true, false);
 		if (rr.getStatus() == DIDBiography.Status.NOT_FOUND)
 			return null;
 
@@ -268,7 +336,7 @@ public class DIDBackend {
 	 */
 	protected DIDDocument resolveDid(DID did, boolean force)
 			throws DIDResolveException {
-		log.info("Resolving DID {}...", did.toString());
+		log.debug("Resolving DID {}...", did.toString());
 
 		if (resolveHandle != null) {
 			DIDDocument doc = resolveHandle.resolve(did);
@@ -276,15 +344,7 @@ public class DIDBackend {
 				return doc;
 		}
 
-		DIDBiography bio = null;
-		if (!force) {
-			bio = cache.load(did, ttl);
-			log.debug("Try load {} from resolver cache: {}.",
-					did.toString(), bio == null ? "non" : "matched");
-		}
-
-		if (bio == null)
-			bio = resolveDidFromBackend(did, false);
+		DIDBiography bio = resolveDidBiography(did, false, force);
 
 		DIDTransaction tx = null;
 		switch (bio.getStatus()) {
@@ -352,64 +412,38 @@ public class DIDBackend {
 		return resolveDid(did, false);
 	}
 
+	private CredentialBiography resolveCredentialBiography(DIDURL id, DID issuer, boolean force)
+			throws DIDResolveException {
+		log.info("Resolving credential {}, issuer={}...", id, issuer);
+
+		CredentialResolveRequest request = new CredentialResolveRequest(generateRequestId());
+		request.setParameters(id, issuer);
+
+		if (force)
+			cache.invalidate(request);
+
+		try {
+			return (CredentialBiography)cache.get(request);
+		} catch (ExecutionException e) {
+			throw new DIDResolveException(e);
+		}
+	}
+
 	protected CredentialBiography resolveCredentialBiography(DIDURL id, DID issuer)
 			throws DIDResolveException {
-		String requestId = generateRequestId();
-		CredentialResolveRequest request = new CredentialResolveRequest(requestId);
-		request.setParameters(id, issuer);
-		InputStream is = resolve(request);
-
-		CredentialResolveResponse response;
-		try {
-			response = CredentialResolveResponse.parse(is, CredentialResolveResponse.class);
-		} catch (DIDSyntaxException | IOException e) {
-			throw new DIDResolveException(e);
-		} finally {
-			try {
-				is.close();
-			} catch (IOException ignore) {
-			}
-		}
-
-		if (response.getResponseId() == null || !response.getResponseId().equals(requestId))
-			throw new DIDResolveException("Mismatched resolve result with request.");
-
-		CredentialBiography bio = response.getResult();
-		if (bio == null) {
-			throw new DIDResolveException("Resolve credential error("
-					+ response.getErrorCode() + "): " + response.getErrorMessage());
-		}
-
-		if (bio.getStatus() != CredentialBiography.Status.NOT_FOUND) {
-			try {
-				cache.store(bio);
-			} catch (IOException e) {
-				log.error("!!! Cache resolved result error !!!", e);
-			}
-		}
-
-		return bio;
-
+		return resolveCredentialBiography(id, issuer, false);
 	}
 
 	protected CredentialBiography resolveCredentialBiography(DIDURL id)
 			throws DIDResolveException {
-		return resolveCredentialBiography(id, null);
+		return resolveCredentialBiography(id, null, false);
 	}
 
 	protected VerifiableCredential resolveCredential(DIDURL id, DID issuer, boolean force)
 			throws DIDResolveException {
-		log.info("Resolving credential {}...", id);
+		log.debug("Resolving credential {}...", id);
 
-		CredentialBiography bio = null;
-		if (!force) {
-			bio = cache.load(id, ttl);
-			log.debug("Try load {} from resolver cache: {}.",
-					id.toString(), bio == null ? "non" : "matched");
-		}
-
-		if (bio == null)
-			bio = resolveCredentialBiography(id, issuer);
+		CredentialBiography bio = resolveCredentialBiography(id, issuer, force);
 
 		CredentialTransaction tx = null;
 		switch (bio.getStatus()) {
@@ -469,7 +503,7 @@ public class DIDBackend {
 		throws DIDResolveException {
 		log.info("Resolving credential revocation {}...", id);
 
-		CredentialBiography bio = resolveCredentialBiography(id, signer);
+		CredentialBiography bio = resolveCredentialBiography(id, signer, false);
 		return bio.getStatus() == CredentialBiography.Status.REVOKED;
 	}
 
@@ -477,27 +511,10 @@ public class DIDBackend {
 			throws DIDResolveException {
 		log.info("List credentials for {}", did);
 
-		String requestId = generateRequestId();
-		CredentialListRequest request = new CredentialListRequest(requestId);
+		CredentialListRequest request = new CredentialListRequest(generateRequestId());
 		request.setParameters(did, skip, limit);
-		InputStream is = resolve(request);
 
-		CredentialListResponse response;
-		try {
-			response = CredentialListResponse.parse(is, CredentialListResponse.class);
-		} catch (DIDSyntaxException | IOException e) {
-			throw new DIDResolveException(e);
-		} finally {
-			try {
-				is.close();
-			} catch (IOException ignore) {
-			}
-		}
-
-		if (response.getResponseId() == null || !response.getResponseId().equals(requestId))
-			throw new DIDResolveException("Mismatched resolve result with request.");
-
-		CredentialList list = response.getResult();
+		CredentialList list = (CredentialList)resolve(request);
 		if (list == null || list.size() == 0)
 			return null;
 
@@ -520,6 +537,21 @@ public class DIDBackend {
 		log.info("ID transaction complete.");
 	}
 
+	private void invalidDidCache(DID did) {
+		DIDResolveRequest request = new DIDResolveRequest(generateRequestId());
+		request.setParameters(did, true);
+		cache.invalidate(request);
+
+		request.setParameters(did, false);
+		cache.invalidate(request);
+	}
+
+	private void invalidCredentialCache(DIDURL id, DID signer) {
+		CredentialResolveRequest request = new CredentialResolveRequest(generateRequestId());
+		request.setParameters(id, signer);
+		cache.invalidate(request);
+	}
+
 	/**
 	 * Publish 'create' id transaction for the new did.
 	 *
@@ -534,6 +566,7 @@ public class DIDBackend {
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.create(doc, signKey, storepass);
 		createTransaction(request);
+		invalidDidCache(doc.getSubject());
 	}
 
 	/**
@@ -552,7 +585,7 @@ public class DIDBackend {
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.update(doc, previousTxid, signKey, storepass);
 		createTransaction(request);
-		cache.invalidate(doc.getSubject());
+		invalidDidCache(doc.getSubject());
 	}
 
 	protected void transferDid(DIDDocument doc, TransferTicket ticket,
@@ -560,7 +593,7 @@ public class DIDBackend {
 			throws DIDStoreException, InvalidKeyException, DIDTransactionException {
 		DIDRequest request = DIDRequest.transfer(doc, ticket, signKey, storepass);
 		createTransaction(request);
-		cache.invalidate(doc.getSubject());
+		invalidDidCache(doc.getSubject());
 	}
 
     /**
@@ -577,7 +610,7 @@ public class DIDBackend {
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.deactivate(doc, signKey, storepass);
 		createTransaction(request);
-		cache.invalidate(doc.getSubject());
+		invalidDidCache(doc.getSubject());
 	}
 
 	/**
@@ -599,7 +632,7 @@ public class DIDBackend {
 		DIDRequest request = DIDRequest.deactivate(target,
 				targetSignKey, signer, signKey, storepass);
 		createTransaction(request);
-		cache.invalidate(target.getSubject());
+		invalidDidCache(target.getSubject());
 	}
 
 	protected void declareCredential(VerifiableCredential vc, DIDDocument signer,
@@ -608,6 +641,8 @@ public class DIDBackend {
 		CredentialRequest request = CredentialRequest.declare(vc, signer,
 				signKey, storepass);
 		createTransaction(request);
+		invalidCredentialCache(vc.getId(), null);
+		invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
 	protected void revokeCredential(VerifiableCredential vc, DIDDocument signer,
@@ -616,6 +651,8 @@ public class DIDBackend {
 		CredentialRequest request = CredentialRequest.revoke(vc, signer,
 				signKey, storepass);
 		createTransaction(request);
+		invalidCredentialCache(vc.getId(), null);
+		invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
 	protected void revokeCredential(DIDURL vc, DIDDocument signer,
@@ -624,5 +661,7 @@ public class DIDBackend {
 		CredentialRequest request = CredentialRequest.revoke(vc, signer,
 				signKey, storepass);
 		createTransaction(request);
+		invalidCredentialCache(vc, null);
+		invalidCredentialCache(vc, signer.getSubject());
 	}
 }

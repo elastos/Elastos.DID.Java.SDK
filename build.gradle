@@ -47,6 +47,7 @@ dependencies {
 
     // Use JUnit test framework
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.0'
+	testImplementation 'ch.qos.logback:logback-classic:1.2.3'
     	
     testRuntime 'org.junit.jupiter:junit-jupiter:5.7.0'
 	testRuntime 'ch.qos.logback:logback-classic:1.2.3'

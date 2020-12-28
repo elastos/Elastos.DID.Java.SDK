@@ -34,6 +34,7 @@ import org.elastos.did.exception.DIDException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestConfig;
 import org.elastos.did.utils.TestData;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,9 +46,13 @@ public class VerifiablePresentationTest {
 
     @BeforeEach
     public void beforeEach() throws DIDException {
-    	testData = new TestData();
-    	testData.init(true);
+    	testData = new TestData(true);
     	store = testData.getStore();
+    }
+
+    @AfterEach
+    public void afterEach() {
+    	testData.cleanup();
     }
 
     @Test
