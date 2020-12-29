@@ -22,22 +22,17 @@
 
 package org.elastos.did;
 
-import java.io.InputStream;
+import org.elastos.did.exception.DIDTransactionException;
 
-import org.elastos.did.exception.DIDResolveException;
-
-/**
- * The interface to provide DID Adapter method to publish DID Document.
- */
-public interface DIDAdapter extends DIDTransactionDispatcher {
+public interface DIDTransactionDispatcher {
 	/**
-	 * Perform the DID related resolve.
+	 * User need to implement 'createIdTransaction' function.
+	 * An application-defined function that create id transaction to chain.
 	 *
-	 * @param requestId the request identifier by user defined
-	 * @param request the resolve request
-	 * @return the resolve result
-	 * @throws DIDResolveException resolve did failed.
+	 * @param payload the payload string to put into id transaction
+	 * @param memo the memorandum string
+	 * @throws DIDTransactionException throw this exception if publishing id transaction failed.
 	 */
-	public InputStream resolve(String request)
-			throws DIDResolveException;
+	public void createIdTransaction(String payload, String memo)
+		throws DIDTransactionException;
 }

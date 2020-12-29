@@ -73,10 +73,10 @@ public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 			if (!id.equals(p.id))
 				return false;
 
-			if ((issuer == null || p.issuer == null) && (issuer != p.issuer))
-				return false;
+			DID lIssuer = this.issuer != null ? this.issuer : this.id.getDid();
+			DID rIssuer = p.issuer != null ? p.issuer : p.id.getDid();
 
-			return issuer.equals(p.issuer);
+			return lIssuer.equals(rIssuer);
 		}
 	}
 
