@@ -23,27 +23,37 @@
 package org.elastos.did;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.elastos.did.exception.DIDStoreException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The class defines the implement of DID Metadata.
  */
 public class DIDMetadata extends AbstractMetadata implements Cloneable {
-	private final static String TXID = RESERVED_PREFIX + "txid";
-	private final static String PREV_SIGNATURE = RESERVED_PREFIX + "prevSignature";
-	private final static String SIGNATURE = RESERVED_PREFIX + "signature";
-	private final static String PUBLISHED = RESERVED_PREFIX + "published";
-	private final static String ALIAS = RESERVED_PREFIX + "alias";
-	private final static String DEACTIVATED = RESERVED_PREFIX + "deactivated";
+	private final static String ROOT_IDENTITY = "rootIdentity";
+	private final static String INDEX = "index";
+	private final static String TXID = "txid";
+	private final static String PREV_SIGNATURE = "prevSignature";
+	private final static String SIGNATURE = "signature";
+	private final static String PUBLISHED = "published";
+	private final static String DEACTIVATED = "deactivated";
 
-	private final static SimpleDateFormat dateFormat =
-			new SimpleDateFormat(Constants.DATE_FORMAT);
+	private DID did;
+
+	private static final Logger log = LoggerFactory.getLogger(DIDMetadata.class);
+
+	protected DIDMetadata() {
+		this(null);
+	}
+
 	/**
 	 * Constructs the empty DIDMetadataImpl.
 	 */
-	protected DIDMetadata() {
-		this(null);
+	protected DIDMetadata(DID did) {
+		this(did, null);
 	}
 
 	/**
@@ -51,26 +61,25 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 *
 	 * @param store the specified DIDStore
 	 */
-	protected DIDMetadata(DIDStore store) {
+	protected DIDMetadata(DID did, DIDStore store) {
 		super(store);
+		this.did = did;
 	}
 
-	/**
-	 * Set alias for DID.
-	 *
-	 * @param alias the alias string
-	 */
-	public void setAlias(String alias) {
-		put(ALIAS, alias);
+	protected void setRootIdentityId(String id) {
+		put(ROOT_IDENTITY, id);
 	}
 
-	/**
-	 * Get alias from DID.
-	 *
-	 * @return the alias string
-	 */
-	public String getAlias() {
-		return (String)get(ALIAS);
+	protected String getRootIdentityId() {
+		return get(ROOT_IDENTITY);
+	}
+
+	protected void setIndex(int index) {
+		put(INDEX, index);
+	}
+
+	protected int getIndex() {
+		return getInteger(INDEX);
 	}
 
 	/**
@@ -88,7 +97,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 * @return the transaction string
 	 */
 	public String getTransactionId() {
-		return (String)get(TXID);
+		return get(TXID);
 	}
 
 	/**
@@ -106,7 +115,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 * @return the signature string
 	 */
 	public String getPreviousSignature() {
-		return (String)get(PREV_SIGNATURE);
+		return get(PREV_SIGNATURE);
 	}
 
 	/**
@@ -124,7 +133,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 * @return the signature string
 	 */
 	public String getSignature() {
-		return (String)get(SIGNATURE);
+		return get(SIGNATURE);
 	}
 
 	/**
@@ -133,7 +142,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 * @param timestamp the time published
 	 */
 	protected void setPublished(Date timestamp) {
-		put(PUBLISHED, dateFormat.format(timestamp));
+		put(PUBLISHED, timestamp);
 	}
 
 	/**
@@ -143,8 +152,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 */
 	public Date getPublished() {
 		try {
-			String published = (String)get(PUBLISHED);
-			return published == null ? null : dateFormat.parse(published);
+			return getDate(PUBLISHED);
 		} catch (ParseException e) {
 			return null;
 		}
@@ -166,8 +174,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 *         the returned value is false if the did is activated.
 	 */
 	public boolean isDeactivated( ) {
-		Boolean v = (Boolean)get(DEACTIVATED);
-		return v == null ? false : v;
+		return getBoolean(DEACTIVATED);
 	}
 
     /**
@@ -185,4 +192,15 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 			return null;
 		}
     }
+
+	@Override
+	protected void save() {
+		if (attachedStore()) {
+			try {
+				getStore().storeDidMetadata(did, this);
+			} catch (DIDStoreException ignore) {
+				log.error("INTERNAL - error store metadata for DID {}", did);
+			}
+		}
+	}
 }

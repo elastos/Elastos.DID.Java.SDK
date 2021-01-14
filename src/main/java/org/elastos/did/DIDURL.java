@@ -30,7 +30,6 @@ import java.util.Map;
 
 import org.elastos.did.DIDObject.SerializeContext;
 import org.elastos.did.VerifiableCredential.Proof;
-import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.MalformedDIDURLException;
 import org.elastos.did.parser.DIDURLBaseListener;
 import org.elastos.did.parser.DIDURLParser;
@@ -63,7 +62,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	private Map<String, String> query;
 	private String fragment;
 
-	private CredentialMetadata metadata;
+	private AbstractMetadata metadata;
 
 	/**
 	 * Constructs the DIDURl with the given value.
@@ -362,7 +361,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	 *
 	 * @param metadata the meta data
 	 */
-	protected void setMetadata(CredentialMetadata metadata) {
+	protected void setMetadata(AbstractMetadata metadata) {
 		this.metadata = metadata;
 	}
 
@@ -371,21 +370,8 @@ public class DIDURL implements Comparable<DIDURL> {
 	 *
 	 * @return the meta data
 	 */
-	public CredentialMetadata getMetadata() {
-		if (metadata == null)
-			metadata = new CredentialMetadata();
-
+	public AbstractMetadata getMetadata() {
 		return metadata;
-	}
-
-	/**
-	 * Store meta data in DIDStore.
-	 *
-	 * @throws DIDStoreException there is no store to attatch.
-	 */
-	public void saveMetadata() throws DIDStoreException {
-		if (metadata != null && metadata.attachedStore())
-			metadata.getStore().storeCredentialMetadata(this.getDid(), this, metadata);
 	}
 
 	public String toString(DID base) {

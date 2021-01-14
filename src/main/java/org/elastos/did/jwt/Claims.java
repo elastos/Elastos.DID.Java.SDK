@@ -345,6 +345,8 @@ public class Claims implements Map<String, Object> {
 	 */
 	public String getAsJson(Object key) {
 		Object v = impl.get(key);
+		if (v == null)
+			return null;
 
 		ObjectMapper mapper = new ObjectMapper();
 		try {

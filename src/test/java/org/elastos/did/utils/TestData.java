@@ -34,10 +34,10 @@ import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.DIDURL;
 import org.elastos.did.Mnemonic;
+import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.backend.SPVAdapter;
-import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 
@@ -84,6 +84,8 @@ public final class TestData {
 	private String restoreMnemonic;
 
 	private DIDStore store;
+	private String mnemonic;
+	private RootIdentity identity;
 
 	public TestData(boolean simulated) throws DIDException {
 		adapter = simulated ? DIDTestExtension.getSimChain().getAdapter() :
@@ -93,7 +95,7 @@ public final class TestData {
 
 		DIDTestExtension.getSimChain().reset();
     	Utils.deleteFile(new File(TestConfig.storeRoot));
-		store = DIDStore.open("filesystem", TestConfig.storeRoot);
+		store = DIDStore.open(TestConfig.storeRoot);
 	}
 
 	public TestData() throws DIDException {
@@ -107,6 +109,14 @@ public final class TestData {
 
 	public DIDStore getStore() {
     	return store;
+	}
+
+	public RootIdentity getRootIdentity() {
+		return identity;
+	}
+
+	public String getMnemonic() {
+		return mnemonic;
 	}
 
 	public void waitForWalletAvaliable() throws DIDException {
@@ -134,12 +144,12 @@ public final class TestData {
 		}
 	}
 
-	public String initIdentity() throws DIDException {
-    	String mnemonic =  Mnemonic.getInstance().generate();
-    	store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
-    			TestConfig.passphrase, TestConfig.storePass, true);
+	public RootIdentity initIdentity() throws DIDException {
+    	mnemonic =  Mnemonic.getInstance().generate();
+    	identity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+    			TestConfig.passphrase, true, store, TestConfig.storePass);
 
-    	return mnemonic;
+    	return identity;
 	}
 
 	private DIDDocument loadDIDDocument(String fileName)
@@ -159,9 +169,9 @@ public final class TestData {
 	private void importPrivateKey(DIDURL id, String fileName)
 			throws IOException, DIDException {
 		String skBase58 = loadText(fileName);
-		byte[] sk = Base58.decode(skBase58);
+		byte[] sk = HDKey.deserializeBase58(skBase58).serialize();
 
-		store.storePrivateKey(id.getDid(), id, sk, TestConfig.storePass);
+		store.storePrivateKey(id, sk, TestConfig.storePass);
 	}
 
 	public DIDDocument loadTestIssuer() throws DIDException, IOException {

@@ -69,8 +69,8 @@ public class MnemonicTest {
 			assertTrue(mc.isValid(mnemonic));
 
 			DIDStore store = testData.getStore();
-	    	store.initPrivateIdentity(lang, mnemonic,
-	    			TestConfig.passphrase, TestConfig.storePass, true);
+	    	RootIdentity.create(lang, mnemonic, TestConfig.passphrase,
+	    			true, store, TestConfig.storePass);
 
 			mnemonic = mnemonic + "z";
 			assertFalse(mc.isValid(mnemonic));

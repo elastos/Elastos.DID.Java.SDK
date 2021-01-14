@@ -42,6 +42,7 @@ import java.util.concurrent.CompletionException;
 import org.elastos.did.backend.CredentialBiography;
 import org.elastos.did.backend.CredentialTransaction;
 import org.elastos.did.backend.IDChainRequest;
+import org.elastos.did.exception.CredentialAlreadyExistException;
 import org.elastos.did.exception.CredentialExpiredException;
 import org.elastos.did.exception.CredentialInvalidException;
 import org.elastos.did.exception.CredentialNotGenuineException;
@@ -50,7 +51,6 @@ import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDInvalidException;
 import org.elastos.did.exception.DIDNotFoundException;
-import org.elastos.did.exception.DIDObjectAlreadyExistException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
@@ -509,27 +509,14 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * @return the Credential Meta data object
 	 */
 	public CredentialMetadata getMetadata() {
-		if (metadata == null) {
-			metadata = new CredentialMetadata();
-			getId().setMetadata(metadata);
-		}
+		if (metadata == null)
+			metadata = new CredentialMetadata(getId());
 
 		return metadata;
 	}
 
 	private DIDStore getStore() {
-		return metadata == null ? null : metadata.getStore();
-	}
-
-	/**
-	 * Store Meta data of Credential.
-	 *
-	 * @throws DIDStoreException store meta data failed.
-	 */
-	public void saveMetadata() throws DIDStoreException {
-		if (metadata != null && metadata.attachedStore())
-			metadata.getStore().storeCredentialMetadata(getSubject().getId(),
-					getId(), metadata);
+		return metadata.getStore();
 	}
 
 	/**
@@ -783,7 +770,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 
 		if (wasDeclared()) {
 			log.error("Publish failed because the credential already declared.");
-			throw new DIDObjectAlreadyExistException(getId().toString());
+			throw new CredentialAlreadyExistException(getId().toString());
 		}
 
 		DIDDocument owner = getStore().loadDid(getSubject().getId());
@@ -793,7 +780,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 			if (owner == null)
 				throw new DIDNotFoundException(getSubject().getId().toString());
 
-			owner.getMetadata().setStore(getStore());
+			owner.getMetadata().attachStore(getStore());
 		}
 
 		checkState(signKey != null || owner.getDefaultPublicKeyId() != null, "No effective controller");
@@ -899,7 +886,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 			if (owner == null)
 				throw new DIDNotFoundException(getSubject().getId().toString());
 
-			owner.getMetadata().setStore(getStore());
+			owner.getMetadata().attachStore(getStore());
 		}
 
 		checkState(signKey != null || owner.getDefaultPublicKeyId() != null, "No effective controller");

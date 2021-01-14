@@ -391,7 +391,7 @@ public class DIDBackend {
 			throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
 
 		DIDDocument doc = tx.getRequest().getDocument();
-		DIDMetadata metadata = new DIDMetadata();
+		DIDMetadata metadata = new DIDMetadata(doc.getSubject());
 		metadata.setTransactionId(tx.getTransactionId());
 		metadata.setSignature(doc.getProof().getSignature());
 		metadata.setPublished(tx.getTimestamp());
@@ -456,11 +456,30 @@ public class DIDBackend {
 			if (tx.getRequest().getOperation() != IDChainRequest.Operation.REVOKE)
 				throw new DIDResolveException("Invalid credential biography, wrong status.");
 
-			if (!tx.getRequest().isValid())
+			if (bio.getTransactionCount() < 1 || bio.getTransactionCount() > 2)
 				throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
 
-			if (bio.getTransactionCount() == 1)
+
+			if (bio.getTransactionCount() == 1) {
+				if (!tx.getRequest().isValid())
+					throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
+
 				return null;
+			} else {
+				VerifiableCredential vc = bio.getTransaction(1).getRequest().getCredential();
+
+				// Avoid resolve current credential recursively
+				CredentialRequest request = new CredentialRequest(tx.getRequest()) {
+					@Override
+					public VerifiableCredential getCredential() {
+						return vc;
+					}
+				};
+
+
+				if (!request.isValid())
+					throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
+			}
 
 			tx = bio.getTransaction(1);
 			break;
@@ -476,7 +495,8 @@ public class DIDBackend {
 			throw new DIDResolveException("Invalid credential transaction, signature mismatch.");
 
 		VerifiableCredential vc = tx.getRequest().getCredential();
-		CredentialMetadata metadata = new CredentialMetadata();
+		CredentialMetadata metadata = new CredentialMetadata(vc.getId());
+		metadata.setTransactionId(tx.getTransactionId());
 		metadata.setPublished(tx.getTimestamp());
 		if (bio.getStatus() == CredentialBiography.Status.REVOKED)
 			metadata.setRevoked(true);

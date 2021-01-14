@@ -51,6 +51,7 @@ import org.elastos.did.crypto.Base64;
 import org.elastos.did.crypto.EcdsaSigner;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.AlreadySignedException;
+import org.elastos.did.exception.DIDAlreadyExistException;
 import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDException;
@@ -808,7 +809,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		// attach to the store if necessary
 		DIDDocument doc = getControllerDocument(effectiveController);
 		if (!doc.getMetadata().attachedStore())
-			doc.getMetadata().setStore(getMetadata().getStore());
+			doc.getMetadata().attachStore(getMetadata().getStore());
 	}
 
 	public boolean isMultiSignature() {
@@ -966,7 +967,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (!getMetadata().attachedStore())
 			return false;
 
-		return getMetadata().getStore().containsPrivateKey(id.getDid(), id);
+		return getMetadata().getStore().containsPrivateKey(id);
 	}
 
 	/**
@@ -1051,7 +1052,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 	private KeyPair getKeyPair(DIDURL id, String storepass)
 			throws InvalidKeyException, DIDStoreException {
-		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid storepass");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 		checkState(id != null || getDefaultPublicKeyId() != null, "No effective controller");
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
 
@@ -1062,11 +1063,11 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				throw new InvalidKeyException("Key no exist");
 		}
 
-		if (!getMetadata().getStore().containsPrivateKey(getSubject(), id))
+		if (!getMetadata().getStore().containsPrivateKey(id))
 			throw new InvalidKeyException("Don't have private key");
 
 		HDKey key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
-				getSubject(), id, storepass));
+				id, storepass));
 		return key.getJCEKeyPair();
 	}
 
@@ -1084,7 +1085,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
 
 		HDKey key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
-				getSubject(), getDefaultPublicKeyId(), storepass));
+				getDefaultPublicKeyId(), storepass));
 
 		return key.derive(index).serializeBase58();
 	}
@@ -1135,7 +1136,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			throw new DIDStoreException("Not attached with a DID store.");
 
 		HDKey key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
-				getSubject(), getDefaultPublicKeyId(), storepass));
+				getDefaultPublicKeyId(), storepass));
 
 		String path = mapToDerivePath(identifier, securityCode);
 		return key.derive(path).serializeBase58();
@@ -1709,6 +1710,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		try {
 			for (DID did : controllers) {
 				DIDDocument doc = did.resolve();
+				if (doc == null)
+					throw new MalformedDocumentException("Can not resolve controller: " + did);
+
 				controllerDocs.put(did, doc);
 			}
 		} catch (DIDResolveException e) {
@@ -1933,16 +1937,14 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the DIDMetadata object
 	 */
 	public DIDMetadata getMetadata() {
-		if (metadata == null) {
-			metadata = new DIDMetadata();
-			subject.setMetadata(metadata);
-		}
+		if (metadata == null)
+			metadata = new DIDMetadata(getSubject());
 
 		return metadata;
 	}
 
-	private DIDStore getStore() {
-		return metadata == null ? null : metadata.getStore();
+	protected DIDStore getStore() {
+		return getMetadata().getStore();
 	}
 
 	/**
@@ -1950,10 +1952,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *
 	 * @throws DIDStoreException store DID Metadata failed.
 	 */
-	public void saveMetadata() throws DIDStoreException {
-		if (metadata != null && metadata.attachedStore())
-			metadata.getStore().storeDidMetadata(getSubject(), metadata);
-	}
+	//public void saveMetadata() throws DIDStoreException {
+	//	if (metadata.attachedStore())
+	//		metadata.getStore().storeDidMetadata(getSubject(), metadata);
+	//}
 
 	/**
 	 * Judge whether the did document is expired or not.
@@ -1982,6 +1984,18 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				(getControllerCount() <= 1 && proofs.size() != 1))
 			return false;
 
+		byte[] digest = null;
+		try {
+			DIDDocument doc = new DIDDocument(this);
+			doc.proofs = null;
+			String json = doc.serialize(true);
+			digest = EcdsaSigner.sha256Digest(json.getBytes());
+		} catch (DIDSyntaxException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Serialize document", ignore);
+			return false;
+		}
+
 		// Document should signed(only) by default public key.
 		if (!isCustomizedDid()) {
 			Proof proof = getProof();
@@ -1993,20 +2007,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (!proof.getCreator().equals(getDefaultPublicKeyId()))
 				return false;
 
-			try {
-				DIDDocument doc = new DIDDocument(this);
-				doc.proofs = null;
-				String json = doc.serialize(true);
-
-				if (!verify(proof.getCreator(), proof.getSignature(), json.getBytes()))
-					return false;
-			} catch (DIDSyntaxException ignore) {
-				// Should never happen
-				log.error("INTERNAL - Serialize document", ignore);
-				return false;
-			}
-
-			return true;
+			return verifyDigest(proof.getCreator(), proof.getSignature(), digest);
 		} else {
 			List<DID> checkedControllers = new ArrayList<DID>(_proofs.size());
 
@@ -2029,18 +2030,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				if (!proof.getCreator().equals(controllerDoc.getDefaultPublicKeyId()))
 					return false;
 
-				try {
-					DIDDocument doc = new DIDDocument(this);
-					doc.proofs = null;
-					String json = doc.serialize(true);
-
-					if (!controllerDoc.verify(proof.getCreator(), proof.getSignature(), json.getBytes()))
-						return false;
-				} catch (DIDSyntaxException ignore) {
-					// Should never happen
-					log.error("INTERNAL - Serialize document", ignore);
+				if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest))
 					return false;
-				}
+
+				checkedControllers.add(proof.getCreator().getDid());
 			}
 
 			return true;
@@ -2054,7 +2047,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 *         the returned value is false if the did document is not genuine.
 	 */
 	public boolean isDeactivated() {
-		return getMetadata().isDeactivated();
+		return getMetadata() != null ? getMetadata().isDeactivated() : false;
 	}
 
 	/**
@@ -2214,17 +2207,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (pk == null)
 			throw new InvalidKeyException("Invalid sign key");
 
-		DID signer = null;
-		if (pk.getController().equals(getSubject()))
-			signer = getSubject();
-		else if (hasController()) {
-			controllers.contains(pk.getController());
-			signer = pk.getController();
-		} else {
-			throw new InvalidKeyException("Invalid sign key");
-		}
-
-		return getMetadata().getStore().sign(signer, id, storepass, digest);
+		return getMetadata().getStore().sign(pk.getId(), storepass, digest);
 	}
 
 	/**
@@ -2392,6 +2375,79 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		return jpb;
 	}
 
+	public DIDDocument newCustomizedDid(DID did, String storepass)
+			throws DIDInvalidException, DIDResolveException, DIDStoreException {
+		return newCustomizedDid(did, null, 0, storepass);
+	}
+
+	public DIDDocument newCustomizedDid(String did, String storepass)
+			throws DIDInvalidException, DIDResolveException, DIDStoreException {
+		return newCustomizedDid(DID.valueOf(did), storepass);
+	}
+
+	public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, String storepass)
+			throws DIDInvalidException, DIDResolveException, DIDStoreException {
+		checkArgument(did != null, "Invalid DID");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkState(getMetadata().attachedStore(), "Not attached with a store");
+
+		List<DID> ctrls = null;
+		if (controllers != null && controllers.length > 0) {
+			ctrls = new ArrayList<DID>(controllers.length);
+
+			for (DID ctrl : controllers) {
+				if (ctrl.equals(getSubject()))
+					continue;
+
+				ctrls.add(ctrl);
+			}
+
+			if (ctrls.size() == 0)
+				ctrls = null;
+			else
+				checkArgument(multisig >= 0 && multisig <= ctrls.size(), "Invalid multisig");
+		}
+
+		log.info("Creating new DID {} with controller {}...", did, getSubject());
+
+		DIDDocument doc = did.resolve(true);
+		if (doc != null)
+			throw new DIDAlreadyExistException(did.toString());
+
+		log.info("Creating new DID {} with controller {}...", did, getSubject());
+
+		DIDDocument.Builder db = new DIDDocument.Builder(did, this, getStore());
+		if (ctrls != null) {
+			for (DID ctrl : ctrls) {
+				if (ctrl.equals(getSubject()))
+					continue;
+
+				db.addController(ctrl);
+			}
+
+			db.setMultiSignature(multisig);
+		}
+
+		try {
+			doc = db.seal(storepass);
+			getStore().storeDid(doc);
+			return doc;
+		} catch (MalformedDocumentException ignore) {
+			log.error("INTERNAL - Seal DID document", ignore);
+			throw new DIDStoreException(ignore);
+		}
+	}
+
+	public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, String storepass)
+			throws DIDInvalidException, DIDResolveException, DIDStoreException {
+		List<DID> _controllers = new ArrayList<DID>(controllers.length);
+		for (String ctrl : controllers)
+			_controllers.add(new DID(ctrl));
+
+		return newCustomizedDid(DID.valueOf(did),_controllers.toArray(new DID[0]),
+				multisig, storepass);
+	}
+
 	public TransferTicket createTransferTicket(DID did, DID to, String storepass)
 			throws DIDResolveException, NotControllerException, DIDStoreException {
 		checkArgument(did != null, "Invalid did");
@@ -2485,7 +2541,6 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (resolvedDoc != null) {
 			if (resolvedDoc.isDeactivated()) {
 				getMetadata().setDeactivated(true);
-				saveMetadata();
 
 				log.error("Publish failed because DID is deactivated.");
 				throw new DIDDeactivatedException(getSubject().toString());
@@ -2533,7 +2588,6 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		getMetadata().setPreviousSignature(reolvedSignautre);
 		getMetadata().setSignature(getProof().getSignature());
-		saveMetadata();
 	}
 
 	/**
@@ -2844,7 +2898,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		else if (doc.isDeactivated())
 			throw new DIDDeactivatedException(getSubject().toString());
 		else
-			doc.getMetadata().setStore(getStore());
+			doc.getMetadata().attachStore(getStore());
 
 		if (signKey == null) {
 			signKey = doc.getDefaultPublicKeyId();
@@ -3377,7 +3431,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 */
 		protected Builder(DID did, DIDStore store) {
 			this.document = new DIDDocument(did);
-			this.document.getMetadata().setStore(store);
+			DIDMetadata metadata = new DIDMetadata(did, store);
+			this.document.setMetadata(metadata);
 		}
 
 		/**
@@ -3388,7 +3443,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 */
 		protected Builder(DID did, DIDDocument controller, DIDStore store) {
 			this.document = new DIDDocument(did, controller);
-			this.document.getMetadata().setStore(store);
+			DIDMetadata metadata = new DIDMetadata(did, store);
+			this.document.setMetadata(metadata);
+
 			this.controllerDoc = controller;
 		}
 
@@ -3634,7 +3691,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		        try {
 		        	// TODO: should delete the loosed private key when store the document
 		            if (document.getMetadata().attachedStore())
-		                document.getMetadata().getStore().deletePrivateKey(getSubject(), id);
+		                document.getMetadata().getStore().deletePrivateKey(id);
 		        } catch (DIDStoreException ignore) {
 		            log.error("INTERNAL - Remove private key", ignore);
 		        }
@@ -4592,7 +4649,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				else {
 					// edit() call on one controller document
 					signerDoc = document.getControllerDocument(document.getControllers().get(0));
-					signerDoc.getMetadata().setStore(document.getMetadata().getStore());
+					signerDoc.getMetadata().attachStore(document.getMetadata().getStore());
 				}
 			}
 

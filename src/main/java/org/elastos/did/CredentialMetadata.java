@@ -23,8 +23,11 @@
 package org.elastos.did;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.elastos.did.exception.DIDStoreException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The interface for Credential's meta data(include alias name, last modified time for Credential
@@ -34,18 +37,23 @@ import java.util.Date;
  * The class defines the implement of Credential Meta data.
  */
 public class CredentialMetadata extends AbstractMetadata implements Cloneable {
-	private final static String ALIAS = RESERVED_PREFIX + "alias";
-	private final static String PUBLISHED = RESERVED_PREFIX + "published";
-	private final static String REVOKED = RESERVED_PREFIX + "revoked";
+	private final static String TXID = "txid";
+	private final static String PUBLISHED = "published";
+	private final static String REVOKED = "revoked";
 
-	private final static SimpleDateFormat dateFormat =
-			new SimpleDateFormat(Constants.DATE_FORMAT);
+	private DIDURL id;
+
+	private static final Logger log = LoggerFactory.getLogger(CredentialMetadata.class);
+
+	protected CredentialMetadata() {
+		this(null);
+	}
 
 	/**
 	 * Construct the empty CredentialMetadataImpl.
 	 */
-	protected CredentialMetadata() {
-		this(null);
+	protected CredentialMetadata(DIDURL id) {
+		this(id, null);
 	}
 
 	/**
@@ -53,46 +61,46 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	 *
 	 * @param store the specified DIDStore
 	 */
-	protected CredentialMetadata(DIDStore store) {
+	protected CredentialMetadata(DIDURL id, DIDStore store) {
 		super(store);
+		this.id = id;
 	}
 
 	/**
-	 * Set alias for credential.
+	 * Set transaction id for CredentialMetadata.
 	 *
-	 * @param alias alias string
+	 * @param txid the transaction id string
 	 */
-	public void setAlias(String alias) {
-		put(ALIAS, alias);
+	protected void setTransactionId(String txid) {
+		put(TXID, txid);
 	}
 
 	/**
-	 * Get alias from credential.
+	 * Get the last transaction id.
 	 *
-	 * @return alias string
+	 * @return the transaction string
 	 */
-	public String getAlias() {
-		return (String)get(ALIAS);
+	public String getTransactionId() {
+		return get(TXID);
 	}
 
 	/**
-	 * Set published time into CredentialMetadata.
+	 * Set published time for CredentialMetadata.
 	 *
 	 * @param timestamp the time published
 	 */
 	protected void setPublished(Date timestamp) {
-		put(PUBLISHED, dateFormat.format(timestamp));
+		put(PUBLISHED, timestamp);
 	}
 
 	/**
-	 * Get the time of the lastest declare transaction.
+	 * Get the time of the latest declare transaction.
 	 *
 	 * @return the published time
 	 */
 	public Date getPublished() {
 		try {
-			String published = (String)get(PUBLISHED);
-			return published == null ? null : dateFormat.parse(published);
+			return getDate(PUBLISHED);
 		} catch (ParseException e) {
 			return null;
 		}
@@ -114,8 +122,7 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	 *         the returned value is false if the did is not revoked.
 	 */
 	public boolean isRevoked( ) {
-		Boolean v = (Boolean)get(REVOKED);
-		return v == null ? false : v;
+		return getBoolean(REVOKED);
 	}
 
     /**
@@ -133,5 +140,16 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 			return null;
 		}
     }
+
+	@Override
+	protected void save() {
+		if (attachedStore()) {
+			try {
+				getStore().storeCredentialMetadata(id, this);
+			} catch (DIDStoreException ignore) {
+				log.error("INTERNAL - error store metadata for credential {}", id);
+			}
+		}
+	}
 }
 

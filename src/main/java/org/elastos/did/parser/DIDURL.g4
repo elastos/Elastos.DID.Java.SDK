@@ -26,7 +26,7 @@
 grammar DIDURL;
 
 didurl
-	: did (';' params)? ('/' path)? ('?' query)? ('#' frag)? SPACE?
+	: did? (';' params)? ('/' path)? ('?' query)? ('#' frag)? SPACE?
 	;
 
 did

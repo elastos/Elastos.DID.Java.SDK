@@ -104,15 +104,8 @@ public class Mnemonic {
 	 *
 	 * @return the Mnemonic object
 	 */
-	public static Mnemonic getInstance() {
-		String language = "";
-
-		if (mcTable.containsKey(language))
-			return mcTable.get(language);
-
-		Mnemonic m = new Mnemonic(MnemonicCode.INSTANCE);
-		mcTable.put(language, m);
-		return m;
+	public static Mnemonic getInstance() throws DIDException {
+		return getInstance(null);
 	}
 
 	/**
@@ -122,16 +115,21 @@ public class Mnemonic {
 	 * @return the Mnemonic object
 	 * @throws DIDException generate Mnemonic into table failed.
 	 */
-	public static Mnemonic getInstance(String language) throws DIDException {
-		if (language == null || language.isEmpty())
-			return getInstance();
+	public static synchronized Mnemonic getInstance(String language)
+			throws DIDException {
+		if (language == null)
+			language = ENGLISH;
 
 		if (mcTable.containsKey(language))
 			return mcTable.get(language);
 
 		try {
-			InputStream is = MnemonicCode.openDefaultWords(language);
-			MnemonicCode mc = new MnemonicCode(is, null);
+			MnemonicCode mc =  MnemonicCode.INSTANCE;
+			if (!language.isEmpty()) {
+				InputStream is = MnemonicCode.openDefaultWords(language);
+				mc = new MnemonicCode(is, null);
+			}
+
 			Mnemonic m = new Mnemonic(mc);
 			mcTable.put(language, m);
 			return m;

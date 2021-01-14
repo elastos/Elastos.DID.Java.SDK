@@ -26,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
+import org.spongycastle.crypto.digests.MD5Digest;
+import org.spongycastle.util.encoders.Hex;
 
 public class Aes256cbcTest {
 	private static final String passwd = "secret";
@@ -75,5 +77,23 @@ public class Aes256cbcTest {
 		String cipher = Aes256cbc.encryptToBase64(plain.getBytes(), passwd);
 
 		assertEquals(base64, cipher);
+	}
+
+	@Test
+	public void genFingerprint() throws Exception {
+		String password = "password";
+		byte[] digest = new byte[16];
+
+		MD5Digest md = new MD5Digest();
+		md.update(password.getBytes(), 0, password.getBytes().length);
+		md.doFinal(digest, 0);
+
+		byte[] secret = Aes256cbc.encrypt(digest, password);
+
+		md.reset();
+		md.update(secret, 0, secret.length);
+		md.doFinal(digest, 0);
+
+		System.out.println(Hex.toHexString(digest));
 	}
 }
