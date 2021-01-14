@@ -64,15 +64,18 @@ public class IDChainOperationsTest {
 
 	private TestData testData;
 	private DIDStore store;
+	private RootIdentity identity;
 
 	private static final Logger log = LoggerFactory.getLogger(IDChainOperationsTest.class);
 
     @BeforeEach
     public void beforeEach() throws DIDException {
     	testData = new TestData();
-    	store = testData.getStore();
+    	testData.initIdentity();
 
-		testData.initIdentity();
+    	store = testData.getStore();
+    	identity = testData.getRootIdentity();
+
 		testData.waitForWalletAvaliable();
     }
 
@@ -84,7 +87,7 @@ public class IDChainOperationsTest {
 	@Test
 	public void testPublishAndResolve() throws DIDException {
 		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = store.newDid(TestConfig.storePass);
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
 
 		log.debug("Publishing new DID {}...", did);
@@ -103,7 +106,7 @@ public class IDChainOperationsTest {
 	@Test
 	public void testPublishAndResolveAsync() throws DIDException {
 		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = store.newDid(TestConfig.storePass);
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
 
         log.debug("Publishing new DID {}...", did);
@@ -127,7 +130,7 @@ public class IDChainOperationsTest {
 	@Test
 	public void testPublishAndResolveAsync2() throws DIDException {
 		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = store.newDid(TestConfig.storePass);
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
 
 		log.debug("Publishing new DID and resolve {}...", did);
@@ -156,7 +159,7 @@ public class IDChainOperationsTest {
 		String[] sigs = new String[3];
 
 		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = store.newDid(TestConfig.storePass);
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
 
         log.debug("Publishing new DID {}...", did);
@@ -251,7 +254,7 @@ public class IDChainOperationsTest {
 		String[] sigs = new String[3];
 
 		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = store.newDid(TestConfig.storePass);
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
 
         log.debug("Publishing new DID {}...", did);
@@ -357,7 +360,7 @@ public class IDChainOperationsTest {
 	@Test
 	public void testUpdateAndResolveWithCredentials() throws DIDException {
 		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = store.newDid(TestConfig.storePass);
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
 
 		Issuer selfIssuer = new Issuer(doc);
@@ -481,7 +484,7 @@ public class IDChainOperationsTest {
 	@Test
 	public void testUpdateAndResolveWithCredentialsAsync() throws DIDException {
 		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = store.newDid(TestConfig.storePass);
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
 
 		Issuer selfIssuer = new Issuer(doc);
@@ -619,16 +622,16 @@ public class IDChainOperationsTest {
 	public void testRestore() throws DIDException, IOException {
 		String mnemonic = testData.loadRestoreMnemonic();
 
-		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
-				TestConfig.passphrase, TestConfig.storePass, true);
+		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+				TestConfig.passphrase, true, store, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");
 		long start = System.currentTimeMillis();
-		store.synchronize(TestConfig.storePass);
+		rootIdentity.synchronize();
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-		List<DID> dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
+		List<DID> dids = store.listDids();
 		assertEquals(5, dids.size());
 
 		ArrayList<String> didStrings = new ArrayList<String>(dids.size());
@@ -652,7 +655,7 @@ public class IDChainOperationsTest {
 			assertEquals(4, vcs.size());
 
 			for (DIDURL id : vcs) {
-				VerifiableCredential vc = store.loadCredential(did, id);
+				VerifiableCredential vc = store.loadCredential(id);
 				assertNotNull(vc);
 				assertEquals(id, vc.getId());
 			}
@@ -666,12 +669,12 @@ public class IDChainOperationsTest {
 	public void testRestoreAsync() throws DIDException, IOException {
 		String mnemonic = testData.loadRestoreMnemonic();
 
-		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
-				TestConfig.passphrase, TestConfig.storePass, true);
+		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+				TestConfig.passphrase, true, store, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");
 		long start = System.currentTimeMillis();
-		CompletableFuture<Void> f = store.synchronizeAsync(TestConfig.storePass)
+		CompletableFuture<Void> f = rootIdentity.synchronizeAsync()
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - start + 500) / 1000;
 					log.debug("Synchronize from IDChain...OK({}s)", duration);
@@ -679,7 +682,7 @@ public class IDChainOperationsTest {
 
 		f.join();
 
-		List<DID> dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
+		List<DID> dids = store.listDids();
 		assertEquals(5, dids.size());
 
 		ArrayList<String> didStrings = new ArrayList<String>(dids.size());
@@ -703,7 +706,7 @@ public class IDChainOperationsTest {
 			assertEquals(4, vcs.size());
 
 			for (DIDURL id : vcs) {
-				VerifiableCredential vc = store.loadCredential(did, id);
+				VerifiableCredential vc = store.loadCredential(id);
 				assertNotNull(vc);
 				assertEquals(id, vc.getId());
 			}
@@ -717,16 +720,16 @@ public class IDChainOperationsTest {
 	public void testSyncWithLocalModification1() throws DIDException, IOException {
 		String mnemonic = testData.loadRestoreMnemonic();
 
-		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
-				TestConfig.passphrase, TestConfig.storePass, true);
+		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+				TestConfig.passphrase, true, store, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");
 		long start = System.currentTimeMillis();
-		store.synchronize(TestConfig.storePass);
+		rootIdentity.synchronize();
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-		List<DID> dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
+		List<DID> dids = store.listDids();
 		assertEquals(5, dids.size());
 
 		ArrayList<String> didStrings = new ArrayList<String>(dids.size());
@@ -750,7 +753,7 @@ public class IDChainOperationsTest {
 			assertEquals(4, vcs.size());
 
 			for (DIDURL id : vcs) {
-				VerifiableCredential vc = store.loadCredential(did, id);
+				VerifiableCredential vc = store.loadCredential(id);
 				assertNotNull(vc);
 				assertEquals(id, vc.getId());
 			}
@@ -768,11 +771,11 @@ public class IDChainOperationsTest {
 
 		log.debug("Synchronizing again from IDChain...");
 		start = System.currentTimeMillis();
-		store.synchronize(TestConfig.storePass);
+		rootIdentity.synchronize();
 		duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
-		dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
+		dids = store.listDids();
 		assertEquals(5, dids.size());
 
 		didStrings = new ArrayList<String>(dids.size());
@@ -795,7 +798,7 @@ public class IDChainOperationsTest {
 			assertEquals(4, vcs.size());
 
 			for (DIDURL id : vcs) {
-				VerifiableCredential vc = store.loadCredential(did, id);
+				VerifiableCredential vc = store.loadCredential(id);
 				assertNotNull(vc);
 				assertEquals(id, vc.getId());
 			}
@@ -812,16 +815,16 @@ public class IDChainOperationsTest {
 	public void testSyncWithLocalModification2() throws DIDException, IOException {
 		String mnemonic = testData.loadRestoreMnemonic();
 
-		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
-				TestConfig.passphrase, TestConfig.storePass, true);
+		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+				TestConfig.passphrase, true, store, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");
 		long start = System.currentTimeMillis();
-		store.synchronize(TestConfig.storePass);
+		rootIdentity.synchronize();
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-		List<DID> dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
+		List<DID> dids = store.listDids();
 		assertEquals(5, dids.size());
 
 		ArrayList<String> didStrings = new ArrayList<String>(dids.size());
@@ -845,7 +848,7 @@ public class IDChainOperationsTest {
 			assertEquals(4, vcs.size());
 
 			for (DIDURL id : vcs) {
-				VerifiableCredential vc = store.loadCredential(did, id);
+				VerifiableCredential vc = store.loadCredential(id);
 				assertNotNull(vc);
 				assertEquals(id, vc.getId());
 			}
@@ -865,11 +868,11 @@ public class IDChainOperationsTest {
 
 		log.debug("Synchronizing again from IDChain...");
 		start = System.currentTimeMillis();
-		store.synchronize((c, l) -> c, TestConfig.storePass);
+		rootIdentity.synchronize((c, l) -> c);
 		duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
-		dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
+		dids = store.listDids();
 		assertEquals(5, dids.size());
 
 		didStrings = new ArrayList<String>(dids.size());
@@ -892,7 +895,7 @@ public class IDChainOperationsTest {
 			assertEquals(4, vcs.size());
 
 			for (DIDURL id : vcs) {
-				VerifiableCredential vc = store.loadCredential(did, id);
+				VerifiableCredential vc = store.loadCredential(id);
 				assertNotNull(vc);
 				assertEquals(id, vc.getId());
 			}
@@ -909,12 +912,12 @@ public class IDChainOperationsTest {
 	public void testSyncWithLocalModificationAsync() throws DIDException, IOException {
 		String mnemonic = testData.loadRestoreMnemonic();
 
-		store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
-				TestConfig.passphrase, TestConfig.storePass, true);
+		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+				TestConfig.passphrase, true, store, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");
 		long s1 = System.currentTimeMillis();
-		CompletableFuture<Void> f = store.synchronizeAsync(TestConfig.storePass)
+		CompletableFuture<Void> f = rootIdentity.synchronizeAsync()
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - s1 + 500) / 1000;
 					log.debug("Synchronize from IDChain...OK({}s)", duration);
@@ -922,7 +925,7 @@ public class IDChainOperationsTest {
 
 		f.join();
 
-		List<DID> dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
+		List<DID> dids = store.listDids();
 		assertEquals(5, dids.size());
 
 		ArrayList<String> didStrings = new ArrayList<String>(dids.size());
@@ -946,7 +949,7 @@ public class IDChainOperationsTest {
 			assertEquals(4, vcs.size());
 
 			for (DIDURL id : vcs) {
-				VerifiableCredential vc = store.loadCredential(did, id);
+				VerifiableCredential vc = store.loadCredential(id);
 				assertNotNull(vc);
 				assertEquals(id, vc.getId());
 			}
@@ -966,7 +969,7 @@ public class IDChainOperationsTest {
 
 		log.debug("Synchronizing again from IDChain...");
 		long s2 = System.currentTimeMillis();
-		f = store.synchronizeAsync((c, l) -> c, TestConfig.storePass)
+		f = rootIdentity.synchronizeAsync((c, l) -> c)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - s2 + 500) / 1000;
 					log.debug("Synchronize again from IDChain...OK({}s)", duration);
@@ -974,7 +977,7 @@ public class IDChainOperationsTest {
 
 		f.join();
 
-		dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
+		dids = store.listDids();
 		assertEquals(5, dids.size());
 
 		didStrings = new ArrayList<String>(dids.size());
@@ -997,7 +1000,7 @@ public class IDChainOperationsTest {
 			assertEquals(4, vcs.size());
 
 			for (DIDURL id : vcs) {
-				VerifiableCredential vc = store.loadCredential(did, id);
+				VerifiableCredential vc = store.loadCredential(id);
 				assertNotNull(vc);
 				assertEquals(id, vc.getId());
 			}

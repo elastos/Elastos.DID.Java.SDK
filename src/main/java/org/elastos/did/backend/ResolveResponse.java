@@ -54,6 +54,7 @@ public abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DID
 	@JsonProperty(RESULT)
 	private R result;
 	@JsonProperty(ERROR)
+	@JsonInclude(Include.NON_NULL)
 	private JsonRpcError error;
 
 	@JsonPropertyOrder({ ERROR_CODE, ERROR_MESSAGE, ERROR_DATA })

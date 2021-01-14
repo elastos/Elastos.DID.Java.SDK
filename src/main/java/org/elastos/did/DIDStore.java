@@ -22,6 +22,8 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,33 +39,27 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.elastos.did.DIDDocument.PublicKey;
-import org.elastos.did.DIDStorage.ReEncryptor;
 import org.elastos.did.crypto.Aes256cbc;
-import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.crypto.EcdsaSigner;
 import org.elastos.did.crypto.HDKey;
-import org.elastos.did.exception.DIDBackendException;
-import org.elastos.did.exception.DIDException;
-import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStorageException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.MalformedDocumentException;
 import org.elastos.did.exception.MalformedExportDataException;
 import org.elastos.did.exception.WrongPasswordException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.CryptoException;
+import org.spongycastle.crypto.digests.MD5Digest;
 import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.util.encoders.Hex;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -77,33 +73,76 @@ import com.google.common.cache.CacheBuilder;
  * DIDStore is local store for all DIDs.
  */
 public final class DIDStore {
+	protected static final String DID_STORE_TYPE = "did:elastos:store";
+	protected static final int DID_STORE_VERSION = 3;
+
 	private static final int CACHE_INITIAL_CAPACITY = 16;
-	private static final int CACHE_MAX_CAPACITY = 64;
+	private static final int CACHE_MAX_CAPACITY = 128;
 
 	private static final Object NULL = new Object();
-
-	/**
-	 * List DIDs that contains private key in DIDStore
-	 */
-	public static final int DID_HAS_PRIVATEKEY = 0;
-
-	/**
-	 * List DIDs that does not contain private key in DIDStore
-	 */
-	public static final int DID_NO_PRIVATEKEY = 1;
-
-	/**
-	 * List all DIDs
-	 */
-	public static final int DID_ALL	= 2;
 
 	private static final String DID_EXPORT = "did.elastos.export/1.0";
 
 	private Cache<Object, Object> cache;
 
 	private DIDStorage storage;
+	private Metadata metadata;
 
 	private static final Logger log = LoggerFactory.getLogger(DIDStore.class);
+
+	static class Metadata extends AbstractMetadata {
+		private static final String TYPE = "type";
+		private static final String VERSION = "version";
+		private static final String FINGERPRINT = "fingerprint";
+		private static final String DEFAULT_ROOT_IDENTITY = "defaultRootIdentity";
+
+		protected Metadata(DIDStore store) {
+			super();
+			put(TYPE, DID_STORE_TYPE);
+			put(VERSION, DID_STORE_VERSION);
+			if (store != null)
+				attachStore(store);
+		}
+
+		protected Metadata() {
+			this(null);
+		}
+
+		protected String getType() {
+			return get(TYPE);
+		}
+
+		public int getVersion() {
+			return getInteger(VERSION);
+		}
+
+		public void setFingerprint(String fingerprint) {
+			put(FINGERPRINT, fingerprint);
+		}
+
+		public String getFingerprint() {
+			return get(FINGERPRINT);
+		}
+
+		protected void setDefaultRootIdentity(String id) {
+			put(DEFAULT_ROOT_IDENTITY, id);
+		}
+
+		public String getDefaultRootIdentity() {
+			return get(DEFAULT_ROOT_IDENTITY);
+		}
+
+		@Override
+		protected void save() {
+			if (attachedStore()) {
+				try {
+					getStore().storage.storeMetadata(this);
+				} catch (DIDStoreException ignore) {
+					log.error("INTERNAL - error store metadata for DIDStore");
+				}
+			}
+		}
+	}
 
 	/**
 	 * The interface for ConflictHandle to indicate how to resolve the conflict,
@@ -120,7 +159,16 @@ public final class DIDStore {
 		DIDDocument merge(DIDDocument chainCopy, DIDDocument localCopy);
 	}
 
-	private DIDStore(int initialCacheCapacity, int maxCacheCapacity, DIDStorage storage) {
+	public interface DIDFilter {
+		public boolean select(DID did);
+	}
+
+	public interface CredentialFilter {
+		public boolean select(DIDURL id);
+	}
+
+	private DIDStore(int initialCacheCapacity, int maxCacheCapacity,
+			DIDStorage storage) throws DIDStoreException {
 		if (initialCacheCapacity < 0)
 			initialCacheCapacity = 0;
 
@@ -151,6 +199,8 @@ public final class DIDStore {
 				.build();
 
 		this.storage = storage;
+		this.metadata = storage.loadMetadata();
+		this.metadata.attachStore(this);
 	}
 
 	/**
@@ -163,16 +213,13 @@ public final class DIDStore {
 	 * @return the DIDStore object
 	 * @throws DIDStoreException Unsupport the specified store type.
 	 */
-	public static DIDStore open(String type, String location,
+	public static DIDStore open(String location,
 			int initialCacheCapacity, int maxCacheCapacity) throws DIDStoreException {
-		if (type == null || location == null || location.isEmpty() ||
+		if (location == null || location.isEmpty() ||
 				maxCacheCapacity < initialCacheCapacity)
 			throw new IllegalArgumentException();
 
-		if (!type.equals("filesystem"))
-			throw new DIDStoreException("Unsupported store type: " + type);
-
-		DIDStorage storage = new FileSystemStorage(location);
+		DIDStorage storage = new FileSystemStorage(new File(location));
 		return new DIDStore(initialCacheCapacity, maxCacheCapacity, storage);
 	}
 
@@ -184,26 +231,35 @@ public final class DIDStore {
 	 * @return the DIDStore object
 	 * @throws DIDStoreException Unsupport the specified store type.
 	 */
-	public static DIDStore open(String type, String location)
+	public static DIDStore open(String location)
 			throws DIDStoreException {
-		return open(type, location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
+		return open(location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 	}
 
 	public void close() {
 		cache.invalidateAll();
 		cache = null;
+		metadata = null;
 		storage = null;
 	}
 
-	/**
-	 * Judge whether private identity exists in DIDStore.
-	 *
-	 * @return the returned value is true if private identity exists;
-	 *         the returned value if false if private identity doesnot exist.
-	 * @throws DIDStoreException Unsupport the specified store type.
-	 */
-	public boolean containsPrivateIdentity() throws DIDStoreException {
-		return storage.containsPrivateIdentity();
+	private static String calcFingerprint(String password) throws DIDStoreException {
+		MD5Digest md5 = new MD5Digest();
+		byte[] digest = new byte[md5.getDigestSize()];
+		byte[] passwd = password.getBytes();
+		md5.update(passwd, 0, passwd.length);
+		md5.doFinal(digest, 0);
+		md5.reset();
+
+		try {
+			byte[] cipher = Aes256cbc.encrypt(digest, password);
+			md5.update(cipher, 0, cipher.length);
+			md5.doFinal(digest, 0);
+
+			return Hex.toHexString(digest);
+		} catch (CryptoException e) {
+			throw new DIDStoreException("Calculate fingerprint error.", e);
+		}
 	}
 
 	/**
@@ -216,15 +272,14 @@ public final class DIDStore {
 	 */
 	protected static String encryptToBase64(byte[] input, String passwd)
 			throws DIDStoreException {
-		byte[] cipher;
 		try {
-			cipher = Aes256cbc.encrypt(input, passwd);
+			byte[] cipher = Aes256cbc.encrypt(input, passwd);
+
+			return Base64.encodeToString(cipher,
+					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 		} catch (CryptoException e) {
 			throw new DIDStoreException("Encrypt data error.", e);
 		}
-
-		return Base64.encodeToString(cipher,
-				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 	}
 
 	/**
@@ -237,9 +292,10 @@ public final class DIDStore {
 	 */
 	protected static byte[] decryptFromBase64(String input, String passwd)
 			throws DIDStoreException {
-		byte[] cipher = Base64.decode(input,
-				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 		try {
+			byte[] cipher = Base64.decode(input,
+					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+
 			return Aes256cbc.decrypt(cipher, passwd);
 		} catch (CryptoException e) {
 			throw new WrongPasswordException("Decrypt private key error.", e);
@@ -254,149 +310,57 @@ public final class DIDStore {
 		return newSecret;
 	}
 
-	/**
-	 * Initialize private identity by mnemonic.
-	 *
-	 * @param language the language string
-     *                support language string: "chinese_simplified",
-     *                "chinese_traditional", "czech", "english", "french",
-     *                "italian", "japanese", "korean", "spanish".
-	 * @param mnemonic the mnemonic string
-	 * @param passphrase the password for mnemonic to generate seed
-	 * @param storepass the password for DIDStore
-	 * @param force force = true, must create new private identity;
-	 *              force = false, must not create new private identity if there is private identity.
-	 * @throws DIDStoreException there is private identity if user need unforce mode.
-	 */
-	public void initPrivateIdentity(String language, String mnemonic,
-			String passphrase, String storepass, boolean force)
+	private String encrypt(byte[] input, String passwd) throws DIDStoreException {
+		String fingerprint = metadata.getFingerprint();
+		String currentFingerprint = calcFingerprint(passwd);
+
+		if (fingerprint != null && !currentFingerprint.equals(fingerprint))
+			throw new WrongPasswordException("Password mismatched with previous password.");
+
+		String result = encryptToBase64(input, passwd);
+
+		if (fingerprint == null || fingerprint.isEmpty())
+			metadata.setFingerprint(currentFingerprint);
+
+		return result;
+	}
+
+	private byte[] decrypt(String input, String passwd) throws DIDStoreException {
+		String fingerprint = metadata.getFingerprint();
+		String currentFingerprint = calcFingerprint(passwd);
+
+		byte[] result = decryptFromBase64(input, passwd);
+
+		if (fingerprint == null || fingerprint.isEmpty())
+			metadata.setFingerprint(currentFingerprint);
+
+		return result;
+	}
+
+	protected void storeRootIdentity(RootIdentity identity, String storepass)
 			throws DIDStoreException {
-		if (mnemonic == null)
-			throw new IllegalArgumentException("Invalid mnemonic.");
+		checkArgument(identity != null, "Invalid identity");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		if (storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException("Invalid password.");
+		String encryptedMnemonic = null;
+		if (identity.getMnemonic() != null)
+			encryptedMnemonic = encrypt(identity.getMnemonic().getBytes(), storepass);
 
-		try {
-			Mnemonic mc = Mnemonic.getInstance(language);
-			if (!mc.isValid(mnemonic))
-				throw new IllegalArgumentException("Invalid mnemonic.");
-		} catch (DIDException e) {
-			throw new IllegalArgumentException(e);
-		}
+		String encryptedPrivateKey = encrypt(identity.getRootPrivateKey().serialize(), storepass);
 
-		if (containsPrivateIdentity() && !force)
-			throw new DIDStoreException("Already has private identity.");
+		String publicKey = identity.getPreDerivedPublicKey().serializePublicKeyBase58();
 
-		if (passphrase == null)
-			passphrase = "";
+		storage.storeRootIdentity(identity.getId(), encryptedMnemonic,
+				encryptedPrivateKey, publicKey, identity.getIndex());
 
-		HDKey privateIdentity = new HDKey(mnemonic, passphrase);
-
-		initPrivateIdentity(privateIdentity, storepass);
-
-		// Save mnemonic
-		String encryptedMnemonic = encryptToBase64(
-				mnemonic.getBytes(), storepass);
-		storage.storeMnemonic(encryptedMnemonic);
-
+		if (metadata.getDefaultRootIdentity() == null)
+			metadata.setDefaultRootIdentity(identity.getId());
 	}
 
-	/**
-	 * Initialize new private identity by mnemonic with unforce mode.
-	 *
-	 * @param language the language string
-     *                support language string: "chinese_simplified",
-     *                "chinese_traditional", "czech", "english", "french",
-     *                "italian", "japanese", "korean", "spanish".
-	 * @param mnemonic the mnemonic string
-	 * @param passphrase the password for mnemonic to generate seed
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException there is private identity if user need unforce mode.
-	 */
-	public void initPrivateIdentity(String language, String mnemonic,
-			String passphrase, String storepass) throws DIDStoreException {
-		initPrivateIdentity(language, mnemonic, passphrase, storepass, false);
-	}
-
-	/**
-	 * Initialize private identity by extended private key.
-	 *
-	 * @param extentedPrivateKey the extented private key string
-	 * @param storepass the password for DIDStore
-	 * @param force force = true, must create new private identity;
-	 *              force = false, must not create new private identity if there is private identity.
-	 * @throws DIDStoreException there is private identity if user need unforce mode.
-	 */
-	public void initPrivateIdentity(String extentedPrivateKey, String storepass,
-			boolean force) throws DIDStoreException {
-		if (extentedPrivateKey == null || extentedPrivateKey.isEmpty())
-			throw new IllegalArgumentException("Invalid extended private key.");
-
-		if (storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException("Invalid password.");
-
-		if (containsPrivateIdentity() && !force)
-			throw new DIDStoreException("Already has private indentity.");
-
-		HDKey privateIdentity = HDKey.deserialize(Base58.decode(extentedPrivateKey));
-		initPrivateIdentity(privateIdentity, storepass);
-	}
-
-	/**
-	 * Initialize private identity by extended private key with unforce mode.
-	 *
-	 * @param extentedPrivateKey the extented private key string
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException there is private identity if user need unforce mode.
-	 */
-	public void initPrivateIdentity(String extentedPrivateKey, String storepass)
+	protected void storeRootIdentity(RootIdentity identity)
 			throws DIDStoreException {
-		initPrivateIdentity(extentedPrivateKey, storepass, false);
-	}
-
-	/**
-	 * Initialize private identity by HDKey content.
-	 *
-	 * @param privateIdentity the HDKey object
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException there is private identity if user need unforce mode.
-	 */
-	private void initPrivateIdentity(HDKey privateIdentity, String storepass)
-			throws DIDStoreException {
-		// Save extended root private key
-		String encryptedIdentity = encryptToBase64(
-				privateIdentity.serialize(), storepass);
-		storage.storePrivateIdentity(encryptedIdentity);
-
-		// Save pre-derived public key
-		HDKey preDerivedKey = privateIdentity.derive(HDKey.PRE_DERIVED_PUBLICKEY_PATH);
-		storage.storePublicIdentity(preDerivedKey.serializePublicKeyBase58());
-
-		// Save index
-		storage.storePrivateIdentityIndex(0);
-
-		preDerivedKey.wipe();
-		privateIdentity.wipe();
-	}
-
-	/**
-	 * Export mnemonic from DIDStore
-	 *
-	 * @param storepass the password for DIDStore
- 	 * @return the mnemonic string
-	 * @throws DIDStoreException there is no mnemonic in DID Store.
-	 */
-	public String exportMnemonic(String storepass) throws DIDStoreException {
-		if (storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException("Invalid password.");
-
-		if (storage.containsMnemonic()) {
-			String encryptedMnemonic = storage.loadMnemonic();
-			return new String(decryptFromBase64(encryptedMnemonic, storepass));
-		} else {
-			throw new DIDStoreException("DID store doesn't contain mnemonic.");
-		}
+		checkArgument(identity != null, "Invalid identity");
+		storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
 	}
 
     /**
@@ -406,403 +370,157 @@ public final class DIDStore {
      * @return the HDKey object(private identity)
      * @throws DIDStoreException there is invalid private identity in DIDStore.
      */
-	protected HDKey loadPrivateIdentity(String storepass)
+	public RootIdentity loadRootIdentity(String id)
 			throws DIDStoreException {
-		if (!containsPrivateIdentity())
-			return null;
+		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
-		HDKey privateIdentity = null;
-
-		byte[] keyData = decryptFromBase64(storage.loadPrivateIdentity(), storepass);
-		if (keyData.length == HDKey.SEED_BYTES) {
-			// For backward compatible, convert to extended root private key
-			// TODO: Should be remove in the future
-			privateIdentity = new HDKey(keyData);
-
-			String encryptedIdentity = encryptToBase64(
-					privateIdentity.serialize(), storepass);
-			storage.storePrivateIdentity(encryptedIdentity);
-		} else if (keyData.length == HDKey.EXTENDED_PRIVATEKEY_BYTES){
-			privateIdentity = HDKey.deserialize(keyData);
-		} else {
-			throw new DIDStoreException("Invalid private identity.");
-		}
-
-		Arrays.fill(keyData, (byte)0);
-
-		// For backward compatible, create pre-derived public key if not exist.
-		// TODO: Should be remove in the future
-		if (!storage.containsPublicIdentity()) {
-			HDKey preDerivedKey = privateIdentity.derive(HDKey.PRE_DERIVED_PUBLICKEY_PATH);
-			storage.storePublicIdentity(preDerivedKey.serializePublicKeyBase58());
-		}
-
-		return privateIdentity;
-	}
-
-	/**
-	 * Load public identity from identity.
-	 * There is extended private key and extended public key in DIDStore.
-	 *
-	 * @return the HDKey object
-	 * @throws DIDStoreException load root public identity failed.
-	 */
-	protected HDKey loadPublicIdentity() throws DIDStoreException {
-		if (!containsPrivateIdentity())
-			return null;
-
-		String keyData = storage.loadPublicIdentity();
-		HDKey publicIdentity = HDKey.deserializeBase58(keyData);
-
-		return publicIdentity;
-	}
-
-	/**
-	 * Synchronize DIDStore.
-	 *
-	 * @param handle the handle to ConflictHandle
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException synchronize did faile with resolve error.
-	 * @throws DIDStoreException there is no private identity in DIDStore.
-	 */
-	public void synchronize(ConflictHandle handle, String storepass)
-			throws DIDBackendException, DIDStoreException {
-		if (handle == null || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
-
-		int nextIndex = storage.loadPrivateIdentityIndex();
-		HDKey privateIdentity = loadPrivateIdentity(storepass);
-		if (privateIdentity == null)
-			throw new DIDStoreException("DID Store does not contains private identity.");
+		String key = "root-identity:" + id;
 
 		try {
-			int blanks = 0;
-			int i = 0;
-
-			while (i < nextIndex || blanks < 20) {
-				HDKey key = privateIdentity.derive(HDKey.DERIVE_PATH_PREFIX + i++);
-				DID did = new DID(DID.METHOD, key.getAddress());
-
-				log.info("Synchronize {}/{}...", did.toString(), i);
-
-				try {
-					DIDDocument chainCopy = null;
-					chainCopy = DIDBackend.getInstance().resolveDid(did, true);
-					if (chainCopy != null) {
-						log.debug("{} exists, got the on-chain copy.", did.toString());
-
-						DIDDocument finalCopy = chainCopy;
-
-						DIDDocument localCopy = loadDid(did);
-						if (localCopy != null) {
-							if (localCopy.getMetadata().getSignature() == null ||
-									!localCopy.getProof().getSignature().equals(
-									localCopy.getMetadata().getSignature())) {
-								log.debug("{} on-chain copy conflict with local copy.",
-										did.toString());
-
-								// Local copy was modified
-								finalCopy = handle.merge(chainCopy, localCopy);
-								if (finalCopy == null || !finalCopy.getSubject().equals(did)) {
-									log.error("Conflict handle merge the DIDDocument error.");
-									throw new DIDStoreException("deal with local modification error.");
-								} else {
-									log.debug("Conflict handle return the final copy.");
-								}
-							}
-						}
-
-						// Save private key
-						storePrivateKey(did, finalCopy.getDefaultPublicKeyId(),
-								key.serialize(), storepass);
-
-						storeDid(finalCopy);
-
-						if (i >= nextIndex)
-							storage.storePrivateIdentityIndex(i);
-
-						blanks = 0;
+			Object value = cache.get(key, new Callable<Object>() {
+			    @Override
+			    public Object call() throws DIDStoreException {
+					RootIdentity identity = storage.loadRootIdentity(id);
+					if (identity != null) {
+						identity.setMetadata(loadRootIdentityMetadata(id));
+						return identity;
 					} else {
-						log.debug("{} not exists.", did.toString());
-
-						if (i >= nextIndex)
-							blanks++;
+						return NULL;
 					}
-				} finally {
-					key.wipe();
-				}
-			}
-		} finally {
-			privateIdentity.wipe();
+			    }
+			});
+
+			return value == NULL ? null : (RootIdentity)value;
+		} catch (ExecutionException e) {
+			throw new DIDStoreException("Load root identity failed: " + id, e);
 		}
 	}
 
+	public RootIdentity loadRootIdentity() throws DIDStoreException {
+		String id = metadata.getDefaultRootIdentity();
+		if (id == null || id.isEmpty())
+			return null;
+
+		return loadRootIdentity(id);
+	}
+
 	/**
-	 * Synchronize DIDStore.
-	 * ConflictHandle uses default method.
+	 * Judge whether private identity exists in DIDStore.
+	 *
+	 * @return the returned value is true if private identity exists;
+	 *         the returned value if false if private identity doesnot exist.
+	 * @throws DIDStoreException Unsupport the specified store type.
+	 */
+	public boolean containsRootIdentity(String id) throws DIDStoreException {
+		return storage.loadRootIdentity(id) != null;
+	}
+
+	/**
+	 * Export mnemonic from DIDStore
 	 *
 	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException synchronize did faile with resolve error.
-	 * @throws DIDStoreException there is no private identity in DIDStore.
+ 	 * @return the mnemonic string
+	 * @throws DIDStoreException there is no mnemonic in DID Store.
 	 */
-	public void synchronize(String storepass)
-			throws DIDBackendException, DIDStoreException {
-		synchronize((c, l) -> {
-			l.getMetadata().setPublished(c.getMetadata().getPublished());
-			l.getMetadata().setSignature(c.getMetadata().getSignature());
-			return l;
-		}, storepass);
+	public String exportRootIdentityMnemonic(String id, String storepass) throws DIDStoreException {
+		checkArgument(id != null && !id.isEmpty(), "Invalid id");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+
+		String encryptedMnemonic = storage.loadRootIdentityMnemonic(id);
+		if (encryptedMnemonic != null)
+			return new String(decrypt(encryptedMnemonic, storepass));
+		else
+			return null;
+	}
+
+	public boolean containsRootIdentityMnemonic(String id) throws DIDStoreException {
+		checkArgument(id != null && !id.isEmpty(), "Invalid id");
+
+		String encryptedMnemonic = storage.loadRootIdentityMnemonic(id);
+		return encryptedMnemonic != null;
 	}
 
     /**
-     * Synchronize DIDStore with asynchronous mode.
+     * Load private identity from DIDStore.
      *
-	 * @param handle the handle to ConflictHandle
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *         resolved DIDDocument if success; null otherwise.
+     * @param storepass the password for DIDStore
+     * @return the HDKey object(private identity)
+     * @throws DIDStoreException there is invalid private identity in DIDStore.
      */
-	public CompletableFuture<Void> synchronizeAsync(
-			ConflictHandle handle, String storepass) {
-		if (handle == null || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
-
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-			try {
-				synchronize(handle, storepass);
-			} catch (DIDBackendException | DIDStoreException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	}
-
-    /**
-     * Synchronize DIDStore with asynchronous mode.
-     * ConflictHandle uses default method.
-     *
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
-     */
-	public CompletableFuture<Void> synchronizeAsync(String storepass) {
-		if (storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
-
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-			try {
-				synchronize(storepass);
-			} catch (DIDBackendException | DIDStoreException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	}
-
-	/**
-	 * Create a new DID with specified index and get this DID's Document content.
-	 *
-	 * @param index the index to create new did.
-	 * @param alias the alias string
-	 * @param storepass the password for DIDStore
-	 * @return the DIDDocument content related to the new DID
-	 * @throws DIDStoreException there is no private identity in DIDStore.
-	 */
-	public DIDDocument newDid(int index, String alias, String storepass)
+	private HDKey loadRootIdentityPrivateKey(String id, String storepass)
 			throws DIDStoreException {
-		if (index < 0 || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		String key = "root-identity:" + id + "#privatekey";
 
-		HDKey privateIdentity = loadPrivateIdentity(storepass);
-		if (privateIdentity == null)
-			throw new DIDStoreException("DID Store not contains private identity.");
-
-		HDKey key = privateIdentity.derive(HDKey.DERIVE_PATH_PREFIX + index);
 		try {
-			DID did = new DID(DID.METHOD, key.getAddress());
-			log.info("Creating new DID {} with index {}...", did.toString(), index);
+			Object value = cache.get(key, new Callable<Object>() {
+			    @Override
+			    public Object call() throws DIDStorageException {
+					String encryptedKey = storage.loadRootIdentityPrivateKey(id);
+					return encryptedKey != null ? encryptedKey : NULL;			    }
+			});
 
-			DIDDocument doc = loadDid(did);
-			if (doc != null)
-				throw new DIDStoreException("DID already exists.");
-
-			DIDURL id = new DIDURL(did, "primary");
-			storePrivateKey(did, id, key.serialize(), storepass);
-
-			DIDDocument.Builder db = new DIDDocument.Builder(did, this);
-			db.addAuthenticationKey(id, key.getPublicKeyBase58());
-			try {
-				doc = db.seal(storepass);
-			} catch (MalformedDocumentException ignore) {
-				log.error("INTERNAL - Seal DID document", ignore);
-				throw new DIDStoreException(ignore);
+			if (value != NULL) {
+				byte[] keyData = decrypt((String)value, storepass);
+				return HDKey.deserialize(keyData);
+			} else {
+				return null;
 			}
-			doc.getMetadata().setAlias(alias);
-			storeDid(doc);
-			return doc;
-		} finally {
-			privateIdentity.wipe();
-			key.wipe();
+		} catch (ExecutionException e) {
+			throw new DIDStoreException("Load root identity private key failed: " + id, e);
 		}
 	}
 
-	/**
-	 * Create a new DID with specified index and get this DID's Document content.
-	 *
-	 * @param index the index to create new did.
-	 * @param storepass the password for DIDStore
-	 * @return the DIDDocument content related to the new DID
-	 * @throws DIDStoreException there is no private identity in DIDStore.
-	 */
-	public DIDDocument newDid(int index, String storepass) throws DIDStoreException {
-		return newDid(index, null, storepass);
-	}
-
-	/**
-	 * Create a new DID and get this DID's Document content.
-	 *
-	 * @param alias the alias string
-	 * @param storepass the password for DIDStore
-	 * @return the DIDDocument content related to the new DID
-	 * @throws DIDStoreException there is no private identity in DIDStore.
-	 */
-	public DIDDocument newDid(String alias, String storepass)
+	protected HDKey derive(RootIdentity identity, String path, String storepass)
 			throws DIDStoreException {
-		int nextIndex = storage.loadPrivateIdentityIndex();
-		DIDDocument doc = newDid(nextIndex++, alias, storepass);
-		storage.storePrivateIdentityIndex(nextIndex);
-		return doc;
+		checkArgument(identity != null, "Invalid identity");
+		checkArgument(path != null && !path.isEmpty(), "Invalid path");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+
+		HDKey rootPrivateKey = loadRootIdentityPrivateKey(identity.getId(), storepass);
+		HDKey key = rootPrivateKey.derive(path);
+		rootPrivateKey.wipe();
+
+		return key;
 	}
 
-	/**
-	 * Create a new DID without alias and get this DID's Document content.
-	 *
-	 * @param storepass the password for DIDStore
-	 * @return the DIDDocument content related to the new DID
-	 * @throws DIDStoreException there is no private identity in DIDStore.
-	 */
-	public DIDDocument newDid(String storepass) throws DIDStoreException {
-		return newDid(null, storepass);
+	public boolean deleteRootIdentity(String id) throws DIDStoreException {
+		checkArgument(id != null && !id.isEmpty(), "Invalid id");
+
+		boolean success = storage.deleteRootIdentity(id);
+		if (success && metadata.getDefaultRootIdentity() != null &&
+				metadata.getDefaultRootIdentity().equals(id))
+			metadata.setDefaultRootIdentity(null);
+
+		return success;
 	}
 
-	/**
-	 * Only get DID with specified index.
-	 *
-	 * @param index the index
-	 * @return the DID object
-	 * @throws DIDStoreException there is no private identity in DIDStore.
-	 */
-	public DID getDid(int index) throws DIDStoreException {
-		if (index < 0)
-			throw new IllegalArgumentException();
-
-		HDKey publicIdentity = loadPublicIdentity();
-		if (publicIdentity == null)
-			throw new DIDStoreException("DID Store not contains private identity.");
-
-		HDKey key = publicIdentity.derive("0/" + index);
-		DID did = new DID(DID.METHOD, key.getAddress());
-		return did;
+	public List<RootIdentity> listRootIdentities() throws DIDStoreException {
+		return storage.listRootIdentities();
 	}
 
-	public DIDDocument newDid(DID did, DID controller, String storepass)
+	public boolean containsRootIdentities() throws DIDStoreException {
+		return storage.containsRootIdenities();
+	}
+
+	protected void storeRootIdentityMetadata(String id, RootIdentity.Metadata metadata)
 			throws DIDStoreException {
-		if (did == null || controller == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(id != null && !id.isEmpty(), "Invalid id");
+		checkArgument(metadata != null, "Invalid metadata");
 
-		log.info("Creating new DID {} with controller {}...", did, controller);
-
-		DIDDocument controllerDoc = loadDid(controller);
-		if (controllerDoc == null)
-			throw new DIDStoreException("Controller DID not exists in the store");
-
-		if (!controllerDoc.isValid())
-			throw new DIDStoreException("Controller DID not valid");
-
-		if (loadDid(did) != null)
-			throw new DIDStoreException("DID " + did + " already exists.");
-
-		try {
-			if (did.resolve(true) != null)
-				throw new DIDStoreException("DID " + did + " already exist.");
-		} catch (DIDResolveException ignore) {
-			// If already exist, the ID transaction will failed in the future
-		}
-
-		DIDDocument.Builder db = new DIDDocument.Builder(did, controllerDoc, this);
-		try {
-			DIDDocument doc = db.seal(storepass);
-			storeDid(doc);
-			return doc;
-		} catch (MalformedDocumentException ignore) {
-			log.error("INTERNAL - Seal DID document", ignore);
-			throw new DIDStoreException(ignore);
-		}
+		storage.storeRootIdentityMetadata(id, metadata);
 	}
 
-	public DIDDocument newDid(String did, String controller, String storepass)
+	protected RootIdentity.Metadata loadRootIdentityMetadata(String id)
 			throws DIDStoreException {
-		return newDid(DID.valueOf(did), DID.valueOf(controller), storepass);
-	}
+		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
-	public DIDDocument newDid(DID did, DID[] controllers, DID self, int multisig, String storepass)
-			throws DIDStoreException, DIDResolveException {
-		if (did == null || controllers == null || controllers.length == 0 ||
-				self == null ||storepass.isEmpty())
-			throw new IllegalArgumentException();
+		RootIdentity.Metadata metadata = storage.loadRootIdentityMetadata(id);
+		if (metadata != null)
+			metadata.attachStore(this);
+		else
+			metadata = new RootIdentity.Metadata(id, this);
 
-		log.info("Creating new DID {} with controllers {}...", did, controllers);
-
-		DIDDocument controllerDoc = loadDid(self);
-		if (controllerDoc == null)
-			throw new DIDStoreException("Controller DID not exists in the store");
-
-		if (!controllerDoc.isValid())
-			throw new DIDStoreException("Controller DID not valid");
-
-		if (loadDid(did) != null)
-			throw new DIDStoreException("DID " + did + " already exists.");
-
-		try {
-			if (did.resolve(true) != null)
-				throw new DIDStoreException("DID " + did + " already exist.");
-		} catch (DIDResolveException ignore) {
-			// If already exist, the ID transaction will failed in the future
-		}
-
-		DIDDocument.Builder db = new DIDDocument.Builder(did, controllerDoc, this);
-		try {
-			for (DID ctrl : controllers) {
-				if (ctrl.equals(self))
-					continue;
-
-				db.addController(ctrl);
-			}
-
-			db.setMultiSignature(multisig);
-
-			DIDDocument doc = db.seal(storepass);
-			storeDid(doc);
-			return doc;
-		} catch (MalformedDocumentException ignore) {
-			log.error("INTERNAL - Seal DID document", ignore);
-			throw new DIDStoreException(ignore);
-		}
-	}
-
-	public DIDDocument newDid(String did, String controllers[], String self, int multisig, String storepass)
-			throws DIDStoreException, DIDResolveException {
-		if (did == null || controllers == null || controllers.length == 0 ||
-				self == null ||storepass.isEmpty())
-			throw new IllegalArgumentException();
-
-		List<DID> _controllers = new ArrayList<DID>();
-		for (String ctrl : controllers)
-			_controllers.add(new DID(ctrl));
-
-		return newDid(DID.valueOf(did), _controllers.toArray(new DID[0]),
-				DID.valueOf(self), multisig, storepass);
+		return metadata;
 	}
 
     /**
@@ -812,100 +530,21 @@ public final class DIDStore {
      * @throws DIDStoreException DIDStore error.
      */
 	public void storeDid(DIDDocument doc) throws DIDStoreException {
-		if (doc == null)
-			throw new IllegalArgumentException();
+		checkArgument(doc != null, "Invalid doc");
 
 		storage.storeDid(doc);
+		if (doc.getStore() != this) {
+			DIDMetadata metadata = loadDidMetadata(doc.getSubject());
+			doc.getMetadata().merge(metadata);
+			storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
-		DIDMetadata metadata = loadDidMetadata(doc.getSubject());
-		doc.getMetadata().merge(metadata);
-		doc.getMetadata().setStore(this);
-
-		storage.storeDidMetadata(doc.getSubject(), doc.getMetadata());
+			doc.getMetadata().attachStore(this);
+		}
 
 		for (VerifiableCredential vc : doc.getCredentials())
 			storeCredential(vc);
 
 		cache.put(doc.getSubject(), doc);
-	}
-
-	/**
-	 * Store DID Metadata.
-	 *
-	 * @param did the owner of Metadata
-	 * @param metadata the meta data
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	protected void storeDidMetadata(DID did, DIDMetadata metadata)
-			throws DIDStoreException {
-		storage.storeDidMetadata(did, metadata);
-
-		Object value = cache.getIfPresent(did);
-		if (value != null && value != NULL) {
-			if (value instanceof DIDDocument) {
-				DIDDocument doc = (DIDDocument)value;
-				doc.setMetadata(metadata);
-			} else {
-				log.error("INTERNAL - invalid cache entry");
-				cache.invalidate(did);
-			}
-		}
-	}
-
-	/**
-	 * Store DID Metadata.
-	 *
-	 * @param did the owner of Metadata
-	 * @param metadata the meta data
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	protected void storeDidMetadata(String did, DIDMetadata metadata)
-			throws DIDStoreException{
-		storeDidMetadata(DID.valueOf(did), metadata);
-	}
-
-	/**
-	 * Load Meta data for the specified DID.
-	 *
-	 * @param did the specified DID
-	 * @return the Meta data
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	protected DIDMetadata loadDidMetadata(DID did) throws DIDStoreException {
-		if (did == null)
-			throw new IllegalArgumentException();
-
-		DIDDocument doc = null;
-		DIDMetadata metadata = null;
-		Object value = cache.getIfPresent(did);
-		if (value != null && value != NULL) {
-			if (value instanceof DIDDocument) {
-				doc = (DIDDocument)value;
-				metadata = doc.getMetadata();
-				if (metadata != null)
-					return metadata;
-			} else {
-				log.error("INTERNAL - invalid cache entry");
-				cache.invalidate(did);
-			}
-		}
-
-		metadata = storage.loadDidMetadata(did);
-		if (doc != null)
-			doc.setMetadata(metadata);
-
-		return metadata;
-	}
-
-	/**
-	 * Load Meta data about DID.
-	 *
-	 * @param did the specified DID string
-	 * @return the Meta data
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	protected DIDMetadata loadDidMetadata(String did) throws DIDStoreException {
-		return loadDidMetadata(DID.valueOf(did));
 	}
 
 	/**
@@ -916,18 +555,15 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public DIDDocument loadDid(DID did) throws DIDStoreException {
-		if (did == null)
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
 
 		try {
 			Object value = cache.get(did, new Callable<Object>() {
 			    @Override
-			    public Object call() throws DIDStorageException {
+			    public Object call() throws DIDStoreException {
 					DIDDocument doc = storage.loadDid(did);
 					if (doc != null) {
-						DIDMetadata metadata = storage.loadDidMetadata(did);
-						metadata.setStore(DIDStore.this);
-						doc.setMetadata(metadata);
+						doc.setMetadata(loadDidMetadata(did));
 						return doc;
 					} else {
 						return NULL;
@@ -961,10 +597,8 @@ public final class DIDStore {
      * @throws DIDStoreException DIDStore error.
      */
 	public boolean containsDid(DID did) throws DIDStoreException {
-		if (did == null)
-			throw new IllegalArgumentException();
-
-		return storage.containsDid(did);
+		checkArgument(did != null, "Invalid did");
+		return loadDid(did) != null;
 	}
 
     /**
@@ -979,6 +613,57 @@ public final class DIDStore {
 		return containsDid(DID.valueOf(did));
 	}
 
+	/**
+	 * Store DID Metadata.
+	 *
+	 * @param did the owner of Metadata
+	 * @param metadata the meta data
+	 * @throws DIDStoreException DIDStore error.
+	 */
+	protected void storeDidMetadata(DID did, DIDMetadata metadata)
+			throws DIDStoreException {
+		checkArgument(did != null, "Invalid did");
+		checkArgument(metadata != null, "Invalid metadata");
+
+		storage.storeDidMetadata(did, metadata);
+		metadata.attachStore(this);
+
+		DIDURL id = new DIDURL(did, ";metadata");
+		cache.put(id, metadata);
+	}
+
+	/**
+	 * Load Meta data for the specified DID.
+	 *
+	 * @param did the specified DID
+	 * @return the Meta data
+	 * @throws DIDStoreException DIDStore error.
+	 */
+	protected DIDMetadata loadDidMetadata(DID did) throws DIDStoreException {
+		checkArgument(did != null, "Invalid did");
+
+		DIDURL id = new DIDURL(did, ";metadata");
+		try {
+			Object value = cache.get(id , new Callable<Object>() {
+			    @Override
+			    public Object call() throws DIDStorageException {
+					DIDMetadata metadata = storage.loadDidMetadata(did);
+					if (metadata != null)
+						metadata.attachStore(DIDStore.this);
+					else
+						metadata = new DIDMetadata(did, DIDStore.this);
+
+					return metadata;
+			    }
+			});
+
+			return value == NULL ? null : (DIDMetadata)value;
+		} catch (ExecutionException e) {
+			throw new DIDStoreException("Load did metadata failed: " + did, e);
+		}
+	}
+
+
     /**
      * Delete the specified DID.
      *
@@ -988,8 +673,7 @@ public final class DIDStore {
      * @throws DIDStoreException DIDStore error.
      */
 	public boolean deleteDid(DID did) throws DIDStoreException {
-		if (did == null)
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
 
 		cache.invalidate(did);
 		return storage.deleteDid(did);
@@ -1010,22 +694,34 @@ public final class DIDStore {
 	/**
 	 * List all DIDs according to the specified condition.
 	 *
-	 * @param filter the specified condition.
-	 *               0: all did; 1: did has privatekeys;
-     *               2: did has no privatekeys.
 	 * @return the DID array.
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public List<DID> listDids(int filter) throws DIDStoreException {
-		List<DID> dids = storage.listDids(filter);
-
+	public List<DID> listDids() throws DIDStoreException {
+		List<DID> dids = storage.listDids();
 		for (DID did : dids) {
 			DIDMetadata metadata = loadDidMetadata(did);
-			metadata.setStore(this);
 			did.setMetadata(metadata);
 		}
 
 		return dids;
+	}
+
+	public List<DID> selectDids(DIDFilter filter) throws DIDStoreException {
+		List<DID> src = listDids();
+
+		if (filter != null) {
+			List<DID> dest = new ArrayList<DID>();
+
+			for (DID did : src) {
+				if (filter.select(did))
+					dest.add(did);
+			}
+
+			return dest;
+		} else {
+			return src;
+		}
 	}
 
 	/**
@@ -1036,108 +732,18 @@ public final class DIDStore {
 	 */
 	public void storeCredential(VerifiableCredential credential)
 			throws DIDStoreException {
-		if (credential == null)
-			throw new IllegalArgumentException();
+		checkArgument(credential != null, "Invalid credential");
 
 		storage.storeCredential(credential);
+		if (credential.getMetadata().getStore() != this) {
+			CredentialMetadata metadata = loadCredentialMetadata(credential.getId());
+			credential.getMetadata().merge(metadata);
+			storeCredentialMetadata(credential.getId(), credential.getMetadata());
 
-		CredentialMetadata metadata = loadCredentialMetadata(
-				credential.getSubject().getId(), credential.getId());
-		credential.getMetadata().merge(metadata);
-		credential.getMetadata().setStore(this);
-
-		storage.storeCredentialMetadata(credential.getSubject().getId(),
-				credential.getId(), credential.getMetadata());
+			credential.getMetadata().attachStore(this);
+		}
 
 		cache.put(credential.getId(), credential);
-	}
-
-    /**
-     * Store meta data for the specified Credential.
-     *
-     * @param did the owner of the specified Credential
-     * @param id the identifier of Credential
-     * @param metadata the meta data for Credential
-     * @throws DIDStoreException DIDStore error.
-     */
-	protected void storeCredentialMetadata(DID did, DIDURL id,
-			CredentialMetadata metadata) throws DIDStoreException {
-		if (did == null || id == null)
-			throw new IllegalArgumentException();
-
-		storage.storeCredentialMetadata(did, id, metadata);
-
-		Object value = cache.getIfPresent(id);
-		if (value != null && value != NULL) {
-			if (value instanceof VerifiableCredential) {
-				VerifiableCredential vc = (VerifiableCredential)value;
-				vc.setMetadata(metadata);
-			} else {
-				log.error("INTERNAL - invalid cache entry");
-				cache.invalidate(id);
-			}
-		}
-	}
-
-    /**
-     * Store meta data for the specified Credential.
-     *
-     * @param did the owner of the specified Credential
-     * @param id the identifier of Credential
-     * @param metadata the meta data for Credential
-     * @throws DIDStoreException DIDStore error.
-     */
-	protected void storeCredentialMetadata(String did, String id,
-			CredentialMetadata metadata) throws DIDStoreException {
-		storeCredentialMetadata(DID.valueOf(did), DIDURL.valueOf(did, id), metadata);
-	}
-
-	/**
-	 * Load the meta data about the specified Credential.
-	 *
-	 * @param did the owner of Credential
-     * @param id the identifier of Credential
-	 * @return the meta data for Credential
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	protected CredentialMetadata loadCredentialMetadata(DID did, DIDURL id)
-			throws DIDStoreException {
-		if (did == null || id == null)
-			throw new IllegalArgumentException();
-
-		VerifiableCredential vc = null;
-		CredentialMetadata metadata = null;
-		Object value = cache.getIfPresent(id);
-		if (value != null && value != NULL) {
-			if (value instanceof VerifiableCredential) {
-				vc = (VerifiableCredential)value;
-				metadata = vc.getMetadata();
-				if (metadata != null)
-					return metadata;
-			} else {
-				log.error("INTERNAL - invalid cache entry");
-				cache.invalidate(id);
-			}
-		}
-
-		metadata = storage.loadCredentialMetadata(did, id);
-		if (vc != null)
-			vc.setMetadata(metadata);
-
-		return metadata;
-	}
-
-	/**
-	 * Load the meta data about the specified Credential.
-	 *
-	 * @param did the owner of Credential
-     * @param id the identifier of Credential
-	 * @return the meta data for Credential
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	protected CredentialMetadata loadCredentialMetadata(String did, String id)
-			throws DIDStoreException {
-		return loadCredentialMetadata(DID.valueOf(did), DIDURL.valueOf(did, id));
 	}
 
 	/**
@@ -1148,20 +754,17 @@ public final class DIDStore {
 	 * @return the Credential object
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public VerifiableCredential loadCredential(DID did, DIDURL id)
+	public VerifiableCredential loadCredential(DIDURL id)
 			throws DIDStoreException {
-		if (did == null || id == null)
-			throw new IllegalArgumentException();
+		checkArgument(id != null, "Invalid id");
 
 		try {
 			Object value = cache.get(id, new Callable<Object>() {
 			    @Override
-			    public Object call() throws DIDStorageException {
-			    	VerifiableCredential vc = storage.loadCredential(did, id);
+			    public Object call() throws DIDStoreException {
+			    	VerifiableCredential vc = storage.loadCredential(id);
 					if (vc != null) {
-						CredentialMetadata metadata = storage.loadCredentialMetadata(did, id);
-						metadata.setStore(DIDStore.this);
-						vc.setMetadata(metadata);
+						vc.setMetadata(loadCredentialMetadata(id));
 						return vc;
 					} else {
 						return NULL;
@@ -1171,7 +774,7 @@ public final class DIDStore {
 
 			return value == NULL ? null : (VerifiableCredential)value;
 		} catch (ExecutionException e) {
-			throw new DIDStoreException("Load did document failed: " + did, e);
+			throw new DIDStoreException("Load credential failed: " + id, e);
 		}
 	}
 
@@ -1183,9 +786,38 @@ public final class DIDStore {
 	 * @return the Credential object
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public VerifiableCredential loadCredential(String did, String id)
+	public VerifiableCredential loadCredential(String id)
 			throws DIDStoreException {
-		return loadCredential(DID.valueOf(did), DIDURL.valueOf(did, id));
+		return loadCredential(DIDURL.valueOf(id));
+	}
+
+	/**
+	 * Judge whether does DIDStore contain the specified credential.
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @return the returned value is true if there is no credential owned the specific DID;
+	 *         the returned value is false if there is credentials owned the specific DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
+	public boolean containsCredential(DIDURL id)
+			throws DIDStoreException {
+		checkArgument(id != null, "Invalid id");
+		return loadCredential(id) != null;
+	}
+
+	/**
+	 * Judge whether does DIDStore contain the specified credential.
+	 *
+	 * @param did the owner of Credential
+	 * @param id the identifier of Credential
+	 * @return the returned value is true if there is no credential owned the specific DID;
+	 *         the returned value is false if there is credentials owned the specific DID.
+	 * @throws DIDStoreException DIDStore error.
+	 */
+	public boolean containsCredential(String id)
+			throws DIDStoreException {
+		return containsCredential(DIDURL.valueOf(id));
 	}
 
 	/**
@@ -1196,9 +828,7 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public boolean containsCredentials(DID did) throws DIDStoreException {
-		if (did == null)
-			throw new IllegalArgumentException();
-
+		checkArgument(did != null, "Invalid did");
 		return storage.containsCredentials(did);
 	}
 
@@ -1213,35 +843,62 @@ public final class DIDStore {
 		return containsCredentials(DID.valueOf(did));
 	}
 
-	/**
-	 * Judge whether does DIDStore contain the specified credential.
-	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID;
-	 *         the returned value is false if there is credentials owned the specific DID.
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	public boolean containsCredential(DID did, DIDURL id)
-			throws DIDStoreException {
-		if (did == null || id == null)
-			throw new IllegalArgumentException();
+    /**
+     * Store meta data for the specified Credential.
+     *
+     * @param did the owner of the specified Credential
+     * @param id the identifier of Credential
+     * @param metadata the meta data for Credential
+     * @throws DIDStoreException DIDStore error.
+     */
+	protected void storeCredentialMetadata(DIDURL id,
+			CredentialMetadata metadata) throws DIDStoreException {
+		checkArgument(id != null, "Invalid id");
+		checkArgument(metadata != null, "Invalid metadata");
 
-		return storage.containsCredential(did, id);
+		storage.storeCredentialMetadata(id, metadata);
+		metadata.attachStore(this);
+
+		DIDURL.Builder builder = new DIDURL.Builder(id);
+		builder.setParameter("metadata", null);
+		DIDURL metadataId = builder.build();
+		cache.put(metadataId, metadata);
 	}
 
 	/**
-	 * Judge whether does DIDStore contain the specified credential.
+	 * Load the meta data about the specified Credential.
 	 *
 	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID;
-	 *         the returned value is false if there is credentials owned the specific DID.
+     * @param id the identifier of Credential
+	 * @return the meta data for Credential
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public boolean containsCredential(String did, String id)
+	protected CredentialMetadata loadCredentialMetadata(DIDURL id)
 			throws DIDStoreException {
-		return containsCredential(DID.valueOf(did), DIDURL.valueOf(did, id));
+		checkArgument(id != null, "Invalid id");
+
+		DIDURL.Builder builder = new DIDURL.Builder(id);
+		builder.setParameter("metadata", null);
+		DIDURL metadataId = builder.build();
+
+		try {
+			Object value = cache.get(metadataId , new Callable<Object>() {
+			    @Override
+			    public Object call() throws DIDStorageException {
+					CredentialMetadata metadata = storage.loadCredentialMetadata(id);
+					if (metadata != null)
+						metadata.attachStore(DIDStore.this);
+					else
+						metadata = new CredentialMetadata(id, DIDStore.this);
+
+					return metadata;
+			    }
+			});
+
+			return value == NULL ? null : (CredentialMetadata)value;
+		} catch (ExecutionException e) {
+			throw new DIDStoreException("Load Credential metadata failed: " + id, e);
+		}
 	}
 
 	/**
@@ -1253,12 +910,10 @@ public final class DIDStore {
 	 *         the returned value is false if there is credentials owned the specific DID.
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public boolean deleteCredential(DID did, DIDURL id) throws DIDStoreException {
-		if (did == null || id == null)
-			throw new IllegalArgumentException();
-
+	public boolean deleteCredential(DIDURL id) throws DIDStoreException {
+		checkArgument(id != null, "Invalid id");
 		cache.invalidate(id);
-		return storage.deleteCredential(did, id);
+		return storage.deleteCredential(id);
 	}
 
 	/**
@@ -1270,9 +925,9 @@ public final class DIDStore {
 	 *         the returned value is false if there is credentials owned the specific DID.
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public boolean deleteCredential(String did, String id)
+	public boolean deleteCredential(String id)
 			throws DIDStoreException {
-		return deleteCredential(DID.valueOf(did), DIDURL.valueOf(did, id));
+		return deleteCredential(DIDURL.valueOf(id));
 	}
 
 	/**
@@ -1283,14 +938,11 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public List<DIDURL> listCredentials(DID did) throws DIDStoreException {
-		if (did == null)
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
 
 		List<DIDURL> ids = storage.listCredentials(did);
-
 		for (DIDURL id : ids) {
-			CredentialMetadata metadata = loadCredentialMetadata(did, id);
-			metadata.setStore(this);
+			CredentialMetadata metadata = loadCredentialMetadata(id);
 			id.setMetadata(metadata);
 		}
 
@@ -1317,15 +969,24 @@ public final class DIDStore {
 	 * @return the Credential array
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public List<DIDURL> selectCredentials(DID did, DIDURL id, String[] type)
+	public List<DIDURL> selectCredentials(DID did, CredentialFilter filter)
 			throws DIDStoreException {
-		if (did == null)
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
 
-		if ((id == null) && (type == null || type.length == 0))
-			throw new IllegalArgumentException();
+		List<DIDURL> src = listCredentials(did);
 
-		return storage.selectCredentials(did, id, type);
+		if (filter != null) {
+			List<DIDURL> dest = new ArrayList<DIDURL>();
+
+			for (DIDURL id : src) {
+				if (filter.select(id))
+					dest.add(id);
+			}
+
+			return dest;
+		} else {
+			return src;
+		}
 	}
 
 	/**
@@ -1337,15 +998,9 @@ public final class DIDStore {
 	 * @return the Credential array
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public List<DIDURL> selectCredentials(String did, String id, String[] type)
+	public List<DIDURL> selectCredentials(String did, CredentialFilter filter)
 			throws DIDStoreException {
-		if (did == null || did.isEmpty())
-			throw new IllegalArgumentException();
-
-		if ((id == null || id.isEmpty()) && type == null || type.length == 0)
-			throw new IllegalArgumentException();
-
-		return selectCredentials(DID.valueOf(did), DIDURL.valueOf(did, id), type);
+		return selectCredentials(DID.valueOf(did), filter);
 	}
 
 	/**
@@ -1357,15 +1012,16 @@ public final class DIDStore {
 	 * @param storepass the password for DIDStore
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public void storePrivateKey(DID did, DIDURL id, byte[] privateKey,
+	public void storePrivateKey(DIDURL id, byte[] privateKey,
 			String storepass) throws DIDStoreException {
-		if (did == null || id == null ||
-				privateKey == null || privateKey.length == 0 ||
-				storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(id != null, "Invalid id");
+		checkArgument(privateKey != null && privateKey.length != 0, "Invalid private key");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		String encryptedKey = encryptToBase64(privateKey, storepass);
-		storage.storePrivateKey(did, id, encryptedKey);
+		String encryptedKey = encrypt(privateKey, storepass);
+		storage.storePrivateKey(id, encryptedKey);
+
+		cache.put(id, encryptedKey);
 	}
 
 	/**
@@ -1377,10 +1033,26 @@ public final class DIDStore {
 	 * @param storepass the password for DIDStore
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public void storePrivateKey(String did, String id, byte[] privateKey,
+	public void storePrivateKey(String id, byte[] privateKey,
 			String storepass) throws DIDStoreException {
-		storePrivateKey(DID.valueOf(did), DIDURL.valueOf(did, id),
-				privateKey, storepass);
+		storePrivateKey(DIDURL.valueOf(id), privateKey, storepass);
+	}
+
+	private String loadPrivateKey(DIDURL id) throws DIDStoreException {
+		try {
+			Object value = cache.get(id, new Callable<Object>() {
+			    @Override
+			    public Object call() throws DIDStoreException {
+					String encryptedKey = storage.loadPrivateKey(id);
+					return encryptedKey != null ? encryptedKey : NULL;
+			    }
+			});
+
+			return value == NULL ? null : (String)value;
+		} catch (ExecutionException e) {
+			throw new DIDStoreException("Load did private key failed: " + id, e);
+		}
+
 	}
 
 	/**
@@ -1392,37 +1064,40 @@ public final class DIDStore {
 	 * @return the original private key
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	protected byte[] loadPrivateKey(DID did, DIDURL id, String storepass)
+	protected byte[] loadPrivateKey(DIDURL id, String storepass)
 			throws DIDStoreException {
-		String encryptedKey = storage.loadPrivateKey(did, id);
-		byte[] keyBytes = decryptFromBase64(encryptedKey, storepass);
+		checkArgument(id != null, "Invalid id");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		// For backward compatible, convert to extended private key
-		// TODO: Should be remove in the future
-		byte[] extendedKeyBytes = null;
-		if (keyBytes.length == HDKey.PRIVATEKEY_BYTES) {
-			HDKey identity = loadPrivateIdentity(storepass);
-			if (identity != null) {
-				for (int i = 0; i < 100; i++) {
-					HDKey child = identity.derive(HDKey.DERIVE_PATH_PREFIX + i);
-					if (Arrays.equals(child.getPrivateKeyBytes(), keyBytes)) {
-						extendedKeyBytes = child.serialize();
-						break;
-					}
-					child.wipe();
-				}
-				identity.wipe();
-			}
+		String encryptedKey = loadPrivateKey(id);
+		return encryptedKey == null ? null : decrypt(encryptedKey, storepass);
+	}
 
-			if (extendedKeyBytes == null)
-				extendedKeyBytes = HDKey.paddingToExtendedPrivateKey(keyBytes);
+	/**
+	 * Judge that the specified key has private key in DIDStore.
+	 *
+	 * @param did the owner of key
+	 * @param id the identifier of key
+	 * @return the returned value is true if there is private keys owned the specified key;
+	 *         the returned value is false if there is no private keys owned the specified key.
+	 * @throws DIDStoreException DIDStore error.
+	 */
+	public boolean containsPrivateKey(DIDURL id) throws DIDStoreException {
+		checkArgument(id != null, "Invalid id");
+		return loadPrivateKey(id) != null;
+	}
 
-			storePrivateKey(did, id, extendedKeyBytes, storepass);
-		} else {
-			extendedKeyBytes = keyBytes;
-		}
-
-		return extendedKeyBytes;
+	/**
+	 * Judge that the specified key has private key in DIDStore.
+	 *
+	 * @param did the owner of key
+	 * @param id the identifier of key
+	 * @return the returned value is true if there is private keys owned the specified key;
+	 *         the returned value is false if there is no private keys owned the specified key.
+	 * @throws DIDStoreException DIDStore error.
+	 */
+	public boolean containsPrivateKey(String id) throws DIDStoreException {
+		return containsPrivateKey(DIDURL.valueOf(id));
 	}
 
 	/**
@@ -1434,9 +1109,7 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public boolean containsPrivateKeys(DID did) throws DIDStoreException {
-		if (did == null)
-			throw new IllegalArgumentException();
-
+		checkArgument(did != null, "Invalid did");
 		return storage.containsPrivateKeys(did);
 	}
 
@@ -1452,35 +1125,20 @@ public final class DIDStore {
 		return containsPrivateKeys(DID.valueOf(did));
 	}
 
+
 	/**
-	 * Judge that the specified key has private key in DIDStore.
+	 * Delete the private key owned to the specified key.
 	 *
 	 * @param did the owner of key
 	 * @param id the identifier of key
-	 * @return the returned value is true if there is private keys owned the specified key;
-	 *         the returned value is false if there is no private keys owned the specified key.
+	 * @return the returned value is true if deleting private keys successfully;
+	 *         the returned value is false if deleting private keys failed.
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public boolean containsPrivateKey(DID did, DIDURL id)
-			throws DIDStoreException {
-		if (did == null || id == null)
-			throw new IllegalArgumentException();
-
-		return storage.containsPrivateKey(did, id);
-	}
-
-	/**
-	 * Judge that the specified key has private key in DIDStore.
-	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @return the returned value is true if there is private keys owned the specified key;
-	 *         the returned value is false if there is no private keys owned the specified key.
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	public boolean containsPrivateKey(String did, String id)
-			throws DIDStoreException {
-		return containsPrivateKey(DID.valueOf(did), DIDURL.valueOf(did, id));
+	public boolean deletePrivateKey(DIDURL id) throws DIDStoreException {
+		checkArgument(id != null, "Invalid id");
+		cache.invalidate(id);
+		return storage.deletePrivateKey(id);
 	}
 
 	/**
@@ -1492,25 +1150,8 @@ public final class DIDStore {
 	 *         the returned value is false if deleting private keys failed.
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public boolean deletePrivateKey(DID did, DIDURL id) throws DIDStoreException {
-		if (did == null || id == null)
-			throw new IllegalArgumentException();
-
-		return storage.deletePrivateKey(did, id);
-	}
-
-	/**
-	 * Delete the private key owned to the specified key.
-	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @return the returned value is true if deleting private keys successfully;
-	 *         the returned value is false if deleting private keys failed.
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	public boolean deletePrivateKey(String did, String id)
-			throws DIDStoreException {
-		return deletePrivateKey(DID.valueOf(did), DIDURL.valueOf(did, id));
+	public boolean deletePrivateKey(String id) throws DIDStoreException {
+		return deletePrivateKey(DIDURL.valueOf(id));
 	}
 
 	/**
@@ -1523,39 +1164,18 @@ public final class DIDStore {
 	 * @return the signature string
 	 * @throws DIDStoreException can not get DID Document if no specified sign key.
 	 */
-	protected String sign(DID did, DIDURL id, String storepass, byte[] digest)
+	protected String sign(DIDURL id, String storepass, byte[] digest)
 			throws DIDStoreException {
-		if (did == null || storepass == null || storepass.isEmpty() || digest == null)
-			throw new IllegalArgumentException();
+		checkArgument(id != null, "Invalid id");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
-		if (id == null) {
-			DIDDocument doc = loadDid(did);
-			if (doc == null)
-				throw new DIDStoreException("Can not resolve DID document.");
-
-			id = doc.getDefaultPublicKeyId();
-		}
-
-		HDKey key = HDKey.deserialize(loadPrivateKey(did, id, storepass));
+		HDKey key = HDKey.deserialize(loadPrivateKey(id, storepass));
 		byte[] sig = EcdsaSigner.sign(key.getPrivateKeyBytes(), digest);
 		key.wipe();
 
 		return Base64.encodeToString(sig,
 				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-	}
-
-	/**
-	 * Sign the digest data by the specified key.
-	 *
-	 * @param did the owner of sign key
-	 * @param storepass the password for DIDStore
-	 * @param digest the digest data
-	 * @return the signature string
-	 * @throws DIDStoreException can not get DID Document if no specified sign key
-	 */
-	protected String sign(DID did, String storepass, byte[] digest)
-			throws DIDStoreException {
-		return sign(did, null, storepass, digest);
 	}
 
     /**
@@ -1567,18 +1187,12 @@ public final class DIDStore {
      */
 	public void changePassword(String oldPassword, String newPassword)
 			throws DIDStoreException {
-		ReEncryptor ree = new ReEncryptor() {
-			@Override
-			public String reEncrypt(String data) throws DIDStoreException {
-				byte[] secret = DIDStore.decryptFromBase64(data, oldPassword);
-				String result = DIDStore.encryptToBase64(secret, newPassword);
-				Arrays.fill(secret, (byte)0);
+		storage.changePassword((data) -> {
+			return DIDStore.reEncrypt(data, oldPassword, newPassword);
+		});
 
-				return result;
-			}
-		};
-
-		storage.changePassword(ree);
+		metadata.setFingerprint(calcFingerprint(newPassword));
+		cache.invalidateAll();
 	}
 
 	@JsonPropertyOrder({ "type", "created", "id", "document", "credential", "privatekey", "fingerprint" })
@@ -1845,8 +1459,8 @@ public final class DIDStore {
 			for (DIDURL id : ids) {
 				log.debug("Exporting credential {}...", id.toString());
 
-				VerifiableCredential vc = storage.loadCredential(did, id);
-				vc.setMetadata(storage.loadCredentialMetadata(did, id));
+				VerifiableCredential vc = storage.loadCredential(id);
+				vc.setMetadata(storage.loadCredentialMetadata(id));
 				de.addCredential(vc);
 			}
 		}
@@ -1855,10 +1469,9 @@ public final class DIDStore {
 			List<PublicKey> pks = doc.getPublicKeys();
 			for (PublicKey pk : pks) {
 				DIDURL id = pk.getId();
-				if (storage.containsPrivateKey(did, id)) {
+				String key = storage.loadPrivateKey(id);
+				if (key != null) {
 					log.debug("Exporting private key {}...", id.toString());
-
-					String key = storage.loadPrivateKey(did, id);
 					de.addPrivatekey(id, key, storepass, password);
 				}
 			}
@@ -2041,7 +1654,7 @@ public final class DIDStore {
 			for (VerifiableCredential vc : vcs) {
 				log.debug("Importing credential {}...", vc.getId().toString());
 				storage.storeCredential(vc);
-				storage.storeCredentialMetadata(doc.getSubject(), vc.getId(), vc.getMetadata());
+				storage.storeCredentialMetadata(vc.getId(), vc.getMetadata());
 			}
 		}
 
@@ -2049,8 +1662,7 @@ public final class DIDStore {
 		if (sks != null) {
 			for (DIDExport.PrivateKey sk : sks) {
 				log.debug("Importing private key {}...", sk.getId().toString());
-				storage.storePrivateKey(doc.getSubject(), sk.getId(),
-						sk.getKey(password, storepass));
+				storage.storePrivateKey(sk.getId(), sk.getKey(password, storepass));
 			}
 		}
 	}
@@ -2151,7 +1763,7 @@ public final class DIDStore {
 
 	@JsonPropertyOrder({ "type", "created", "mnemonic", "key", "key.pub", "index", "fingerprint" })
 	@JsonInclude(Include.NON_NULL)
-	static class PrivateIdentityExport extends DIDObject<PrivateIdentityExport> {
+	static class RootIdentityExport extends DIDObject<RootIdentityExport> {
 		@JsonProperty("type")
 		private String type;
 		@JsonProperty("created")
@@ -2168,7 +1780,7 @@ public final class DIDStore {
 		private String fingerprint;
 
 		@JsonCreator
-		protected PrivateIdentityExport(@JsonProperty(value = "type", required = true) String type) {
+		protected RootIdentityExport(@JsonProperty(value = "type", required = true) String type) {
 			if (type == null)
 				throw new IllegalArgumentException("Invalid export type");
 
@@ -2244,7 +1856,7 @@ public final class DIDStore {
 					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 		}
 
-		public PrivateIdentityExport seal(String exportpass) {
+		public RootIdentityExport seal(String exportpass) {
 			Calendar now = Calendar.getInstance();
 			now.set(Calendar.MILLISECOND, 0);
 			this.created = now.getTime();
@@ -2278,20 +1890,23 @@ public final class DIDStore {
 		}
 	}
 
-	private PrivateIdentityExport exportPrivateIdentity(String password, String storepass)
+	private RootIdentityExport exportRootIdentity(String id,
+			String password, String storepass)
 			throws DIDStoreException {
-		PrivateIdentityExport pie = new PrivateIdentityExport(DID_EXPORT);
+		RootIdentityExport rie = new RootIdentityExport(DID_EXPORT);
 
-		if (storage.containsMnemonic())
-			pie.setMnemonic(storage.loadMnemonic(), storepass, password);
+		// TODO: support multiple named root identities
+		String mnemonic = storage.loadRootIdentityMnemonic(id);
+		if (mnemonic != null)
+			rie.setMnemonic(mnemonic, storepass, password);
 
-		pie.setKey(storage.loadPrivateIdentity(), storepass, password);
+		rie.setKey(storage.loadRootIdentityPrivateKey(id), storepass, password);
 
-		if (storage.containsPublicIdentity())
-			pie.setPubkey(storage.loadPublicIdentity());
+		RootIdentity identity = storage.loadRootIdentity(id);
+		rie.setPubkey(identity.getPreDerivedPublicKey().serializePublicKeyBase58());
 
-		pie.setIndex(storage.loadPrivateIdentityIndex());
-		return pie.seal(password);
+		rie.setIndex(identity.getIndex());
+		return rie.seal(password);
 	}
 
 	/**
@@ -2305,14 +1920,16 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error
 	 * @throws IOException write json string failed
 	 */
-	public void exportPrivateIdentity(OutputStream out, String password, String storepass)
+	public void exportRootIdentity(String id, OutputStream out,
+			String password, String storepass)
 			throws DIDStoreException, IOException {
-		if (out == null || password == null || password.isEmpty() ||
-				storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(id != null && !id.isEmpty(), "Invalid identity id");
+		checkArgument(out != null, "Invalid output stream");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		try {
-			exportPrivateIdentity(password, storepass).serialize(out);
+			exportRootIdentity(id, password, storepass).serialize(out);
 		} catch (DIDSyntaxException ignore) {
 			// Should never happen
 			log.error("INTERNAL - Serialize exported private identity", ignore);
@@ -2330,14 +1947,16 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error
 	 * @throws IOException write json string failed
 	 */
-	public void exportPrivateIdentity(Writer out, String password, String storepass)
+	public void exportRootIdentity(String id, Writer out,
+			String password, String storepass)
 			throws DIDStoreException, IOException {
-		if (out == null || password == null || password.isEmpty()
-				|| storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(id != null && !id.isEmpty(), "Invalid identity id");
+		checkArgument(out != null, "Invalid output writer");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		try {
-			exportPrivateIdentity(password, storepass).serialize(out);
+			exportRootIdentity(id, password, storepass).serialize(out);
 		} catch (DIDSyntaxException ignore) {
 			// Should never happen
 			log.error("INTERNAL - Serialize exported private identity", ignore);
@@ -2355,10 +1974,16 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error
 	 * @throws IOException write json string failed
 	 */
-	public void exportPrivateIdentity(File file, String password, String storepass)
+	public void exportRootIdentity(String id, File file,
+			String password, String storepass)
 			throws DIDStoreException, IOException {
+		checkArgument(id != null && !id.isEmpty(), "Invalid identity id");
+		checkArgument(file != null, "Invalid output file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+
 		try {
-			exportPrivateIdentity(password, storepass).serialize(file);
+			exportRootIdentity(id, password, storepass).serialize(file);
 		} catch (DIDSyntaxException ignore) {
 			// Should never heppen
 			log.error("INTERNAL - Serialize exported private identity", ignore);
@@ -2376,31 +2001,30 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error
 	 * @throws IOException write json string failed
 	 */
-	public void exportPrivateIdentity(String file, String password, String storepass)
+	public void exportRootIdentity(String id, String file,
+			String password, String storepass)
 			throws DIDStoreException, IOException {
-		if (file == null || file.isEmpty() || password == null ||
-				password.isEmpty() || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(id != null && !id.isEmpty(), "Invalid identity id");
+		checkArgument(file != null && !file.isEmpty(), "Invalid output file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		exportPrivateIdentity(new File(file), password, storepass);
+		exportRootIdentity(id, new File(file), password, storepass);
 	}
 
-	private void importPrivateIdentity(PrivateIdentityExport pie, String password, String storepass)
+	private void importRootIdentity(RootIdentityExport rie, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		pie.verify(password);
+		rie.verify(password);
 
 		// Save
-		String encryptedMnemonic = pie.getMnemonic(password, storepass);
-		if (encryptedMnemonic != null)
-			storage.storeMnemonic(encryptedMnemonic);
+		String encryptedMnemonic = rie.getMnemonic(password, storepass);
+		String encryptedPrivateKey = (rie.getKey(password, storepass));
+		String publicKey = rie.getPubkey();
+		HDKey pk = HDKey.deserializeBase58(publicKey);
+		String id = RootIdentity.getId(pk.serializePublicKey());
 
-		storage.storePrivateIdentity(pie.getKey(password, storepass));
-
-		String pubkey = pie.getPubkey();
-		if (pubkey != null)
-			storage.storePublicIdentity(pubkey);
-
-		storage.storePrivateIdentityIndex(pie.getIndex());
+		storage.storeRootIdentity(id, encryptedMnemonic, encryptedPrivateKey,
+				publicKey, rie.getIndex());
 	}
 
 
@@ -2414,19 +2038,18 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error
 	 * @throws IOException write json string failed
 	 */
-	public void importPrivateIdentity(InputStream in, String password, String storepass)
+	public void importRootIdentity(InputStream in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException  {
-		if (in == null || password == null || password.isEmpty() ||
-				storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(in != null, "Invalid input stream");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		PrivateIdentityExport pie;
 		try {
-			pie = PrivateIdentityExport.parse(in, PrivateIdentityExport.class);
+			RootIdentityExport rie = RootIdentityExport.parse(in, RootIdentityExport.class);
+			importRootIdentity(rie, password, storepass);
 		} catch (DIDSyntaxException e) {
 			throw (MalformedExportDataException)e;
 		}
-		importPrivateIdentity(pie, password, storepass);
 	}
 
 	/**
@@ -2439,19 +2062,18 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error
 	 * @throws IOException write json string failed
 	 */
-	public void importPrivateIdentity(Reader in, String password, String storepass)
+	public void importRootIdentity(Reader in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (in == null || password == null || password.isEmpty() ||
-				storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(in != null, "Invalid input reader");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		PrivateIdentityExport pie;
 		try {
-			pie = PrivateIdentityExport.parse(in, PrivateIdentityExport.class);
+			RootIdentityExport rie = RootIdentityExport.parse(in, RootIdentityExport.class);
+			importRootIdentity(rie, password, storepass);
 		} catch (DIDSyntaxException e) {
 			throw (MalformedExportDataException)e;
 		}
-		importPrivateIdentity(pie, password, storepass);
 	}
 
 	/**
@@ -2464,19 +2086,18 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error
 	 * @throws IOException write json string failed
 	 */
-	public void importPrivateIdentity(File file, String password, String storepass)
+	public void importRootIdentity(File file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (file == null || password == null || password.isEmpty() ||
-				storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(file != null, "Invalid input file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		PrivateIdentityExport pie;
 		try {
-			pie = PrivateIdentityExport.parse(file, PrivateIdentityExport.class);
+			RootIdentityExport rie = RootIdentityExport.parse(file, RootIdentityExport.class);
+			importRootIdentity(rie, password, storepass);
 		} catch (DIDSyntaxException e) {
 			throw (MalformedExportDataException)e;
 		}
-		importPrivateIdentity(pie, password, storepass);
 	}
 
 	/**
@@ -2489,13 +2110,13 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error
 	 * @throws IOException write json string failed
 	 */
-	public void importPrivateIdentity(String file, String password, String storepass)
+	public void importRootIdentity(String file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (file == null || file.isEmpty() || password == null ||
-				password.isEmpty() || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(file != null && !file.isEmpty(), "Invalid input file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		importPrivateIdentity(new File(file), password, storepass);
+		importRootIdentity(new File(file), password, storepass);
 	}
 
 	/**
@@ -2509,20 +2130,21 @@ public final class DIDStore {
 	 */
 	public void exportStore(ZipOutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
-		if (out == null || password == null || password.isEmpty()
-				|| storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(out != null, "Invalid output zip stream");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		ZipEntry ze;
 
-		if (containsPrivateIdentity()) {
-			ze = new ZipEntry("privateIdentity");
+		List<RootIdentity> ris = listRootIdentities();
+		for (RootIdentity ri : ris) {
+			ze = new ZipEntry("rootIdentity-" + ri.getId());
 			out.putNextEntry(ze);
-			exportPrivateIdentity(out, password, storepass);
+			exportRootIdentity(ri.getId(), out, password, storepass);
 			out.closeEntry();
 		}
 
-		List<DID> dids = listDids(DID_ALL);
+		List<DID> dids = listDids();
 		for (DID did : dids) {
 			ze = new ZipEntry(did.getMethodSpecificId());
 			out.putNextEntry(ze);
@@ -2542,9 +2164,9 @@ public final class DIDStore {
 	 */
 	public void exportStore(File zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
-		if (zipFile == null || password == null || password.isEmpty()
-				|| storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(zipFile != null, "Invalid output zip file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zipFile));
 		exportStore(out, password, storepass);
@@ -2562,9 +2184,9 @@ public final class DIDStore {
 	 */
 	public void exportStore(String zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
-		if (zipFile == null || zipFile.isEmpty() || password == null
-				|| password.isEmpty() || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(zipFile != null && !zipFile.isEmpty(), "Invalid output zip file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		exportStore(new File(zipFile), password, storepass);
 	}
@@ -2581,14 +2203,14 @@ public final class DIDStore {
 	 */
 	public void importStore(ZipInputStream in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (in == null || password == null || password.isEmpty()
-				|| storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(in != null, "Invalid input zip stream");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		ZipEntry ze;
 		while ((ze = in.getNextEntry()) != null) {
-			if (ze.getName().equals("privateIdentity"))
-				importPrivateIdentity(in, password, storepass);
+			if (ze.getName().startsWith("rootIdentity"))
+				importRootIdentity(in, password, storepass);
 			else
 				importDid(in, password, storepass);
 			in.closeEntry();
@@ -2607,9 +2229,9 @@ public final class DIDStore {
 	 */
 	public void importStore(File zipFile, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (zipFile == null || password == null || password.isEmpty()
-				|| storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(zipFile != null, "Invalid input zip file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		ZipInputStream in = new ZipInputStream(new FileInputStream(zipFile));
 		importStore(in, password, storepass);
@@ -2628,9 +2250,9 @@ public final class DIDStore {
 	 */
 	public void importStore(String zipFile, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (zipFile == null || zipFile.isEmpty() || password == null
-				|| password.isEmpty() || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(zipFile != null && !zipFile.isEmpty(), "Invalid input zip file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		importStore(new File(zipFile), password, storepass);
 	}

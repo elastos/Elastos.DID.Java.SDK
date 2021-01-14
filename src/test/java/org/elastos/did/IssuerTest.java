@@ -196,7 +196,7 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 
-	@Test
+	//@Test
 	public void IssueKycCredentialForCidTest() throws DIDException, IOException {
 		DIDDocument issuerDoc = testData.loadTestIssuer();
 		DIDDocument testDoc = testData.loadCustomizedDidDocument();
@@ -240,7 +240,7 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 
-	@Test
+	//@Test
 	public void IssueKycCredentialFromCidTest() throws DIDException, IOException {
 		DIDDocument issuerDoc = testData.loadCustomizedDidDocument();
 		DIDDocument testDoc = testData.loadTestDocument();
@@ -284,7 +284,7 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 
-	@Test
+	//@Test
 	public void IssueSelfProclaimedCredentialFromCidTest() throws DIDException, IOException {
 		DIDDocument issuerDoc = testData.loadCustomizedDidDocument();
 

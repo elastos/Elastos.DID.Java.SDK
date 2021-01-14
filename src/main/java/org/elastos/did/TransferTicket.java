@@ -295,6 +295,8 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 
 			if (!doc.verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs()))
 				return false;
+
+			checkedControllers.add(proof.getVerificationMethod().getDid());
 		}
 
 		return true;

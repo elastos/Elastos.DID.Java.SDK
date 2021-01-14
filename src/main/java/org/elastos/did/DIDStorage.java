@@ -45,14 +45,22 @@ public interface DIDStorage {
 		public String reEncrypt(String data) throws DIDStoreException;
 	};
 
+	public void storeMetadata(DIDStore.Metadata metadata) throws DIDStorageException;
+
+	public DIDStore.Metadata loadMetadata() throws DIDStorageException;
+
+	public void storeRootIdentityMetadata(String id, RootIdentity.Metadata metadata)
+			throws DIDStorageException;
+
 	/**
-	 * Judge whether private identity exists in DIDStorage.
+	 * Load DID Metadata.
 	 *
-	 * @return the returned value is true if private identity exists;
-	 *         the returned value if false if private identity does not exist.
-	 * @throws DIDStorageException Unsupport the specified store type.
+	 * @param did the owner of Metadata.
+	 * @return the meta data
+	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public boolean containsPrivateIdentity() throws DIDStorageException;
+	public RootIdentity.Metadata loadRootIdentityMetadata(String id)
+			throws DIDStorageException;
 
 	/**
 	 * Store private identity.
@@ -60,7 +68,8 @@ public interface DIDStorage {
 	 * @param key the private identity
 	 * @throws DIDStorageException store private identity failed.
 	 */
-	public void storePrivateIdentity(String key) throws DIDStorageException;
+	public void storeRootIdentity(String id, String mnemonic, String privateKey,
+			String publicKey, int index) throws DIDStorageException;
 
 	/**
 	 * Load private identity.
@@ -68,65 +77,12 @@ public interface DIDStorage {
 	 * @return the private identity from file
 	 * @throws DIDStorageException load private identity failed.
 	 */
-	public String loadPrivateIdentity() throws DIDStorageException;
+	public RootIdentity loadRootIdentity(String id) throws DIDStorageException;
 
-	/**
-	 * Judge whether there is public identity in the DIDStore.
-	 *
-	 * @return the returned value is true if there is public identity in the DIDStorage;
-	 *         the returned value is false if there is no public identity in the DIDStorage.
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public boolean containsPublicIdentity() throws DIDStorageException;
+	public void updateRootIdentityIndex(String id, int index)
+			throws DIDStorageException;
 
-	/**
-	 * Store public identity.
-	 *
-	 * @param key the extended public key
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public void storePublicIdentity(String key) throws DIDStorageException;
-
-	/**
-	 * Load public identity.
-	 *
-	 * @return the extended public key
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public String loadPublicIdentity() throws DIDStorageException;
-
-	/**
-	 * Store index.
-	 *
-	 * @param index the index
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public void storePrivateIdentityIndex(int index) throws DIDStorageException;
-
-	/**
-	 * Load index.
-	 *
-	 * @return the index
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public int loadPrivateIdentityIndex() throws DIDStorageException;
-
-	/**
-	 * Judge whether there is mnemonic in the DIDStorage.
-	 *
-	 * @return the retuened value is true if there is mnemonic in the DIDStorage;
-	 *         the retuened value is false if there is no mnemonic in the DIDStorage
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public boolean containsMnemonic() throws DIDStorageException;
-
-	/**
-	 * Store mnemonic.
-	 *
-	 * @param mnemonic the mnemonic string
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public void storeMnemonic(String mnemonic) throws DIDStorageException;
+	public String loadRootIdentityPrivateKey(String id) throws DIDStorageException;
 
 	/**
 	 * Load mnemonic.
@@ -134,7 +90,13 @@ public interface DIDStorage {
 	 * @return the mnemonic string
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public String loadMnemonic() throws DIDStorageException;
+	public String loadRootIdentityMnemonic(String id) throws DIDStorageException;
+
+	public boolean deleteRootIdentity(String id) throws DIDStorageException;
+
+	public List<RootIdentity> listRootIdentities() throws DIDStorageException;
+
+	public boolean containsRootIdenities() throws DIDStorageException;
 
 	/**
 	 * Store DID Metadata.
@@ -172,16 +134,6 @@ public interface DIDStorage {
 	public DIDDocument loadDid(DID did) throws DIDStorageException;
 
 	/**
-     * Judge whether containing the specified DID or not.
-     *
-     * @param did the specified DID
-     * @return the returned value is true if the specified DID is in the DIDStorage;
-     *         the returned value is false if the specified DID is not in the DIDStorage.
-     * @throws DIDStorageException DIDStorage error.
-	 */
-	public boolean containsDid(DID did) throws DIDStorageException;
-
-	/**
      * Delete the specified DID.
      *
      * @param did the specified DID
@@ -194,13 +146,10 @@ public interface DIDStorage {
 	/**
 	 * List all DIDs according to the specified condition.
 	 *
-	 * @param filter the specified condition.
-	 *               0: all did; 1: did has privatekeys;
-     *               2: did has no privatekeys.
 	 * @return the DID array.
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public List<DID> listDids(int filter) throws DIDStorageException;
+	public List<DID> listDids() throws DIDStorageException;
 
 	/**
      * Store meta data for the specified Credential.
@@ -210,7 +159,7 @@ public interface DIDStorage {
      * @param metadata the meta data for Credential
      * @throws DIDStorageException DIDStorage error.
 	 */
-	public void storeCredentialMetadata(DID did, DIDURL id, CredentialMetadata metadata)
+	public void storeCredentialMetadata(DIDURL id, CredentialMetadata metadata)
 			throws DIDStorageException;
 
 	/**
@@ -221,7 +170,7 @@ public interface DIDStorage {
 	 * @return the meta data for Credential
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public CredentialMetadata loadCredentialMetadata(DID did, DIDURL id)
+	public CredentialMetadata loadCredentialMetadata(DIDURL id)
 			throws DIDStorageException;
 
 	/**
@@ -241,7 +190,7 @@ public interface DIDStorage {
 	 * @return the Credential object
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public VerifiableCredential loadCredential(DID did, DIDURL id)
+	public VerifiableCredential loadCredential(DIDURL id)
 			throws DIDStorageException;
 
 	/**
@@ -254,18 +203,6 @@ public interface DIDStorage {
 	public boolean containsCredentials(DID did) throws DIDStorageException;
 
 	/**
-	 * Judge whether does DIDStore contain the specified credential.
-	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID;
-	 *         the returned value is false if there is credentials owned the specific DID.
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public boolean containsCredential(DID did, DIDURL id)
-			throws DIDStorageException;
-
-	/**
 	 * Delete the specified Credential
 	 *
 	 * @param did the owner of Credential
@@ -274,7 +211,7 @@ public interface DIDStorage {
 	 *         the returned value is false if there is credentials owned the specific DID.
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public boolean deleteCredential(DID did, DIDURL id)
+	public boolean deleteCredential(DIDURL id)
 			throws DIDStorageException;
 
 	/**
@@ -287,18 +224,6 @@ public interface DIDStorage {
 	public List<DIDURL> listCredentials(DID did) throws DIDStorageException;
 
 	/**
-	 * Select the Credentials according to the specified condition.
-	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @param type the Credential type
-	 * @return the Credential array
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public List<DIDURL> selectCredentials(DID did, DIDURL id, String[] type)
-			throws DIDStorageException;
-
-	/**
 	 * Store private key. Encrypt and encode private key with base64url method.
 	 *
 	 * @param did the owner of key
@@ -306,7 +231,7 @@ public interface DIDStorage {
 	 * @param privateKey the original private key(32 bytes)
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public void storePrivateKey(DID did, DIDURL id, String privateKey)
+	public void storePrivateKey(DIDURL id, String privateKey)
 			throws DIDStorageException;
 
 	/**
@@ -317,8 +242,7 @@ public interface DIDStorage {
 	 * @return the encrypted private key
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public String loadPrivateKey(DID did, DIDURL id)
-			throws DIDStorageException;
+	public String loadPrivateKey(DIDURL id) throws DIDStorageException;
 
 	/**
 	 * Judge whether there is private key owned the specified DID in DIDStore.
@@ -331,18 +255,6 @@ public interface DIDStorage {
 	public boolean containsPrivateKeys(DID did) throws DIDStorageException;
 
 	/**
-	 * Judge that the specified key has private key in DIDStore.
-	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @return the returned value is true if there is private keys owned the specified key;
-	 *         the returned value is false if there is no private keys owned the specified key.
-	 * @throws DIDStorageException DIDStorage error.
-	 */
-	public boolean containsPrivateKey(DID did, DIDURL id)
-			throws DIDStorageException;
-
-	/**
 	 * Delete the private key owned to the specified key.
 	 *
 	 * @param did the owner of key
@@ -351,8 +263,7 @@ public interface DIDStorage {
 	 *         the returned value is false if deleting private keys failed.
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	public boolean deletePrivateKey(DID did, DIDURL id)
-			throws DIDStorageException;
+	public boolean deletePrivateKey(DIDURL id) throws DIDStorageException;
 
     /**
      * Change password for DIDStore.

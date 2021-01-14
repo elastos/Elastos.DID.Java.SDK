@@ -22,21 +22,27 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * The class defines the base interface of Meta data.
  *
  */
-public abstract class AbstractMetadata extends DIDObject<AbstractMetadata> {
-	protected final static String RESERVED_PREFIX = "DX-";
+public abstract class AbstractMetadata extends DIDObject<AbstractMetadata>
+		implements Cloneable {
+	private final static String ALIAS = "alias";
 
-	public TreeMap<String, Object> props;
+	protected final static String USER_EXTRA_PREFIX = "UX-";
+
+	public HashMap<String, String> props;
 	private DIDStore store;
 
 	/**
@@ -46,38 +52,28 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata> {
 	 */
 	protected AbstractMetadata(DIDStore store) {
 		this.store = store;
-		this.props = new TreeMap<String, Object>();
+		this.props = new HashMap<String, String>();
 	}
 
-	@JsonAnyGetter
-	@JsonPropertyOrder(alphabetic = true)
-	private Map<String, Object> getProperties() {
-		return props;
-	}
-
-	@JsonAnySetter
-	protected void put(String name, Object value) {
-		props.put(name, value);
-	}
-
-	protected Object get(String name) {
-		return props.get(name);
-	}
-
-	protected Object remove(String name) {
-		return props.remove(name);
-	}
-
-	public boolean isEmpty() {
-		return props.isEmpty();
+	/**
+	 * Constructs the AbstractMetadata with the given value.
+	 *
+	 * @param store the DIDStore
+	 */
+	protected AbstractMetadata() {
+		this(null);
 	}
 
 	/**
 	 * Set store for Abstract Metadata.
 	 * @param store the DIDStore
 	 */
-	protected void setStore(DIDStore store) {
+	protected void attachStore(DIDStore store) {
 		this.store = store;
+	}
+
+	protected void detachStore() {
+		this.store = null;
 	}
 
 	/**
@@ -99,6 +95,73 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata> {
 		return store != null;
 	}
 
+	@JsonAnyGetter
+	protected Map<String, String> getProperties() {
+		return props;
+	}
+
+	@JsonAnySetter
+	protected void put(String name, String value) {
+		props.put(name, value);
+		save();
+	}
+
+	protected String get(String name) {
+		return props.get(name);
+	}
+
+	protected void put(String name, boolean value) {
+		put(name, String.valueOf(value));
+	}
+
+	protected boolean getBoolean(String name) {
+		return Boolean.valueOf(get(name));
+	}
+
+	protected void put(String name, int value) {
+		put(name, String.valueOf(value));
+	}
+
+	protected int getInteger(String name) {
+		return Integer.valueOf(get(name));
+	}
+
+	protected void put(String name, Date value) {
+		put(name, dateFormat.format(value));
+	}
+
+	protected Date getDate(String name) throws ParseException {
+		return dateFormat.parse(get(name));
+	}
+
+	protected String remove(String name) {
+		String value = props.remove(name);
+		save();
+		return value;
+	}
+
+	public boolean isEmpty() {
+		return props.isEmpty();
+	}
+
+	/**
+	 * Set alias.
+	 *
+	 * @param alias alias string
+	 */
+	public void setAlias(String alias) {
+		put(ALIAS, alias);
+	}
+
+	/**
+	 * Get alias.
+	 *
+	 * @return alias string
+	 */
+	public String getAlias() {
+		return get(ALIAS);
+	}
+
 	/**
 	 * Set Extra element.
 	 *
@@ -106,10 +169,9 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata> {
 	 * @param value the value string
 	 */
 	public void setExtra(String key, String value) {
-		if (key == null || key.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
 
-		put(key, value);
+		put(USER_EXTRA_PREFIX + key, value);
 	}
 
 	/**
@@ -119,14 +181,55 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata> {
 	 * @return the value string
 	 */
 	public String getExtra(String key) {
-		if (key == null || key.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
 
-		return (String)get(key);
+		return get(USER_EXTRA_PREFIX + key);
+	}
+
+	public void setExtra(String key, Boolean value) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+
+		put(USER_EXTRA_PREFIX + key, value);
+	}
+
+	public boolean getExtraBoolean(String key) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+
+		return getBoolean(USER_EXTRA_PREFIX + key);
+	}
+
+	public void setExtra(String key, Integer value) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+
+		put(USER_EXTRA_PREFIX + key, value);
+	}
+
+	public int getExtraInteger(String key) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+
+		return getInteger(USER_EXTRA_PREFIX + key);
+	}
+
+	public void setExtra(String key, Date value) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+
+		put(USER_EXTRA_PREFIX + key, value);
+	}
+
+	public Date getExtraDate(String key) throws ParseException {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+
+		return getDate(USER_EXTRA_PREFIX + key);
+	}
+
+	public String removeExtra(String key) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+
+		return remove(USER_EXTRA_PREFIX + key);
 	}
 
 	/**
-	 * Merge two meta datas.
+	 * Merge two metadata.
 	 *
 	 * @param metadata the metadata to be merged.
 	 */
@@ -152,14 +255,14 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata> {
      * @return a shallow copy of this object
      */
 	@Override
+	@SuppressWarnings("unchecked")
 	protected Object clone() throws CloneNotSupportedException {
 		AbstractMetadata result = (AbstractMetadata)super.clone();
         result.store = store;
-        @SuppressWarnings("unchecked")
-		TreeMap<String, Object> map = (TreeMap<String, Object>) props.clone();
-		result.props = map;
+        result.props = (HashMap<String, String>) props.clone();
 
         return result;
     }
 
+	protected abstract void save();
 }

@@ -54,6 +54,13 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		super(operation);
 	}
 
+	protected CredentialRequest(CredentialRequest request) {
+		super(request);
+		this.id = request.id;
+		this.vc = request.vc;
+		this.signer = request.signer;
+	}
+
 	/**
 	 * Constructs the 'declare' credential Request.
 	 *
@@ -233,8 +240,17 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 
 	@Override
 	protected DIDDocument getSignerDocument() throws DIDResolveException {
-		if (signer == null)
-			signer = getProof().getVerificationMethod().getDid().resolve();
+		if (signer != null)
+			return signer;
+
+		if (getOperation() == Operation.DECLARE)
+			signer = getCredential().getSubject().getId().resolve();
+		else {
+			if (getCredential() != null)
+				signer = getCredential().getSubject().getId().resolve();
+			else
+				signer = getProof().getVerificationMethod().getDid().resolve();
+		}
 
 		return signer;
 	}

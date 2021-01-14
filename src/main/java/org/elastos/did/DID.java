@@ -31,7 +31,6 @@ import java.util.concurrent.CompletionException;
 import org.elastos.did.backend.DIDBiography;
 import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDResolveException;
-import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.parser.DIDURLBaseListener;
 import org.elastos.did.parser.DIDURLParser;
@@ -158,30 +157,24 @@ public class DID implements Comparable<DID> {
 	 * Get DIDMetadata object from DID.
 	 *
 	 * @return the DIDMetadata object
+	 * @throws DIDResolveException
 	 */
-	public DIDMetadata getMetadata() {
-		if (metadata == null)
-			metadata = new DIDMetadata();
+	public synchronized DIDMetadata getMetadata() throws DIDResolveException {
+		if (metadata == null) {
+			DIDDocument doc = DIDBackend.getInstance().resolveDid(this);
+			setMetadata(doc != null ? doc.getMetadata() : new DIDMetadata(this));
+		}
 
 		return metadata;
-	}
-
-	/**
-	 * Store the DIDMetadata content of DID.
-	 *
-	 * @throws DIDStoreException throw this exception if storing DIDMetadata content failed.
-	 */
-	public void saveMetadata() throws DIDStoreException {
-		if (metadata != null && metadata.attachedStore())
-			metadata.getStore().storeDidMetadata(this, metadata);
 	}
 
 	/**
 	 * Get the DID is deactivated or not.
 	 *
 	 * @return the DID deactivated status
+	 * @throws DIDResolveException
 	 */
-	public boolean isDeactivated() {
+	public boolean isDeactivated() throws DIDResolveException {
 		return getMetadata().isDeactivated();
 	}
 

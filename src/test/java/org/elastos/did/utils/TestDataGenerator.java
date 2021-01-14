@@ -36,6 +36,7 @@ import org.elastos.did.DIDStore;
 import org.elastos.did.DIDURL;
 import org.elastos.did.Issuer;
 import org.elastos.did.Mnemonic;
+import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.backend.SPVAdapter;
@@ -52,9 +53,15 @@ public class TestDataGenerator {
 	private DIDDocument issuer;
 	private DIDDocument test;
 	private DIDStore store;
+	private RootIdentity identity;
+	private HDKey rootPrivateKey;
 
 	private String init(String storeRoot) throws IOException, DIDException {
-		adapter = new SPVAdapter(TestConfig.network,
+		String network = "TestNet";
+		if (TestConfig.network.equalsIgnoreCase("mainnet"))
+			network = "MainNet";
+
+		adapter = new SPVAdapter(network,
 				TestConfig.walletDir, TestConfig.walletId,
 				new SPVAdapter.PasswordCallback() {
 					@Override
@@ -66,11 +73,13 @@ public class TestDataGenerator {
 		DIDBackend.initialize(adapter);
 
 		Utils.deleteFile(new File(storeRoot));
-		store = DIDStore.open("filesystem", storeRoot);
+		store = DIDStore.open(storeRoot);
 
     	String mnemonic =  Mnemonic.getInstance().generate();
-    	store.initPrivateIdentity(Mnemonic.ENGLISH, mnemonic,
-    			TestConfig.passphrase, TestConfig.storePass, true);
+    	rootPrivateKey = new HDKey(mnemonic, TestConfig.passphrase);
+
+    	identity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+    			TestConfig.passphrase, store, TestConfig.storePass);
 
     	testDataDir = new File(TestConfig.tempDir + File.separator +
     			"DIDTestFiles" + File.separator + "testdata");
@@ -80,7 +89,9 @@ public class TestDataGenerator {
 	}
 
 	private void createTestIssuer() throws DIDException, IOException {
-		DIDDocument doc = store.newDid("Issuer", TestConfig.storePass);
+		int index = 0;
+		DIDDocument doc = identity.newDid(index, TestConfig.storePass);
+		doc.getMetadata().setAlias("Issuer");
 
 		System.out.print("Generate issuer DID: " + doc.getSubject() + "...");
 
@@ -105,10 +116,9 @@ public class TestDataGenerator {
 		vc.getMetadata().setAlias("Profile");
 		store.storeCredential(vc);
 
-		// DIDURL id = issuer.getDefaultPublicKeyId();
-		// TODO: fix
-		// HDKey key = HDKey.deserialize(store.loadPrivateKey(issuer.getSubject(), id, TestConfig.storePass));
-		// writeTo("issuer." + id.getFragment() + ".sk", key.serializeBase58());
+		DIDURL id = issuer.getDefaultPublicKeyId();
+		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + index);
+		writeTo("issuer." + id.getFragment() + ".sk", key.serializeBase58());
 
 		String json = issuer.toString(true);
 		writeTo("issuer.normalized.json", json);
@@ -123,7 +133,9 @@ public class TestDataGenerator {
 	}
 
 	private void createTestDocument() throws DIDException, IOException {
-		DIDDocument doc = store.newDid("Test", TestConfig.storePass);
+		int index = 1;
+		DIDDocument doc = identity.newDid(index, TestConfig.storePass);
+		doc.getMetadata().setAlias("Test");
 
 		// Test document with two embedded credentials
 		System.out.print("Generate test DID: " + doc.getSubject() + "...");
@@ -188,9 +200,8 @@ public class TestDataGenerator {
 		store.storeCredential(vcEmail);
 
 		DIDURL id = test.getDefaultPublicKeyId();
-		// TODO: fix
-		// HDKey key = HDKey.deserialize(store.loadPrivateKey(test.getSubject(), id, TestConfig.storePass));
-		// writeTo("document." + id.getFragment() + ".sk", key.serializeBase58());
+		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + index);
+		writeTo("document." + id.getFragment() + ".sk", key.serializeBase58());
 
 		String json = test.toString(true);
 		writeTo("document.normalized.json", json);
@@ -368,7 +379,7 @@ public class TestDataGenerator {
 	    		Thread.sleep(30000);
 	    	}
 
-	    	DIDDocument doc = store.newDid(TestConfig.storePass);
+	    	DIDDocument doc = identity.newDid(TestConfig.storePass);
 
 			Issuer selfIssuer = new Issuer(doc);
 			VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());

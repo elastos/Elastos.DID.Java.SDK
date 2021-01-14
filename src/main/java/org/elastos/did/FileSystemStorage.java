@@ -24,19 +24,19 @@ package org.elastos.did;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDStorageException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDStoreVersionMismatch;
@@ -48,63 +48,65 @@ import org.slf4j.LoggerFactory;
  * FileSystem DID Store: storage layout
  *
  *  + DIDStore root
- *    - .meta						    [Store meta file, include magic and version]
- *    + private							[Personal root private key for HD identity]
- *      - key							[HD root private key]
- *      - index							[Last derive index]
- *    + ids
- *      + ixxxxxxxxxxxxxxx0 			[DID root, named by id specific string]
- *        - .meta						[Meta for DID, json format, OPTIONAL]
- *        - document					[DID document, json format]
- *        + credentials				    [Credentials root, OPTIONAL]
- *          + credential-id-0           [Credential root, named by id' fragment]
- *            - .meta					[Meta for credential, json format, OPTONAL]
- *            - credential				[Credential, json format]
- *          + ...
- *          + credential-id-N
- *            - .meta
- *            - credential
- *        + privatekeys				    [Private keys root, OPTIONAL]
- *          - privatekey-id-0			[Encrypted private key, named by pk' id]
- *          - ...
- *          - privatekey-id-N
- *
- *      ......
- *
- *      + ixxxxxxxxxxxxxxxN
- *
+ *    + data 						    [Current data root folder]
+ *      - .metadata						[DIDStore metadata]
+ *      + roots							[Root identities folder]
+ *        + xxxxxxx0					[Root identity folder named by id]
+ *          - .metadata					[RootIdentity metadata]
+ *          - mnemonic					[Encrypted mnemonic file, OPTIONAL]
+ *          - private					[Encrypted root private key file]
+ *          - public					[Pre-derived public key file]
+ *          - index						[Last derive index]
+ *        + ...
+ *        + xxxxxxxN
+ *      + ids							[DIDs folder]
+ *        + ixxxxxxxxxxxxxxx0 			[DID root, named by id specific string]
+ *          - .metadata					[Meta for DID, json format, OPTIONAL]
+ *          - document					[DID document, json format]
+ *          + credentials				[Credentials root, OPTIONAL]
+ *            + credential-id-0         [Credential root, named by id' fragment]
+ *              - .metadata				[Meta for credential, json format, OPTONAL]
+ *              - credential			[Credential, json format]
+ *            + ...
+ *            + credential-id-N
+ *          + privatekeys				[Private keys root, OPTIONAL]
+ *            - privatekey-id-0			[Encrypted private key, named by pk' id]
+ *            - ...
+ *            - privatekey-id-N
+ *        + ...
+ *        + ixxxxxxxxxxxxxxxN
  */
-class FileSystemStorage implements DIDStorage {
-	private static final byte[] STORE_MAGIC = { 0x00, 0x0D, 0x01, 0x0D };
-	protected static final int STORE_VERSION = 2;
-	private static final int STORE_META_SIZE = 8;
 
-	private static final String PRIVATE_DIR = "private";
-	private static final String HDKEY_FILE = "key";
-	private static final String HDPUBKEY_FILE = "key.pub";
-	private static final String INDEX_FILE = "index";
-	private static final String MNEMONIC_FILE = "mnemonic";
+class FileSystemStorage implements DIDStorage {
+	private static final String DATA_DIR = "data";
+
+	private static final String ROOT_IDENTITIES_DIR = "roots";
+
+	private static final String ROOT_IDENTITY_MNEMONIC_FILE = "mnemonic";
+	private static final String ROOT_IDENTITY_PRIVATEKEY_FILE = "private";
+	private static final String ROOT_IDENTITY_PUBLICKEY_FILE = "public";
+	private static final String ROOT_IDENTITY_INDEX_FILE = "index";
 
 	private static final String DID_DIR = "ids";
 	private static final String DOCUMENT_FILE = "document";
+
 	private static final String CREDENTIALS_DIR = "credentials";
 	private static final String CREDENTIAL_FILE = "credential";
+
 	private static final String PRIVATEKEYS_DIR = "privatekeys";
 
-	private static final String META_FILE = ".meta";
+	private static final String METADATA = ".metadata";
 
 	private static final String JOURNAL_SUFFIX = ".journal";
-	private static final String DEPRECATED_SUFFIX = ".deprecated";
 
 	private File storeRoot;
+	private String currentDataDir;
 
 	private static final Logger log = LoggerFactory.getLogger(FileSystemStorage.class);
 
-	FileSystemStorage(String dir) throws DIDStorageException {
-		if (dir == null)
-			throw new IllegalArgumentException();
-
-		storeRoot = new File(dir);
+	protected FileSystemStorage(File dir) throws DIDStorageException {
+		storeRoot = dir;
+		currentDataDir = DATA_DIR;
 
 		if (storeRoot.exists())
 			checkStore();
@@ -114,64 +116,81 @@ class FileSystemStorage implements DIDStorage {
 
 	private void initializeStore() throws DIDStorageException {
 		try {
+			log.debug("Initializing DID store at {}", storeRoot.getAbsolutePath());
+
 			storeRoot.mkdirs();
 
-			File file = getFile(META_FILE);
-			file.createNewFile();
+			DIDStore.Metadata metadata = new DIDStore.Metadata();
 
-			OutputStream out = new FileOutputStream(file);
-			out.write(STORE_MAGIC);
-
-			byte[] version = new byte[4];
-			version[0] = (byte)((STORE_VERSION >> 24) & 0xFF);
-			version[1] = (byte)((STORE_VERSION >> 16) & 0xFF);
-			version[2] = (byte)((STORE_VERSION >> 8) & 0xFF);
-			version[3] = (byte)(STORE_VERSION & 0xFF);
-
-			out.write(version);
-			out.close();
-		} catch (IOException e) {
+			File file = getFile(true, currentDataDir, METADATA);
+			metadata.serialize(file);
+		} catch (DIDSyntaxException | IOException e) {
+			log.error("Initialize DID store error", e);
 			throw new DIDStorageException("Initialize DIDStore \""
 					+ storeRoot.getAbsolutePath() + "\" error.", e);
 		}
 	}
 
 	private void checkStore() throws DIDStorageException {
-		if (storeRoot.isFile())
-			throw new DIDStorageException("Store root \""
-					+ storeRoot.getAbsolutePath() + "\" is a file.");
+		log.debug("Checking DID store at {}", storeRoot.getAbsolutePath());
 
-		File file = getFile(META_FILE);
-		if (!file.exists() || !file.isFile() || file.length() != STORE_META_SIZE)
-			throw new DIDStorageException("Directory \""
-					+ storeRoot.getAbsolutePath() + "\" is not a DIDStore.");
-
-		InputStream in = null;
-		byte[] magic = new byte[4];
-		byte[] version = new byte[4];
-
-		try {
-			in = new FileInputStream(file);
-			in.read(magic);
-			in.read(version);
-			in.close();
-		} catch (IOException e) {
-			throw new DIDStorageException("Check DIDStore \""
-					+ storeRoot.getAbsolutePath() + "\" error.", e);
+		if (storeRoot.isFile()) {
+			log.error("Path {} not a directory", storeRoot.getAbsolutePath());
+			throw new DIDStorageException("Invalid DIDStore \""
+					+ storeRoot.getAbsolutePath() + "\".");
 		}
 
-		if (!Arrays.equals(STORE_MAGIC, magic))
-			throw new DIDStorageException("Directory \""
-					+ storeRoot.getAbsolutePath() + "\" is not a DIDStore.");
-
-		int v = (0xFF & version[0]) << 24 |
-				(0xFF & version[1]) << 16 |
-				(0xFF & version[2]) << 8  |
-				(0xFF & version[3]) << 0;
-		if (v != STORE_VERSION)
-			throw new DIDStoreVersionMismatch("Version: " + v);
-
 		postChangePassword();
+
+		File file = getDir(currentDataDir);
+		if (!file.exists()) {
+			File oldMetadata = getFile(".meta");
+			if (oldMetadata.exists() && oldMetadata.isFile())
+				upgradeFromV2();
+			else {
+				log.error("Path {} not a DID store", storeRoot.getAbsolutePath());
+				throw new DIDStorageException("Invalid DIDStore \""
+						+ storeRoot.getAbsolutePath() + "\".");
+			}
+		}
+
+		if (!file.isDirectory()) {
+			log.error("Path {} not a DID store, missing data directory",
+					storeRoot.getAbsolutePath());
+			throw new DIDStorageException("Invalid DIDStore \""
+					+ storeRoot.getAbsolutePath() + "\".");
+		}
+
+		file = getFile(false, currentDataDir, METADATA);
+		if (!file.exists() || !file.isFile()) {
+			log.error("Path {} not a DID store, missing store metadata",
+					storeRoot.getAbsolutePath());
+			throw new DIDStorageException("Invalid DIDStore \""
+					+ storeRoot.getAbsolutePath() + "\".");
+		}
+
+		try {
+			DIDStore.Metadata metadata = DIDStore.Metadata.parse(file, DIDStore.Metadata.class);
+
+			if (!metadata.getType().equals(DIDStore.DID_STORE_TYPE))
+				throw new DIDStorageException("Unknown DIDStore type");
+
+			if (metadata.getVersion() != DIDStore.DID_STORE_VERSION)
+				throw new DIDStorageException("Unsupported DIDStore version");
+		} catch (DIDSyntaxException | IOException e) {
+			log.error("Check DID store error, failed load store metadata", e);
+			throw new DIDStorageException("Can not check the store metadata", e);
+		}
+	}
+
+	private static String toPath(DIDURL id) {
+		String path = id.toString(id.getDid());
+		return path.replace(';', '.').replace('/', '_').replace('?', '-');
+	}
+
+	private static DIDURL toDIDURL(DID did, String path) {
+		path = path.replace('.', ';').replace('_', '/').replace('-', '?');
+		return new DIDURL(did, path);
 	}
 
 	private static void deleteFile(File file) {
@@ -184,16 +203,28 @@ class FileSystemStorage implements DIDStorage {
 		file.delete();
 	}
 
-	private File getFile(String ... path) {
-		try {
-			return getFile(false, path);
-		} catch (IOException ignore) {
-			// Dead code
-			return null;
+	private static void copyFile(File src, File dest) throws IOException {
+	    FileInputStream in = null;
+	    FileOutputStream out = null;
+	    try {
+	        in = new FileInputStream(src);
+	        out = new FileOutputStream(dest);
+	        out.getChannel().transferFrom(in.getChannel(), 0,
+	        		in.getChannel().size());
+		} finally {
+			if (in != null)
+				in.close();
+
+			if (out != null)
+				out.close();
 		}
 	}
 
-	private File getFile(boolean create, String ... path) throws IOException {
+	private File getFile(String ... path) {
+		return getFile(false, path);
+	}
+
+	private File getFile(boolean create, String ... path) {
 		StringBuffer relPath = new StringBuffer(256);
 		File file;
 
@@ -213,10 +244,8 @@ class FileSystemStorage implements DIDStorage {
 		}
 
 		file = new File(relPath.toString());
-		if (create) {
+		if (create)
 			file.getParentFile().mkdirs();
-			file.createNewFile();
-		}
 
 		return file;
 	}
@@ -233,7 +262,7 @@ class FileSystemStorage implements DIDStorage {
 		return new File(relPath.toString());
 	}
 
-	private void writeText(File file, String text) throws IOException {
+	private static void writeText(File file, String text) throws IOException {
 		FileWriter writer = null;
 		try {
 			writer = new FileWriter(file);
@@ -244,221 +273,155 @@ class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	private String readText(File file) throws IOException {
-		String text = null;
-
-		if (!file.exists()) {
-			throw new FileNotFoundException(file.getAbsolutePath());
-		} else {
-			BufferedReader reader = null;
-			try {
-				reader = new BufferedReader(new FileReader(file));
-				text = reader.readLine();
-			} finally {
-				if (reader != null)
-					reader.close();
-			}
-		}
-
-		return text;
-	}
-
-	private File getHDPrivateKeyFile(boolean create) throws IOException {
-		return getFile(create, PRIVATE_DIR, HDKEY_FILE);
-	}
-
-	private File getHDPrivateKeyFile() {
+	private static String readText(File file) throws IOException {
+		BufferedReader reader = null;
 		try {
-			return getHDPrivateKeyFile(false);
-		} catch (IOException ignore) {
-			// createNewFile will throws IOException.
-			// but in this case, createNewFile will never be called.
-			return null;
-		}
-	}
-
-	private File getHDPublicKeyFile(boolean create) throws IOException {
-		return getFile(create, PRIVATE_DIR, HDPUBKEY_FILE);
-	}
-
-	private File getHDPublicKeyFile() {
-		try {
-			return getHDPublicKeyFile(false);
-		} catch (IOException ignore) {
-			// createNewFile will throws IOException.
-			// but in this case, createNewFile will never be called.
-			return null;
+			reader = new BufferedReader(new FileReader(file));
+			return reader.readLine();
+		} finally {
+			if (reader != null)
+				reader.close();
 		}
 	}
 
 	@Override
-	public boolean containsPrivateIdentity() {
-		File file = getHDPrivateKeyFile();
-		return file.exists() && file.length() > 0;
-	}
-
-	@Override
-	public void storePrivateIdentity(String key) throws DIDStorageException {
+	public void storeMetadata(DIDStore.Metadata metadata) throws DIDStorageException {
 		try {
-			File file = getHDPrivateKeyFile(true);
-			writeText(file, key);
-		} catch (IOException e) {
-			throw new DIDStorageException("Store private identity error.", e);
-		}
-	}
-
-	@Override
-	public String loadPrivateIdentity() throws DIDStorageException {
-		try {
-			File file = getHDPrivateKeyFile();
-			return readText(file);
-		} catch (IOException e) {
-			throw new DIDStorageException("Load private identity error.", e);
-		}
-	}
-
-	@Override
-	public boolean containsPublicIdentity() {
-		File file = getHDPublicKeyFile();
-		return file.exists() && file.length() > 0;
-	}
-
-	@Override
-	public void storePublicIdentity(String key) throws DIDStorageException {
-		try {
-			File file = getHDPublicKeyFile(true);
-			writeText(file, key);
-		} catch (IOException e) {
-			throw new DIDStorageException("Store public identity error.", e);
-		}
-	}
-
-	@Override
-	public String loadPublicIdentity() throws DIDStorageException {
-		try {
-			File file = getHDPublicKeyFile();
-			return readText(file);
-		} catch (IOException e) {
-			throw new DIDStorageException("Load public identity error.", e);
-		}
-	}
-
-	@Override
-	public void storePrivateIdentityIndex(int index) throws DIDStorageException {
-		try {
-			File file = getFile(true, PRIVATE_DIR, INDEX_FILE);
-			writeText(file, Integer.toString(index));
-		} catch (IOException e) {
-			throw new DIDStorageException("Store private identity index error.", e);
-		}
-	}
-
-	@Override
-	public int loadPrivateIdentityIndex() throws DIDStorageException {
-		try {
-			File file = getFile(PRIVATE_DIR, INDEX_FILE);
-			return Integer.valueOf(readText(file));
-		} catch (Exception e) {
-			throw new DIDStorageException("Load private identity index error.", e);
-		}
-	}
-
-	@Override
-	public boolean containsMnemonic() throws DIDStorageException {
-		File file = getFile(PRIVATE_DIR, MNEMONIC_FILE);;
-		return file.exists() && file.length() > 0;
-	}
-
-	@Override
-	public void storeMnemonic(String mnemonic) throws DIDStorageException {
-		try {
-			File file = getFile(true, PRIVATE_DIR, MNEMONIC_FILE);
-			writeText(file, mnemonic);
-		} catch (IOException e) {
-			throw new DIDStorageException("Store mnemonic error.", e);
-		}
-	}
-
-	@Override
-	public String loadMnemonic() throws DIDStorageException {
-		try {
-			File file = getFile(PRIVATE_DIR, MNEMONIC_FILE);
-			return readText(file);
-		} catch (IOException e) {
-			throw new DIDStorageException("Load mnemonic error.", e);
-		}
-	}
-
-	@Override
-	public void storeDidMetadata(DID did, DIDMetadata metadata) throws DIDStorageException {
-		try {
-			File file = getFile(true, DID_DIR, did.getMethodSpecificId(), META_FILE);
+			File file = getFile(true, currentDataDir, METADATA);
 
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
 				metadata.serialize(file);
 		} catch (DIDSyntaxException | IOException e) {
-			throw new DIDStorageException("Store DID metadata error.", e);
+			throw new DIDStorageException("Store DIDStore metadata error", e);
 		}
 	}
 
 	@Override
-	public DIDMetadata loadDidMetadata(DID did) throws DIDStorageException {
+	public DIDStore.Metadata loadMetadata() throws DIDStorageException {
 		try {
-			File file = getFile(DID_DIR, did.getMethodSpecificId(), META_FILE);
-			DIDMetadata metadata;
+			File file = getFile(currentDataDir, METADATA);
+			DIDStore.Metadata metadata = null;
 			if (file.exists())
-				metadata = DIDMetadata.parse(file, DIDMetadata.class);
-			else
-				metadata = new DIDMetadata();
+				metadata = DIDStore.Metadata.parse(file, DIDStore.Metadata.class);
 
 			return metadata;
 		} catch (DIDSyntaxException | IOException e) {
-			throw new DIDStorageException(e);
+			throw new DIDStorageException("Load DIDStore metadata error", e);
+		}
+	}
+
+	private File getRootIdentityFile(String id, String file, boolean create) {
+		return getFile(create, currentDataDir, ROOT_IDENTITIES_DIR, id, file);
+	}
+
+	private File getRootIdentityDir(String id) {
+		return getDir(currentDataDir, ROOT_IDENTITIES_DIR, id);
+	}
+
+	@Override
+	public void storeRootIdentityMetadata(String id, RootIdentity.Metadata metadata)
+			throws DIDStorageException {
+		try {
+			File file = getRootIdentityFile(id, METADATA, true);
+
+			if (metadata == null || metadata.isEmpty())
+				file.delete();
+			else
+				metadata.serialize(file);
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDStorageException("Store root identity metadata error: " + id, e);
 		}
 	}
 
 	@Override
-	public void storeDid(DIDDocument doc) throws DIDStorageException {
+	public RootIdentity.Metadata loadRootIdentityMetadata(String id) throws DIDStorageException {
 		try {
-			File file = getFile(true, DID_DIR,
-					doc.getSubject().getMethodSpecificId(), DOCUMENT_FILE);
+			File file = getRootIdentityFile(id, METADATA, false);
+			RootIdentity.Metadata metadata = null;
+			if (file.exists())
+				metadata = RootIdentity.Metadata.parse(file, RootIdentity.Metadata.class);
 
-			doc.serialize(file, true);
-			storeDidMetadata(doc.getSubject(), doc.getMetadata());
+			return metadata;
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDStorageException("Load root identity metadata error: " + id, e);
+		}
+	}
+
+	@Override
+	public void storeRootIdentity(String id, String mnemonic, String privateKey,
+			String publicKey, int index) throws DIDStorageException {
+		try {
+			File file;
+
+			if (mnemonic != null) {
+				file = getRootIdentityFile(id, ROOT_IDENTITY_MNEMONIC_FILE, true);
+				writeText(file, mnemonic);
+			}
+
+			if (privateKey != null) {
+				file = getRootIdentityFile(id, ROOT_IDENTITY_PRIVATEKEY_FILE, true);
+				writeText(file, privateKey);
+			}
+
+			if (publicKey != null) {
+				file = getRootIdentityFile(id, ROOT_IDENTITY_PUBLICKEY_FILE, true);
+				writeText(file, publicKey);
+			}
+
+			file = getRootIdentityFile(id, ROOT_IDENTITY_INDEX_FILE, true);
+			writeText(file, Integer.toString(index));
 		} catch (IOException e) {
-			throw new DIDStorageException("Store DIDDocument error.", e);
-		} catch (DIDSyntaxException ignore) {
-			// Should never happen
-			log.error("INTERNAL - Try to store a malformed document", ignore);
+			throw new DIDStorageException("Store root identity error: " + id, e);
 		}
 	}
 
 	@Override
-	public DIDDocument loadDid(DID did) throws DIDStorageException {
+	public RootIdentity loadRootIdentity(String id) throws DIDStorageException {
 		try {
-			File file = getFile(DID_DIR,
-					did.getMethodSpecificId(), DOCUMENT_FILE);
+			File file = getRootIdentityFile(id, ROOT_IDENTITY_PUBLICKEY_FILE, false);
 			if (!file.exists())
 				return null;
 
-			return DIDDocument.parse(file);
-		} catch (DIDSyntaxException | IOException e) {
-			throw new DIDStorageException("Load DIDDocument error.", e);
+			String publicKey = readText(file);
+			file = getRootIdentityFile(id, ROOT_IDENTITY_INDEX_FILE, false);
+			int index = Integer.valueOf(readText(file));
+
+			return RootIdentity.create(publicKey, index);
+		} catch (IOException e) {
+			throw new DIDStorageException("Load public key for identity error: " + id, e);
 		}
 	}
 
 	@Override
-	public boolean containsDid(DID did) {
-		File file = getFile(DID_DIR,
-					did.getMethodSpecificId(), DOCUMENT_FILE);
-		return file.exists();
+	public void updateRootIdentityIndex(String id, int index)
+			throws DIDStorageException {
+		try {
+			File file = getRootIdentityFile(id, ROOT_IDENTITY_INDEX_FILE, false);
+			writeText(file, Integer.toString(index));
+		} catch (IOException e) {
+			throw new DIDStorageException("Update index for indentiy error: " + id, e);
+		}
 	}
 
 	@Override
-	public boolean deleteDid(DID did) {
-		File dir = getDir(DID_DIR, did.getMethodSpecificId());
+	public String loadRootIdentityPrivateKey(String id) throws DIDStorageException {
+		// TODO: support multiple named identity
+		try {
+			File file = getRootIdentityFile(id, ROOT_IDENTITY_PRIVATEKEY_FILE, false);
+			if (!file.exists())
+				return null;
+
+			return readText(file);
+		} catch (IOException e) {
+			throw new DIDStorageException("Load private key for identity error: " + id, e);
+		}
+	}
+
+	@Override
+	public boolean deleteRootIdentity(String id) {
+		File dir = getRootIdentityDir(id);
 		if (dir.exists()) {
 			deleteFile(dir);
 			return true;
@@ -468,39 +431,140 @@ class FileSystemStorage implements DIDStorage {
 	}
 
 	@Override
-	public List<DID> listDids(int filter) {
-		File dir = getDir(DID_DIR);
+	public List<RootIdentity> listRootIdentities() throws DIDStorageException {
+		File dir = getDir(currentDataDir, ROOT_IDENTITIES_DIR);
+		if (!dir.exists())
+			return new ArrayList<RootIdentity>(0);
+
+		File[] children = dir.listFiles((file) -> {
+			return file.isDirectory();
+		});
+
+		if (children == null || children.length == 0)
+			return new ArrayList<RootIdentity>(0);
+
+		ArrayList<RootIdentity> ids = new ArrayList<RootIdentity>(children.length);
+		for (File id : children) {
+			RootIdentity identity = loadRootIdentity(id.getName());
+			ids.add(identity);
+		}
+
+		return ids;
+	}
+
+	@Override
+	public boolean containsRootIdenities() {
+		File dir = getDir(currentDataDir, ROOT_IDENTITIES_DIR);
+		if (!dir.exists())
+			return false;
+
+		File[] children = dir.listFiles((file) -> {
+			return file.isDirectory();
+		});
+
+		return (children != null && children.length > 0);
+	}
+
+	@Override
+	public String loadRootIdentityMnemonic(String id) throws DIDStorageException {
+		// TODO: support multiple named identity
+		try {
+			File file = getRootIdentityFile(id, ROOT_IDENTITY_MNEMONIC_FILE, false);
+			return readText(file);
+		} catch (IOException e) {
+			throw new DIDStorageException("Load mnemonic for identity error: " + id, e);
+		}
+	}
+
+	private File getDidFile(DID did, boolean create) {
+		return getFile(create, currentDataDir, DID_DIR, did.getMethodSpecificId(), DOCUMENT_FILE);
+	}
+
+	private File getDidMetadataFile(DID did, boolean create) {
+		return getFile(create, currentDataDir, DID_DIR, did.getMethodSpecificId(), METADATA);
+	}
+
+	private File getDidDir(DID did) {
+		return getDir(currentDataDir, DID_DIR, did.getMethodSpecificId());
+	}
+
+	@Override
+	public void storeDidMetadata(DID did, DIDMetadata metadata) throws DIDStorageException {
+		try {
+			File file = getDidMetadataFile(did, true);
+
+			if (metadata == null || metadata.isEmpty())
+				file.delete();
+			else
+				metadata.serialize(file);
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDStorageException("Store DID metadata error: " + did, e);
+		}
+	}
+
+	@Override
+	public DIDMetadata loadDidMetadata(DID did) throws DIDStorageException {
+		try {
+			File file = getDidMetadataFile(did, false);
+			DIDMetadata metadata = null;
+			if (file.exists())
+				metadata = DIDMetadata.parse(file, DIDMetadata.class);
+
+			return metadata;
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDStorageException("Load DID metadata error: " + did, e);
+		}
+	}
+
+	@Override
+	public void storeDid(DIDDocument doc) throws DIDStorageException {
+		try {
+			File file = getDidFile(doc.getSubject(), true);
+			doc.serialize(file, true);
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDStorageException("Store DID document error: " +
+					doc.getSubject(), e);
+		}
+	}
+
+	@Override
+	public DIDDocument loadDid(DID did) throws DIDStorageException {
+		try {
+			File file = getDidFile(did, false);
+			if (!file.exists())
+				return null;
+
+			return DIDDocument.parse(file);
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDStorageException("Load DID document error: " + did, e);
+		}
+	}
+
+	@Override
+	public boolean deleteDid(DID did) {
+		File dir = getDidDir(did);
+		if (dir.exists()) {
+			deleteFile(dir);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public List<DID> listDids() {
+		File dir = getDir(currentDataDir, DID_DIR);
 		if (!dir.exists())
 			return new ArrayList<DID>(0);
 
-		File[] children = dir.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File file) {
-				if (!file.isDirectory())
-					return false;
-
-				boolean hasPrivateKey = false;
-				DID did = new DID(DID.METHOD, file.getName());
-				try {
-					hasPrivateKey = containsPrivateKeys(did);
-				} catch (Exception ignore) {
-				}
-
-				if (filter == DIDStore.DID_HAS_PRIVATEKEY) {
-					return hasPrivateKey;
-				} else if (filter == DIDStore.DID_NO_PRIVATEKEY) {
-					return !hasPrivateKey;
-				} else if (filter == DIDStore.DID_ALL) {
-					return true;
-				}
-
-				return false;
-			}
+		File[] children = dir.listFiles((file) -> {
+			return file.isDirectory();
 		});
 
-		int size = children != null ? children.length : 0;
-		ArrayList<DID> dids = new ArrayList<DID>(size);
+		if (children == null || children.length == 0)
+			return new ArrayList<DID>(0);
 
+		ArrayList<DID> dids = new ArrayList<DID>(children.length);
 		for (File didRoot : children) {
 			DID did = new DID(DID.METHOD, didRoot.getName());
 			dids.add(did);
@@ -509,37 +573,51 @@ class FileSystemStorage implements DIDStorage {
 		return dids;
 	}
 
+	private File getCredentialFile(DIDURL id, boolean create) {
+		return getFile(create, currentDataDir, DID_DIR, id.getDid().getMethodSpecificId(),
+				CREDENTIALS_DIR, toPath(id), CREDENTIAL_FILE);
+	}
+
+	private File getCredentialMetadataFile(DIDURL id, boolean create) {
+		return getFile(create, currentDataDir, DID_DIR, id.getDid().getMethodSpecificId(),
+				CREDENTIALS_DIR, toPath(id), METADATA);
+	}
+
+	private File getCredentialDir(DIDURL id) {
+		return getDir(currentDataDir, DID_DIR, id.getDid().getMethodSpecificId(),
+				CREDENTIALS_DIR, toPath(id));
+	}
+
+	private File getCredentialsDir(DID did) {
+		return getDir(currentDataDir, DID_DIR, did.getMethodSpecificId(), CREDENTIALS_DIR);
+	}
+
 	@Override
-	public void storeCredentialMetadata(DID did, DIDURL id, CredentialMetadata metadata)
+	public void storeCredentialMetadata(DIDURL id, CredentialMetadata metadata)
 			throws DIDStorageException {
 		try {
-			File file = getFile(true, DID_DIR, did.getMethodSpecificId(),
-					CREDENTIALS_DIR, id.getFragment(), META_FILE);
+			File file = getCredentialMetadataFile(id, true);
 
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
 				metadata.serialize(file);
 		} catch (DIDSyntaxException | IOException e) {
-			throw new DIDStorageException("Store credential metadata error.", e);
+			throw new DIDStorageException("Store credential metadata error: " + id, e);
 		}
 	}
 
 	@Override
-	public CredentialMetadata loadCredentialMetadata(DID did, DIDURL id)
+	public CredentialMetadata loadCredentialMetadata(DIDURL id)
 			throws DIDStorageException {
 		try {
-			File file = getFile(DID_DIR, did.getMethodSpecificId(),
-					CREDENTIALS_DIR, id.getFragment(), META_FILE);
-			CredentialMetadata metadata;
-			if (file.exists())
-				metadata = CredentialMetadata.parse(file, CredentialMetadata.class);
-			else
-				metadata = new CredentialMetadata();
+			File file = getCredentialMetadataFile(id, false);
+			if (!file.exists())
+				return null;
 
-			return metadata;
+			return CredentialMetadata.parse(file, CredentialMetadata.class);
 		} catch (DIDSyntaxException | IOException e) {
-			throw new DIDStorageException(e);
+			throw new DIDStorageException("Load credential metadata error: " + id, e);
 		}
 	}
 
@@ -547,73 +625,49 @@ class FileSystemStorage implements DIDStorage {
 	public void storeCredential(VerifiableCredential credential)
 			throws DIDStorageException {
 		try {
-			File file = getFile(true, DID_DIR,
-					credential.getSubject().getId().getMethodSpecificId(),
-					CREDENTIALS_DIR, credential.getId().getFragment(),
-					CREDENTIAL_FILE);
-
+			File file = getCredentialFile(credential.getId(), true);
 			credential.serialize(file, true);
-			storeCredentialMetadata(credential.getSubject().getId(),
-						credential.getId(), credential.getMetadata());
-		} catch (IOException e) {
-			throw new DIDStorageException("Store credential error.", e);
-		} catch (DIDSyntaxException ignore) {
-			// Should never happen
-			log.error("INTERNAL - Try to store a malformed credential", ignore);
+		} catch (DIDSyntaxException | IOException e) {
+			throw new DIDStorageException("Store credential error: " +
+					credential.getId(), e);
 		}
 	}
 
 	@Override
-	public VerifiableCredential loadCredential(DID did, DIDURL id)
+	public VerifiableCredential loadCredential(DIDURL id)
 			throws DIDStorageException {
 		try {
-			File file = getFile(DID_DIR, did.getMethodSpecificId(),
-					CREDENTIALS_DIR, id.getFragment(), CREDENTIAL_FILE);
+			File file = getCredentialFile(id, false);
 			if (!file.exists())
 				return null;
 
 			return VerifiableCredential.parse(file);
 		} catch (DIDSyntaxException | IOException e) {
-			throw new DIDStorageException("Load VerifiableCredential error.", e);
+			throw new DIDStorageException("Load credential error: " + id, e);
 		}
 	}
 
 	@Override
 	public boolean containsCredentials(DID did) {
-		File dir = getDir(DID_DIR, did.getMethodSpecificId(), CREDENTIALS_DIR);
+		File dir = getCredentialsDir(did);
 		if (!dir.exists())
 			return false;
 
-		File[] creds = dir.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File file) {
-				if (file.isDirectory())
-					return true;
-				else
-					return false;
-			}
+		File[] creds = dir.listFiles((file) -> {
+			return file.isDirectory();
 		});
 
 		return creds == null ? false : creds.length > 0;
 	}
 
 	@Override
-	public boolean containsCredential(DID did, DIDURL id) {
-		File file = getFile(DID_DIR, did.getMethodSpecificId(),
-				CREDENTIALS_DIR, id.getFragment(), CREDENTIAL_FILE);
-		return file.exists();
-	}
-
-	@Override
-	public boolean deleteCredential(DID did, DIDURL id) {
-		File dir = getDir(DID_DIR, did.getMethodSpecificId(),
-				CREDENTIALS_DIR, id.getFragment());
+	public boolean deleteCredential(DIDURL id) {
+		File dir = getCredentialDir(id);
 		if (dir.exists()) {
 			deleteFile(dir);
 
 			// Remove the credentials directory is no credential exists.
-			dir = getDir(DID_DIR, did.getMethodSpecificId(),
-					CREDENTIALS_DIR);
+			dir = getCredentialsDir(id.getDid());
 			if (dir.list().length == 0)
 				dir.delete();
 
@@ -625,97 +679,78 @@ class FileSystemStorage implements DIDStorage {
 
 	@Override
 	public List<DIDURL> listCredentials(DID did) {
-		File dir = getDir(DID_DIR, did.getMethodSpecificId(), CREDENTIALS_DIR);
+		File dir = getCredentialsDir(did);
 		if (!dir.exists())
 			return new ArrayList<DIDURL>(0);
 
-		File[] children = dir.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File file) {
-				if (file.isDirectory())
-					return true;
-				else
-					return false;
-			}
+		File[] children = dir.listFiles((file) -> {
+			return file.isDirectory();
 		});
 
-		int size = children != null ? children.length : 0;
-		ArrayList<DIDURL> credentials = new ArrayList<DIDURL>(size);
+		if (children == null || children.length == 0)
+			return new ArrayList<DIDURL>(0);
 
-		for (File credential : children) {
-			DIDURL id = new DIDURL(did, credential.getName());
-			credentials.add(id);
-		}
+		ArrayList<DIDURL> credentials = new ArrayList<DIDURL>(children.length);
+		for (File credential : children)
+			credentials.add(toDIDURL(did, credential.getName()));
 
 		return credentials;
 	}
 
-	@Override
-	public List<DIDURL> selectCredentials(DID did, DIDURL id, String[] type)
-			throws DIDStorageException {
-		// TODO:
-		return null;
+	private File getPrivateKeyFile(DIDURL id, boolean create) {
+		return getFile(create, currentDataDir, DID_DIR, id.getDid().getMethodSpecificId(),
+				PRIVATEKEYS_DIR, toPath(id));
+	}
+
+	private File getPrivateKeysDir(DID did) {
+		return getDir(currentDataDir, DID_DIR, did.getMethodSpecificId(), PRIVATEKEYS_DIR);
 	}
 
 	@Override
-	public void storePrivateKey(DID did, DIDURL id, String privateKey)
+	public void storePrivateKey(DIDURL id, String privateKey)
 			throws DIDStorageException {
 		try {
-			File file = getFile(true, DID_DIR, did.getMethodSpecificId(),
-					PRIVATEKEYS_DIR, id.getFragment());
+			File file = getPrivateKeyFile(id, true);
 			writeText(file, privateKey);
 		} catch (IOException e) {
-			throw new DIDStorageException("Store private key error.", e);
+			throw new DIDStorageException("Store private key error: " + id, e);
 		}
 	}
 
 	@Override
-	public String loadPrivateKey(DID did, DIDURL id) throws DIDStorageException {
+	public String loadPrivateKey(DIDURL id) throws DIDStorageException {
 		try {
-			File file = getFile(DID_DIR, did.getMethodSpecificId(),
-					PRIVATEKEYS_DIR, id.getFragment());
+			File file = getPrivateKeyFile(id, false);
+			if (!file.exists())
+				return null;
+
 			return readText(file);
 		} catch (Exception e) {
-			throw new DIDStorageException("Load private key error.", e);
+			throw new DIDStorageException("Load private key error: " + id, e);
 		}
 	}
 
 	@Override
 	public boolean containsPrivateKeys(DID did) {
-		File dir = getDir(DID_DIR, did.getMethodSpecificId(), PRIVATEKEYS_DIR);
+		File dir = getPrivateKeysDir(did);
 		if (!dir.exists())
 			return false;
 
-		File[] keys = dir.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File file) {
-				if (file.getName().startsWith("."))
-					return false;
-				else
-					return true;
-			}
+		File[] keys = dir.listFiles((file) -> {
+			return file.isFile();
 		});
 
 		return keys == null ? false : keys.length > 0;
 	}
 
 	@Override
-	public boolean containsPrivateKey(DID did, DIDURL id) {
-		File file = getFile(DID_DIR, did.getMethodSpecificId(),
-				PRIVATEKEYS_DIR, id.getFragment());
-		return file.exists();
-	}
-
-	@Override
-	public boolean deletePrivateKey(DID did, DIDURL id) {
-		File file = getFile(DID_DIR, did.getMethodSpecificId(),
-				PRIVATEKEYS_DIR, id.getFragment());
+	public boolean deletePrivateKey(DIDURL id) {
+		File file = getPrivateKeyFile(id, false);
 		if (file.exists()) {
 			file.delete();
 
 			// Remove the privatekeys directory is no privatekey exists.
-			File dir = getDir(DID_DIR, did.getMethodSpecificId(),
-				PRIVATEKEYS_DIR);
+			File dir = getPrivateKeysDir(id.getDid());
 			if (dir.list().length == 0)
 				dir.delete();
 
@@ -727,12 +762,17 @@ class FileSystemStorage implements DIDStorage {
 
 	private boolean needReencrypt(File file) {
 		String[] patterns = {
-				"(.+)\\" + File.separator + PRIVATE_DIR + "\\" +
-				File.separator + HDKEY_FILE,
-				"(.+)\\" + File.separator + PRIVATE_DIR + "\\" +
-				File.separator + MNEMONIC_FILE,
-				"(.+)\\" + File.separator + DID_DIR + "\\" +
-				File.separator + "(.+)" + "\\" + File.separator +
+				// Root identity's private key
+				"(.+)\\" + File.separator + DATA_DIR + "\\" + File.separator +
+				ROOT_IDENTITIES_DIR + "\\" + File.separator + "(.+)\\" +
+				File.separator + ROOT_IDENTITY_PRIVATEKEY_FILE,
+				// Root identity's mnemonic
+				"(.+)\\" + File.separator + DATA_DIR + "\\" + File.separator +
+				ROOT_IDENTITIES_DIR + "\\" + File.separator + "(.+)\\" +
+				File.separator + ROOT_IDENTITY_MNEMONIC_FILE,
+				// DID's private keys
+				"(.+)\\" + File.separator + DATA_DIR + "\\" + File.separator +
+				DID_DIR + "\\" + File.separator + "(.+)\\" + File.separator +
 				PRIVATEKEYS_DIR + "\\" + File.separator + "(.+)"
 		};
 
@@ -760,62 +800,35 @@ class FileSystemStorage implements DIDStorage {
 			}
 		} else {
 			if (needReencrypt(src)) {
-				String org = readText(src);
-				writeText(dest, reEncryptor.reEncrypt(org));
+				String text = readText(src);
+				writeText(dest, reEncryptor.reEncrypt(text));
 			} else {
-			    FileInputStream in = null;
-			    FileOutputStream out = null;
-			    try {
-			        in = new FileInputStream(src);
-			        out = new FileOutputStream(dest);
-			        out.getChannel().transferFrom(in.getChannel(), 0,
-			        		in.getChannel().size());
-				} finally {
-					if (in != null)
-						in.close();
-
-					if (out != null)
-						out.close();
-				}
+			    copyFile(src, dest);
 			}
 		}
 	}
 
 	private void postChangePassword() {
-		File privateDir = getDir(PRIVATE_DIR);
-		File privateDeprecated = getDir(PRIVATE_DIR + DEPRECATED_SUFFIX);
-		File privateJournal = getDir(PRIVATE_DIR + JOURNAL_SUFFIX);
+		File dataDir = getDir(DATA_DIR);
+		File dataJournal = getDir(DATA_DIR + JOURNAL_SUFFIX);
 
-		File didDir = getDir(DID_DIR);
-		File didDeprecated = getDir(DID_DIR + DEPRECATED_SUFFIX);
-		File didJournal = getDir(DID_DIR + JOURNAL_SUFFIX);
+		int timestamp = (int)(System.currentTimeMillis() / 1000);
+		File dataDeprecated = getDir(DATA_DIR + "-" + timestamp);
 
 		File stageFile = getFile("postChangePassword");
 
 		if (stageFile.exists()) {
-			if (privateJournal.exists()) {
-				if (privateDir.exists())
-					privateDir.renameTo(privateDeprecated);
+			if (dataJournal.exists()) {
+				if (dataDir.exists())
+					dataDir.renameTo(dataDeprecated);
 
-				privateJournal.renameTo(privateDir);
+				dataJournal.renameTo(dataDir);
 			}
 
-			if (didJournal.exists()) {
-				if (didDir.exists())
-					didDir.renameTo(didDeprecated);
-
-				didJournal.renameTo(didDir);
-			}
-
-			deleteFile(privateDeprecated);
-			deleteFile(didDeprecated);
 			stageFile.delete();
 		} else {
-			if (privateJournal.exists())
-				deleteFile(privateJournal);
-
-			if (didJournal.exists())
-				deleteFile(didJournal);
+			if (dataJournal.exists())
+				deleteFile(dataJournal);
 		}
 	}
 
@@ -823,21 +836,311 @@ class FileSystemStorage implements DIDStorage {
 	public void changePassword(ReEncryptor reEncryptor)
 			throws DIDStorageException {
 		try {
-			File privateDir = getDir(PRIVATE_DIR);
-			File privateJournal = getDir(PRIVATE_DIR + JOURNAL_SUFFIX);
+			File dataDir = getDir(DATA_DIR);
+			File dataJournal = getDir(DATA_DIR + JOURNAL_SUFFIX);
 
-			File didDir = getDir(DID_DIR);
-			File didJournal = getDir(DID_DIR + JOURNAL_SUFFIX);
+			copy(dataDir, dataJournal, reEncryptor);
 
-			copy(privateDir, privateJournal, reEncryptor);
-			copy(didDir, didJournal, reEncryptor);
-
-			@SuppressWarnings("unused")
 			File stageFile = getFile(true, "postChangePassword");
+			stageFile.createNewFile();
 		} catch (DIDStoreException | IOException e) {
 			throw new DIDStorageException("Change store password failed.");
 		} finally {
 			postChangePassword();
 		}
+	}
+
+	// Dirty upgrade implementation
+	/* V2 store layout:
+	 *  + DIDStore root
+	 *    - .meta						    [Store meta file, include magic and version]
+	 *    + private							[Personal root private key for HD identity]
+	 *      - key							[HD root private key]
+	 *      - index							[Last derive index]
+	 *    + ids
+	 *      + ixxxxxxxxxxxxxxx0 			[DID root, named by id specific string]
+	 *        - .meta						[Meta for DID, json format, OPTIONAL]
+	 *        - document					[DID document, json format]
+	 *        + credentials				    [Credentials root, OPTIONAL]
+	 *          + credential-id-0           [Credential root, named by id' fragment]
+	 *            - .meta					[Meta for credential, json format, OPTONAL]
+	 *            - credential				[Credential, json format]
+	 *          + ...
+	 *          + credential-id-N
+	 *            - .meta
+	 *            - credential
+	 *        + privatekeys				    [Private keys root, OPTIONAL]
+	 *          - privatekey-id-0			[Encrypted private key, named by pk' id]
+	 *          - ...
+	 *          - privatekey-id-N
+	 *
+	 *      ......
+	 *
+	 *      + ixxxxxxxxxxxxxxxN
+	 */
+	private void upgradeFromV2() throws DIDStorageException {
+		byte[] MAGIC = { 0x00, 0x0D, 0x01, 0x0D };
+
+		log.info("Try to upgrading DID store to the latest version...");
+
+		File file = getFile(".meta");
+		if (!file.exists() || !file.isFile() || file.length() != 8) {
+			log.error("Abort upgrade DID store, invalid DID store metadata file");
+			throw new DIDStorageException("Directory \""
+					+ storeRoot.getAbsolutePath() + "\" is not a DIDStore.");
+		}
+
+		InputStream in = null;
+		byte[] magic = new byte[4];
+		byte[] version = new byte[4];
+
+		try {
+			in = new FileInputStream(file);
+			in.read(magic);
+			in.read(version);
+			in.close();
+		} catch (IOException e) {
+			log.error("Abort upgrade DID store, failed load DID store metadata file");
+			throw new DIDStorageException("Check DIDStore \""
+					+ storeRoot.getAbsolutePath() + "\" error.", e);
+		}
+
+		if (!Arrays.equals(MAGIC, magic)) {
+			log.error("Abort upgrade DID store, invalid DID store magic number");
+			throw new DIDStorageException("Directory \""
+					+ storeRoot.getAbsolutePath() + "\" is not a DIDStore.");
+		}
+
+		int v = (0xFF & version[0]) << 24 |
+				(0xFF & version[1]) << 16 |
+				(0xFF & version[2]) << 8  |
+				(0xFF & version[3]) << 0;
+		if (v != 2) {
+			log.error("Abort upgrade DID store, invalid DID store version");
+			throw new DIDStoreVersionMismatch("Version: " + v);
+		}
+
+		try {
+			// upgrade to data journal directory
+			currentDataDir = DATA_DIR + JOURNAL_SUFFIX;
+			File dir = getDir(currentDataDir);
+			if (dir.exists())
+				deleteFile(dir);
+			dir.mkdirs();
+
+			String id = null;
+
+			dir = getDir("private");
+			if (dir.exists()) {
+				if (!dir.isDirectory()) {
+					log.error("Abort upgrade DID store, invalid root identity folder");
+					throw new DIDStorageException("Invalid root identity folder");
+				}
+
+				// Root identity
+				file = getFile("private", "key");
+				String privateKey = null;
+				if (file.exists() && file.isFile())
+					privateKey = readText(file);
+
+				if (privateKey == null || privateKey.isEmpty()) {
+					log.error("Abort upgrade DID store, invalid root private key");
+					throw new DIDStorageException("Invalid root private key");
+				}
+
+				file = getFile("private", "key.pub");
+				String publicKey = null;
+				if (file.exists() && file.isFile())
+					publicKey = readText(file);
+
+				if (publicKey == null || publicKey.isEmpty()) {
+					log.error("Abort upgrade DID store, invalid root public key");
+					throw new DIDStorageException("Invalid root public key");
+				}
+
+				file = getFile("private", "mnemonic");
+				String mnemonic = null;
+				if (file.exists() && file.isFile())
+					mnemonic = readText(file);
+
+				file = getFile("private", "index");
+				int index = 0;
+				if (file.exists() && file.isFile())
+					index = Integer.valueOf(readText(file));
+
+				HDKey pk = HDKey.deserializeBase58(publicKey);
+				id = RootIdentity.getId(pk.serializePublicKey());
+				storeRootIdentity(id, mnemonic, privateKey, publicKey, index);
+			}
+
+			// Create store metadata with default root identity
+			DIDStore.Metadata metadata = new DIDStore.Metadata();
+			if (id != null)
+				metadata.setDefaultRootIdentity(id);
+			storeMetadata(metadata);
+
+			// DIDs
+			dir = getDir("ids");
+			if (!dir.exists())
+				return;
+
+			if (!dir.isDirectory()) {
+				log.error("Abort upgrade DID store, invalid DIDs directory");
+				throw new DIDStorageException("Invalid DIDs directory");
+			}
+
+			File[] ids = dir.listFiles((f) -> {
+				return f.isDirectory();
+			});
+
+			if (ids == null || ids.length == 0)
+				return;
+
+			// For each DID
+			for (File idDir : ids) {
+				// DID document and metadata
+				file = getFile("ids", idDir.getName(), "document");
+				if (!file.exists())
+					continue;
+
+				if (!file.isFile()) {
+					log.error("Abort upgrade DID store, invalid DID document: " + idDir.getName());
+					throw new DIDStorageException("Invalid DID document: " + idDir.getName());
+				}
+
+				DIDDocument doc = DIDDocument.parse(file);
+				storeDid(doc);
+
+				file = getFile("ids", idDir.getName(), ".meta");
+				if (file.exists() && file.isFile()) {
+					DIDMetadata dm = upgradeMetadataV2(file, DIDMetadata.class);
+					storeDidMetadata(doc.getSubject(), dm);
+				}
+
+				// Credentials
+				dir = getDir("ids", idDir.getName(), "credentials");
+				if (!dir.exists())
+					continue;
+
+				if (!dir.isDirectory()) {
+					log.error("Abort upgrade DID store, invalid credential directory: {}", idDir.getName());
+					throw new DIDStorageException("Invalid credential directory: " + idDir.getName());
+				}
+
+				File[] vcs = dir.listFiles((f) -> {
+					return f.isDirectory();
+				});
+
+				if (vcs == null || vcs.length == 0)
+					break;
+
+				// For each credential
+				for (File vcDir : vcs) {
+					// Credential and metadata
+					file = getFile("ids", idDir.getName(), "credentials",
+							vcDir.getName(), "credential");
+					if (!file.exists())
+						continue;
+
+					if (!file.isFile()) {
+						log.error("Abort upgrade DID store, invalid credential: {}/{}",
+								idDir.getName(), vcDir.getName());
+						throw new DIDStorageException("Invalid credential: "
+								+ idDir.getName() + "/" + vcDir.getName());
+					}
+
+					VerifiableCredential vc = VerifiableCredential.parse(file);
+					storeCredential(vc);
+
+					file = getFile("ids", idDir.getName(), "credentials",
+							vcDir.getName(), ".meta");
+					CredentialMetadata cm = upgradeMetadataV2(file, CredentialMetadata.class);
+					storeCredentialMetadata(vc.getId(), cm);
+				}
+
+				// Private keys
+				dir = getDir("ids", idDir.getName(), "privatekeys");
+				if (!file.exists())
+					continue;
+
+				if (!dir.isDirectory()) {
+					log.error("Abort upgrade DID store, invalid private keys directory: {}", idDir.getName());
+					throw new DIDStorageException("Invalid private keys directory: " + idDir.getName());
+				}
+
+				File[] sks = dir.listFiles((f) -> {
+					return f.isFile();
+				});
+
+				if (sks == null || sks.length == 0)
+					break;
+
+				// For each credential
+				for (File skFile : sks) {
+					// Credential and metadata
+					String sk = readText(skFile);
+					if (sk == null || sk.isEmpty())
+						continue;
+
+					DIDURL keyId = new DIDURL(doc.getSubject(), "#" + skFile.getName());
+					storePrivateKey(keyId, sk);
+				}
+			}
+
+			dir = getDir(currentDataDir);
+			dir.renameTo(getDir(DATA_DIR));
+			currentDataDir = DATA_DIR;
+
+			int timestamp = (int)(System.currentTimeMillis() / 1000);
+			dir = getDir(DATA_DIR + "-" + timestamp);
+			dir.mkdirs();
+			file = getFile(".meta");
+			file.renameTo(getFile(dir.getName(), ".meta"));
+			file = getDir("private");
+			file.renameTo(getFile(dir.getName(), "private"));
+			file = getDir("ids");
+			file.renameTo(getFile(dir.getName(), "ids"));
+		} catch (DIDStorageException | IOException | DIDSyntaxException e) {
+			currentDataDir = DATA_DIR;
+
+			File dir = getDir(DATA_DIR + JOURNAL_SUFFIX);
+			if (dir.exists())
+				deleteFile(dir);
+
+			if (e instanceof DIDStorageException)
+				throw (DIDStorageException)e;
+			else
+				throw new DIDStorageException(e);
+		}
+	}
+
+	private <T extends AbstractMetadata> T upgradeMetadataV2(File file, Class<T> clazz)
+			throws DIDSyntaxException, IOException {
+		T oldData = AbstractMetadata.parse(file, clazz);
+		T newData = null;
+		try {
+			newData = clazz.getDeclaredConstructor().newInstance();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			log.error("INTERNAL - instantiate {}", clazz.getName());
+			return null;
+		}
+
+		Map<String, String> props = oldData.getProperties();
+		for (Map.Entry<String, String> entry : props.entrySet()) {
+			String key = entry.getKey();
+			if (key.startsWith("DX-")) {
+				if (key.equals("DX-lastModified"))
+					continue;
+
+				key = key.substring(3);
+			} else {
+				key = AbstractMetadata.USER_EXTRA_PREFIX + key;
+			}
+
+			newData.put(key, entry.getValue());
+		}
+
+		return newData;
 	}
 }

@@ -55,10 +55,10 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 public abstract class DIDObject<T> {
 	private final static boolean NORMALIZED_DEFAULT = false;
 
-	private final static SimpleDateFormat dateFormat =
+	protected final static SimpleDateFormat dateFormat =
 			new SimpleDateFormat(Constants.DATE_FORMAT);
 
-	private final static SimpleDateFormat isoDateFormat =
+	protected final static SimpleDateFormat isoDateFormat =
 			new SimpleDateFormat(Constants.DATE_FORMAT_ISO_8601);
 
 	private static final Logger log = LoggerFactory.getLogger(DIDObject.class);
