@@ -504,27 +504,19 @@ public class DIDBackend {
 		return vc;
 	}
 
-	protected VerifiableCredential resolveCredential(DIDURL id, boolean force)
-			throws DIDResolveException {
-		return resolveCredential(id, null, force);
-	}
-
 	protected VerifiableCredential resolveCredential(DIDURL id, DID issuer)
 			throws DIDResolveException {
 		return resolveCredential(id, issuer, false);
 	}
 
-	protected VerifiableCredential resolveCredential(DIDURL id)
+	protected VerifiableCredential resolveCredential(DIDURL id, boolean force)
 			throws DIDResolveException {
-		return resolveCredential(id, false);
+		return resolveCredential(id, null, force);
 	}
 
-	protected boolean resolveCredentialRevocation(DIDURL id, DID signer)
-		throws DIDResolveException {
-		log.info("Resolving credential revocation {}...", id);
-
-		CredentialBiography bio = resolveCredentialBiography(id, signer, false);
-		return bio.getStatus() == CredentialBiography.Status.REVOKED;
+	protected VerifiableCredential resolveCredential(DIDURL id)
+			throws DIDResolveException {
+		return resolveCredential(id, null, false);
 	}
 
 	protected List<DIDURL> listCredentials(DID did, int skip, int limit)
