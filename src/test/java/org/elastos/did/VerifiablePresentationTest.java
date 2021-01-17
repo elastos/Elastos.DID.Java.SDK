@@ -58,53 +58,10 @@ public class VerifiablePresentationTest {
     @Test
 	public void testReadPresentation() throws DIDException, IOException {
 		// For integrity check
-		testData.loadTestIssuer();
-		DIDDocument testDoc = testData.loadTestDocument();
+		testData.getCompatibleData().loadTestIssuer();
+		DIDDocument testDoc = testData.getCompatibleData().loadTestDocument();
 
-		VerifiablePresentation vp = testData.loadPresentation();
-
-		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType());
-		assertEquals(testDoc.getSubject(), vp.getSigner());
-
-		assertEquals(4, vp.getCredentialCount());
-		List<VerifiableCredential> vcs = vp.getCredentials();
-		for (VerifiableCredential vc : vcs) {
-			assertEquals(testDoc.getSubject(), vc.getSubject().getId());
-
-			assertTrue(vc.getId().getFragment().equals("profile")
-					|| vc.getId().getFragment().equals("email")
-					|| vc.getId().getFragment().equals("twitter")
-					|| vc.getId().getFragment().equals("passport"));
-		}
-
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "profile")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "email")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "twitter")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "passport")));
-		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "notExist")));
-
-		assertTrue(vp.isGenuine());
-		assertTrue(vp.isValid());
-	}
-
-	@Test
-	public void testBuild() throws DIDException, IOException {
-		// For integrity check
-		testData.loadTestIssuer();
-		DIDDocument testDoc = testData.loadTestDocument();
-
-		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
-				testDoc.getSubject(), store);
-
-		VerifiablePresentation vp = pb.credentials(testData.loadProfileCredential())
-				.credentials(testData.loadEmailCredential())
-				.credentials(testData.loadTwitterCredential())
-				.credentials(testData.loadPassportCredential())
-				.realm("https://example.com/")
-				.nonce("873172f58701a9ee686f0630204fee59")
-				.seal(TestConfig.storePass);
-
-		assertNotNull(vp);
+		VerifiablePresentation vp = testData.getCompatibleData().loadPresentation();
 
 		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType());
 		assertEquals(testDoc.getSubject(), vp.getSigner());
@@ -133,23 +90,65 @@ public class VerifiablePresentationTest {
 	@Test
 	public void testParseAndSerialize() throws DIDException, IOException {
 		// For integrity check
-		testData.loadTestIssuer();
-		testData.loadTestDocument();
+		testData.getCompatibleData().loadTestIssuer();
+		testData.getCompatibleData().loadTestDocument();
 
-		VerifiablePresentation vp = testData.loadPresentation();
+		VerifiablePresentation vp = testData.getCompatibleData().loadPresentation();
 		assertNotNull(vp);
 		assertTrue(vp.isGenuine());
 		assertTrue(vp.isValid());
 
 		VerifiablePresentation normalized = VerifiablePresentation.parse(
-				testData.loadPresentationNormalizedJson());
+				testData.getCompatibleData().loadPresentationNormalizedJson());
 		assertNotNull(normalized);
 		assertTrue(normalized.isGenuine());
 		assertTrue(normalized.isValid());
 
-		assertEquals(testData.loadPresentationNormalizedJson(),
+		assertEquals(testData.getCompatibleData().loadPresentationNormalizedJson(),
 				normalized.toString(true));
-		assertEquals(testData.loadPresentationNormalizedJson(),
+		assertEquals(testData.getCompatibleData().loadPresentationNormalizedJson(),
 				vp.toString(true));
+	}
+
+	@Test
+	public void testBuild() throws DIDException, IOException {
+		DIDDocument testDoc = testData.getInstantData().loadTestDocument();
+
+		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
+				testDoc.getSubject(), store);
+
+		VerifiablePresentation vp = pb
+				.credentials(testData.getInstantData().loadProfileCredential())
+				.credentials(testData.getInstantData().loadEmailCredential())
+				.credentials(testData.getInstantData().loadTwitterCredential())
+				.credentials(testData.getInstantData().loadPassportCredential())
+				.realm("https://example.com/")
+				.nonce("873172f58701a9ee686f0630204fee59")
+				.seal(TestConfig.storePass);
+
+		assertNotNull(vp);
+
+		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType());
+		assertEquals(testDoc.getSubject(), vp.getSigner());
+
+		assertEquals(4, vp.getCredentialCount());
+		List<VerifiableCredential> vcs = vp.getCredentials();
+		for (VerifiableCredential vc : vcs) {
+			assertEquals(testDoc.getSubject(), vc.getSubject().getId());
+
+			assertTrue(vc.getId().getFragment().equals("profile")
+					|| vc.getId().getFragment().equals("email")
+					|| vc.getId().getFragment().equals("twitter")
+					|| vc.getId().getFragment().equals("passport"));
+		}
+
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "profile")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "email")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "twitter")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "passport")));
+		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "notExist")));
+
+		assertTrue(vp.isGenuine());
+		assertTrue(vp.isValid());
 	}
 }

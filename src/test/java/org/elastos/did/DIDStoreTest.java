@@ -197,7 +197,7 @@ public class DIDStoreTest {
 	@Test
 	public void testStoreAndLoadDID() throws DIDException, IOException {
     	// Store test data into current store
-    	DIDDocument issuer = testData.loadTestIssuer();
+    	DIDDocument issuer = testData.getInstantData().loadTestIssuer();
 
     	File file = getFile("ids", issuer.getSubject().getMethodSpecificId(),
     			"document");
@@ -209,7 +209,7 @@ public class DIDStoreTest {
     	assertTrue(file.exists());
     	assertTrue(file.isFile());
 
-    	DIDDocument test = testData.loadTestDocument();
+    	DIDDocument test = testData.getInstantData().loadTestDocument();
 
     	file = getFile("ids", test.getSubject().getMethodSpecificId(),
     			"document");
@@ -238,10 +238,10 @@ public class DIDStoreTest {
 	@Test
 	public void testLoadCredentials() throws DIDException, IOException {
     	// Store test data into current store
-    	testData.loadTestIssuer();
-    	DIDDocument test = testData.loadTestDocument();
+    	testData.getInstantData().loadTestIssuer();
+    	DIDDocument test = testData.getInstantData().loadTestDocument();
 
-    	VerifiableCredential vc = testData.loadProfileCredential();
+    	VerifiableCredential vc = testData.getInstantData().loadProfileCredential();
     	vc.getMetadata().setAlias("MyProfile");
 
     	File file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
@@ -254,7 +254,7 @@ public class DIDStoreTest {
     	assertTrue(file.exists());
     	assertTrue(file.isFile());
 
-    	vc = testData.loadEmailCredential();
+    	vc = testData.getInstantData().loadEmailCredential();
       	vc.getMetadata().setAlias("Email");
 
     	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
@@ -267,7 +267,7 @@ public class DIDStoreTest {
     	assertTrue(file.exists());
     	assertTrue(file.isFile());
 
-    	vc = testData.loadTwitterCredential();
+    	vc = testData.getInstantData().loadTwitterCredential();
     	vc.getMetadata().setAlias("Twitter");
 
     	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
@@ -280,7 +280,7 @@ public class DIDStoreTest {
     	assertTrue(file.exists());
     	assertTrue(file.isFile());
 
-    	vc = testData.loadPassportCredential();
+    	vc = testData.getInstantData().loadPassportCredential();
     	vc.getMetadata().setAlias("Passport");
 
     	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
@@ -330,15 +330,15 @@ public class DIDStoreTest {
     	testData.initIdentity();
 
     	// Store test data into current store
-    	testData.loadTestIssuer();
-    	DIDDocument test = testData.loadTestDocument();
-    	VerifiableCredential vc = testData.loadProfileCredential();
+    	testData.getInstantData().loadTestIssuer();
+    	DIDDocument test = testData.getInstantData().loadTestDocument();
+    	VerifiableCredential vc = testData.getInstantData().loadProfileCredential();
     	vc.getMetadata().setAlias("MyProfile");
-    	vc = testData.loadEmailCredential();
+    	vc = testData.getInstantData().loadEmailCredential();
     	vc.getMetadata().setAlias("Email");
-    	vc = testData.loadTwitterCredential();
+    	vc = testData.getInstantData().loadTwitterCredential();
     	vc.getMetadata().setAlias("Twitter");
-    	vc = testData.loadPassportCredential();
+    	vc = testData.getInstantData().loadPassportCredential();
     	vc.getMetadata().setAlias("Passport");
 
     	List<DIDURL> vcs = store.listCredentials(test.getSubject());
@@ -360,15 +360,15 @@ public class DIDStoreTest {
 	@Test
 	public void testDeleteCredential() throws DIDException, IOException {
     	// Store test data into current store
-    	testData.loadTestIssuer();
-    	DIDDocument test = testData.loadTestDocument();
-    	VerifiableCredential vc = testData.loadProfileCredential();
+    	testData.getInstantData().loadTestIssuer();
+    	DIDDocument test = testData.getInstantData().loadTestDocument();
+    	VerifiableCredential vc = testData.getInstantData().loadProfileCredential();
     	vc.getMetadata().setAlias("MyProfile");
-    	vc = testData.loadEmailCredential();
+    	vc = testData.getInstantData().loadEmailCredential();
     	vc.getMetadata().setAlias("Email");
-    	vc = testData.loadTwitterCredential();
+    	vc = testData.getInstantData().loadTwitterCredential();
     	vc.getMetadata().setAlias("Twitter");
-    	vc = testData.loadPassportCredential();
+    	vc = testData.getInstantData().loadPassportCredential();
     	vc.getMetadata().setAlias("Passport");
 
     	File file = getFile("ids", test.getSubject().getMethodSpecificId(),
@@ -741,15 +741,15 @@ public class DIDStoreTest {
     	testData.initIdentity();
 
     	// Store test data into current store
-    	testData.loadTestIssuer();
-    	testData.loadTestDocument();
-    	VerifiableCredential vc = testData.loadProfileCredential();
+    	testData.getInstantData().loadTestIssuer();
+    	testData.getInstantData().loadTestDocument();
+    	VerifiableCredential vc = testData.getInstantData().loadProfileCredential();
     	vc.getMetadata().setAlias("MyProfile");
-    	vc = testData.loadEmailCredential();
+    	vc = testData.getInstantData().loadEmailCredential();
     	vc.getMetadata().setAlias("Email");
-    	vc = testData.loadTwitterCredential();
+    	vc = testData.getInstantData().loadTwitterCredential();
     	vc.getMetadata().setAlias("Twitter");
-    	vc = testData.loadPassportCredential();
+    	vc = testData.getInstantData().loadPassportCredential();
     	vc.getMetadata().setAlias("Passport");
 
 		File tempDir = new File(TestConfig.tempDir);

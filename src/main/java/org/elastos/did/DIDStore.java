@@ -213,14 +213,31 @@ public final class DIDStore {
 	 * @return the DIDStore object
 	 * @throws DIDStoreException Unsupport the specified store type.
 	 */
+	public static DIDStore open(File location,
+			int initialCacheCapacity, int maxCacheCapacity) throws DIDStoreException {
+		checkArgument(location != null, "Invalid store location");
+		checkArgument(maxCacheCapacity >= initialCacheCapacity, "Invalid cache capacity spec");
+
+		try {
+			location = location.getCanonicalFile();
+		} catch (IOException e) {
+			throw new IllegalArgumentException("Invalid store location", e);
+		}
+
+		DIDStorage storage = new FileSystemStorage(location);
+		return new DIDStore(initialCacheCapacity, maxCacheCapacity, storage);
+	}
+
 	public static DIDStore open(String location,
 			int initialCacheCapacity, int maxCacheCapacity) throws DIDStoreException {
-		if (location == null || location.isEmpty() ||
-				maxCacheCapacity < initialCacheCapacity)
-			throw new IllegalArgumentException();
+		checkArgument(location != null && !location.isEmpty(), "Invalid store location");
 
-		DIDStorage storage = new FileSystemStorage(new File(location));
-		return new DIDStore(initialCacheCapacity, maxCacheCapacity, storage);
+		return open(new File(location), initialCacheCapacity, maxCacheCapacity);
+	}
+
+	public static DIDStore open(File location)
+			throws DIDStoreException {
+		return open(location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 	}
 
 	/**
@@ -470,13 +487,13 @@ public final class DIDStore {
 		}
 	}
 
-	protected HDKey derive(RootIdentity identity, String path, String storepass)
+	protected HDKey derive(String id, String path, String storepass)
 			throws DIDStoreException {
-		checkArgument(identity != null, "Invalid identity");
+		checkArgument(id != null && !id.isEmpty(), "Invalid identity");
 		checkArgument(path != null && !path.isEmpty(), "Invalid path");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		HDKey rootPrivateKey = loadRootIdentityPrivateKey(identity.getId(), storepass);
+		HDKey rootPrivateKey = loadRootIdentityPrivateKey(id, storepass);
 		HDKey key = rootPrivateKey.derive(path);
 		rootPrivateKey.wipe();
 
@@ -1070,7 +1087,12 @@ public final class DIDStore {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		String encryptedKey = loadPrivateKey(id);
-		return encryptedKey == null ? null : decrypt(encryptedKey, storepass);
+		if (encryptedKey == null) {
+			// fail-back to lazy private key generation
+			return RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
+		} else {
+			return decrypt(encryptedKey, storepass);
+		}
 	}
 
 	/**

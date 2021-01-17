@@ -55,8 +55,8 @@ public class DIDTest {
 
     @BeforeEach
     public void beforeEach() throws DIDException {
-    	did = new DID(testDID);
     	testData = new TestData();
+    	did = new DID(testDID);
     }
 
     @AfterEach

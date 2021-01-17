@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.utils.DIDTestExtension;
@@ -49,10 +48,17 @@ public class IssuerTest {
 	private TestData testData;
 	private DIDStore store;
 
+	private DIDDocument issuerDoc;
+	private DIDDocument testDoc;
+
     @BeforeEach
-    public void beforeEach() throws DIDException {
+    public void beforeEach() throws Exception {
     	testData = new TestData(true);
     	store = testData.getStore();
+    	testData.initIdentity();
+
+    	issuerDoc = testData.getInstantData().loadTestIssuer();
+    	testDoc = testData.getInstantData().loadTestDocument();
     }
 
     @AfterEach
@@ -62,8 +68,6 @@ public class IssuerTest {
 
 	@Test
 	public void newIssuerTestWithSignKey() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadTestIssuer();
-
 		DIDURL signKey = issuerDoc.getDefaultPublicKeyId();
 
 		Issuer issuer = new Issuer(issuerDoc.getSubject(), signKey, store);
@@ -74,8 +78,6 @@ public class IssuerTest {
 
 	@Test
 	public void newIssuerTestWithoutSignKey() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadTestIssuer();
-
 		Issuer issuer = new Issuer(issuerDoc.getSubject(), store);
 
 		assertEquals(issuerDoc.getSubject(), issuer.getDid());
@@ -84,16 +86,7 @@ public class IssuerTest {
 
 	@Test
 	public void newIssuerTestWithInvalidKey() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadTestIssuer();
-		DIDDocument.Builder db = issuerDoc.edit();
-
-		HDKey key = TestData.generateKeypair();
 		DIDURL signKey = new DIDURL(issuerDoc.getSubject(), "testKey");
-		db.addAuthenticationKey(signKey, key.getPublicKeyBase58());
-
-		issuerDoc = db.seal(TestConfig.storePass);
-		assertTrue(issuerDoc.isValid());
-
 		DIDDocument doc = issuerDoc;
 		Exception e = assertThrows(InvalidKeyException.class, () -> {
 			new Issuer(doc, signKey);
@@ -103,9 +96,7 @@ public class IssuerTest {
 
 	@Test
 	public void newIssuerTestWithInvalidKey2() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadTestIssuer();
 		DIDURL signKey = new DIDURL(issuerDoc.getSubject(), "recovery");
-
 		DIDDocument doc = issuerDoc;
 		Exception e = assertThrows(InvalidKeyException.class, () -> {
 			new Issuer(doc, signKey);
@@ -115,9 +106,6 @@ public class IssuerTest {
 
 	@Test
 	public void IssueKycCredentialTest() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadTestIssuer();
-		DIDDocument testDoc = testData.loadTestDocument();
-
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
@@ -159,8 +147,6 @@ public class IssuerTest {
 
 	@Test
 	public void IssueSelfProclaimedCredentialTest() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadTestIssuer();
-
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Testing Issuer");
 		props.put("nation", "Singapore");
@@ -196,10 +182,10 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 
+	// TODO:
 	//@Test
 	public void IssueKycCredentialForCidTest() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadTestIssuer();
-		DIDDocument testDoc = testData.loadCustomizedDidDocument();
+		DIDDocument testDoc = testData.getInstantData().loadCustomizedDidDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
@@ -240,10 +226,10 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 
+	// TODO:
 	//@Test
 	public void IssueKycCredentialFromCidTest() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadCustomizedDidDocument();
-		DIDDocument testDoc = testData.loadTestDocument();
+		DIDDocument issuerDoc = testData.getInstantData().loadCustomizedDidDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
@@ -284,9 +270,10 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 
+	// TODO:
 	//@Test
 	public void IssueSelfProclaimedCredentialFromCidTest() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadCustomizedDidDocument();
+		DIDDocument issuerDoc = testData.getInstantData().loadCustomizedDidDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Testing Issuer");
@@ -326,8 +313,6 @@ public class IssuerTest {
 	@Test
 	public void IssueJsonPropsCredentialTest()
 			throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.loadTestIssuer();
-
 		String props = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
 		Issuer issuer = new Issuer(issuerDoc);
