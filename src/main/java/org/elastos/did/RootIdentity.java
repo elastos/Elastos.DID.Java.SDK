@@ -313,6 +313,38 @@ public final class RootIdentity {
 		return did;
 	}
 
+	protected static byte[] lazyCreateDidPrivateKey(DIDURL id, DIDStore store, String storepass)
+			throws DIDStoreException {
+		DIDDocument doc = store.loadDid(id.getDid());
+		if (doc == null) {
+			log.error("INTERNAL - Missing document for DID: {}", id.getDid());
+			throw new DIDStoreException("Missing document for DID: " + id.getDid());
+		}
+
+		String identity = doc.getMetadata().getRootIdentityId();
+		if (identity == null)
+			return null;
+
+		HDKey key = store.derive(identity, HDKey.DERIVE_PATH_PREFIX +
+				doc.getMetadata().getIndex(), storepass);
+
+		DIDDocument.PublicKey pk = doc.getPublicKey(id);
+		if (pk == null) {
+			log.error("INTERNAL - Invalid public key: {}", id);
+			throw new DIDStoreException("Invalid public key: " + id);
+		}
+
+		if (!key.getPublicKeyBase58().equals(pk.getPublicKeyBase58())) {
+			log.error("INTERNAL - Invalid DID metadata: {}", id.getDid());
+			throw new DIDStoreException("Invalid DID metadata: " + id.getDid());
+		}
+
+		store.storePrivateKey(id, key.serialize(), storepass);
+		byte[] sk = key.serialize();
+		key.wipe();
+		return sk;
+	}
+
 	/**
 	 * Create a new DID with specified index and get this DID's Document content.
 	 *
@@ -348,7 +380,7 @@ public final class RootIdentity {
 
 		log.debug("Creating new DID {} at index {}...", did.toString(), index);
 
-		HDKey key = getStore().derive(this, HDKey.DERIVE_PATH_PREFIX + index, storepass);
+		HDKey key = getStore().derive(getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
 		try {
 			DIDURL id = new DIDURL(did, "primary");
 			getStore().storePrivateKey(id, key.serialize(), storepass);
@@ -506,6 +538,8 @@ public final class RootIdentity {
 				if (i > lastIndex)
 					blanks++;
 			}
+
+			i++;
 		}
 
 		if (lastIndex >= getIndex())

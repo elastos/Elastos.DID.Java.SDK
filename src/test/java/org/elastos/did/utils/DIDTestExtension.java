@@ -24,6 +24,8 @@ package org.elastos.did.utils;
 
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 
+import org.elastos.did.DIDAdapter;
+import org.elastos.did.DIDBackend;
 import org.elastos.did.backend.SPVAdapter;
 import org.elastos.did.backend.SimulatedIDChain;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -31,24 +33,33 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource;
 
 public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
-	private static SPVAdapter adapter;
+	private static DIDAdapter adapter;
 	private static SimulatedIDChain simChain;
 
-	private void setup() throws Exception {
-		if (TestConfig.network.equalsIgnoreCase("mainnet") ||
-				TestConfig.network.equalsIgnoreCase("testnet")) {
-			adapter = new SPVAdapter(TestConfig.network,
-				TestConfig.walletDir, TestConfig.walletId,
-				new SPVAdapter.PasswordCallback() {
-					@Override
-					public String getPassword(String walletDir, String walletId) {
-						return TestConfig.walletPassword;
-					}
-				});
+	private void setup(String name) throws Exception {
+		// Force load TestConfig first!!!
+		String network = TestConfig.network;
+
+		if (name.equals("IDChainOperationsTest")) {
+			if (network.equalsIgnoreCase("mainnet") || network.equalsIgnoreCase("testnet")) {
+				adapter = new SPVAdapter(network,
+					TestConfig.walletDir, TestConfig.walletId,
+					new SPVAdapter.PasswordCallback() {
+						@Override
+						public String getPassword(String walletDir, String walletId) {
+							return TestConfig.walletPassword;
+						}
+					});
+			}
 		}
 
-		simChain = new SimulatedIDChain();
-		simChain.start();
+		if (adapter == null) {
+			simChain = new SimulatedIDChain();
+			simChain.start();
+			adapter = simChain.getAdapter();
+		}
+
+		DIDBackend.initialize(adapter);
 	}
 
 	@Override
@@ -56,26 +67,29 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 		if (simChain != null)
 			simChain.stop();
 
-		if (adapter != null)
-			adapter.destroy();
+		if (adapter != null && adapter instanceof SPVAdapter)
+			((SPVAdapter)adapter).destroy();
+
+		simChain = null;
+		adapter = null;
 	}
 
 	@Override
 	public void beforeAll(ExtensionContext context) throws Exception {
-	    String key = this.getClass().getName();
+		String key = this.getClass().getName();
 	    Object value = context.getRoot().getStore(GLOBAL).get(key);
 	    if (value == null) {
 	    	// First test container invocation.
-	    	setup();
+	    	setup(context.getDisplayName());
 	    	context.getRoot().getStore(GLOBAL).put(key, this);
 	    }
 	}
 
-	public static SimulatedIDChain getSimChain() {
-		return simChain;
+	public static void resetData() {
+		simChain.reset();
 	}
 
-	public static SPVAdapter getSpvAdapter() {
+	public static DIDAdapter getAdapter() {
 		return adapter;
 	}
 }

@@ -75,7 +75,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testGetPublicKey() throws IOException, DIDException {
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -149,7 +149,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testGetPublicKeyWithEmptyCid() throws IOException, DIDException {
-		DIDDocument doc = testData.loadEmptyCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadEmptyCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -225,7 +225,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testGetPublicKeyWithCid() throws IOException, DIDException {
-		DIDDocument doc = testData.loadCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -313,7 +313,7 @@ public class DIDDocumentTest {
 	public void testAddPublicKey() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -350,7 +350,7 @@ public class DIDDocumentTest {
 	public void testAddPublicKeyWithCid() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -387,7 +387,7 @@ public class DIDDocumentTest {
 	public void testRemovePublicKey() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -436,7 +436,7 @@ public class DIDDocumentTest {
 	public void testRemovePublicKeyWithCid() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -488,7 +488,7 @@ public class DIDDocumentTest {
 	public void testGetAuthenticationKey() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -556,7 +556,7 @@ public class DIDDocumentTest {
 	public void testGetAuthenticationKeyWithCid() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -637,7 +637,7 @@ public class DIDDocumentTest {
 	public void testAddAuthenticationKey() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -705,7 +705,7 @@ public class DIDDocumentTest {
 	public void testAddAuthenticationKeyWithCid() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadEmptyCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadEmptyCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -780,7 +780,7 @@ public class DIDDocumentTest {
 	public void testRemoveAuthenticationKey() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -835,7 +835,7 @@ public class DIDDocumentTest {
 	public void testRemoveAuthenticationKeyWithCid() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -881,7 +881,7 @@ public class DIDDocumentTest {
 	public void testGetAuthorizationKey() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -937,7 +937,7 @@ public class DIDDocumentTest {
 	public void testGetAuthorizationKeyWithCid() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -989,7 +989,7 @@ public class DIDDocumentTest {
 	public void testAddAuthorizationKey() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1063,7 +1063,7 @@ public class DIDDocumentTest {
 	public void testAddAuthorizationKeyWithCid() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1138,7 +1138,7 @@ public class DIDDocumentTest {
 	public void testRemoveAuthorizationKey() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1189,7 +1189,7 @@ public class DIDDocumentTest {
 	public void testRemoveAuthorizationKeyWithCid() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadCustomizedDidDocument();
+		DIDDocument doc = testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1295,7 +1295,7 @@ public class DIDDocumentTest {
 	public void testGetCredential() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1351,17 +1351,17 @@ public class DIDDocumentTest {
 	public void testAddCredential() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
 		DIDDocument.Builder db = doc.edit();
 
 		// Add credentials.
-		VerifiableCredential vc = testData.loadPassportCredential();
+		VerifiableCredential vc = testData.getCompatibleData().loadPassportCredential();
 		db.addCredential(vc);
 
-		vc = testData.loadTwitterCredential();
+		vc = testData.getCompatibleData().loadTwitterCredential();
 		db.addCredential(vc);
 
 		final VerifiableCredential fvc = vc;
@@ -1392,7 +1392,7 @@ public class DIDDocumentTest {
 	public void testAddSelfClaimedCredential() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1439,17 +1439,17 @@ public class DIDDocumentTest {
 	public void testRemoveCredential() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
 		DIDDocument.Builder db = doc.edit();
 
 		// Add test credentials.
-		VerifiableCredential vc = testData.loadPassportCredential();
+		VerifiableCredential vc = testData.getCompatibleData().loadPassportCredential();
 		db.addCredential(vc);
 
-		vc = testData.loadTwitterCredential();
+		vc = testData.getCompatibleData().loadTwitterCredential();
 		db.addCredential(vc);
 
 		// Remove credentials
@@ -1486,7 +1486,7 @@ public class DIDDocumentTest {
 	public void testGetService() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1546,7 +1546,7 @@ public class DIDDocumentTest {
 	public void testAddService() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1583,7 +1583,7 @@ public class DIDDocumentTest {
 	public void testRemoveService() throws DIDException, IOException {
 		testData.initIdentity();
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1619,7 +1619,7 @@ public class DIDDocumentTest {
 		testData.initIdentity();
 
 		DIDDocument compact = DIDDocument
-				.parse(testData.loadTestCompactJson());
+				.parse(testData.getCompatibleData().loadTestCompactJson());
 		assertNotNull(compact);
 		assertTrue(compact.isValid());
 
@@ -1631,7 +1631,7 @@ public class DIDDocumentTest {
 		assertEquals(3, compact.getServiceCount());
 
 		DIDDocument normalized = DIDDocument
-				.parse(testData.loadTestCompactJson());
+				.parse(testData.getCompatibleData().loadTestCompactJson());
 		assertNotNull(normalized);
 		assertTrue(normalized.isValid());
 
@@ -1642,14 +1642,14 @@ public class DIDDocumentTest {
 		assertEquals(2, normalized.getCredentialCount());
 		assertEquals(3, normalized.getServiceCount());
 
-		DIDDocument doc = testData.loadTestDocument();
+		DIDDocument doc = testData.getCompatibleData().loadTestDocument();
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		assertEquals(testData.loadTestNormalizedJson(), compact.toString(true));
-		assertEquals(testData.loadTestNormalizedJson(),
+		assertEquals(testData.getCompatibleData().loadTestNormalizedJson(), compact.toString(true));
+		assertEquals(testData.getCompatibleData().loadTestNormalizedJson(),
 				normalized.toString(true));
-		assertEquals(testData.loadTestNormalizedJson(), doc.toString(true));
+		assertEquals(testData.getCompatibleData().loadTestNormalizedJson(), doc.toString(true));
 
 		// Don't check the compact mode anymore
 		/*
@@ -1662,9 +1662,8 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testSignAndVerify() throws DIDException, IOException {
-		testData.initIdentity();
-
-		DIDDocument doc = testData.loadTestDocument();
+		RootIdentity identity = testData.initIdentity();
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1694,9 +1693,8 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testDerive() throws DIDException, IOException {
-		testData.initIdentity();
-
-		DIDDocument doc = testData.loadTestDocument();
+		RootIdentity identity = testData.initIdentity();
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1716,9 +1714,8 @@ public class DIDDocumentTest {
 	public void testDeriveFromIdentifier() throws DIDException, IOException {
 		String identifier = "org.elastos.did.test";
 
-		testData.initIdentity();
-
-		DIDDocument doc = testData.loadTestDocument();
+		RootIdentity identity = testData.initIdentity();
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 

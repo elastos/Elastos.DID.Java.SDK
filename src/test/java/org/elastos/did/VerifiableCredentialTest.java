@@ -54,10 +54,10 @@ public class VerifiableCredentialTest {
 
     @Test
 	public void TestKycCredential() throws DIDException, IOException {
-		DIDDocument issuer = testData.loadTestIssuer();
-		DIDDocument test = testData.loadTestDocument();
+		DIDDocument issuer = testData.getCompatibleData().loadTestIssuer();
+		DIDDocument test = testData.getCompatibleData().loadTestDocument();
 
-		VerifiableCredential vc = testData.loadEmailCredential();
+		VerifiableCredential vc = testData.getCompatibleData().loadEmailCredential();
 
 		assertEquals(new DIDURL(test.getSubject(), "email"), vc.getId());
 
@@ -80,9 +80,9 @@ public class VerifiableCredentialTest {
 
 	@Test
 	public void TestSelfProclaimedCredential() throws DIDException, IOException {
-		DIDDocument test = testData.loadTestDocument();
+		DIDDocument test = testData.getCompatibleData().loadTestDocument();
 
-		VerifiableCredential vc = testData.loadProfileCredential();
+		VerifiableCredential vc = testData.getCompatibleData().loadProfileCredential();
 
 		assertEquals(new DIDURL(test.getSubject(), "profile"), vc.getId());
 
@@ -110,17 +110,17 @@ public class VerifiableCredentialTest {
 	@Test
 	public void testParseAndSerializeKycCredential()
 			throws DIDException, IOException {
-		String json = testData.loadTwitterVcNormalizedJson();
+		String json = testData.getCompatibleData().loadTwitterVcNormalizedJson();
 		VerifiableCredential normalized = VerifiableCredential.parse(json);
 
-		json = testData.loadTwitterVcCompactJson();
+		json = testData.getCompatibleData().loadTwitterVcCompactJson();
 		VerifiableCredential compact = VerifiableCredential.parse(json);
 
-		VerifiableCredential vc = testData.loadTwitterCredential();
+		VerifiableCredential vc = testData.getCompatibleData().loadTwitterCredential();
 
-		assertEquals(testData.loadTwitterVcNormalizedJson(), normalized.toString(true));
-		assertEquals(testData.loadTwitterVcNormalizedJson(), compact.toString(true));
-		assertEquals(testData.loadTwitterVcNormalizedJson(), vc.toString(true));
+		assertEquals(testData.getCompatibleData().loadTwitterVcNormalizedJson(), normalized.toString(true));
+		assertEquals(testData.getCompatibleData().loadTwitterVcNormalizedJson(), compact.toString(true));
+		assertEquals(testData.getCompatibleData().loadTwitterVcNormalizedJson(), vc.toString(true));
 
 		// Don't check the compact mode anymore
 		/*
@@ -133,17 +133,17 @@ public class VerifiableCredentialTest {
 	@Test
 	public void testParseAndSerializeSelfProclaimedCredential()
 			throws DIDException, IOException {
-		String json = testData.loadProfileVcNormalizedJson();
+		String json = testData.getCompatibleData().loadProfileVcNormalizedJson();
 		VerifiableCredential normalized = VerifiableCredential.parse(json);
 
-		json = testData.loadProfileVcCompactJson();
+		json = testData.getCompatibleData().loadProfileVcCompactJson();
 		VerifiableCredential compact = VerifiableCredential.parse(json);
 
-		VerifiableCredential vc = testData.loadProfileCredential();
+		VerifiableCredential vc = testData.getCompatibleData().loadProfileCredential();
 
-		assertEquals(testData.loadProfileVcNormalizedJson(), normalized.toString(true));
-		assertEquals(testData.loadProfileVcNormalizedJson(), compact.toString(true));
-		assertEquals(testData.loadProfileVcNormalizedJson(), vc.toString(true));
+		assertEquals(testData.getCompatibleData().loadProfileVcNormalizedJson(), normalized.toString(true));
+		assertEquals(testData.getCompatibleData().loadProfileVcNormalizedJson(), compact.toString(true));
+		assertEquals(testData.getCompatibleData().loadProfileVcNormalizedJson(), vc.toString(true));
 
 		// Don't check the compact mode anymore
 		/*
@@ -156,17 +156,17 @@ public class VerifiableCredentialTest {
 	@Test
 	public void testParseAndSerializeJsonCredential()
 			throws DIDException, IOException {
-		String json = testData.loadJsonVcNormalizedJson();
+		String json = testData.getCompatibleData().loadJsonVcNormalizedJson();
 		VerifiableCredential normalized = VerifiableCredential.parse(json);
 
-		json = testData.loadJsonVcCompactJson();
+		json = testData.getCompatibleData().loadJsonVcCompactJson();
 		VerifiableCredential compact = VerifiableCredential.parse(json);
 
-		VerifiableCredential vc = testData.loadJsonCredential();
+		VerifiableCredential vc = testData.getCompatibleData().loadJsonCredential();
 
-		assertEquals(testData.loadJsonVcNormalizedJson(), normalized.toString(true));
-		assertEquals(testData.loadJsonVcNormalizedJson(), compact.toString(true));
-		assertEquals(testData.loadJsonVcNormalizedJson(), vc.toString(true));
+		assertEquals(testData.getCompatibleData().loadJsonVcNormalizedJson(), normalized.toString(true));
+		assertEquals(testData.getCompatibleData().loadJsonVcNormalizedJson(), compact.toString(true));
+		assertEquals(testData.getCompatibleData().loadJsonVcNormalizedJson(), vc.toString(true));
 
 		// Don't check the compact mode anymore
 		/*

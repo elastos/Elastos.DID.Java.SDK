@@ -33,7 +33,11 @@ import java.util.Date;
 import java.util.Map;
 
 import org.elastos.did.DIDDocument;
+import org.elastos.did.DIDURL;
+import org.elastos.did.RootIdentity;
+import org.elastos.did.VerifiableCredential;
 import org.elastos.did.crypto.Base64;
+import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestConfig;
@@ -54,13 +58,25 @@ public class JwtTest {
 	private static final int OPT = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 
 	private TestData testData;
+	private DIDDocument doc;
 
 	private static final Logger log = LoggerFactory.getLogger(JwtTest.class);
 
     @BeforeEach
     public void beforeEach() throws DIDException {
     	testData = new TestData(true);
- 		testData.initIdentity();
+ 		RootIdentity identity = testData.initIdentity();
+ 		doc = identity.newDid(TestConfig.storePass);
+
+ 		HDKey key = TestData.generateKeypair();
+ 		DIDDocument.Builder db = doc.edit();
+ 		DIDURL id = new DIDURL(doc.getSubject(), "#key2");
+ 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
+ 		testData.getStore().storePrivateKey(id, key.serialize(), TestConfig.storePass);
+ 		doc = db.seal(TestConfig.storePass);
+ 		testData.getStore().storeDid(doc);
+
+ 		doc.publish(TestConfig.storePass);
     }
 
     @AfterEach
@@ -91,10 +107,6 @@ public class JwtTest {
 	@Test
 	public void jwtTest()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Header h = JwtBuilder.createHeader();
 		h.setType(Header.JWT_TYPE)
 			.setContentType("json");
@@ -152,10 +164,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestSignWithDefaultKey()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		JwsHeader h = JwtBuilder.createJwsHeader();
 		h.setType(Header.JWT_TYPE)
 			.setContentType("json");
@@ -217,10 +225,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestSignWithSpecificKey()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
 		Date iat = cal.getTime();
@@ -276,10 +280,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestAutoVerify()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
 		Date iat = cal.getTime();
@@ -336,10 +336,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestClaimJsonNode()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
 		Date iat = cal.getTime();
@@ -348,7 +344,9 @@ public class JwtTest {
 		cal.add(Calendar.MONTH, 4);
 		Date exp = cal.getTime();
 
-		Map<String, Object> vc = loadJson(testData.loadEmailVcNormalizedJson());
+		VerifiableCredential vcEmail = testData.getInstantData().loadEmailCredential();
+
+		Map<String, Object> vc = loadJson(vcEmail.serialize(true));
 
 		String token = doc.jwtBuilder()
 				.addHeader(Header.TYPE, Header.JWT_TYPE)
@@ -397,7 +395,7 @@ public class JwtTest {
 		Class<Map<String, Object>> clazz = (Class)Map.class;
 		Map<String, Object> map = c.get("vc", clazz);
 		assertNotNull(map);
-		assertEquals(testData.loadEmailCredential().getId().toString(), map.get("id"));
+		assertEquals(vcEmail.getId().toString(), map.get("id"));
 		assertTrue(map.equals(vc));
 
 		// get as json text
@@ -412,10 +410,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestClaimJsonText()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
 		Date iat = cal.getTime();
@@ -424,7 +418,8 @@ public class JwtTest {
 		cal.add(Calendar.MONTH, 4);
 		Date exp = cal.getTime();
 
-		String jsonValue = testData.loadEmailVcNormalizedJson();
+		VerifiableCredential vcProfile = testData.getInstantData().loadProfileCredential();
+		String jsonValue = vcProfile.serialize(true);
 
 		String token = doc.jwtBuilder()
 				.addHeader(Header.TYPE, Header.JWT_TYPE)
@@ -475,7 +470,7 @@ public class JwtTest {
 		Class<Map<String, Object>> clazz = (Class)Map.class;
 		Map<String, Object> map = c.get("vc", clazz);
 		assertNotNull(map);
-		assertEquals(testData.loadEmailCredential().getId().toString(), map.get("id"));
+		assertEquals(vcProfile.getId().toString(), map.get("id"));
 		assertTrue(map.equals(vc));
 
 		// get as json text
@@ -490,10 +485,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestSetClaimWithJsonNode()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
 		Date iat = cal.getTime();
@@ -570,10 +561,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestSetClaimWithJsonText()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
 		Date iat = cal.getTime();
@@ -648,10 +635,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestAddClaimWithJsonNode()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
 		Date iat = cal.getTime();
@@ -728,10 +711,6 @@ public class JwtTest {
 	@Test
 	public void jwsTestAddClaimWithJsonText()
 			throws DIDException, IOException, JwtException {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
 		Date iat = cal.getTime();
@@ -805,10 +784,6 @@ public class JwtTest {
 
 	@Test
 	public void jwsTestExpiration() throws Exception {
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
 		Date iat = cal.getTime();
