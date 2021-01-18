@@ -29,7 +29,6 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.elastos.did.DIDAdapter;
 import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
@@ -39,7 +38,7 @@ import org.elastos.did.Mnemonic;
 import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
-import org.elastos.did.backend.SPVAdapter;
+import org.elastos.did.backend.SimulatedIDChain;
 import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
@@ -49,28 +48,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class TestDataGenerator {
 	private File testDataDir;
-	private DIDAdapter adapter;
+	private SimulatedIDChain simChain;
 	private DIDDocument issuer;
 	private DIDDocument test;
 	private DIDStore store;
 	private RootIdentity identity;
 	private HDKey rootPrivateKey;
 
-	private String init(String storeRoot) throws IOException, DIDException {
-		String network = "TestNet";
-		if (TestConfig.network.equalsIgnoreCase("mainnet"))
-			network = "MainNet";
+	private void init(String storeRoot) throws IOException, DIDException {
+		simChain = new SimulatedIDChain();
+		simChain.start();
 
-		adapter = new SPVAdapter(network,
-				TestConfig.walletDir, TestConfig.walletId,
-				new SPVAdapter.PasswordCallback() {
-					@Override
-					public String getPassword(String walletDir, String walletId) {
-						return TestConfig.walletPassword;
-					}
-				});
-
-		DIDBackend.initialize(adapter);
+		DIDBackend.initialize(simChain.getAdapter());
 
 		Utils.deleteFile(new File(storeRoot));
 		store = DIDStore.open(storeRoot);
@@ -84,8 +73,13 @@ public class TestDataGenerator {
     	testDataDir = new File(TestConfig.tempDir + File.separator +
     			"DIDTestFiles" + File.separator + "testdata");
     	testDataDir.mkdirs();
+	}
 
-    	return mnemonic;
+	private void cleanup() {
+		if (simChain != null)
+			simChain.stop();
+
+		simChain = null;
 	}
 
 	private void createTestIssuer() throws DIDException, IOException {
@@ -354,111 +348,7 @@ public class TestDataGenerator {
     			"DIDTestFiles" + File.separator + "teststore");
 		createTestIssuer();
 		createTestDocument();
-	}
-
-	public void createTestDidsForRestore()
-			throws IOException, DIDException, InterruptedException {
-		System.out.print("Generate mnemonic for restore...");
-		String mnemonic = init(TestConfig.storeRoot);
-		writeTo("mnemonic.restore", mnemonic);
-		System.out.println("OK");
-
-    	StringBuffer dids = new StringBuffer();
-
-    	System.out.println("Generate DIDs for restore......");
-		for (int i = 0; i < 5; i++) {
-    		System.out.print("******** Waiting for wallet available");
-	    	while (true) {
-	    		if (((SPVAdapter)adapter).isAvailable()) {
-	    			System.out.println(" OK");
-	    			break;
-	    		} else {
-	    			System.out.print(".");
-	    		}
-
-	    		Thread.sleep(30000);
-	    	}
-
-	    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-
-			Issuer selfIssuer = new Issuer(doc);
-			VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
-
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("name", "John");
-			props.put("nation", "Singapore");
-			props.put("language", "English");
-			props.put("email", "john@example.com");
-
-			VerifiableCredential vcProfile = cb.id("profile")
-					.type("BasicProfileCredential", "SelfProclaimedCredential")
-					.properties(props)
-					.seal(TestConfig.storePass);
-
-			cb = selfIssuer.issueFor(doc.getSubject());
-
-			props.clear();
-			props.put("email", "john@gmail.com");
-
-			VerifiableCredential vcEmail = cb.id("email")
-					.type("BasicProfileCredential",
-							"InternetAccountCredential", "EmailCredential")
-					.properties(props)
-					.seal(TestConfig.storePass);
-
-			cb = selfIssuer.issueFor(doc.getSubject());
-
-			props.clear();
-			props.put("nation", "Singapore");
-			props.put("passport", "S653258Z07");
-
-			VerifiableCredential vcPassport = cb.id("passport")
-					.type("BasicProfileCredential", "SelfProclaimedCredential")
-					.properties(props)
-					.seal(TestConfig.storePass);
-
-			cb = selfIssuer.issueFor(doc.getSubject());
-
-			props.clear();
-			props.put("twitter", "@john");
-
-			VerifiableCredential vcTwitter = cb.id("twitter")
-					.type("InternetAccountCredential", "TwitterCredential")
-					.properties(props)
-					.seal(TestConfig.storePass);
-
-			DIDDocument.Builder db = doc.edit();
-			db.addCredential(vcProfile);
-			db.addCredential(vcEmail);
-			db.addCredential(vcPassport);
-			db.addCredential(vcTwitter);
-			doc = db.seal(TestConfig.storePass);
-
-			store.storeDid(doc);
-
-    		System.out.print("******** Publishing DID: " + doc.getSubject());
-	    	doc.publish(TestConfig.storePass);
-	    	while (true) {
-	    		Thread.sleep(30000);
-	    		try {
-		    		DIDDocument d = doc.getSubject().resolve(true);
-		    		if (d != null) {
-		    			store.storeDid(d);
-		    			System.out.println(" OK");
-		    			break;
-		    		} else {
-		    			System.out.print(".");
-		    		}
-	    		} catch (Exception ignore) {
-	    			System.out.print("x");
-	    		}
-	    	}
-
-	    	dids.append(doc.getSubject()).append("\n");
-    	}
-
-		writeTo("dids.restore", dids.toString().trim());
-		System.out.println("Generate DIDs for restore......OK");
+		cleanup();
 	}
 
 	private String formatJson(String json) throws IOException {
@@ -473,13 +363,11 @@ public class TestDataGenerator {
 				+ File.separator + fileName);
 		out.write(content);
 		out.close();
-
 	}
 
 	public static void main(String[] argc) throws Exception {
-		TestDataGenerator bc = new TestDataGenerator();
+		TestDataGenerator tdc = new TestDataGenerator();
 
-		bc.createTestFiles();
-		bc.createTestDidsForRestore();
+		tdc.createTestFiles();
 	}
 }

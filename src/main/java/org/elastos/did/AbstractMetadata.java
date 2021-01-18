@@ -26,8 +26,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.text.ParseException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -42,7 +42,7 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata>
 
 	protected final static String USER_EXTRA_PREFIX = "UX-";
 
-	public HashMap<String, String> props;
+	public TreeMap<String, String> props;
 	private DIDStore store;
 
 	/**
@@ -52,7 +52,7 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata>
 	 */
 	protected AbstractMetadata(DIDStore store) {
 		this.store = store;
-		this.props = new HashMap<String, String>();
+		this.props = new TreeMap<String, String>();
 	}
 
 	/**
@@ -259,7 +259,7 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata>
 	protected Object clone() throws CloneNotSupportedException {
 		AbstractMetadata result = (AbstractMetadata)super.clone();
         result.store = store;
-        result.props = (HashMap<String, String>) props.clone();
+        result.props = (TreeMap<String, String>) props.clone();
 
         return result;
     }
