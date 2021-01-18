@@ -31,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -510,10 +509,7 @@ public class DIDStoreTest {
 	public void testCompatibility() throws DIDException {
 		byte[] data = "Hello World".getBytes();
 
-		URL url = this.getClass().getResource("/teststore");
-		File dir = new File(url.getPath());
-
-		DIDStore store = DIDStore.open(dir.getAbsolutePath());
+		DIDStore store = DIDStore.open(testData.getCompatibleData().getStoreDir());
 
        	List<DID> dids = store.listDids();
        	assertEquals(2, dids.size());
@@ -549,10 +545,7 @@ public class DIDStoreTest {
 
 	@Test
 	public void testCompatibilityNewDIDWithWrongPass() throws DIDException {
-		URL url = this.getClass().getResource("/teststore");
-		File dir = new File(url.getPath());
-
-		DIDStore store = DIDStore.open(dir.getAbsolutePath());
+		DIDStore store = DIDStore.open(testData.getCompatibleData().getStoreDir());
 		RootIdentity idenitty = store.loadRootIdentity();
 
 		assertThrows(WrongPasswordException.class, () -> {
@@ -562,10 +555,7 @@ public class DIDStoreTest {
 
 	@Test
 	public void testCompatibilityNewDIDandGetDID() throws DIDException {
-		URL url = this.getClass().getResource("/teststore");
-		File dir = new File(url.getPath());
-
-		DIDStore store = DIDStore.open(dir.getAbsolutePath());
+		DIDStore store = DIDStore.open(testData.getCompatibleData().getStoreDir());
 		RootIdentity identity = store.loadRootIdentity();
 
        	DIDDocument doc = identity.newDid(TestConfig.storePass);
@@ -683,10 +673,14 @@ public class DIDStoreTest {
 
 	@Test
 	public void testExportAndImportDid() throws DIDException, IOException {
-		URL url = this.getClass().getResource("/teststore");
-		File storeDir = new File(url.getPath());
+		File storeDir = new File(TestConfig.storeRoot);
 
-		DIDStore store = DIDStore.open(storeDir.getAbsolutePath());
+		testData.getInstantData().loadTestIssuer();
+		testData.getInstantData().loadTestDocument();
+		testData.getInstantData().loadEmailCredential();
+		testData.getInstantData().loadPassportCredential();
+		testData.getInstantData().loadProfileCredential();
+		testData.getInstantData().loadTwitterCredential();
 
 		DID did = store.listDids().get(0);
 
@@ -711,10 +705,15 @@ public class DIDStoreTest {
 
 	@Test
 	public void testExportAndImportRootIdentity() throws DIDException, IOException {
-		URL url = this.getClass().getResource("/teststore");
-		File storeDir = new File(url.getPath());
+		File storeDir = new File(TestConfig.storeRoot);
 
-		DIDStore store = DIDStore.open(storeDir.getAbsolutePath());
+		testData.getInstantData().loadTestIssuer();
+		testData.getInstantData().loadTestDocument();
+		testData.getInstantData().loadEmailCredential();
+		testData.getInstantData().loadPassportCredential();
+		testData.getInstantData().loadProfileCredential();
+		testData.getInstantData().loadTwitterCredential();
+
 		String id = store.loadRootIdentity().getId();
 
 		File tempDir = new File(TestConfig.tempDir);

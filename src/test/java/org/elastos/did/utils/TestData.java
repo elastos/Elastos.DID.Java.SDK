@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -175,7 +176,7 @@ public final class TestData {
 		private DIDDocument loadDIDDocument(String fileName)
 				throws DIDException, IOException {
 			Reader input = new InputStreamReader(getClass()
-					.getClassLoader().getResourceAsStream("testdata/" + fileName));
+					.getClassLoader().getResourceAsStream("v1/testdata/" + fileName));
 			DIDDocument doc = DIDDocument.parse(input);
 			input.close();
 
@@ -252,7 +253,7 @@ public final class TestData {
 		private VerifiableCredential loadCredential(String fileName)
 				throws DIDException, IOException {
 			Reader input = new InputStreamReader(getClass()
-					.getClassLoader().getResourceAsStream("testdata/" + fileName));
+					.getClassLoader().getResourceAsStream("v1/testdata/" + fileName));
 			VerifiableCredential vc = VerifiableCredential.parse(input);
 			input.close();
 
@@ -306,7 +307,7 @@ public final class TestData {
 				throws DIDException, IOException {
 			if (testVp == null) {
 				Reader input = new InputStreamReader(getClass()
-						.getClassLoader().getResourceAsStream("testdata/vp.json"));
+						.getClassLoader().getResourceAsStream("v1/testdata/vp.json"));
 				testVp = VerifiablePresentation.parse(input);
 				input.close();
 			}
@@ -316,7 +317,7 @@ public final class TestData {
 
 		private String loadText(String fileName) throws IOException {
 			BufferedReader input = new BufferedReader(new InputStreamReader(
-					getClass().getClassLoader().getResourceAsStream("testdata/" + fileName)));
+					getClass().getClassLoader().getResourceAsStream("v1/testdata/" + fileName)));
 			String text = input.readLine();
 			input.close();
 
@@ -426,6 +427,11 @@ public final class TestData {
 				testVpNormalizedJson = loadText("vp.normalized.json");
 
 			return testVpNormalizedJson;
+		}
+
+		public File getStoreDir() {
+			URL url = this.getClass().getResource("/v1/teststore");
+			return new File(url.getPath());
 		}
 	}
 

@@ -1731,8 +1731,7 @@ public class DIDDocumentTest {
 		}
 	}
 
-
-	@Test
+	//@Test
 	public void testCreateCustomizedDid() throws DIDException {
     	RootIdentity identity = testData.initIdentity();
 

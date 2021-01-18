@@ -616,15 +616,6 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		this.subject = subject;
 	}
 
-	protected DIDDocument(DID subject, DIDDocument controllerDoc) {
-		this.subject = subject;
-		this.controllers = new ArrayList<DID>();
-		this.controllerDocs = new HashMap<DID, DIDDocument>();
-
-		this.controllers.add(controllerDoc.getSubject());
-		this.controllerDocs.put(controllerDoc.getSubject(), controllerDoc);
-	}
-
 	/**
 	 * Copy constructor.
 	 *
@@ -2396,7 +2387,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			ctrls = new ArrayList<DID>(controllers.length);
 
 			for (DID ctrl : controllers) {
-				if (ctrl.equals(getSubject()))
+				if (ctrl.equals(getSubject()) || ctrls.contains(ctrl))
 					continue;
 
 				ctrls.add(ctrl);
@@ -2418,12 +2409,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		DIDDocument.Builder db = new DIDDocument.Builder(did, this, getStore());
 		if (ctrls != null) {
-			for (DID ctrl : ctrls) {
-				if (ctrl.equals(getSubject()))
-					continue;
-
+			for (DID ctrl : ctrls)
 				db.addController(ctrl);
-			}
 
 			db.setMultiSignature(multisig);
 		}
@@ -3442,9 +3429,15 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		 * @param store the DIDStore object
 		 */
 		protected Builder(DID did, DIDDocument controller, DIDStore store) {
-			this.document = new DIDDocument(did, controller);
-			DIDMetadata metadata = new DIDMetadata(did, store);
-			this.document.setMetadata(metadata);
+			this.document = new DIDDocument(did);
+
+			this.document.controllers = new ArrayList<DID>();
+			this.document.controllerDocs = new HashMap<DID, DIDDocument>();
+
+			this.document.controllers.add(controllerDoc.getSubject());
+			this.document.controllerDocs.put(controllerDoc.getSubject(), controllerDoc);
+
+			this.document.setMetadata(new DIDMetadata(did, store));
 
 			this.controllerDoc = controller;
 		}
