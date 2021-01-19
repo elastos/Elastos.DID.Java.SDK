@@ -24,9 +24,8 @@ package org.elastos.did.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,16 +51,13 @@ public final class TestData {
 	private String mnemonic;
 	private RootIdentity identity;
 
-	private CompatibleData compatibleData;
+	private CompatibleData v1;
+	private CompatibleData v2;
 	private InstantData instantData;
 
-	public TestData(boolean simulated) throws DIDException {
+	public TestData() throws DIDException {
     	Utils.deleteFile(new File(TestConfig.storeRoot));
 		store = DIDStore.open(TestConfig.storeRoot);
-	}
-
-	public TestData() throws DIDException {
-		this(TestConfig.network.equalsIgnoreCase("simnet"));
 	}
 
 	public void cleanup() {
@@ -94,11 +90,21 @@ public final class TestData {
 		return mnemonic;
 	}
 
-	public CompatibleData getCompatibleData() {
-		if (compatibleData == null)
-			compatibleData = new CompatibleData();
+	public CompatibleData getCompatibleData(int version) {
+		switch (version) {
+		case 1:
+			if (v1 == null)
+				v1 = new CompatibleData(version);
+			return v1;
 
-		return compatibleData;
+		case 2:
+			if (v2 == null)
+				v2 = new CompatibleData(version);
+			return v2;
+
+		default:
+			throw new IllegalArgumentException("Unsupported version");
+		}
 	}
 
 	public InstantData getInstantData() {
@@ -139,299 +145,194 @@ public final class TestData {
 	}
 
 	public class CompatibleData {
-		private DIDDocument testIssuer;
-		private String issuerCompactJson;
-		private String issuerNormalizedJson;
+		File dataPath;
+		File storePath;
+		private Map<String, Object> data;
 
-		private DIDDocument testDocument;
-		private String testCompactJson;
-		private String testNormalizedJson;
+		public CompatibleData(int version) {
+			this.data = new HashMap<String, Object>();
 
-		private DIDDocument emptyCustomizedDidDocument;
-		private DIDDocument customizedDidDocument;
+			URL url = this.getClass().getResource("/v" + version);
+			File root = new File(url.getPath());
 
-		private VerifiableCredential profileVc;
-		private String profileVcCompactJson;
-		private String profileVcNormalizedJson;
+			this.dataPath = new File(root, "/testdata");
+			this.storePath = new File(root, "/teststore");
+		}
 
-		private VerifiableCredential emailVc;
-		private String emailVcCompactJson;
-		private String emailVcNormalizedJson;
+		private File getDidFile(String name, String type) {
+			StringBuffer fileName = new StringBuffer();
+			fileName.append(name).append(".id");
+			if (type != null)
+				fileName.append(".").append(type);
+			fileName.append(".json");
 
-		private VerifiableCredential passportVc;
-		private String passportVcCompactJson;
-		private String passportVcNormalizedJson;
+			return new File(dataPath, fileName.toString());
+		}
 
-		private VerifiableCredential twitterVc;
-		private String twitterVcCompactJson;
-		private String twitterVcNormalizedJson;
+		private File getCredentialFile(String did, String vc, String type) {
+			StringBuffer fileName = new StringBuffer();
+			fileName.append(did).append(".vc.").append(vc);
+			if (type != null)
+				fileName.append(".").append(type);
+			fileName.append(".json");
 
-		private VerifiableCredential jsonVc;
-		private String jsonVcCompactJson;
-		private String jsonVcNormalizedJson;
+			return new File(dataPath, fileName.toString());
+		}
 
-		private VerifiablePresentation testVp;
-		private String testVpNormalizedJson;
+		private File getPresentationFile(String did, String vp, String type) {
+			StringBuffer fileName = new StringBuffer();
+			fileName.append(did).append(".vp.").append(vp);
+			if (type != null)
+				fileName.append(".").append(type);
+			fileName.append(".json");
 
-		private DIDDocument loadDIDDocument(String fileName)
-				throws DIDException, IOException {
-			Reader input = new InputStreamReader(getClass()
-					.getClassLoader().getResourceAsStream("v1/testdata/" + fileName));
-			DIDDocument doc = DIDDocument.parse(input);
+			return new File(dataPath, fileName.toString());
+		}
+
+		private String loadText(File file) throws IOException {
+			StringBuilder text = new StringBuilder();
+			char[] buffer = new char[1024];
+			int len;
+
+			BufferedReader input = new BufferedReader(new FileReader(file));
+			while ((len = input.read(buffer)) >= 0)
+				text.append(buffer, 0, len);
+
 			input.close();
 
-			if (store != null) {
+			return text.toString();
+		}
+
+		public synchronized DIDDocument getDIDDocument(String did, String type)
+				throws DIDException, IOException {
+			String baseKey = "res:did:" + did;
+			String key = type != null ? baseKey + ":" + type : baseKey;
+			if (data.containsKey(key))
+				return (DIDDocument)data.get(key);
+
+			// load the document
+			DIDDocument doc = DIDDocument.parse(getDidFile(did, type));
+
+			if (!data.containsKey(baseKey)) {
+				// If not stored before, store it and load private keys
 				store.storeDid(doc);
+				File[] kfs = dataPath.listFiles((d, f) -> {
+					return (f.startsWith(did + ".id.") && f.endsWith(".sk"));
+				});
+
+				for (File kf : kfs) {
+					int start = did.length() + 4;
+					int end = kf.getName().length() - 3;
+					String fragment = kf.getName().substring(start, end);
+					DIDURL id = new DIDURL(doc.getSubject(), "#" + fragment);
+
+					byte[] sk = HDKey.deserializeBase58(loadText(kf)).serialize();
+					store.storePrivateKey(id, sk, TestConfig.storePass);
+				}
+
+				doc.publish(TestConfig.storePass);
 			}
 
+			data.put(key, doc);
 			return doc;
 		}
 
-		private void importPrivateKey(DIDURL id, String fileName)
-				throws IOException, DIDException {
-			String skBase58 = loadText(fileName);
-			byte[] sk = HDKey.deserializeBase58(skBase58).serialize();
-
-			store.storePrivateKey(id, sk, TestConfig.storePass);
-		}
-
-
-		public DIDDocument loadTestIssuer() throws DIDException, IOException {
-			if (testIssuer == null) {
-				testIssuer = loadDIDDocument("issuer.json");
-
-				importPrivateKey(testIssuer.getDefaultPublicKeyId(), "issuer.primary.sk");
-
-				testIssuer.publish(TestConfig.storePass);
-			}
-
-			return testIssuer;
-		}
-
-		public DIDDocument loadTestDocument() throws DIDException, IOException {
-			loadTestIssuer();
-
-			if (testDocument == null) {
-				testDocument = loadDIDDocument("document.json");
-
-				importPrivateKey(testDocument.getDefaultPublicKeyId(), "document.primary.sk");
-				importPrivateKey(testDocument.getPublicKey("key2").getId(), "document.key2.sk");
-				importPrivateKey(testDocument.getPublicKey("key3").getId(), "document.key3.sk");
-
-				testDocument.publish(TestConfig.storePass);
-			}
-
-			return testDocument;
-		}
-
-		public DIDDocument loadEmptyCustomizedDidDocument() throws DIDException, IOException {
-			loadTestIssuer();
-			loadTestDocument();
-
-			if (emptyCustomizedDidDocument == null) {
-				emptyCustomizedDidDocument = loadDIDDocument("customized-did-empty.json");
-
-				emptyCustomizedDidDocument.publish(TestConfig.storePass);
-			}
-
-			return emptyCustomizedDidDocument;
-		}
-
-		public DIDDocument loadCustomizedDidDocument() throws DIDException, IOException {
-			loadTestIssuer();
-			loadTestDocument();
-
-			if (customizedDidDocument == null) {
-				customizedDidDocument = loadDIDDocument("customized-did.json");
-
-				customizedDidDocument.publish(TestConfig.storePass);
-			}
-
-			return customizedDidDocument;
-		}
-
-		private VerifiableCredential loadCredential(String fileName)
+		public DIDDocument getDIDDocument(String did)
 				throws DIDException, IOException {
-			Reader input = new InputStreamReader(getClass()
-					.getClassLoader().getResourceAsStream("v1/testdata/" + fileName));
-			VerifiableCredential vc = VerifiableCredential.parse(input);
-			input.close();
-
-			if (store != null)
-				store.storeCredential(vc);
-
-			return vc;
+			return getDIDDocument(did, null);
 		}
 
-		public VerifiableCredential loadProfileCredential()
-				throws DIDException, IOException {
-			if (profileVc == null)
-				profileVc = loadCredential("vc-profile.json");
+		public synchronized String getDIDDocumentJson(String did, String type)
+				throws IOException {
+			File file = getDidFile(did, type);
+			String key = "res:json:" + file.getName();
+			if (data.containsKey(key))
+				return (String)data.get(key);
 
-			return profileVc;
-		}
-
-		public VerifiableCredential loadEmailCredential()
-				throws DIDException, IOException {
-			if (emailVc == null)
-				emailVc = loadCredential("vc-email.json");
-
-			return emailVc;
-		}
-
-		public VerifiableCredential loadPassportCredential()
-				throws DIDException, IOException {
-			if (passportVc == null)
-				passportVc = loadCredential("vc-passport.json");
-
-			return passportVc;
-		}
-
-		public VerifiableCredential loadTwitterCredential()
-				throws DIDException, IOException {
-			if (twitterVc == null)
-				twitterVc = loadCredential("vc-twitter.json");
-
-			return twitterVc;
-		}
-
-		public VerifiableCredential loadJsonCredential()
-				throws DIDException, IOException {
-			if (jsonVc == null)
-				jsonVc = loadCredential("vc-json.json");
-
-			return jsonVc;
-		}
-
-		public VerifiablePresentation loadPresentation()
-				throws DIDException, IOException {
-			if (testVp == null) {
-				Reader input = new InputStreamReader(getClass()
-						.getClassLoader().getResourceAsStream("v1/testdata/vp.json"));
-				testVp = VerifiablePresentation.parse(input);
-				input.close();
-			}
-
-			return testVp;
-		}
-
-		private String loadText(String fileName) throws IOException {
-			BufferedReader input = new BufferedReader(new InputStreamReader(
-					getClass().getClassLoader().getResourceAsStream("v1/testdata/" + fileName)));
-			String text = input.readLine();
-			input.close();
-
+			// load the document
+			String text = loadText(file);
+			data.put(key, text);
 			return text;
 		}
 
-		public String loadIssuerCompactJson() throws IOException {
-			if (issuerCompactJson == null)
-				issuerCompactJson = loadText("issuer.compact.json");
+		public synchronized VerifiableCredential getCredential(String did, String vc, String type)
+				throws DIDException, IOException {
+			// Load DID document first for verification
+			getDIDDocument(did);
 
-			return issuerCompactJson;
+			String baseKey = "res:vc:" + did + ":" + vc;
+			String key = type != null ? baseKey + ":" + type : baseKey;
+			if (data.containsKey(key))
+				return (VerifiableCredential)data.get(key);
+
+			// load the credential
+			VerifiableCredential credential = VerifiableCredential.parse(
+					getCredentialFile(did, vc, type));
+
+			// If not stored before, store it
+			if (!data.containsKey(baseKey))
+				store.storeCredential(credential);
+
+			data.put(key, credential);
+			return credential;
 		}
 
-		public String loadIssuerNormalizedJson() throws IOException {
-			if (issuerNormalizedJson == null)
-				issuerNormalizedJson = loadText("issuer.normalized.json");
-
-			return issuerNormalizedJson;
+		public synchronized VerifiableCredential getCredential(String did, String vc)
+				throws DIDException, IOException {
+			return getCredential(did, vc, null);
 		}
 
-		public String loadTestCompactJson() throws IOException {
-			if (testCompactJson == null)
-				testCompactJson = loadText("document.compact.json");
+		public synchronized String getCredentialJson(String did, String vc, String type)
+				throws IOException {
+			File file = getCredentialFile(did, vc, type);
+			String key = "res:json:" + file.getName();
+			if (data.containsKey(key))
+				return (String)data.get(key);
 
-			return testCompactJson;
+			// load the document
+			String text = loadText(file);
+			data.put(key, text);
+			return text;
 		}
 
-		public String loadTestNormalizedJson() throws IOException {
-			if (testNormalizedJson == null)
-				testNormalizedJson = loadText("document.normalized.json");
+		public VerifiablePresentation getPresentation(String did, String vp, String type)
+				throws DIDException, IOException {
+			// Load DID document first for verification
+			getDIDDocument(did);
 
-			return testNormalizedJson;
+			String baseKey = "res:vp:" + did + ":" + vp;
+			String key = type != null ? baseKey + ":" + type : baseKey;
+			if (data.containsKey(key))
+				return (VerifiablePresentation)data.get(key);
+
+			// load the presentation
+			VerifiablePresentation presentation = VerifiablePresentation.parse(
+					getPresentationFile(did, vp, type));
+
+			data.put(key, presentation);
+			return presentation;
 		}
 
-		public String loadProfileVcCompactJson() throws IOException {
-			if (profileVcCompactJson == null)
-				profileVcCompactJson = loadText("vc-profile.compact.json");
-
-			return profileVcCompactJson;
+		public VerifiablePresentation getPresentation(String did, String vp)
+				throws DIDException, IOException {
+			return getPresentation(did, vp, null);
 		}
 
-		public String loadProfileVcNormalizedJson() throws IOException {
-			if (profileVcNormalizedJson == null)
-				profileVcNormalizedJson = loadText("vc-profile.normalized.json");
+		public synchronized String getPresentationJson(String did, String vp, String type)
+				throws IOException {
+			File file = getPresentationFile(did, vp, type);
+			String key = "res:json:" + file.getName();
+			if (data.containsKey(key))
+				return (String)data.get(key);
 
-			return profileVcNormalizedJson;
-		}
-
-		public String loadEmailVcCompactJson() throws IOException {
-			if (emailVcCompactJson == null)
-				emailVcCompactJson = loadText("vc-email.compact.json");
-
-			return emailVcCompactJson;
-		}
-
-		public String loadEmailVcNormalizedJson() throws IOException {
-			if (emailVcNormalizedJson == null)
-				emailVcNormalizedJson = loadText("vc-email.normalized.json");
-
-			return emailVcNormalizedJson;
-		}
-
-		public String loadPassportVcCompactJson() throws IOException {
-			if (passportVcCompactJson == null)
-				passportVcCompactJson = loadText("vc-passport.compact.json");
-
-			return passportVcCompactJson;
-		}
-
-		public String loadPassportVcNormalizedJson() throws IOException {
-			if (passportVcNormalizedJson == null)
-				passportVcNormalizedJson = loadText("vc-passport.normalized.json");
-
-			return passportVcNormalizedJson;
-		}
-
-		public String loadTwitterVcCompactJson() throws IOException {
-			if (twitterVcCompactJson == null)
-				twitterVcCompactJson = loadText("vc-twitter.compact.json");
-
-			return twitterVcCompactJson;
-		}
-
-		public String loadTwitterVcNormalizedJson() throws IOException {
-			if (twitterVcNormalizedJson == null)
-				twitterVcNormalizedJson = loadText("vc-twitter.normalized.json");
-
-			return twitterVcNormalizedJson;
-		}
-
-		public String loadJsonVcCompactJson() throws IOException {
-			if (jsonVcCompactJson == null)
-				jsonVcCompactJson = loadText("vc-json.compact.json");
-
-			return jsonVcCompactJson;
-		}
-
-		public String loadJsonVcNormalizedJson() throws IOException {
-			if (jsonVcNormalizedJson == null)
-				jsonVcNormalizedJson = loadText("vc-json.normalized.json");
-
-			return jsonVcNormalizedJson;
-		}
-
-		public String loadPresentationNormalizedJson() throws IOException {
-			if (testVpNormalizedJson == null)
-				testVpNormalizedJson = loadText("vp.normalized.json");
-
-			return testVpNormalizedJson;
+			// load the document
+			String text = loadText(file);
+			data.put(key, text);
+			return text;
 		}
 
 		public File getStoreDir() {
-			URL url = this.getClass().getResource("/v1/teststore");
-			return new File(url.getPath());
+			return storePath;
 		}
 	}
 

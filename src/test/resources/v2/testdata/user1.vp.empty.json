@@ -1,0 +1,12 @@
+{
+  "type" : "VerifiablePresentation",
+  "created" : "2021-01-19T03:33:14Z",
+  "verifiableCredential" : [ ],
+  "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+    "realm" : "https://example.com/",
+    "nonce" : "873172f58701a9ee686f0630204fee59",
+    "signature" : "bWlZ2c5mZGa8PIzk9fGW-pDFd0S7A8AWlWpHIlrXCfjMt4pdP9HeoEPDw1-zkwi_GjeWu7zwitHlzlkibcc6Yg"
+  }
+}

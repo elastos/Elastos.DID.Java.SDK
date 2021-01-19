@@ -64,7 +64,7 @@ public class JwtTest {
 
     @BeforeEach
     public void beforeEach() throws DIDException {
-    	testData = new TestData(true);
+    	testData = new TestData();
  		RootIdentity identity = testData.initIdentity();
  		doc = identity.newDid(TestConfig.storePass);
 

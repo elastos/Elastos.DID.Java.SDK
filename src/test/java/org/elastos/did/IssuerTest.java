@@ -53,7 +53,7 @@ public class IssuerTest {
 
     @BeforeEach
     public void beforeEach() throws Exception {
-    	testData = new TestData(true);
+    	testData = new TestData();
     	store = testData.getStore();
     	testData.initIdentity();
 

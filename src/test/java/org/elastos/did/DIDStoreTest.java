@@ -47,6 +47,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ public class DIDStoreTest {
 
     @BeforeEach
     public void beforeEach() throws DIDException {
-    	testData = new TestData(true);
+    	testData = new TestData();
     	store = testData.getStore();
     }
 
@@ -505,36 +507,38 @@ public class DIDStoreTest {
 		});
 	}
 
-	@Test
-	public void testCompatibility() throws DIDException {
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+	public void testCompatibility(int version) throws DIDException {
 		byte[] data = "Hello World".getBytes();
 
-		DIDStore store = DIDStore.open(testData.getCompatibleData().getStoreDir());
+		DIDStore store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
 
        	List<DID> dids = store.listDids();
-       	assertEquals(2, dids.size());
+       	assertEquals(4, dids.size());
 
        	for (DID did : dids) {
        		if (did.getMetadata().getAlias().equals("Issuer")) {
        			List<DIDURL> vcs = store.listCredentials(did);
        			assertEquals(1, vcs.size());
 
-       			DIDURL id = vcs.get(0);
-       			assertEquals("Profile", id.getMetadata().getAlias());
-
-       			assertNotNull(store.loadCredential(id));
-       		} else if (did.getMetadata().getAlias().equals("Test")) {
+       			for (DIDURL id : vcs)
+       				assertNotNull(store.loadCredential(id));
+       		} else if (did.getMetadata().getAlias().equals("User1")) {
        			List<DIDURL> vcs = store.listCredentials(did);
        			assertEquals(4, vcs.size());
 
-       			for (DIDURL id : vcs) {
-       				assertTrue(id.getMetadata().getAlias().equals("Profile")
-       						|| id.getMetadata().getAlias().equals("Email")
-       						|| id.getMetadata().getAlias().equals("Passport")
-       						|| id.getMetadata().getAlias().equals("Twitter"));
-
+       			for (DIDURL id : vcs)
        				assertNotNull(store.loadCredential(id));
-       			}
+       		} else if (did.getMetadata().getAlias().equals("User2")) {
+       			List<DIDURL> vcs = store.listCredentials(did);
+       			assertEquals(1, vcs.size());
+
+       			for (DIDURL id : vcs)
+       				assertNotNull(store.loadCredential(id));
+       		} else if (did.getMetadata().getAlias().equals("User3")) {
+       			List<DIDURL> vcs = store.listCredentials(did);
+       			assertEquals(0, vcs.size());
        		}
 
        		DIDDocument doc = store.loadDid(did);
@@ -543,9 +547,10 @@ public class DIDStoreTest {
        	}
 	}
 
-	@Test
-	public void testCompatibilityNewDIDWithWrongPass() throws DIDException {
-		DIDStore store = DIDStore.open(testData.getCompatibleData().getStoreDir());
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+	public void testCompatibilityNewDIDWithWrongPass(int version) throws DIDException {
+		DIDStore store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
 		RootIdentity idenitty = store.loadRootIdentity();
 
 		assertThrows(WrongPasswordException.class, () -> {
@@ -553,9 +558,10 @@ public class DIDStoreTest {
 		});
 	}
 
-	@Test
-	public void testCompatibilityNewDIDandGetDID() throws DIDException {
-		DIDStore store = DIDStore.open(testData.getCompatibleData().getStoreDir());
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+	public void testCompatibilityNewDIDandGetDID(int version) throws DIDException {
+		DIDStore store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
 		RootIdentity identity = store.loadRootIdentity();
 
        	DIDDocument doc = identity.newDid(TestConfig.storePass);

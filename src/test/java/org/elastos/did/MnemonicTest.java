@@ -40,7 +40,7 @@ public class MnemonicTest {
 
     @BeforeEach
     public void beforeEach() throws DIDException {
-    	testData = new TestData(true);
+    	testData = new TestData();
     }
 
     @AfterEach
