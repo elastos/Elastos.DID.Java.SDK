@@ -316,7 +316,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testAddPublicKey(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -353,7 +353,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testAddPublicKeyWithCid() throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = null; //TODO: testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
@@ -391,7 +391,7 @@ public class DIDDocumentTest {
 	@ParameterizedTest
 	@ValueSource(ints = {1, 2})
 	public void testRemovePublicKey(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -440,7 +440,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testRemovePublicKeyWithCid() throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = null; // TODO: testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
@@ -493,7 +493,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testGetAuthenticationKey(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -561,7 +561,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testGetAuthenticationKeyWithCid() throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = null; // TODO: testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
@@ -643,7 +643,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testAddAuthenticationKey(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -711,7 +711,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testAddAuthenticationKeyWithCid() throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = null; // TODO: testData.getCompatibleData().loadEmptyCustomizedDidDocument();
 		assertNotNull(doc);
@@ -787,7 +787,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
     public void testRemoveAuthenticationKey(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -842,7 +842,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testRemoveAuthenticationKeyWithCid() throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = null; // TODO: testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
@@ -889,7 +889,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testGetAuthorizationKey(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -945,7 +945,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testGetAuthorizationKeyWithCid() throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = null; // TODO: testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
@@ -998,7 +998,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testAddAuthorizationKey(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -1072,7 +1072,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testAddAuthorizationKeyWithCid() throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = null; // TODO: testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
@@ -1148,7 +1148,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testRemoveAuthorizationKey(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -1199,7 +1199,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testRemoveAuthorizationKeyWithCid() throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = null; //TODO: testData.getCompatibleData().loadCustomizedDidDocument();
 		assertNotNull(doc);
@@ -1265,7 +1265,7 @@ public class DIDDocumentTest {
 	/*
 	@Test
 	public void testGetJceKeyPair() throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.loadTestDocument();
 		assertNotNull(doc);
@@ -1306,7 +1306,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testGetCredential(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -1365,7 +1365,7 @@ public class DIDDocumentTest {
 	public void testAddCredential(int version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = cd.getDIDDocument("user1");
 		assertNotNull(doc);
@@ -1407,7 +1407,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testAddSelfClaimedCredential(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -1455,7 +1455,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testRemoveCredential(int version) throws DIDException, IOException {
-    	testData.initIdentity();
+    	testData.getRootIdentity();
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
 		DIDDocument doc = cd.getDIDDocument("user1");
@@ -1504,7 +1504,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testGetService(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -1565,7 +1565,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testAddService(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -1603,7 +1603,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testRemoveService(int version) throws DIDException, IOException {
-		testData.initIdentity();
+		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
 		assertNotNull(doc);
@@ -1670,7 +1670,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testSignAndVerify() throws DIDException, IOException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -1701,7 +1701,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testDerive() throws DIDException, IOException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -1722,7 +1722,7 @@ public class DIDDocumentTest {
 	public void testDeriveFromIdentifier() throws DIDException, IOException {
 		String identifier = "org.elastos.did.test";
 
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -1741,7 +1741,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testCreateCustomizedDid() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	// Create normal DID first
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
@@ -1785,7 +1785,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testCreateMultisigCustomizedDid() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	// Create normal DID first
     	DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
@@ -1861,7 +1861,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testUpdateDid() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -1905,7 +1905,7 @@ public class DIDDocumentTest {
 
 	//@Test
 	public void testUpdateCustomizedDid() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	// Create normal DID first
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
@@ -1980,7 +1980,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testUpdateDidWithoutPrevSignature() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2027,7 +2027,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testUpdateDidWithoutSignature() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2073,7 +2073,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testUpdateDidWithoutAllSignatures() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2105,7 +2105,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testForceUpdateDidWithoutAllSignatures() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2137,7 +2137,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testUpdateDidWithWrongPrevSignature() throws DIDException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2183,7 +2183,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testUpdateDidWithWrongSignature() throws DIDException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2229,7 +2229,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testForceUpdateDidWithWrongPrevSignature() throws DIDException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2259,7 +2259,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testForceUpdateDidWithWrongSignature() throws DIDException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2290,7 +2290,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testDeactivateSelfAfterCreate() throws DIDException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2309,7 +2309,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testDeactivateSelfAfterUpdate() throws DIDException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2342,7 +2342,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testDeactivateWithAuthorization1() throws DIDException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -2378,7 +2378,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testDeactivateWithAuthorization2() throws DIDException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	DIDDocument.Builder db = doc.edit();
@@ -2423,7 +2423,7 @@ public class DIDDocumentTest {
 
 	@Test
 	public void testDeactivateWithAuthorization3() throws DIDException {
-		RootIdentity identity = testData.initIdentity();
+		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	DIDDocument.Builder db = doc.edit();

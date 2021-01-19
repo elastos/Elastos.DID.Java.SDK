@@ -277,7 +277,7 @@ public class TestDataGenerator {
 				.properties(jsonProps)
 				.seal(TestConfig.storePass);
 		vcJson.getMetadata().setAlias("json");
-		store.storeCredential(vcTwitter);
+		store.storeCredential(vcJson);
 
 		json = vcJson.toString(true);
 		writeTo("user1.vc.json.normalized.json", json);
