@@ -24,7 +24,7 @@ public class RootIdentityTest {
 
     @BeforeEach
     public void beforeEach() throws DIDException {
-    	testData = new TestData(true);
+    	testData = new TestData();
     	store = testData.getStore();
     }
 

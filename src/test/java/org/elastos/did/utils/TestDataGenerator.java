@@ -39,7 +39,6 @@ import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.backend.SimulatedIDChain;
-import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 
@@ -50,28 +49,28 @@ public class TestDataGenerator {
 	private File testDataDir;
 	private SimulatedIDChain simChain;
 	private DIDDocument issuer;
-	private DIDDocument test;
+	private DIDDocument[] users = new DIDDocument[3];
 	private DIDStore store;
 	private RootIdentity identity;
 	private HDKey rootPrivateKey;
 
-	private void init(String storeRoot) throws IOException, DIDException {
+	private void init(String dataRoot) throws IOException, DIDException {
 		simChain = new SimulatedIDChain();
 		simChain.start();
 
 		DIDBackend.initialize(simChain.getAdapter());
 
-		Utils.deleteFile(new File(storeRoot));
-		store = DIDStore.open(storeRoot);
+		Utils.deleteFile(new File(dataRoot + File.separator + "teststore"));
+		store = DIDStore.open(dataRoot + File.separator + "teststore");
 
-    	String mnemonic =  Mnemonic.getInstance().generate();
+    	//String mnemonic =  Mnemonic.getInstance().generate();
+    	String mnemonic = "amateur file dignity extend cabin jaguar early electric ask video happy access";
     	rootPrivateKey = new HDKey(mnemonic, TestConfig.passphrase);
 
     	identity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
     			TestConfig.passphrase, store, TestConfig.storePass);
 
-    	testDataDir = new File(TestConfig.tempDir + File.separator +
-    			"DIDTestFiles" + File.separator + "testdata");
+    	testDataDir = new File(dataRoot + File.separator + "testdata");
     	testDataDir.mkdirs();
 	}
 
@@ -83,8 +82,8 @@ public class TestDataGenerator {
 	}
 
 	private void createTestIssuer() throws DIDException, IOException {
-		int index = 0;
-		DIDDocument doc = identity.newDid(index, TestConfig.storePass);
+		// index = 0;
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		doc.getMetadata().setAlias("Issuer");
 
 		System.out.print("Generate issuer DID: " + doc.getSubject() + "...");
@@ -92,7 +91,7 @@ public class TestDataGenerator {
 		Issuer selfIssuer = new Issuer(doc);
 		VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
-		Map<String, Object> props= new HashMap<String, Object>();
+		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("name", "Test Issuer");
 		props.put("nation", "Singapore");
 		props.put("language", "English");
@@ -107,42 +106,44 @@ public class TestDataGenerator {
 		db.addCredential(vc);
 		issuer = db.seal(TestConfig.storePass);
 		store.storeDid(issuer);
-		vc.getMetadata().setAlias("Profile");
-		store.storeCredential(vc);
 
 		DIDURL id = issuer.getDefaultPublicKeyId();
-		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + index);
-		writeTo("issuer." + id.getFragment() + ".sk", key.serializeBase58());
+		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + 0);
+		writeTo("issuer.id." + id.getFragment() + ".sk", key.serializeBase58());
 
 		String json = issuer.toString(true);
-		writeTo("issuer.normalized.json", json);
+		writeTo("issuer.id.normalized.json", json);
 
 		json = formatJson(json);
-		writeTo("issuer.json", json);
+		writeTo("issuer.id.json", json);
 
 		json = issuer.toString(false);
-		writeTo("issuer.compact.json", json);
+		writeTo("issuer.id.compact.json", json);
 
 		System.out.println(issuer.isValid() ? "OK" : "Error");
 	}
 
-	private void createTestDocument() throws DIDException, IOException {
-		int index = 1;
-		DIDDocument doc = identity.newDid(index, TestConfig.storePass);
-		doc.getMetadata().setAlias("Test");
+	private void createTestUser1() throws DIDException, IOException {
+		// index = 1;
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
+		doc.getMetadata().setAlias("User1");
 
 		// Test document with two embedded credentials
-		System.out.print("Generate test DID: " + doc.getSubject() + "...");
+		System.out.print("Generate user1 DID: " + doc.getSubject() + "...");
 
 		DIDDocument.Builder db = doc.edit();
 
 		HDKey temp = TestData.generateKeypair();
 		db.addAuthenticationKey("key2", temp.getPublicKeyBase58());
-		writeTo("document.key2.sk", Base58.encode(temp.serialize()));
+		store.storePrivateKey(new DIDURL(doc.getSubject(), "key2"),
+				temp.serialize(), TestConfig.storePass);
+		writeTo("user1.id.key2.sk", temp.serializeBase58());
 
 		temp = TestData.generateKeypair();
 		db.addAuthenticationKey("key3", temp.getPublicKeyBase58());
-		writeTo("document.key3.sk", Base58.encode(temp.serialize()));
+		store.storePrivateKey(new DIDURL(doc.getSubject(), "key3"),
+				temp.serialize(), TestConfig.storePass);
+		writeTo("user1.id.key3.sk", temp.serializeBase58());
 
 		temp = TestData.generateKeypair();
 		db.addAuthorizationKey("recovery",
@@ -159,7 +160,7 @@ public class TestDataGenerator {
 		Issuer selfIssuer = new Issuer(doc);
 		VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
-		Map<String, Object> props= new HashMap<String, Object>();
+		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nation", "Singapore");
@@ -175,7 +176,7 @@ public class TestDataGenerator {
 		Issuer kycIssuer = new Issuer(issuer);
 		cb = kycIssuer.issueFor(doc.getSubject());
 
-		props= new HashMap<String, Object>();
+		props.clear();
 		props.put("email", "john@example.com");
 
 		VerifiableCredential vcEmail = cb.id("email")
@@ -186,63 +187,33 @@ public class TestDataGenerator {
 
 		db.addCredential(vcProfile);
 		db.addCredential(vcEmail);
-		test = db.seal(TestConfig.storePass);
-		store.storeDid(test);
-		vcProfile.getMetadata().setAlias("Profile");
-		store.storeCredential(vcProfile);
-		vcEmail.getMetadata().setAlias("Email");
-		store.storeCredential(vcEmail);
+		doc = db.seal(TestConfig.storePass);
+		store.storeDid(doc);
 
-		DIDURL id = test.getDefaultPublicKeyId();
-		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + index);
-		writeTo("document." + id.getFragment() + ".sk", key.serializeBase58());
+		users[0] = doc;
 
-		String json = test.toString(true);
-		writeTo("document.normalized.json", json);
+		DIDURL id = doc.getDefaultPublicKeyId();
+		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + 1);
+		writeTo("user1.id." + id.getFragment() + ".sk", key.serializeBase58());
+
+		String json = doc.toString(true);
+		writeTo("user1.id.normalized.json", json);
 
 		json = formatJson(json);
-		writeTo("document.json", json);
+		writeTo("user1.id.json", json);
 
-		json = test.toString(false);
-		writeTo("document.compact.json", json);
+		json = doc.toString(false);
+		writeTo("user1.id.compact.json", json);
 
-		System.out.println(test.isValid() ? "OK" : "Error");
-
-		// Profile credential
-		System.out.print("Generate credential: " + vcProfile.getId() + "...");
-		json = vcProfile.toString(true);
-		writeTo("vc-profile.normalized.json", json);
-
-		json = formatJson(json);
-		writeTo("vc-profile.json", json);
-
-		json = vcProfile.toString(false);
-		writeTo("vc-profile.compact.json", json);
-
-		//System.out.println(vcProfile.isValid() ? "OK" : "Error");
-		System.out.println("OK");
-
-		// email credential
-		System.out.print("Generate credential: " + vcEmail.getId() + "...");
-		json = vcEmail.toString(true);
-		writeTo("vc-email.normalized.json", json);
-
-		json = formatJson(json);
-		writeTo("vc-email.json", json);
-
-		json = vcEmail.toString(false);
-		writeTo("vc-email.compact.json", json);
-
-		//System.out.println(vcEmail.isValid() ? "OK" : "Error");
-		System.out.println("OK");
+		System.out.println(doc.isValid() ? "OK" : "Error");
 
 		// Passport credential
-		id = new DIDURL(test.getSubject(), "passport");
+		id = new DIDURL(doc.getSubject(), "passport");
 		System.out.print("Generate credential: " + id + "...");
 
 		cb = selfIssuer.issueFor(doc.getSubject());
 
-		props= new HashMap<String, Object>();
+		props.clear();
 		props.put("nation", "Singapore");
 		props.put("passport", "S653258Z07");
 
@@ -254,24 +225,24 @@ public class TestDataGenerator {
 		store.storeCredential(vcPassport);
 
 		json = vcPassport.toString(true);
-		writeTo("vc-passport.normalized.json", json);
+		writeTo("user1.vc.passport.normalized.json", json);
 
 		json = formatJson(json);
-		writeTo("vc-passport.json", json);
+		writeTo("user1.vc.passport.json", json);
 
 		json = vcPassport.toString(false);
-		writeTo("vc-passport.compact.json", json);
+		writeTo("user1.vc.passport.compact.json", json);
 
 		//System.out.println(vcPassport.isValid() ? "OK" : "Error");
 		System.out.println("OK");
 
 		// Twitter credential
-		id = new DIDURL(test.getSubject(), "twitter");
+		id = new DIDURL(doc.getSubject(), "twitter");
 		System.out.print("Generate credential: " + id + "...");
 
 		cb = kycIssuer.issueFor(doc.getSubject());
 
-		props= new HashMap<String, Object>();
+		props.clear();
 		props.put("twitter", "@john");
 
 		VerifiableCredential vcTwitter = cb.id(id)
@@ -282,19 +253,19 @@ public class TestDataGenerator {
 		store.storeCredential(vcTwitter);
 
 		json = vcTwitter.toString(true);
-		writeTo("vc-twitter.normalized.json", json);
+		writeTo("user1.vc.twitter.normalized.json", json);
 
 		json = formatJson(json);
-		writeTo("vc-twitter.json", json);
+		writeTo("user1.vc.twitter.json", json);
 
 		json = vcTwitter.toString(false);
-		writeTo("vc-twitter.compact.json", json);
+		writeTo("user1.vc.twitter.compact.json", json);
 
 		//System.out.println(vcTwitter.isValid() ? "OK" : "Error");
 		System.out.println("OK");
 
 		// Json format credential
-		id = new DIDURL(test.getSubject(), "json");
+		id = new DIDURL(doc.getSubject(), "json");
 		System.out.print("Generate credential: " + id + "...");
 
 		cb = kycIssuer.issueFor(doc.getSubject());
@@ -302,20 +273,20 @@ public class TestDataGenerator {
 		String jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
 		VerifiableCredential vcJson = cb.id(id)
-				.type("InternetAccountCredential", "TwitterCredential")
+				.type("TestCredential", "JsonCredential")
 				.properties(jsonProps)
 				.seal(TestConfig.storePass);
 		vcJson.getMetadata().setAlias("json");
 		store.storeCredential(vcTwitter);
 
 		json = vcJson.toString(true);
-		writeTo("vc-json.normalized.json", json);
+		writeTo("user1.vc.json.normalized.json", json);
 
 		json = formatJson(json);
-		writeTo("vc-json.json", json);
+		writeTo("user1.vc.json.json", json);
 
 		json = vcJson.toString(false);
-		writeTo("vc-json.compact.json", json);
+		writeTo("user1.vc.json.compact.json", json);
 
 		//System.out.println(vcJson.isValid() ? "OK" : "Error");
 		System.out.println("OK");
@@ -324,7 +295,7 @@ public class TestDataGenerator {
 		System.out.print("Generate presentation...");
 
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
-				test.getSubject(), store);
+				doc.getSubject(), store);
 
 		VerifiablePresentation vp = pb.credentials(vcProfile, vcEmail)
 				.credentials(vcPassport)
@@ -333,21 +304,101 @@ public class TestDataGenerator {
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
 
-		json = vp.toString();
-		writeTo("vp.normalized.json", json);
+		json = vp.toString(true);
+		writeTo("user1.vp.nonempty.normalized.json", json);
 
-		json = formatJson(json);
-		writeTo("vp.json", json);
+		json = formatJson( vp.toString());
+		writeTo("user1.vp.nonempty.json", json);
+
+		pb = VerifiablePresentation.createFor(
+				doc.getSubject(), store);
+
+		vp = pb.realm("https://example.com/")
+				.nonce("873172f58701a9ee686f0630204fee59")
+				.seal(TestConfig.storePass);
+
+		json = vp.toString(true);
+		writeTo("user1.vp.empty.normalized.json", json);
+
+		json = formatJson(vp.toString());
+		writeTo("user1.vp.empty.json", json);
 
 		//System.out.println(vp.isValid() ? "OK" : "Error");
 		System.out.println("OK");
 	}
 
+	private void createTestUser2() throws DIDException, IOException {
+		// index = 2;
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
+		doc.getMetadata().setAlias("User2");
+
+		// Test document with two embedded credentials
+		System.out.print("Generate user2 DID: " + doc.getSubject() + "...");
+
+		DIDDocument.Builder db = doc.edit();
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", "John");
+		props.put("gender", "Male");
+		props.put("nation", "Singapore");
+		props.put("language", "English");
+		props.put("email", "john@example.com");
+		props.put("twitter", "@john");
+
+		db.addCredential("#profile", props, TestConfig.storePass);
+		doc = db.seal(TestConfig.storePass);
+		store.storeDid(doc);
+
+		users[1] = doc;
+
+		DIDURL id = doc.getDefaultPublicKeyId();
+		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + 2);
+		writeTo("user2.id." + id.getFragment() + ".sk", key.serializeBase58());
+
+		String json = doc.toString(true);
+		writeTo("user2.id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("user2.id.json", json);
+
+		json = doc.toString(false);
+		writeTo("user2.id.compact.json", json);
+
+		System.out.println(doc.isValid() ? "OK" : "Error");
+	}
+
+	private void createTestUser3() throws DIDException, IOException {
+		// index = 3;
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
+		doc.getMetadata().setAlias("User3");
+
+		// Test document with two embedded credentials
+		System.out.print("Generate user3 DID: " + doc.getSubject() + "...");
+
+		users[2] = doc;
+
+		DIDURL id = doc.getDefaultPublicKeyId();
+		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + 3);
+		writeTo("user3.id." + id.getFragment() + ".sk", key.serializeBase58());
+
+		String json = doc.toString(true);
+		writeTo("user3.id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("user3.id.json", json);
+
+		json = doc.toString(false);
+		writeTo("user3.id.compact.json", json);
+
+		System.out.println(doc.isValid() ? "OK" : "Error");
+	}
+
 	public void createTestFiles() throws IOException, DIDException {
-		init(TestConfig.tempDir + File.separator +
-    			"DIDTestFiles" + File.separator + "teststore");
+		init(TestConfig.tempDir + File.separator + "DIDTestFiles.v2");
 		createTestIssuer();
-		createTestDocument();
+		createTestUser1();
+		createTestUser2();
+		createTestUser3();
 		cleanup();
 	}
 

@@ -998,92 +998,91 @@ class FileSystemStorage implements DIDStorage {
 
 			// For each DID
 			for (File idDir : ids) {
+				DID did = new DID(DID.METHOD, idDir.getName());
+
 				// DID document and metadata
 				file = getFile("ids", idDir.getName(), "document");
-				if (!file.exists())
-					continue;
+				if (file.exists()) {
+					if (!file.isFile()) {
+						log.error("Abort upgrade DID store, invalid DID document: " + idDir.getName());
+						throw new DIDStorageException("Invalid DID document: " + idDir.getName());
+					}
 
-				if (!file.isFile()) {
-					log.error("Abort upgrade DID store, invalid DID document: " + idDir.getName());
-					throw new DIDStorageException("Invalid DID document: " + idDir.getName());
-				}
+					DIDDocument doc = DIDDocument.parse(file);
+					storeDid(doc);
 
-				DIDDocument doc = DIDDocument.parse(file);
-				storeDid(doc);
-
-				file = getFile("ids", idDir.getName(), ".meta");
-				if (file.exists() && file.isFile()) {
-					DIDMetadata dm = upgradeMetadataV2(file, DIDMetadata.class);
-					storeDidMetadata(doc.getSubject(), dm);
+					file = getFile("ids", idDir.getName(), ".meta");
+					if (file.exists() && file.isFile()) {
+						DIDMetadata dm = upgradeMetadataV2(file, DIDMetadata.class);
+						storeDidMetadata(doc.getSubject(), dm);
+					}
 				}
 
 				// Credentials
 				dir = getDir("ids", idDir.getName(), "credentials");
-				if (!dir.exists())
-					continue;
-
-				if (!dir.isDirectory()) {
-					log.error("Abort upgrade DID store, invalid credential directory: {}", idDir.getName());
-					throw new DIDStorageException("Invalid credential directory: " + idDir.getName());
-				}
-
-				File[] vcs = dir.listFiles((f) -> {
-					return f.isDirectory();
-				});
-
-				if (vcs == null || vcs.length == 0)
-					break;
-
-				// For each credential
-				for (File vcDir : vcs) {
-					// Credential and metadata
-					file = getFile("ids", idDir.getName(), "credentials",
-							vcDir.getName(), "credential");
-					if (!file.exists())
-						continue;
-
-					if (!file.isFile()) {
-						log.error("Abort upgrade DID store, invalid credential: {}/{}",
-								idDir.getName(), vcDir.getName());
-						throw new DIDStorageException("Invalid credential: "
-								+ idDir.getName() + "/" + vcDir.getName());
+				if (dir.exists()) {
+					if (!dir.isDirectory()) {
+						log.error("Abort upgrade DID store, invalid credential directory: {}", idDir.getName());
+						throw new DIDStorageException("Invalid credential directory: " + idDir.getName());
 					}
 
-					VerifiableCredential vc = VerifiableCredential.parse(file);
-					storeCredential(vc);
+					File[] vcs = dir.listFiles((f) -> {
+						return f.isDirectory();
+					});
 
-					file = getFile("ids", idDir.getName(), "credentials",
-							vcDir.getName(), ".meta");
-					CredentialMetadata cm = upgradeMetadataV2(file, CredentialMetadata.class);
-					storeCredentialMetadata(vc.getId(), cm);
+					if (vcs == null || vcs.length == 0)
+						break;
+
+					// For each credential
+					for (File vcDir : vcs) {
+						// Credential and metadata
+						file = getFile("ids", idDir.getName(), "credentials",
+								vcDir.getName(), "credential");
+						if (!file.exists())
+							continue;
+
+						if (!file.isFile()) {
+							log.error("Abort upgrade DID store, invalid credential: {}/{}",
+									idDir.getName(), vcDir.getName());
+							throw new DIDStorageException("Invalid credential: "
+									+ idDir.getName() + "/" + vcDir.getName());
+						}
+
+						VerifiableCredential vc = VerifiableCredential.parse(file);
+						storeCredential(vc);
+
+						file = getFile("ids", idDir.getName(), "credentials",
+								vcDir.getName(), ".meta");
+						CredentialMetadata cm = upgradeMetadataV2(file, CredentialMetadata.class);
+						storeCredentialMetadata(vc.getId(), cm);
+					}
 				}
 
 				// Private keys
 				dir = getDir("ids", idDir.getName(), "privatekeys");
-				if (!file.exists())
-					continue;
+				if (file.exists()) {
+					if (!dir.isDirectory()) {
+						log.error("Abort upgrade DID store, invalid private keys directory: {}", idDir.getName());
+						throw new DIDStorageException("Invalid private keys directory: " + idDir.getName());
+					}
 
-				if (!dir.isDirectory()) {
-					log.error("Abort upgrade DID store, invalid private keys directory: {}", idDir.getName());
-					throw new DIDStorageException("Invalid private keys directory: " + idDir.getName());
-				}
+					File[] sks = dir.listFiles((f) -> {
+						return f.isFile();
+					});
 
-				File[] sks = dir.listFiles((f) -> {
-					return f.isFile();
-				});
+					if (sks == null || sks.length == 0)
+						break;
 
-				if (sks == null || sks.length == 0)
-					break;
+					// For each credential
+					for (File skFile : sks) {
+						// Credential and metadata
+						String sk = readText(skFile);
+						if (sk == null || sk.isEmpty())
+							continue;
 
-				// For each credential
-				for (File skFile : sks) {
-					// Credential and metadata
-					String sk = readText(skFile);
-					if (sk == null || sk.isEmpty())
-						continue;
-
-					DIDURL keyId = new DIDURL(doc.getSubject(), "#" + skFile.getName());
-					storePrivateKey(keyId, sk);
+						DIDURL keyId = new DIDURL(did, "#" + skFile.getName());
+						storePrivateKey(keyId, sk);
+					}
 				}
 			}
 

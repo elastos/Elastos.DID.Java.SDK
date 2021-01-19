@@ -1,0 +1,1 @@
+{"type":"VerifiablePresentation","created":"2021-01-18T14:47:03Z","verifiableCredential":[],"proof":{"type":"ECDSAsecp256r1","verificationMethod":"did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary","realm":"https://example.com/","nonce":"873172f58701a9ee686f0630204fee59","signature":"k8a-jga9oZuMsOuc7XYY5c1Sj2l_GMmyE3D-0mXq-BqGvdZa3wf15a-PW_1mc19MSPhMcmHBtnDDxQfmjQ_WPA"}}
