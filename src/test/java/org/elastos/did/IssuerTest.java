@@ -55,10 +55,10 @@ public class IssuerTest {
     public void beforeEach() throws Exception {
     	testData = new TestData();
     	store = testData.getStore();
-    	testData.initIdentity();
+    	testData.getRootIdentity();
 
-    	issuerDoc = testData.getInstantData().loadTestIssuer();
-    	testDoc = testData.getInstantData().loadTestDocument();
+    	issuerDoc = testData.getInstantData().getIssuerDocument();
+    	testDoc = testData.getInstantData().getUser1Document();
     }
 
     @AfterEach
@@ -185,7 +185,7 @@ public class IssuerTest {
 	// TODO:
 	//@Test
 	public void IssueKycCredentialForCidTest() throws DIDException, IOException {
-		DIDDocument testDoc = testData.getInstantData().loadCustomizedDidDocument();
+		DIDDocument testDoc = null; // TODO: testData.getInstantData().loadCustomizedDidDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
@@ -229,7 +229,7 @@ public class IssuerTest {
 	// TODO:
 	//@Test
 	public void IssueKycCredentialFromCidTest() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.getInstantData().loadCustomizedDidDocument();
+		DIDDocument issuerDoc = null; // TODO: testData.getInstantData().loadCustomizedDidDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
@@ -273,7 +273,7 @@ public class IssuerTest {
 	// TODO:
 	//@Test
 	public void IssueSelfProclaimedCredentialFromCidTest() throws DIDException, IOException {
-		DIDDocument issuerDoc = testData.getInstantData().loadCustomizedDidDocument();
+		DIDDocument issuerDoc = null; // TODO: testData.getInstantData().loadCustomizedDidDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Testing Issuer");

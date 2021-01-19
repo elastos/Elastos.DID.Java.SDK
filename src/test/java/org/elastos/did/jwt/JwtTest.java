@@ -65,7 +65,7 @@ public class JwtTest {
     @BeforeEach
     public void beforeEach() throws DIDException {
     	testData = new TestData();
- 		RootIdentity identity = testData.initIdentity();
+ 		RootIdentity identity = testData.getRootIdentity();
  		doc = identity.newDid(TestConfig.storePass);
 
  		HDKey key = TestData.generateKeypair();
@@ -344,7 +344,7 @@ public class JwtTest {
 		cal.add(Calendar.MONTH, 4);
 		Date exp = cal.getTime();
 
-		VerifiableCredential vcEmail = testData.getInstantData().loadEmailCredential();
+		VerifiableCredential vcEmail = testData.getInstantData().getUser1Document().getCredential("#email");
 
 		Map<String, Object> vc = loadJson(vcEmail.serialize(true));
 
@@ -418,8 +418,8 @@ public class JwtTest {
 		cal.add(Calendar.MONTH, 4);
 		Date exp = cal.getTime();
 
-		VerifiableCredential vcProfile = testData.getInstantData().loadProfileCredential();
-		String jsonValue = vcProfile.serialize(true);
+		VerifiableCredential vcPassport = testData.getInstantData().getUser1PassportCredential();
+		String jsonValue = vcPassport.serialize(true);
 
 		String token = doc.jwtBuilder()
 				.addHeader(Header.TYPE, Header.JWT_TYPE)
@@ -470,7 +470,7 @@ public class JwtTest {
 		Class<Map<String, Object>> clazz = (Class)Map.class;
 		Map<String, Object> map = c.get("vc", clazz);
 		assertNotNull(map);
-		assertEquals(vcProfile.getId().toString(), map.get("id"));
+		assertEquals(vcPassport.getId().toString(), map.get("id"));
 		assertTrue(map.equals(vc));
 
 		// get as json text

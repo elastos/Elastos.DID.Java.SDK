@@ -74,7 +74,7 @@ public class IDChainOperationsTest {
     @BeforeAll
     public static void beforeAll() throws DIDException {
     	testData = new TestData();
-    	testData.initIdentity();
+    	testData.getRootIdentity();
     	dids = new ArrayList<DID>();
     }
 

@@ -82,8 +82,14 @@ public final class TestData {
     	return store;
 	}
 
-	public RootIdentity getRootIdentity() {
-		return identity;
+	public synchronized RootIdentity getRootIdentity() throws DIDException {
+		if (identity == null) {
+	    	mnemonic =  Mnemonic.getInstance().generate();
+	    	identity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+	    			TestConfig.passphrase, true, store, TestConfig.storePass);
+		}
+
+    	return identity;
 	}
 
 	public String getMnemonic() {
@@ -134,14 +140,6 @@ public final class TestData {
 				}
 			}
 		}
-	}
-
-	public RootIdentity initIdentity() throws DIDException {
-    	mnemonic =  Mnemonic.getInstance().generate();
-    	identity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
-    			TestConfig.passphrase, true, store, TestConfig.storePass);
-
-    	return identity;
 	}
 
 	public class CompatibleData {
@@ -337,18 +335,19 @@ public final class TestData {
 	}
 
 	public class InstantData {
-		private DIDDocument testIssuer;
-		private DIDDocument testDocument;
-		private VerifiableCredential vcProfile;
-		private VerifiableCredential vcEmail;
-		private VerifiableCredential vcPassport;
-		private VerifiableCredential vcTwitter;
-		private VerifiableCredential vcJson;
-		private VerifiablePresentation vpTest;
+		private DIDDocument idIssuer;
+		private DIDDocument idUser1;
+		private DIDDocument idUser2;
+		private DIDDocument idUser3;
+		private VerifiableCredential vcUser1Passport;
+		private VerifiableCredential vcUser1Twitter;
+		private VerifiableCredential vcUser1Json;
+		private VerifiablePresentation vpUser1Nonempty;
+		private VerifiablePresentation vpUser1Empty;
 
-		public DIDDocument loadTestIssuer() throws DIDException, IOException {
-			if (testIssuer == null) {
-				initIdentity();
+		public synchronized DIDDocument getIssuerDocument() throws DIDException, IOException {
+			if (idIssuer == null) {
+				getRootIdentity();
 
 				DIDDocument doc = identity.newDid(TestConfig.storePass);
 				doc.getMetadata().setAlias("Issuer");
@@ -356,7 +355,7 @@ public final class TestData {
 				Issuer selfIssuer = new Issuer(doc);
 				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
-				Map<String, Object> props= new HashMap<String, Object>();
+				Map<String, Object> props = new HashMap<String, Object>();
 				props.put("name", "Test Issuer");
 				props.put("nation", "Singapore");
 				props.put("language", "English");
@@ -370,7 +369,7 @@ public final class TestData {
 				DIDDocument.Builder db = doc.edit();
 				db.addCredential(vc);
 
-		 		HDKey key = TestData.generateKeypair();
+				HDKey key = TestData.generateKeypair();
 		 		DIDURL id = new DIDURL(doc.getSubject(), "#key2");
 		 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
 		 		store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
@@ -387,37 +386,33 @@ public final class TestData {
 
 				doc = db.seal(TestConfig.storePass);
 				store.storeDid(doc);
-
-				vc.getMetadata().setAlias("Profile");
-				store.storeCredential(vc);
-
 				doc.publish(TestConfig.storePass);
 
-				testIssuer = doc;
+				idIssuer = doc;
 			}
 
-			return testIssuer;
-
+			return idIssuer;
 		}
 
-		public DIDDocument loadTestDocument() throws DIDException, IOException {
-			if (testDocument == null) {
-				DIDDocument issuer = loadTestIssuer();
+		public synchronized DIDDocument getUser1Document() throws DIDException, IOException {
+			if (idUser1 == null) {
+				getIssuerDocument();
 
 				DIDDocument doc = identity.newDid(TestConfig.storePass);
-				doc.getMetadata().setAlias("Test");
+				doc.getMetadata().setAlias("User1");
 
+				// Test document with two embedded credentials
 				DIDDocument.Builder db = doc.edit();
 
 				HDKey temp = TestData.generateKeypair();
-				DIDURL id = new DIDURL(doc.getSubject(), "#key2");
-				db.addAuthenticationKey(id, temp.getPublicKeyBase58());
-				store.storePrivateKey(id, temp.serialize(), TestConfig.storePass);
+				db.addAuthenticationKey("key2", temp.getPublicKeyBase58());
+				store.storePrivateKey(new DIDURL(doc.getSubject(), "key2"),
+						temp.serialize(), TestConfig.storePass);
 
 				temp = TestData.generateKeypair();
-				id = new DIDURL(doc.getSubject(), "#key3");
-				db.addAuthenticationKey(id, temp.getPublicKeyBase58());
-				store.storePrivateKey(id, temp.serialize(), TestConfig.storePass);
+				db.addAuthenticationKey("key3", temp.getPublicKeyBase58());
+				store.storePrivateKey(new DIDURL(doc.getSubject(), "key3"),
+						temp.serialize(), TestConfig.storePass);
 
 				temp = TestData.generateKeypair();
 				db.addAuthorizationKey("recovery",
@@ -434,7 +429,7 @@ public final class TestData {
 				Issuer selfIssuer = new Issuer(doc);
 				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
-				Map<String, Object> props= new HashMap<String, Object>();
+				Map<String, Object> props = new HashMap<String, Object>();
 				props.put("name", "John");
 				props.put("gender", "Male");
 				props.put("nation", "Singapore");
@@ -442,18 +437,18 @@ public final class TestData {
 				props.put("email", "john@example.com");
 				props.put("twitter", "@john");
 
-				vcProfile = cb.id("profile")
+				VerifiableCredential vcProfile = cb.id("profile")
 						.type("BasicProfileCredential", "SelfProclaimedCredential")
 						.properties(props)
 						.seal(TestConfig.storePass);
 
-				Issuer kycIssuer = new Issuer(issuer);
+				Issuer kycIssuer = new Issuer(idIssuer);
 				cb = kycIssuer.issueFor(doc.getSubject());
 
-				props= new HashMap<String, Object>();
+				props.clear();
 				props.put("email", "john@example.com");
 
-				vcEmail = cb.id("email")
+				VerifiableCredential vcEmail = cb.id("email")
 						.type("BasicProfileCredential",
 								"InternetAccountCredential", "EmailCredential")
 						.properties(props)
@@ -462,130 +457,165 @@ public final class TestData {
 				db.addCredential(vcProfile);
 				db.addCredential(vcEmail);
 				doc = db.seal(TestConfig.storePass);
-
-				vcProfile.getMetadata().setAlias("Profile");
-				store.storeCredential(vcProfile);
-				vcEmail.getMetadata().setAlias("Email");
-				store.storeCredential(vcEmail);
-
 				store.storeDid(doc);
 				doc.publish(TestConfig.storePass);
 
-				id = new DIDURL(doc.getSubject(), "passport");
-				cb = selfIssuer.issueFor(doc.getSubject());
+				idUser1 = doc;
+			}
 
-				props= new HashMap<String, Object>();
+			return idUser1;
+		}
+
+		public synchronized VerifiableCredential getUser1PassportCredential() throws DIDException, IOException {
+			if (vcUser1Passport == null) {
+				DIDDocument doc = getUser1Document();
+
+				DIDURL id = new DIDURL(doc.getSubject(), "passport");
+
+				Issuer selfIssuer = new Issuer(doc);
+				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+
+				Map<String, Object> props = new HashMap<String, Object>();
 				props.put("nation", "Singapore");
 				props.put("passport", "S653258Z07");
 
-				vcPassport = cb.id(id)
+				VerifiableCredential vcPassport = cb.id(id)
 						.type("BasicProfileCredential", "SelfProclaimedCredential")
 						.properties(props)
 						.seal(TestConfig.storePass);
 				vcPassport.getMetadata().setAlias("Passport");
 				store.storeCredential(vcPassport);
 
-				id = new DIDURL(doc.getSubject(), "twitter");
-				cb = kycIssuer.issueFor(doc.getSubject());
+				vcUser1Passport = vcPassport;
+			}
 
-				props= new HashMap<String, Object>();
+			return vcUser1Passport;
+		}
+
+		public synchronized VerifiableCredential getUser1TwitterCredential() throws DIDException, IOException {
+			if (vcUser1Twitter == null) {
+				DIDDocument doc = getUser1Document();
+
+				DIDURL id = new DIDURL(doc.getSubject(), "twitter");
+
+				Issuer kycIssuer = new Issuer(idIssuer);
+				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
+
+				Map<String, Object> props = new HashMap<String, Object>();
 				props.put("twitter", "@john");
 
-				vcTwitter = cb.id(id)
+				VerifiableCredential vcTwitter = cb.id(id)
 						.type("InternetAccountCredential", "TwitterCredential")
 						.properties(props)
 						.seal(TestConfig.storePass);
 				vcTwitter.getMetadata().setAlias("Twitter");
 				store.storeCredential(vcTwitter);
 
-				testDocument = doc;
+				vcUser1Twitter = vcTwitter;
 			}
 
-			return testDocument;
+			return vcUser1Twitter;
 		}
 
-
-		public DIDDocument loadEmptyCustomizedDidDocument() throws DIDException, IOException {
-			return null;
-		}
-
-		public DIDDocument loadCustomizedDidDocument() throws DIDException, IOException {
-			return null;
-		}
-
-		public VerifiableCredential loadProfileCredential()
-				throws DIDException, IOException {
-			if (vcProfile == null)
-				loadTestDocument();
-
-			return vcProfile;
-		}
-
-		public VerifiableCredential loadEmailCredential()
-				throws DIDException, IOException {
-			if (vcEmail == null)
-				loadTestDocument();
-
-			return vcEmail;
-		}
-
-		public VerifiableCredential loadPassportCredential()
-				throws DIDException, IOException {
-			if (vcPassport == null)
-				loadTestDocument();
-
-			return vcPassport;
-		}
-
-		public VerifiableCredential loadTwitterCredential()
-				throws DIDException, IOException {
-			if (vcTwitter == null)
-				loadTestDocument();
-
-			return vcTwitter;
-		}
-
-		public VerifiableCredential loadJsonCredential()
-				throws DIDException, IOException {
-			if (vcJson == null) {
-				DIDDocument doc = loadTestDocument();
-				DIDDocument issuer = loadTestIssuer();
-
-				Issuer kycIssuer = new Issuer(issuer);
+		public synchronized VerifiableCredential getUser1JsonCredential() throws DIDException, IOException {
+			if (vcUser1Json == null) {
+				DIDDocument doc = getUser1Document();
 
 				DIDURL id = new DIDURL(doc.getSubject(), "json");
+				System.out.print("Generate credential: " + id + "...");
+
+				Issuer kycIssuer = new Issuer(idIssuer);
 				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
 
 				String jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
-				vcJson = cb.id(id)
-						.type("InternetAccountCredential", "TwitterCredential")
+				VerifiableCredential vcJson = cb.id(id)
+						.type("TestCredential", "JsonCredential")
 						.properties(jsonProps)
 						.seal(TestConfig.storePass);
 				vcJson.getMetadata().setAlias("json");
+				store.storeCredential(vcJson);
+
+				vcUser1Json = vcJson;
 			}
 
-			return vcJson;
+			return vcUser1Json;
 		}
 
-		public VerifiablePresentation loadPresentation()
-				throws DIDException, IOException {
-			if (vpTest == null) {
-				DIDDocument doc = loadTestDocument();
+		public synchronized VerifiablePresentation getUser1NonemptyPresentation() throws DIDException, IOException {
+			if (vpUser1Nonempty == null) {
+				DIDDocument doc = getUser1Document();
 
 				VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
 						doc.getSubject(), store);
 
-				vpTest = pb.credentials(loadProfileCredential(), loadEmailCredential())
-						.credentials(loadPassportCredential())
-						.credentials(loadTwitterCredential())
+				VerifiablePresentation vp = pb
+						.credentials(doc.getCredential("#profile"), doc.getCredential("#email"))
+						.credentials(getUser1PassportCredential())
+						.credentials(getUser1TwitterCredential())
 						.realm("https://example.com/")
 						.nonce("873172f58701a9ee686f0630204fee59")
 						.seal(TestConfig.storePass);
 
+				vpUser1Nonempty = vp;
 			}
 
-			return vpTest;
+			return vpUser1Nonempty;
+		}
+
+		public synchronized VerifiablePresentation getUser1EmptyPresentation() throws DIDException, IOException {
+			if (vpUser1Empty == null) {
+				DIDDocument doc = getUser1Document();
+
+				VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
+						doc.getSubject(), store);
+
+				VerifiablePresentation vp = pb.realm("https://example.com/")
+						.nonce("873172f58701a9ee686f0630204fee59")
+						.seal(TestConfig.storePass);
+
+				vpUser1Empty = vp;
+			}
+
+			return vpUser1Empty;
+		}
+
+		public synchronized DIDDocument getUser2Document() throws DIDException, IOException {
+			if (idUser2 == null) {
+				DIDDocument doc = identity.newDid(TestConfig.storePass);
+				doc.getMetadata().setAlias("User2");
+
+				DIDDocument.Builder db = doc.edit();
+
+				Map<String, Object> props = new HashMap<String, Object>();
+				props.put("name", "John");
+				props.put("gender", "Male");
+				props.put("nation", "Singapore");
+				props.put("language", "English");
+				props.put("email", "john@example.com");
+				props.put("twitter", "@john");
+
+				db.addCredential("#profile", props, TestConfig.storePass);
+				doc = db.seal(TestConfig.storePass);
+				store.storeDid(doc);
+				doc.publish(TestConfig.storePass);
+
+				idUser2 = doc;
+			}
+
+			return idUser2;
+		}
+
+		public synchronized DIDDocument createUser3Document() throws DIDException, IOException {
+			if (idUser3 == null) {
+				DIDDocument doc = identity.newDid(TestConfig.storePass);
+				doc.getMetadata().setAlias("User3");
+				doc.publish(TestConfig.storePass);
+
+				idUser3 = doc;
+			}
+
+			return idUser3;
 		}
 	}
 }

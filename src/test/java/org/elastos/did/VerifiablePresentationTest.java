@@ -161,26 +161,23 @@ public class VerifiablePresentationTest {
 		assertTrue(normalized.isGenuine());
 		assertTrue(normalized.isValid());
 
-		System.out.println(normalizedJson);
-		System.out.println(normalized.toString(true));
-		System.out.println(vp.toString(true));
-
 		assertEquals(normalizedJson, normalized.toString(true));
 		assertEquals(normalizedJson, vp.toString(true));
 	}
 
 	@Test
 	public void testBuildNonempty() throws DIDException, IOException {
-		DIDDocument testDoc = testData.getInstantData().loadTestDocument();
+		TestData.InstantData td = testData.getInstantData();
+		DIDDocument doc = td.getUser1Document();
 
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
-				testDoc.getSubject(), store);
+				doc.getSubject(), store);
 
 		VerifiablePresentation vp = pb
-				.credentials(testData.getInstantData().loadProfileCredential())
-				.credentials(testData.getInstantData().loadEmailCredential())
-				.credentials(testData.getInstantData().loadTwitterCredential())
-				.credentials(testData.getInstantData().loadPassportCredential())
+				.credentials(doc.getCredential("#profile"))
+				.credentials(doc.getCredential("#email"))
+				.credentials(td.getUser1TwitterCredential())
+				.credentials(td.getUser1PassportCredential())
 				.realm("https://example.com/")
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
@@ -188,12 +185,12 @@ public class VerifiablePresentationTest {
 		assertNotNull(vp);
 
 		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType());
-		assertEquals(testDoc.getSubject(), vp.getSigner());
+		assertEquals(doc.getSubject(), vp.getSigner());
 
 		assertEquals(4, vp.getCredentialCount());
 		List<VerifiableCredential> vcs = vp.getCredentials();
 		for (VerifiableCredential vc : vcs) {
-			assertEquals(testDoc.getSubject(), vc.getSubject().getId());
+			assertEquals(doc.getSubject(), vc.getSubject().getId());
 
 			assertTrue(vc.getId().getFragment().equals("profile")
 					|| vc.getId().getFragment().equals("email")
@@ -213,10 +210,10 @@ public class VerifiablePresentationTest {
 
 	@Test
 	public void testBuildEmpty() throws DIDException, IOException {
-		DIDDocument testDoc = testData.getInstantData().loadTestDocument();
+		DIDDocument doc = testData.getInstantData().getUser1Document();
 
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
-				testDoc.getSubject(), store);
+				doc.getSubject(), store);
 
 		VerifiablePresentation vp = pb
 				.realm("https://example.com/")
@@ -226,7 +223,7 @@ public class VerifiablePresentationTest {
 		assertNotNull(vp);
 
 		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType());
-		assertEquals(testDoc.getSubject(), vp.getSigner());
+		assertEquals(doc.getSubject(), vp.getSigner());
 
 		assertEquals(0, vp.getCredentialCount());
 		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "notExist")));

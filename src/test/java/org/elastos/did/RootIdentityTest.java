@@ -37,7 +37,7 @@ public class RootIdentityTest {
 	public void testInitPrivateIdentity() throws DIDException {
     	assertFalse(store.containsRootIdentities());
 
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
     	assertTrue(store.containsRootIdentities());
 
     	DIDStore store2 = DIDStore.open(TestConfig.storeRoot);
@@ -94,7 +94,7 @@ public class RootIdentityTest {
 
 	@Test
 	public void testCreateDIDWithAlias() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	String alias = "my first did";
 
@@ -122,7 +122,7 @@ public class RootIdentityTest {
 
 	@Test
 	public void tesCreateDIDWithoutAlias() throws DIDException {
-    	RootIdentity identity = testData.initIdentity();
+    	RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
@@ -143,7 +143,7 @@ public class RootIdentityTest {
 
 	@Test
 	public void testCreateDIDByIndex() throws DIDException {
-	    RootIdentity identity = testData.initIdentity();
+	    RootIdentity identity = testData.getRootIdentity();
 
 	    DID did = identity.getDid(0);
 	    DIDDocument doc = identity.newDid(0, TestConfig.storePass);
@@ -164,7 +164,7 @@ public class RootIdentityTest {
 
 	@Test
 	public void testGetDid() throws DIDException {
-	    RootIdentity identity = testData.initIdentity();
+	    RootIdentity identity = testData.getRootIdentity();
 
 	    for (int i = 0; i < 100; i++) {
 		    DIDDocument doc = identity.newDid(i, TestConfig.storePass);
