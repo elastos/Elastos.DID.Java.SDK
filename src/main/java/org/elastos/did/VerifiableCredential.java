@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -73,6 +74,8 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ser.PropertyFilter;
+import com.fasterxml.jackson.databind.ser.PropertyWriter;
 
 /**
  * VerifiableCredential is a set of one or more claims made by the same entity.
@@ -87,6 +90,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 	VerifiableCredential.EXPIRATION_DATE,
 	VerifiableCredential.CREDENTIAL_SUBJECT,
 	VerifiableCredential.PROOF })
+@JsonFilter("credentialFilter")
 public class VerifiableCredential extends DIDObject<VerifiableCredential> implements DIDEntry {
 	protected final static String ID = "id";
 	protected final static String TYPE = "type";
@@ -240,6 +244,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * The default proof type is ECDSAsecp256r1.
 	 */
 	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, CREATED, SIGNATURE })
+	@JsonFilter("credentialProofFilter")
 	static public class Proof {
 		@JsonProperty(TYPE)
 		private String type;
@@ -309,6 +314,26 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	    public String getSignature() {
 	    	return signature;
 	    }
+
+		protected static PropertyFilter getFilter() {
+			return new DIDPropertyFilter() {
+				@Override
+				protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
+					if (context.isNormalized())
+						return true;
+
+					Proof proof = (Proof)pojo;
+					switch (writer.getName()) {
+					case TYPE:
+						return !(proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
+
+					default:
+						return true;
+					}
+				}
+			};
+		}
+
 	}
 
 	/**
@@ -445,16 +470,6 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	/**
-	 * Get current object's DID context.
-	 *
-	 * @return the DID object or null
-	 */
-	@Override
-	protected DID getSerializeContextDid() {
-		return getSubject().getId();
-	}
-
-	/**
 	 * Sanitize routine before sealing or after deserialization.
 	 *
 	 * @param withProof check the proof object or not
@@ -491,6 +506,35 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 			if (proof.verificationMethod.getDid() == null)
 				proof.verificationMethod.setDid(issuer);
 		}
+	}
+
+	/**
+	 * Get current object's DID context.
+	 *
+	 * @return the DID object or null
+	 */
+	@Override
+	protected DID getSerializeContextDid() {
+		return getSubject().getId();
+	}
+
+	protected static PropertyFilter getFilter() {
+		return new DIDPropertyFilter() {
+			@Override
+			protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
+				if (context.isNormalized())
+					return true;
+
+				VerifiableCredential vc = (VerifiableCredential)pojo;
+				switch (writer.getName()) {
+				case ISSUER:
+					return !(vc.getIssuer().equals(context.getDid()));
+
+				default:
+					return true;
+				}
+			}
+		};
 	}
 
 	/**

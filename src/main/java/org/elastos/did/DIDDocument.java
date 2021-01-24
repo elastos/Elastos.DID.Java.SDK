@@ -77,6 +77,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.SHA256Digest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -92,6 +93,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.PropertyFilter;
+import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
@@ -239,6 +242,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
      * authentication or establishing secure communication with service endpoints.
 	 */
 	@JsonPropertyOrder({ ID, TYPE, CONTROLLER, PUBLICKEY_BASE58 })
+	@JsonFilter("publicKeyFilter")
 	public static class PublicKey implements DIDEntry {
 		@JsonProperty(ID)
 		private DIDURL id;
@@ -370,6 +374,28 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			}
 
 			return false;
+		}
+
+		protected static PropertyFilter getFilter() {
+			return new DIDPropertyFilter() {
+				@Override
+				protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
+					if (context.isNormalized())
+						return true;
+
+					PublicKey pk = (PublicKey)pojo;
+					switch (writer.getName()) {
+					case TYPE:
+						return !(pk.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
+
+					case CONTROLLER:
+						return !(pk.getController().equals(context.getDid()));
+
+					default:
+						return true;
+					}
+				}
+			};
 		}
 	}
 
@@ -520,7 +546,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * The Proof represents the proof content of DID Document.
 	 */
 	@JsonPropertyOrder({ TYPE, CREATED, CREATOR, SIGNATURE_VALUE })
-	public static class Proof implements Comparable<Proof>{
+	@JsonFilter("didDocumentProofFilter")
+	public static class Proof implements Comparable<Proof> {
 		@JsonProperty(TYPE)
 		private String type;
 		@JsonInclude(Include.NON_NULL)
@@ -603,6 +630,25 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (rc == 0)
 				rc = this.creator.compareTo(proof.creator);
 			return rc;
+		}
+
+		protected static PropertyFilter getFilter() {
+			return new DIDPropertyFilter() {
+				@Override
+				protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
+					if (context.isNormalized())
+						return true;
+
+					Proof proof = (Proof)pojo;
+					switch (writer.getName()) {
+					case TYPE:
+						return !(proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
+
+					default:
+						return true;
+					}
+				}
+			};
 		}
 	}
 
@@ -792,15 +838,20 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (!isCustomizedDid())
 			throw new UnsupportedOperationException("Not customized DID");
 
-		if (!hasController(controller))
-			throw new NotControllerException("No this controller");
+		if (controller == null) {
+			effectiveController = controller;
+			return;
+		} else {
+			if (!hasController(controller))
+				throw new NotControllerException("No this controller");
 
-		effectiveController = controller;
+			effectiveController = controller;
 
-		// attach to the store if necessary
-		DIDDocument doc = getControllerDocument(effectiveController);
-		if (!doc.getMetadata().attachedStore())
-			doc.getMetadata().attachStore(getMetadata().getStore());
+			// attach to the store if necessary
+			DIDDocument doc = getControllerDocument(effectiveController);
+			if (!doc.getMetadata().attachedStore())
+				doc.getMetadata().attachStore(getMetadata().getStore());
+		}
 	}
 
 	public boolean isMultiSignature() {
@@ -2396,7 +2447,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (ctrls.size() == 0)
 				ctrls = null;
 			else
-				checkArgument(multisig >= 0 && multisig <= ctrls.size(), "Invalid multisig");
+				checkArgument(multisig >= 0 && multisig <= ctrls.size() + 1, "Invalid multisig");
 		}
 
 		log.info("Creating new DID {} with controller {}...", did, getSubject());
@@ -3434,8 +3485,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			this.document.controllers = new ArrayList<DID>();
 			this.document.controllerDocs = new HashMap<DID, DIDDocument>();
 
-			this.document.controllers.add(controllerDoc.getSubject());
-			this.document.controllerDocs.put(controllerDoc.getSubject(), controllerDoc);
+			this.document.controllers.add(controller.getSubject());
+			this.document.controllerDocs.put(controller.getSubject(), controller);
 
 			this.document.setMetadata(new DIDMetadata(did, store));
 
@@ -3894,6 +3945,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		public Builder addAuthorizationKey(DIDURL id, DID controller, String pk) {
 			if (document == null)
 				throw new IllegalStateException("Document already sealed.");
+
+			if (document.isCustomizedDid())
+				throw new UnsupportedOperationException("Customized DID not support authorization.");
 
 			// Can not authorize to self
 			if (controller.equals(getSubject()))

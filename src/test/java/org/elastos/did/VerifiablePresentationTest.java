@@ -63,8 +63,8 @@ public class VerifiablePresentationTest {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
     	// For integrity check
-		cd.getDIDDocument("issuer");
-		DIDDocument user = cd.getDIDDocument("user1");
+		cd.getDocument("issuer");
+		DIDDocument user = cd.getDocument("user1");
 		VerifiablePresentation vp = cd.getPresentation("user1", "nonempty");
 
 		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType());
@@ -97,8 +97,8 @@ public class VerifiablePresentationTest {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
     	// For integrity check
-		cd.getDIDDocument("issuer");
-		DIDDocument user = cd.getDIDDocument("user1");
+		cd.getDocument("issuer");
+		DIDDocument user = cd.getDocument("user1");
 		VerifiablePresentation vp = cd.getPresentation("user1", "empty");
 
 		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType());
@@ -117,8 +117,8 @@ public class VerifiablePresentationTest {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
     	// For integrity check
-		cd.getDIDDocument("issuer");
-		cd.getDIDDocument("user1");
+		cd.getDocument("issuer");
+		cd.getDocument("user1");
 		VerifiablePresentation vp = cd.getPresentation("user1", "nonempty");
 
 		assertNotNull(vp);
@@ -132,10 +132,6 @@ public class VerifiablePresentationTest {
 		assertTrue(normalized.isGenuine());
 		assertTrue(normalized.isValid());
 
-		System.out.println(normalizedJson);
-		System.out.println(normalized.toString(true));
-		System.out.println(vp.toString(true));
-
 		assertEquals(normalizedJson, normalized.toString(true));
 		assertEquals(normalizedJson, vp.toString(true));
 	}
@@ -146,8 +142,8 @@ public class VerifiablePresentationTest {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
     	// For integrity check
-		cd.getDIDDocument("issuer");
-		cd.getDIDDocument("user1");
+		cd.getDocument("issuer");
+		cd.getDocument("user1");
 		VerifiablePresentation vp = cd.getPresentation("user1", "empty");
 
 		assertNotNull(vp);

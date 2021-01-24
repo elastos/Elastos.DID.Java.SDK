@@ -59,8 +59,8 @@ public class VerifiableCredentialTest {
 	public void TestKycCredential(int version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
-    	DIDDocument issuer = cd.getDIDDocument("issuer");
-		DIDDocument user = cd.getDIDDocument("user1");
+    	DIDDocument issuer = cd.getDocument("issuer");
+		DIDDocument user = cd.getDocument("user1");
 
 		VerifiableCredential vc = cd.getCredential("user1", "twitter");
 
@@ -88,7 +88,7 @@ public class VerifiableCredentialTest {
 	public void TestSelfProclaimedCredential(int version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
-    	DIDDocument user = cd.getDIDDocument("user1");
+    	DIDDocument user = cd.getDocument("user1");
 		VerifiableCredential vc = cd.getCredential("user1", "passport");
 
 		assertEquals(new DIDURL(user.getSubject(), "#passport"), vc.getId());
@@ -116,8 +116,8 @@ public class VerifiableCredentialTest {
 	public void TestJsonCredential(int version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
-    	DIDDocument issuer = cd.getDIDDocument("issuer");
-    	DIDDocument user = cd.getDIDDocument("user1");
+    	DIDDocument issuer = cd.getDocument("issuer");
+    	DIDDocument user = cd.getDocument("user1");
 		VerifiableCredential vc = cd.getCredential("user1", "json");
 
 		assertEquals(new DIDURL(user.getSubject(), "#json"), vc.getId());

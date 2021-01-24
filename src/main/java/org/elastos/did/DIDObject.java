@@ -43,17 +43,24 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ser.PropertyFilter;
+import com.fasterxml.jackson.databind.ser.PropertyWriter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
 /**
  * Base class for all DID objects.
  */
 public abstract class DIDObject<T> {
-	private final static boolean NORMALIZED_DEFAULT = false;
+	private final static boolean NORMALIZED_DEFAULT = true;
 
 	protected final static SimpleDateFormat dateFormat =
 			new SimpleDateFormat(Constants.DATE_FORMAT);
@@ -98,6 +105,44 @@ public abstract class DIDObject<T> {
 
 		public void setDid(DID did) {
 			this.did = did;
+		}
+	}
+
+	protected static class DIDPropertyFilter implements PropertyFilter {
+		protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
+				return true;
+		}
+
+		@Override
+		public void serializeAsField(Object pojo, JsonGenerator gen, SerializerProvider provider,
+				PropertyWriter writer) throws Exception {
+			SerializeContext context = (SerializeContext)provider.getConfig()
+					.getAttributes().getAttribute(DIDObject.CONTEXT_KEY);
+
+	        if (include(writer, pojo, context)) {
+	            writer.serializeAsField(pojo, gen, provider);
+	        } else if (!gen.canOmitFields()) { // since 2.3
+	            writer.serializeAsOmittedField(pojo, gen, provider);
+	        }
+		}
+
+		@Override
+		public void serializeAsElement(Object elementValue, JsonGenerator gen, SerializerProvider provider,
+				PropertyWriter writer) throws Exception {
+			 writer.serializeAsElement(elementValue, gen, provider);
+		}
+
+		@Override
+		@Deprecated
+		public void depositSchemaProperty(PropertyWriter writer, ObjectNode propertiesNode,
+				SerializerProvider provider) throws JsonMappingException {
+            writer.depositSchemaProperty(propertiesNode, provider);
+		}
+
+		@Override
+		public void depositSchemaProperty(PropertyWriter writer, JsonObjectFormatVisitor objectVisitor,
+				SerializerProvider provider) throws JsonMappingException {
+            writer.depositSchemaProperty(objectVisitor, provider);
 		}
 	}
 
@@ -206,6 +251,13 @@ public abstract class DIDObject<T> {
 
 		mapper.setConfig(mapper.getSerializationConfig().withAttribute(CONTEXT_KEY,
 				new SerializeContext(normalized, getSerializeContextDid())));
+
+		SimpleFilterProvider filters = new SimpleFilterProvider();
+		filters.addFilter("publicKeyFilter", DIDDocument.PublicKey.getFilter());
+		filters.addFilter("didDocumentProofFilter", DIDDocument.Proof.getFilter());
+		filters.addFilter("credentialFilter", VerifiableCredential.getFilter());
+		filters.addFilter("credentialProofFilter", VerifiableCredential.Proof.getFilter());
+		mapper.setFilterProvider(filters);
 
 		return mapper;
 	}

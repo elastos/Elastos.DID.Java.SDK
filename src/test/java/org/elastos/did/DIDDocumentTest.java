@@ -79,7 +79,7 @@ public class DIDDocumentTest {
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testGetPublicKey(int version) throws IOException, DIDException {
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -318,7 +318,7 @@ public class DIDDocumentTest {
 	public void testAddPublicKey(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -393,7 +393,7 @@ public class DIDDocumentTest {
 	public void testRemovePublicKey(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -495,7 +495,7 @@ public class DIDDocumentTest {
 	public void testGetAuthenticationKey(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -645,7 +645,7 @@ public class DIDDocumentTest {
 	public void testAddAuthenticationKey(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -789,7 +789,7 @@ public class DIDDocumentTest {
     public void testRemoveAuthenticationKey(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -891,7 +891,7 @@ public class DIDDocumentTest {
 	public void testGetAuthorizationKey(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1000,7 +1000,7 @@ public class DIDDocumentTest {
 	public void testAddAuthorizationKey(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1150,7 +1150,7 @@ public class DIDDocumentTest {
 	public void testRemoveAuthorizationKey(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1308,7 +1308,7 @@ public class DIDDocumentTest {
 	public void testGetCredential(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1367,7 +1367,7 @@ public class DIDDocumentTest {
 
 		testData.getRootIdentity();
 
-		DIDDocument doc = cd.getDIDDocument("user1");
+		DIDDocument doc = cd.getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1409,7 +1409,7 @@ public class DIDDocumentTest {
 	public void testAddSelfClaimedCredential(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1458,7 +1458,7 @@ public class DIDDocumentTest {
     	testData.getRootIdentity();
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
-		DIDDocument doc = cd.getDIDDocument("user1");
+		DIDDocument doc = cd.getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1506,7 +1506,7 @@ public class DIDDocumentTest {
 	public void testGetService(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1567,7 +1567,7 @@ public class DIDDocumentTest {
 	public void testAddService(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1605,7 +1605,7 @@ public class DIDDocumentTest {
 	public void testRemoveService(int version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1642,17 +1642,17 @@ public class DIDDocumentTest {
 			throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
-    	String compactJson = cd.getDIDDocumentJson(did, "compact");
+    	String compactJson = cd.getDocumentJson(did, "compact");
 		DIDDocument compact = DIDDocument.parse(compactJson);
 		assertNotNull(compact);
 		assertTrue(compact.isValid());
 
-	   	String normalizedJson = cd.getDIDDocumentJson(did, "normalized");
+	   	String normalizedJson = cd.getDocumentJson(did, "normalized");
 		DIDDocument normalized = DIDDocument.parse(normalizedJson);
 		assertNotNull(normalized);
 		assertTrue(normalized.isValid());
 
-		DIDDocument doc = testData.getCompatibleData(version).getDIDDocument(did);
+		DIDDocument doc = testData.getCompatibleData(version).getDocument(did);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 

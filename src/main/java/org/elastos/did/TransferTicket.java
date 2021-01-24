@@ -93,7 +93,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * The default proof type is ECDSAsecp256r1.
 	 */
 	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, CREATED, SIGNATURE })
-	static public class Proof {
+	static public class Proof implements Comparable<Proof> {
 		@JsonProperty(TYPE)
 		private String type;
 		@JsonProperty(VERIFICATION_METHOD)
@@ -162,6 +162,14 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	    public String getSignature() {
 	    	return signature;
 	    }
+
+		@Override
+		public int compareTo(Proof proof) {
+			int rc = (int)(this.created.getTime() - proof.created.getTime());
+			if (rc == 0)
+				rc = this.verificationMethod.compareTo(proof.verificationMethod);
+			return rc;
+		}
 	}
 
 	/**
