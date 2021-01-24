@@ -30,17 +30,25 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.elastos.did.DID;
+import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
+import org.elastos.did.DIDObject;
 import org.elastos.did.DIDStore;
 import org.elastos.did.DIDURL;
 import org.elastos.did.Issuer;
 import org.elastos.did.Mnemonic;
 import org.elastos.did.RootIdentity;
+import org.elastos.did.TransferTicket;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.backend.SPVAdapter;
+import org.elastos.did.backend.SimulatedIDChain;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class TestData {
 	// HDKey for temporary key generation
@@ -201,7 +209,7 @@ public final class TestData {
 			return text.toString();
 		}
 
-		public synchronized DIDDocument getDIDDocument(String did, String type)
+		public synchronized DIDDocument getDocument(String did, String type)
 				throws DIDException, IOException {
 			String baseKey = "res:did:" + did;
 			String key = type != null ? baseKey + ":" + type : baseKey;
@@ -235,12 +243,12 @@ public final class TestData {
 			return doc;
 		}
 
-		public DIDDocument getDIDDocument(String did)
+		public DIDDocument getDocument(String did)
 				throws DIDException, IOException {
-			return getDIDDocument(did, null);
+			return getDocument(did, null);
 		}
 
-		public synchronized String getDIDDocumentJson(String did, String type)
+		public synchronized String getDocumentJson(String did, String type)
 				throws IOException {
 			File file = getDidFile(did, type);
 			String key = "res:json:" + file.getName();
@@ -256,7 +264,7 @@ public final class TestData {
 		public synchronized VerifiableCredential getCredential(String did, String vc, String type)
 				throws DIDException, IOException {
 			// Load DID document first for verification
-			getDIDDocument(did);
+			getDocument(did);
 
 			String baseKey = "res:vc:" + did + ":" + vc;
 			String key = type != null ? baseKey + ":" + type : baseKey;
@@ -296,7 +304,7 @@ public final class TestData {
 		public VerifiablePresentation getPresentation(String did, String vp, String type)
 				throws DIDException, IOException {
 			// Load DID document first for verification
-			getDIDDocument(did);
+			getDocument(did);
 
 			String baseKey = "res:vp:" + did + ":" + vp;
 			String key = type != null ? baseKey + ":" + type : baseKey;
@@ -339,11 +347,31 @@ public final class TestData {
 		private DIDDocument idUser1;
 		private DIDDocument idUser2;
 		private DIDDocument idUser3;
-		private VerifiableCredential vcUser1Passport;
-		private VerifiableCredential vcUser1Twitter;
-		private VerifiableCredential vcUser1Json;
+		private DIDDocument idUser4;
+
+		private VerifiableCredential vcUser1Passport;	// Issued by idIssuer
+		private VerifiableCredential vcUser1Twitter;	// Self-proclaimed
+		private VerifiableCredential vcUser1Json;		// Issued by idIssuer with complex JSON subject
 		private VerifiablePresentation vpUser1Nonempty;
 		private VerifiablePresentation vpUser1Empty;
+
+		private DIDDocument idExampleCorp; 	// Controlled by idIssuer
+		private DIDDocument idFooBar; 		// Controlled by User1, User2, User3 (2/3)
+		private DIDDocument idFoo; 			// Controlled by User1, User2 (2/2)
+		private DIDDocument idBar;			// Controlled by User1, User2, User3 (3/3)
+		private DIDDocument idBaz;			// Controlled by User1, User2, User3 (1/3)
+
+		private VerifiableCredential vcFooBarServices;	// Self-proclaimed
+		private VerifiableCredential vcFooBarLicense;	// Issued by idExampleCorp
+		private VerifiableCredential vcFooEmail;		// Issued by idIssuer
+
+		private VerifiablePresentation vpFooBarNonempty;
+		private VerifiablePresentation vpFooBarEmpty;
+
+		private VerifiableCredential vcUser1JobPosition;// Issued by idExampleCorp
+
+		private TransferTicket ttFooBar;
+		private TransferTicket ttBaz;
 
 		public synchronized DIDDocument getIssuerDocument() throws DIDException, IOException {
 			if (idIssuer == null) {
@@ -382,7 +410,8 @@ public final class TestData {
 		 		// No private key for recovery
 				key = TestData.generateKeypair();
 				id = new DIDURL(doc.getSubject(), "#recovery");
-		 		db.addAuthorizationKey(id, identity.getDid(1000), key.getPublicKeyBase58());
+		 		db.addAuthorizationKey(id, new DID("did:elastos:" + key.getAddress()),
+		 				key.getPublicKeyBase58());
 
 				doc = db.seal(TestConfig.storePass);
 				store.storeDid(doc);
@@ -542,6 +571,32 @@ public final class TestData {
 			return vcUser1Json;
 		}
 
+		public synchronized VerifiableCredential getUser1JobPositionCredential() throws DIDException, IOException {
+			if (vcUser1JobPosition == null) {
+				getExampleCorpDocument();
+
+				DIDDocument doc = getUser1Document();
+
+				DIDURL id = new DIDURL(doc.getSubject(), "email");
+
+				Issuer kycIssuer = new Issuer(idExampleCorp);
+				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
+
+				Map<String, Object> props = new HashMap<String, Object>();
+				props.put("title", "CEO");
+
+				VerifiableCredential vc = cb.id(id)
+						.type("JobPositionCredential")
+						.properties(props)
+						.seal(TestConfig.storePass);
+				store.storeCredential(vc);
+
+				vcUser1JobPosition = vc;
+			}
+
+			return vcUser1JobPosition;
+		}
+
 		public synchronized VerifiablePresentation getUser1NonemptyPresentation() throws DIDException, IOException {
 			if (vpUser1Nonempty == null) {
 				DIDDocument doc = getUser1Document();
@@ -553,6 +608,7 @@ public final class TestData {
 						.credentials(doc.getCredential("#profile"), doc.getCredential("#email"))
 						.credentials(getUser1PassportCredential())
 						.credentials(getUser1TwitterCredential())
+						.credentials(getUser1JobPositionCredential())
 						.realm("https://example.com/")
 						.nonce("873172f58701a9ee686f0630204fee59")
 						.seal(TestConfig.storePass);
@@ -606,7 +662,7 @@ public final class TestData {
 			return idUser2;
 		}
 
-		public synchronized DIDDocument createUser3Document() throws DIDException, IOException {
+		public synchronized DIDDocument getUser3Document() throws DIDException, IOException {
 			if (idUser3 == null) {
 				DIDDocument doc = identity.newDid(TestConfig.storePass);
 				doc.getMetadata().setAlias("User3");
@@ -616,6 +672,359 @@ public final class TestData {
 			}
 
 			return idUser3;
+		}
+
+		public synchronized DIDDocument getUser4Document() throws DIDException, IOException {
+			if (idUser4 == null) {
+				DIDDocument doc = identity.newDid(TestConfig.storePass);
+				doc.getMetadata().setAlias("User4");
+				doc.publish(TestConfig.storePass);
+
+				idUser4 = doc;
+			}
+
+			return idUser4;
+		}
+
+		public synchronized DIDDocument getExampleCorpDocument() throws DIDException, IOException {
+			if (idExampleCorp == null) {
+				getIssuerDocument();
+
+				DID did = new DID("did:elastos:example");
+				DIDDocument doc = idIssuer.newCustomizedDid(did, TestConfig.storePass);
+
+				Issuer selfIssuer = new Issuer(doc);
+				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+
+				Map<String, Object> props = new HashMap<String, Object>();
+				props.put("name", "Example LLC");
+				props.put("website", "https://example.com/");
+				props.put("email", "contact@example.com");
+
+				VerifiableCredential vc = cb.id("profile")
+						.type("BasicProfileCredential", "SelfProclaimedCredential")
+						.properties(props)
+						.seal(TestConfig.storePass);
+
+				DIDDocument.Builder db = doc.edit();
+				db.addCredential(vc);
+
+				HDKey key = TestData.generateKeypair();
+		 		DIDURL id = new DIDURL(doc.getSubject(), "#key2");
+		 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
+		 		store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+
+		 		// No private key for testKey
+				key = TestData.generateKeypair();
+				id = new DIDURL(doc.getSubject(), "#testKey");
+		 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
+
+				doc = db.seal(TestConfig.storePass);
+				store.storeDid(doc);
+				doc.publish(TestConfig.storePass);
+
+				idExampleCorp = doc;
+			}
+
+			return idExampleCorp;
+		}
+
+		public synchronized DIDDocument getFooBarDocument() throws DIDException, IOException {
+			if (idFooBar == null) {
+				getExampleCorpDocument();
+				getUser1Document();
+				getUser2Document();
+				getUser3Document();
+
+				DID[] controllers = {idUser1.getSubject(), idUser2.getSubject(), idUser3.getSubject()};
+				DID did = new DID("did:elastos:foobar");
+				DIDDocument doc = idUser1.newCustomizedDid(did, controllers, 2, TestConfig.storePass);
+				DIDURL signKey = idUser1.getDefaultPublicKeyId();
+
+				// Add public keys embedded credentials
+				DIDDocument.Builder db = doc.edit(idUser1);
+
+				HDKey temp = TestData.generateKeypair();
+				db.addAuthenticationKey("key2", temp.getPublicKeyBase58());
+				store.storePrivateKey(new DIDURL(doc.getSubject(), "key2"),
+						temp.serialize(), TestConfig.storePass);
+
+				temp = TestData.generateKeypair();
+				db.addAuthenticationKey("key3", temp.getPublicKeyBase58());
+				store.storePrivateKey(new DIDURL(doc.getSubject(), "key3"),
+						temp.serialize(), TestConfig.storePass);
+
+				db.addService("vault", "Hive.Vault.Service",
+						"https://foobar.com/vault");
+				db.addService("vcr", "CredentialRepositoryService",
+						"https://foobar.com/credentials");
+
+				Issuer selfIssuer = new Issuer(doc, signKey);
+				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+
+				Map<String, Object> props = new HashMap<String, Object>();
+				props.put("name", "Foo Bar Inc");
+				props.put("language", "Chinese");
+				props.put("email", "contact@foobar.com");
+
+				VerifiableCredential vcProfile = cb.id("profile")
+						.type("BasicProfileCredential", "SelfProclaimedCredential")
+						.properties(props)
+						.seal(TestConfig.storePass);
+
+				Issuer kycIssuer = new Issuer(idExampleCorp);
+				cb = kycIssuer.issueFor(doc.getSubject());
+
+				props.clear();
+				props.put("email", "foobar@example.com");
+
+				VerifiableCredential vcEmail = cb.id("email")
+						.type("BasicProfileCredential",
+								"InternetAccountCredential", "EmailCredential")
+						.properties(props)
+						.seal(TestConfig.storePass);
+
+				db.addCredential(vcProfile);
+				db.addCredential(vcEmail);
+				doc = db.seal(TestConfig.storePass);
+				doc = idUser3.sign(doc, TestConfig.storePass);
+				store.storeDid(doc);
+				doc.publish(signKey, TestConfig.storePass);
+
+				idFooBar = doc;
+			}
+
+			return idFooBar;
+		}
+
+		public synchronized VerifiableCredential getFooBarServiceCredential() throws DIDException, IOException {
+			if (vcFooBarServices == null) {
+				DIDDocument doc = getFooBarDocument();
+
+				DIDURL id = new DIDURL(doc.getSubject(), "services");
+
+				Issuer selfIssuer = new Issuer(doc, idUser1.getDefaultPublicKeyId());
+				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+
+				Map<String, Object> props = new HashMap<String, Object>();
+				props.put("consultation", "https://foobar.com/consultation");
+				props.put("Outsourceing", "https://foobar.com/outsourcing");
+
+				VerifiableCredential vc = cb.id(id)
+						.type("BasicProfileCredential", "SelfProclaimedCredential")
+						.properties(props)
+						.seal(TestConfig.storePass);
+				store.storeCredential(vc);
+
+				vcFooBarServices = vc;
+			}
+
+			return vcFooBarServices;
+		}
+
+		public synchronized VerifiableCredential getFooBarLicenseCredential() throws DIDException, IOException {
+			if (vcFooBarLicense == null) {
+				getExampleCorpDocument();
+				getUser1Document();
+				getUser2Document();
+				getUser3Document();
+
+				DIDDocument doc = getFooBarDocument();
+
+				DIDURL id = new DIDURL(doc.getSubject(), "license");
+
+				Issuer kycIssuer = new Issuer(idExampleCorp);
+				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
+
+				Map<String, Object> props = new HashMap<String, Object>();
+				props.put("license-id", "20201021C889");
+				props.put("scope", "Consulting");
+
+				VerifiableCredential vc = cb.id(id)
+						.type("LicenseCredential")
+						.properties(props)
+						.seal(TestConfig.storePass);
+				store.storeCredential(vc);
+
+				vcFooBarLicense = vc;
+			}
+
+			return vcFooBarLicense;
+		}
+
+		public synchronized VerifiablePresentation getFooBarNonemptyPresentation() throws DIDException, IOException {
+			if (vpFooBarNonempty == null) {
+				DIDDocument doc = getFooBarDocument();
+
+				VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
+						doc.getSubject(), idUser1.getDefaultPublicKeyId(), store);
+
+				VerifiablePresentation vp = pb
+						.credentials(doc.getCredential("#profile"),
+								doc.getCredential("#email"))
+						.credentials(getFooBarServiceCredential())
+						.credentials(getFooBarLicenseCredential())
+						.realm("https://example.com/")
+						.nonce("873172f58701a9ee686f0630204fee59")
+						.seal(TestConfig.storePass);
+
+				vpFooBarNonempty = vp;
+			}
+
+			return vpFooBarNonempty;
+		}
+
+		public synchronized VerifiablePresentation getFooBarEmptyPresentation() throws DIDException, IOException {
+			if (vpFooBarEmpty == null) {
+				DIDDocument doc = getFooBarDocument();
+
+				VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
+						doc.getSubject(), new DIDURL("did:elastos:foobar#key2"), store);
+
+				VerifiablePresentation vp = pb.realm("https://example.com/")
+						.nonce("873172f58701a9ee686f0630204fee59")
+						.seal(TestConfig.storePass);
+
+				vpFooBarEmpty = vp;
+			}
+
+			return vpFooBarEmpty;
+		}
+
+		public synchronized TransferTicket getFooBarTransferTicket() throws DIDException, IOException {
+			if (ttFooBar == null) {
+				DIDDocument doc = getFooBarDocument();
+				DIDDocument user4 = getUser4Document();
+
+				TransferTicket tt = idUser1.createTransferTicket(doc.getSubject(), user4.getSubject(), TestConfig.storePass);
+				tt = idUser3.sign(tt, TestConfig.storePass);
+
+				ttFooBar = tt;
+			}
+
+			return ttFooBar;
+		}
+
+		public synchronized DIDDocument getFooDocument() throws DIDException, IOException {
+			if (idFoo == null) {
+				getUser1Document();
+				getUser2Document();
+
+				DID[] controllers = {idUser2.getSubject()};
+				DID did = new DID("did:elastos:foo");
+				DIDDocument doc = idUser1.newCustomizedDid(did, controllers, 2, TestConfig.storePass);
+				doc = idUser2.sign(doc, TestConfig.storePass);
+				store.storeDid(doc);
+
+				doc.setEffectiveController(idUser2.getSubject());
+				doc.publish(TestConfig.storePass);
+				doc.setEffectiveController(null);
+
+				idFoo = doc;
+			}
+
+			return idFoo;
+		}
+
+		public synchronized VerifiableCredential getFooEmailCredential() throws DIDException, IOException {
+			if (vcFooEmail == null) {
+				getIssuerDocument();
+
+				DIDDocument doc = getFooDocument();
+
+				DIDURL id = new DIDURL(doc.getSubject(), "email");
+
+				Issuer kycIssuer = new Issuer(idIssuer);
+				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
+
+				Map<String, Object> props = new HashMap<String, Object>();
+				props.put("email", "foo@example.com");
+
+				VerifiableCredential vc = cb.id(id)
+						.type("InternetAccountCredential")
+						.properties(props)
+						.seal(TestConfig.storePass);
+				store.storeCredential(vc);
+
+				vcFooEmail = vc;
+			}
+
+			return vcFooEmail;
+		}
+
+		public synchronized DIDDocument getBarDocument() throws DIDException, IOException {
+			if (idBar == null) {
+				getUser1Document();
+				getUser2Document();
+				getUser3Document();
+
+				DID[] controllers = {idUser2.getSubject(), idUser3.getSubject()};
+				DID did = new DID("did:elastos:bar");
+				DIDDocument doc = idUser1.newCustomizedDid(did, controllers, 3, TestConfig.storePass);
+				doc = idUser2.sign(doc, TestConfig.storePass);
+				doc = idUser3.sign(doc, TestConfig.storePass);
+				store.storeDid(doc);
+				doc.publish(idUser3.getDefaultPublicKeyId(), TestConfig.storePass);
+
+				idBar = doc;
+			}
+
+			return idBar;
+		}
+
+		public synchronized DIDDocument getBazDocument() throws DIDException, IOException {
+			if (idBaz == null) {
+				getUser1Document();
+				getUser2Document();
+				getUser3Document();
+
+				DID[] controllers = {idUser2.getSubject(), idUser3.getSubject()};
+				DID did = new DID("did:elastos:baz");
+				DIDDocument doc = idUser1.newCustomizedDid(did, controllers, 1, TestConfig.storePass);
+				store.storeDid(doc);
+				doc.publish(idUser1.getDefaultPublicKeyId(), TestConfig.storePass);
+
+				idBaz = doc;
+			}
+
+			return idBaz;
+		}
+
+		public synchronized TransferTicket getBazTransferTicket() throws DIDException, IOException {
+			if (ttBaz == null) {
+				DIDDocument doc = getBazDocument();
+				DIDDocument user4 = getUser4Document();
+
+				TransferTicket tt = idUser2.createTransferTicket(doc.getSubject(), user4.getSubject(), TestConfig.storePass);
+
+				ttBaz = tt;
+			}
+
+			return ttBaz;
+		}
+	}
+
+	private static String formatJson(DIDObject<?> obj) throws Exception {
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode node = mapper.readTree(obj.serialize());
+		String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+		return json;
+	}
+
+
+	public static void main(String[] args) throws Exception {
+		SimulatedIDChain simChain = new SimulatedIDChain();
+		simChain.start();
+
+		try {
+			DIDBackend.initialize(simChain.getAdapter());
+
+			InstantData rd = new TestData().getInstantData();
+			DIDDocument doc = rd.getUser1Document();
+			System.out.println(formatJson(doc));
+
+		} finally {
+			simChain.stop();
 		}
 	}
 }

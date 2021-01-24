@@ -63,7 +63,7 @@ public class TestDataGenerator {
 		Utils.deleteFile(new File(dataRoot + File.separator + "teststore"));
 		store = DIDStore.open(dataRoot + File.separator + "teststore");
 
-    	//String mnemonic =  Mnemonic.getInstance().generate();
+    	// String mnemonic =  Mnemonic.getInstance().generate();
     	String mnemonic = "amateur file dignity extend cabin jaguar early electric ask video happy access";
     	rootPrivateKey = new HDKey(mnemonic, TestConfig.passphrase);
 
