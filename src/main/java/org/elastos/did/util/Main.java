@@ -2,13 +2,18 @@ package org.elastos.did.util;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.elastos.did.DID;
 import org.elastos.did.DIDBackend;
+import org.elastos.did.DIDBackend.ResolveHandle;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
@@ -63,6 +68,44 @@ public class Main {
 		}
 	}
 
+	public static class LocalResolveHandle implements ResolveHandle {
+		private File didDir;
+		private Map<DID, DIDDocument> dids;
+
+		public LocalResolveHandle(String dir) throws IOException {
+			if (dir == null || dir.isEmpty())
+				didDir = new File(".");
+			else
+				didDir = new File(dir);
+
+			didDir = didDir.getCanonicalFile();
+			dids = new HashMap<DID, DIDDocument>();
+		}
+
+		@Override
+		public DIDDocument resolve(DID did) {
+			if (dids.containsKey(did))
+				return dids.get(did);
+
+			try {
+				File didFile = new File(didDir, did.getMethodSpecificId());
+				if (didFile.exists() && didFile.isFile()) {
+					InputStream in = new FileInputStream(didFile);
+					DIDDocument doc = DIDDocument.fromJson(in);
+					in.close();
+					System.out.println("Load did " + did + " from " + didFile.getAbsolutePath());
+					dids.put(did, doc);
+					return doc;
+				}
+			} catch (Exception e) {
+				System.out.print("Load did  " + did + " error!");
+				e.printStackTrace(System.err);
+			}
+
+			return null;
+		}
+	}
+
 	@Command(name = "resolvedid", mixinStandardHelpOptions = true, version = "resolvedid 1.0",
 			description = "Resolve DID from the ID side chain.")
 	public static class ResolveDid implements Callable<Integer> {
@@ -88,6 +131,9 @@ public class Main {
 		public Integer call() throws Exception {
 			try {
 				setupDIDBackend(network);
+
+				if (!didstr.startsWith("did:"))
+					didstr = "did:elastos:" + didstr;
 
 				DID did = new DID(didstr);
 
@@ -160,6 +206,9 @@ public class Main {
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
 	    private boolean force = false;
 
+		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory.")
+	    private String local = null;
+
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
 	    private boolean verbose = false;
 
@@ -170,6 +219,7 @@ public class Main {
 		public Integer call() throws Exception {
 			try {
 				setupDIDBackend(network);
+				DIDBackend.setResolveHandle(new LocalResolveHandle(local));
 
 				VerifiableCredential vc = VerifiableCredential.fromJson(new FileReader(credentialFile));
 				System.out.format("Genuine: %s\n", vc.isGenuine());
@@ -195,6 +245,9 @@ public class Main {
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
 	    private boolean force = false;
 
+		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory.")
+	    private String local = null;
+
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
 	    private boolean verbose = false;
 
@@ -205,6 +258,7 @@ public class Main {
 		public Integer call() throws Exception {
 			try {
 				setupDIDBackend(network);
+				DIDBackend.setResolveHandle(new LocalResolveHandle(local));
 
 				VerifiablePresentation vp = VerifiablePresentation.fromJson(new FileReader(presentationFile));
 				System.out.format("Genuine: %s\n", vp.isGenuine());
@@ -231,6 +285,9 @@ public class Main {
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
 	    private boolean force = false;
 
+		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory.")
+	    private String local = null;
+
 		@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
 	    private boolean compact = false;
 
@@ -244,6 +301,7 @@ public class Main {
 		public Integer call() throws Exception {
 			try {
 				setupDIDBackend(network);
+				DIDBackend.setResolveHandle(new LocalResolveHandle(local));
 
 				BufferedReader in = new BufferedReader(new FileReader(jwtFile));
 				String token = in.readLine();
