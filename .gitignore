@@ -12,7 +12,7 @@ gradle-app.setting
 
 # eclipse specific git ignore
 .project
-.metadata
+# .metadata
 .classpath
 .settings
 .loadpath
