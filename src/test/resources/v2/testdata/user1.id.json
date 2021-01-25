@@ -4,12 +4,12 @@
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#key2",
     "type" : "ECDSAsecp256r1",
     "controller" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "publicKeyBase58" : "vxW2PngrasDuJTfKEZKgukpNDYj6ZoyVfZtdzLmvmNTJ"
+    "publicKeyBase58" : "rDsMhQMJ9Bat43AAxBaAdsrD4pqhCrD9Ss3Wn1kXzj9v"
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#key3",
     "type" : "ECDSAsecp256r1",
     "controller" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "publicKeyBase58" : "ndVZYQ43JeZzJ4vd6Mir3UogRp6jRMjT2ujzLAMKQm9k"
+    "publicKeyBase58" : "qfquDkMQGny5d9B46hk2XGds7yXkTTjJaydJcRHZ1mVZ"
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
     "type" : "ECDSAsecp256r1",
@@ -18,8 +18,8 @@
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#recovery",
     "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:iZNbxBeafSgantAtje1jcBUCQ5AkWfu5Jg",
-    "publicKeyBase58" : "dprnfWKt4PsVYK6Ro5KUkYvbGMkrx8G8Qvrw3fC9tcBW"
+    "controller" : "did:elastos:iqRibk6rRZjfAB1k4YJP782TmoVszRwjEq",
+    "publicKeyBase58" : "qGgn61dSDeeXxqpm7xsc93J81LaAwbT5t3dQBGqPvVDE"
   } ],
   "authentication" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#key2", "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#key3", "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary" ],
   "authorization" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#recovery" ],
@@ -27,8 +27,8 @@
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#email",
     "type" : [ "BasicProfileCredential", "EmailCredential", "InternetAccountCredential" ],
     "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-    "issuanceDate" : "2021-01-19T03:33:14Z",
-    "expirationDate" : "2026-01-19T03:33:14Z",
+    "issuanceDate" : "2021-01-25T08:13:06Z",
+    "expirationDate" : "2026-01-25T08:13:06Z",
     "credentialSubject" : {
       "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
       "email" : "john@example.com"
@@ -36,15 +36,15 @@
     "proof" : {
       "type" : "ECDSAsecp256r1",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "created" : "2021-01-19T03:33:14Z",
-      "signature" : "Au2nWb36m7Pf6dJ6JuQbmL4o1LYY86mIRyZQn5MYPEBH4ZFQ-CtdeoRrGkcUUEvO5acF1qr0ZRc7d3K_05cqug"
+      "created" : "2021-01-25T08:13:06Z",
+      "signature" : "Efpgx574hMtzCqAJnuyg7bTf2nF3tj_9M-mfVBYN_W2iAcTicIM8leNM6ftD3YU_2Y00QidLzhNsOzHScXxIlg"
     }
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#profile",
     "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
     "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "issuanceDate" : "2021-01-19T03:33:14Z",
-    "expirationDate" : "2026-01-19T03:33:14Z",
+    "issuanceDate" : "2021-01-25T08:13:06Z",
+    "expirationDate" : "2026-01-25T08:13:06Z",
     "credentialSubject" : {
       "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
       "email" : "john@example.com",
@@ -57,8 +57,8 @@
     "proof" : {
       "type" : "ECDSAsecp256r1",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "created" : "2021-01-19T03:33:14Z",
-      "signature" : "bgMC9uoo_cfWGT8vi8hYSbL9ePE60xGVL3nlxbwIbXWxeo0QNEKTPGSL06liUluKIQ6s7WL_LGPWPUuQExhS0Q"
+      "created" : "2021-01-25T08:13:06Z",
+      "signature" : "BEo9ysa5JFWrK7V6xUuXDlRVPqk5huNXlRUXNtOnE0w0t7rBqrJxl7f12tiL7uhqj8-Hg3HoUnjjk41fPngsBg"
     }
   } ],
   "service" : [ {
@@ -74,11 +74,11 @@
     "type" : "CredentialRepositoryService",
     "serviceEndpoint" : "https://did.example.com/credentials"
   } ],
-  "expires" : "2026-01-19T03:33:14Z",
+  "expires" : "2026-01-25T08:13:06Z",
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-01-19T03:33:14Z",
+    "created" : "2021-01-25T08:13:06Z",
     "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "vdzyuC2ERe6unh6QFuUf8P6de8LaW5L8ebpaHIDuuyuCRfrQyfQyX_eOZk_RO1efzNJxCNvWHecq4wa3dIIkUw"
+    "signatureValue" : "P64_HjAcXQ91Sftf89qmG1s_1qZH_YCVtHeh5rrWVXadP1exT1zFACnUr5DABF3VeRm6YDRDhB4OE8gYTHkf4A"
   }
 }

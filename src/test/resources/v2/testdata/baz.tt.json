@@ -1,0 +1,1 @@
+{"id":"did:elastos:baz","to":"did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d","txid":"19fb6ac430d05365fdd882f2c7c20cd7","proof":{"type":"ECDSAsecp256r1","verificationMethod":"did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary","created":"2021-01-25T08:13:08Z","signature":"5YOAppM1spLU_LEl9BcY-vb8dzdNC5f3JefeP0RBtRcgjA4DGXwbEi9k8WYgh0YvMU6ICo6_vvCmJgD6utplLg"}}

@@ -2,8 +2,8 @@
   "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#twitter",
   "type" : [ "InternetAccountCredential", "TwitterCredential" ],
   "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-  "issuanceDate" : "2021-01-19T03:33:14Z",
-  "expirationDate" : "2026-01-19T03:33:14Z",
+  "issuanceDate" : "2021-01-25T08:13:06Z",
+  "expirationDate" : "2026-01-25T08:13:06Z",
   "credentialSubject" : {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
     "twitter" : "@john"
@@ -11,7 +11,7 @@
   "proof" : {
     "type" : "ECDSAsecp256r1",
     "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "created" : "2021-01-19T03:33:14Z",
-    "signature" : "uqZ7FcOR1y7riub5UPsQcZQ-KD6VI-JgYymcKa2OzKSJd3XRowNWEeKubybbn-9h3SZsiz_Zxj6tEI6l8KMogg"
+    "created" : "2021-01-25T08:13:06Z",
+    "signature" : "lyNrIBQPNdnYGX3MwRg9ftMPbYlylkAdvL7xi7695RE0p_oZDfF1cnXRh9QgfBz1fcGetGaE0twQNW7FBl-DVw"
   }
 }

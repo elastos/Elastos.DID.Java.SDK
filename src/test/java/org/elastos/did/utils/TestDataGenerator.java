@@ -29,6 +29,7 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.elastos.did.DID;
 import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
@@ -36,6 +37,7 @@ import org.elastos.did.DIDURL;
 import org.elastos.did.Issuer;
 import org.elastos.did.Mnemonic;
 import org.elastos.did.RootIdentity;
+import org.elastos.did.TransferTicket;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.backend.SimulatedIDChain;
@@ -49,7 +51,8 @@ public class TestDataGenerator {
 	private File testDataDir;
 	private SimulatedIDChain simChain;
 	private DIDDocument issuer;
-	private DIDDocument[] users = new DIDDocument[3];
+	private DIDDocument exampleCorp;
+	private DIDDocument[] users = new DIDDocument[4];
 	private DIDStore store;
 	private RootIdentity identity;
 	private HDKey rootPrivateKey;
@@ -83,10 +86,12 @@ public class TestDataGenerator {
 
 	private void createTestIssuer() throws DIDException, IOException {
 		// index = 0;
+		System.out.print("Generate issuer DID...");
+
 		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		doc.getMetadata().setAlias("Issuer");
 
-		System.out.print("Generate issuer DID: " + doc.getSubject() + "...");
+		System.out.print(doc.getSubject() + "...");
 
 		Issuer selfIssuer = new Issuer(doc);
 		VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
@@ -106,6 +111,7 @@ public class TestDataGenerator {
 		db.addCredential(vc);
 		issuer = db.seal(TestConfig.storePass);
 		store.storeDid(issuer);
+		issuer.publish(TestConfig.storePass);
 
 		DIDURL id = issuer.getDefaultPublicKeyId();
 		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + 0);
@@ -125,11 +131,12 @@ public class TestDataGenerator {
 
 	private void createTestUser1() throws DIDException, IOException {
 		// index = 1;
+		System.out.print("Generate user1 DID...");
+
 		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		doc.getMetadata().setAlias("User1");
 
-		// Test document with two embedded credentials
-		System.out.print("Generate user1 DID: " + doc.getSubject() + "...");
+		System.out.print(doc.getSubject() + "...");
 
 		DIDDocument.Builder db = doc.edit();
 
@@ -189,6 +196,7 @@ public class TestDataGenerator {
 		db.addCredential(vcEmail);
 		doc = db.seal(TestConfig.storePass);
 		store.storeDid(doc);
+		doc.publish(TestConfig.storePass);
 
 		users[0] = doc;
 
@@ -329,11 +337,12 @@ public class TestDataGenerator {
 
 	private void createTestUser2() throws DIDException, IOException {
 		// index = 2;
+		System.out.print("Generate user2 DID...");
+
 		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		doc.getMetadata().setAlias("User2");
 
-		// Test document with two embedded credentials
-		System.out.print("Generate user2 DID: " + doc.getSubject() + "...");
+		System.out.print(doc.getSubject() + "...");
 
 		DIDDocument.Builder db = doc.edit();
 
@@ -348,6 +357,7 @@ public class TestDataGenerator {
 		db.addCredential("#profile", props, TestConfig.storePass);
 		doc = db.seal(TestConfig.storePass);
 		store.storeDid(doc);
+		doc.publish(TestConfig.storePass);
 
 		users[1] = doc;
 
@@ -369,11 +379,13 @@ public class TestDataGenerator {
 
 	private void createTestUser3() throws DIDException, IOException {
 		// index = 3;
+		System.out.print("Generate user3 DID...");
+
 		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		doc.getMetadata().setAlias("User3");
+		doc.publish(TestConfig.storePass);
 
-		// Test document with two embedded credentials
-		System.out.print("Generate user3 DID: " + doc.getSubject() + "...");
+		System.out.print(doc.getSubject() + "...");
 
 		users[2] = doc;
 
@@ -393,12 +405,371 @@ public class TestDataGenerator {
 		System.out.println(doc.isValid() ? "OK" : "Error");
 	}
 
+	private void createTestUser4() throws DIDException, IOException {
+		// index = 4;
+		System.out.print("Generate user4 DID...");
+
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
+		doc.getMetadata().setAlias("User4");
+		doc.publish(TestConfig.storePass);
+
+		System.out.print(doc.getSubject() + "...");
+
+		users[3] = doc;
+
+		DIDURL id = doc.getDefaultPublicKeyId();
+		HDKey key = rootPrivateKey.derive(HDKey.DERIVE_PATH_PREFIX + 4);
+		writeTo("user4.id." + id.getFragment() + ".sk", key.serializeBase58());
+
+		String json = doc.toString(true);
+		writeTo("user4.id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("user4.id.json", json);
+
+		json = doc.toString(false);
+		writeTo("user4.id.compact.json", json);
+
+		System.out.println(doc.isValid() ? "OK" : "Error");
+	}
+
+	private void createExampleCorp() throws DIDException, IOException {
+		System.out.print("Generate ExampleCorp DID...");
+
+		DID did = new DID("did:elastos:example");
+		DIDDocument doc = issuer.newCustomizedDid(did, TestConfig.storePass);
+
+		System.out.print(did + "...");
+
+		Issuer selfIssuer = new Issuer(doc);
+		VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", "Example LLC");
+		props.put("website", "https://example.com/");
+		props.put("email", "contact@example.com");
+
+		VerifiableCredential vc = cb.id("profile")
+				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.properties(props)
+				.seal(TestConfig.storePass);
+
+		DIDDocument.Builder db = doc.edit();
+		db.addCredential(vc);
+
+		doc = db.seal(TestConfig.storePass);
+		store.storeDid(doc);
+		doc.publish(TestConfig.storePass);
+
+		exampleCorp = doc;
+
+		String json = issuer.toString(true);
+		writeTo("examplecorp.id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("examplecorp.id.json", json);
+
+		json = issuer.toString(false);
+		writeTo("examplecorp.id.compact.json", json);
+
+		System.out.println(doc.isValid() ? "OK" : "Error");
+	}
+
+	private void createFooBar() throws DIDException, IOException {
+		System.out.print("Generate FooBar DID...");
+
+		DID[] controllers = {users[0].getSubject(), users[2].getSubject(), users[2].getSubject()};
+		DID did = new DID("did:elastos:foobar");
+		DIDDocument doc = users[0].newCustomizedDid(did, controllers, 2, TestConfig.storePass);
+
+		System.out.print(did + "...");
+
+		DIDURL signKey = users[0].getDefaultPublicKeyId();
+
+		// Add public keys embedded credentials
+		DIDDocument.Builder db = doc.edit(users[0]);
+
+		HDKey temp = TestData.generateKeypair();
+		db.addAuthenticationKey("key2", temp.getPublicKeyBase58());
+		store.storePrivateKey(new DIDURL(doc.getSubject(), "key2"),
+				temp.serialize(), TestConfig.storePass);
+		writeTo("foobar.id.key2.sk", temp.serializeBase58());
+
+		temp = TestData.generateKeypair();
+		db.addAuthenticationKey("key3", temp.getPublicKeyBase58());
+		store.storePrivateKey(new DIDURL(doc.getSubject(), "key3"),
+				temp.serialize(), TestConfig.storePass);
+		writeTo("foobar.id.key3.sk", temp.serializeBase58());
+
+		db.addService("vault", "Hive.Vault.Service",
+				"https://foobar.com/vault");
+		db.addService("vcr", "CredentialRepositoryService",
+				"https://foobar.com/credentials");
+
+		Issuer selfIssuer = new Issuer(doc, signKey);
+		VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", "Foo Bar Inc");
+		props.put("language", "Chinese");
+		props.put("email", "contact@foobar.com");
+
+		VerifiableCredential vcProfile = cb.id("profile")
+				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.properties(props)
+				.seal(TestConfig.storePass);
+
+		Issuer kycIssuer = new Issuer(exampleCorp);
+		cb = kycIssuer.issueFor(doc.getSubject());
+
+		props.clear();
+		props.put("email", "foobar@example.com");
+
+		VerifiableCredential vcEmail = cb.id("email")
+				.type("BasicProfileCredential",
+						"InternetAccountCredential", "EmailCredential")
+				.properties(props)
+				.seal(TestConfig.storePass);
+
+		db.addCredential(vcProfile);
+		db.addCredential(vcEmail);
+		doc = db.seal(TestConfig.storePass);
+		doc = users[2].sign(doc, TestConfig.storePass);
+		store.storeDid(doc);
+		doc.publish(signKey, TestConfig.storePass);
+
+		String json = doc.toString(true);
+		writeTo("foobar.id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("foobar.id.json", json);
+
+		json = doc.toString(false);
+		writeTo("foobar.id.compact.json", json);
+
+		System.out.println(doc.isValid() ? "OK" : "Error");
+
+		DIDURL id = new DIDURL(doc.getSubject(), "services");
+		System.out.print("Generate credential: " + id + "...");
+
+		cb = selfIssuer.issueFor(doc.getSubject());
+
+		props.clear();
+		props.put("consultation", "https://foobar.com/consultation");
+		props.put("Outsourceing", "https://foobar.com/outsourcing");
+
+		VerifiableCredential vcServices = cb.id(id)
+				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.properties(props)
+				.seal(TestConfig.storePass);
+		store.storeCredential(vcServices);
+
+		json = vcServices.toString(true);
+		writeTo("foobar.vc.services.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("foobar.vc.services.json", json);
+
+		json = vcServices.toString(false);
+		writeTo("foobar.vc.services.compact.json", json);
+
+		//System.out.println(vcPassport.isValid() ? "OK" : "Error");
+		System.out.println("OK");
+
+		id = new DIDURL(doc.getSubject(), "license");
+		System.out.print("Generate credential: " + id + "...");
+
+		cb = kycIssuer.issueFor(doc.getSubject());
+
+		props.clear();
+		props.put("license-id", "20201021C889");
+		props.put("scope", "Consulting");
+
+		VerifiableCredential vcLicense = cb.id(id)
+				.type("LicenseCredential")
+				.properties(props)
+				.seal(TestConfig.storePass);
+		store.storeCredential(vcLicense);
+
+		json = vcLicense.toString(true);
+		writeTo("foobar.vc.license.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("foobar.vc.license.json", json);
+
+		json = vcLicense.toString(false);
+		writeTo("foobar.vc.license.compact.json", json);
+
+		//System.out.println(vcPassport.isValid() ? "OK" : "Error");
+		System.out.println("OK");
+
+		System.out.print("Generate presentation...");
+
+		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
+				doc.getSubject(), signKey, store);
+
+		VerifiablePresentation vp = pb
+				.credentials(vcProfile, vcEmail)
+				.credentials(vcServices)
+				.credentials(vcLicense)
+				.realm("https://example.com/")
+				.nonce("873172f58701a9ee686f0630204fee59")
+				.seal(TestConfig.storePass);
+
+		json = vp.toString(true);
+		writeTo("foobar.vp.nonempty.normalized.json", json);
+
+		json = formatJson( vp.toString());
+		writeTo("foobar.vp.nonempty.json", json);
+
+		pb = VerifiablePresentation.createFor(
+				doc.getSubject(), new DIDURL("did:elastos:foobar#key2"), store);
+
+		vp = pb.realm("https://example.com/")
+				.nonce("873172f58701a9ee686f0630204fee59")
+				.seal(TestConfig.storePass);
+
+		json = vp.toString(true);
+		writeTo("foobar.vp.empty.normalized.json", json);
+
+		json = formatJson( vp.toString());
+		writeTo("foobar.vp.empty.json", json);
+
+		System.out.println("OK");
+
+		System.out.print("Creatr transfer ticket: " + did + "...");
+		TransferTicket tt = users[0].createTransferTicket(doc.getSubject(), users[3].getSubject(), TestConfig.storePass);
+		tt = users[2].sign(tt, TestConfig.storePass);
+
+		json = tt.toString();
+		writeTo("foobar.tt.json", json);
+
+		System.out.println("OK");
+	}
+
+	private void createFoo() throws DIDException, IOException {
+		System.out.print("Generate Foo DID...");
+
+		DID did = new DID("did:elastos:foo");
+		DID[] controllers = {users[1].getSubject()};
+		DIDDocument doc = users[0].newCustomizedDid(did, controllers, 2, TestConfig.storePass);
+		System.out.print(did + "...");
+
+		doc = users[1].sign(doc, TestConfig.storePass);
+		store.storeDid(doc);
+
+		doc.setEffectiveController(users[1].getSubject());
+		doc.publish(TestConfig.storePass);
+		doc.setEffectiveController(null);
+
+		String json = doc.toString(true);
+		writeTo("foo.id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("foo.id.json", json);
+
+		json = doc.toString(false);
+		writeTo("foo.id.compact.json", json);
+
+		System.out.println(doc.isValid() ? "OK" : "Error");
+
+		DIDURL id = new DIDURL(doc.getSubject(), "email");
+		System.out.print("Generate credential: " + id + "...");
+
+		Issuer kycIssuer = new Issuer(issuer);
+		VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("email", "foo@example.com");
+
+		VerifiableCredential vc = cb.id(id)
+				.type("InternetAccountCredential")
+				.properties(props)
+				.seal(TestConfig.storePass);
+		store.storeCredential(vc);
+
+		json = vc.toString(true);
+		writeTo("foo.vc.email.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("foo.vc.email.json", json);
+
+		json = vc.toString(false);
+		writeTo("foo.vc.email.compact.json", json);
+
+		System.out.println("OK");
+	}
+
+	private void createBar() throws DIDException, IOException {
+		System.out.print("Generate Bar DID...");
+
+		DID[] controllers = {users[1].getSubject(), users[2].getSubject()};
+		DID did = new DID("did:elastos:bar");
+		DIDDocument doc = users[0].newCustomizedDid(did, controllers, 3, TestConfig.storePass);
+
+		System.out.print(did + "...");
+
+		doc = users[1].sign(doc, TestConfig.storePass);
+		doc = users[2].sign(doc, TestConfig.storePass);
+		store.storeDid(doc);
+		doc.publish(users[2].getDefaultPublicKeyId(), TestConfig.storePass);
+
+		String json = doc.toString(true);
+		writeTo("bar.id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("bar.id.json", json);
+
+		json = doc.toString(false);
+		writeTo("bar.id.compact.json", json);
+
+		System.out.println(doc.isValid() ? "OK" : "Error");
+	}
+
+	private void createBaz() throws DIDException, IOException {
+		System.out.print("Generate Baz DID...");
+
+		DID[] controllers = {users[1].getSubject(), users[2].getSubject()};
+		DID did = new DID("did:elastos:baz");
+		DIDDocument doc = users[0].newCustomizedDid(did, controllers, 1, TestConfig.storePass);
+
+		System.out.print(did + "...");
+
+		store.storeDid(doc);
+		doc.publish(users[0].getDefaultPublicKeyId(), TestConfig.storePass);
+
+		String json = doc.toString(true);
+		writeTo("baz.id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("baz.id.json", json);
+
+		json = doc.toString(false);
+		writeTo("baz.id.compact.json", json);
+
+		System.out.println(doc.isValid() ? "OK" : "Error");
+
+		System.out.print("Creatr transfer ticket: " + did + "...");
+		TransferTicket tt = users[1].createTransferTicket(doc.getSubject(), users[3].getSubject(), TestConfig.storePass);
+
+		json = tt.toString();
+		writeTo("baz.tt.json", json);
+
+		System.out.println("OK");
+	}
+
 	public void createTestFiles() throws IOException, DIDException {
 		init(TestConfig.tempDir + File.separator + "DIDTestFiles.v2");
 		createTestIssuer();
 		createTestUser1();
 		createTestUser2();
 		createTestUser3();
+		createTestUser4();
+		createExampleCorp();
+		createFooBar();
+		createFoo();
+		createBar();
+		createBaz();
 		cleanup();
 	}
 

@@ -1637,10 +1637,11 @@ public class DIDDocumentTest {
 
     @ParameterizedTest
     @CsvSource({"1,issuer", "1,user1", "1,user2", "1,user3",
-    		"2,issuer", "2,user1", "2,user2", "2,user3"})
+    		"2,examplecorp", "2,foobar", "2,foo", "2,bar", "2,baz"})
 	public void testParseAndSerializeDocument(int version, String did)
 			throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
+    	cd.loadAll();
 
     	String compactJson = cd.getDocumentJson(did, "compact");
 		DIDDocument compact = DIDDocument.parse(compactJson);
@@ -1652,7 +1653,7 @@ public class DIDDocumentTest {
 		assertNotNull(normalized);
 		assertTrue(normalized.isValid());
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument(did);
+		DIDDocument doc = cd.getDocument(did);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -1660,12 +1661,12 @@ public class DIDDocumentTest {
 		assertEquals(normalizedJson, normalized.toString(true));
 		assertEquals(normalizedJson, doc.toString(true));
 
-		// Don't check the compact mode anymore
-		/*
-		assertEquals(compactJson, compact.toString(false));
-		assertEquals(compactJson, normalized.toString(false));
-		assertEquals(compactJson, doc.toString(false));
-		*/
+		// Don't check the compact mode for the old versions
+		if (cd.isLatestVersion()) {
+			assertEquals(compactJson, compact.toString(false));
+			assertEquals(compactJson, normalized.toString(false));
+			assertEquals(compactJson, doc.toString(false));
+		}
 	}
 
 	@Test
