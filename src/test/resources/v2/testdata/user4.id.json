@@ -1,0 +1,17 @@
+{
+  "id" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d",
+  "publicKey" : [ {
+    "id" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d#primary",
+    "type" : "ECDSAsecp256r1",
+    "controller" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d",
+    "publicKeyBase58" : "eorUr7Ek4XG1tjiqtioPDHMC2BDR7sKyVqaXc2Euiikd"
+  } ],
+  "authentication" : [ "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d#primary" ],
+  "expires" : "2026-01-25T08:13:07Z",
+  "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-01-25T08:13:07Z",
+    "creator" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d#primary",
+    "signatureValue" : "kATUr30oqkYsJxk29BW2JT7PZ3n29hYhMSeaRqvdZSrbpZMfRKuLRHtr6gsGP8NoNFREDuTVMGNJpoS1LJrsFQ"
+  }
+}

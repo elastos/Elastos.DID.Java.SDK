@@ -31,9 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.elastos.did.DID;
-import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
-import org.elastos.did.DIDObject;
 import org.elastos.did.DIDStore;
 import org.elastos.did.DIDURL;
 import org.elastos.did.Issuer;
@@ -43,12 +41,8 @@ import org.elastos.did.TransferTicket;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.backend.SPVAdapter;
-import org.elastos.did.backend.SimulatedIDChain;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class TestData {
 	// HDKey for temporary key generation
@@ -151,9 +145,10 @@ public final class TestData {
 	}
 
 	public class CompatibleData {
-		File dataPath;
-		File storePath;
+		private File dataPath;
+		private File storePath;
 		private Map<String, Object> data;
+		private int version;
 
 		public CompatibleData(int version) {
 			this.data = new HashMap<String, Object>();
@@ -163,6 +158,11 @@ public final class TestData {
 
 			this.dataPath = new File(root, "/testdata");
 			this.storePath = new File(root, "/teststore");
+			this.version = version;
+		}
+
+		public boolean isLatestVersion() {
+			return version == 2;
 		}
 
 		private File getDidFile(String name, String type) {
@@ -236,7 +236,17 @@ public final class TestData {
 					store.storePrivateKey(id, sk, TestConfig.storePass);
 				}
 
-				doc.publish(TestConfig.storePass);
+				switch (did) {
+				case "foobar":
+				case "foo":
+				case "bar":
+				case "baz":
+					doc.publish(getDocument("user1").getDefaultPublicKeyId(), TestConfig.storePass);
+					break;
+
+				default:
+					doc.publish(TestConfig.storePass);
+				}
 			}
 
 			data.put(key, doc);
@@ -339,6 +349,22 @@ public final class TestData {
 
 		public File getStoreDir() {
 			return storePath;
+		}
+
+		public void loadAll() throws DIDException, IOException {
+			getDocument("issuer");
+			getDocument("user1");
+			getDocument("user2");
+			getDocument("user3");
+
+			if (version == 2) {
+				getDocument("user4");
+				getDocument("examplecorp");
+				getDocument("foobar");
+				getDocument("foo");
+				getDocument("bar");
+				getDocument("baz");
+			}
 		}
 	}
 
@@ -1001,30 +1027,6 @@ public final class TestData {
 			}
 
 			return ttBaz;
-		}
-	}
-
-	private static String formatJson(DIDObject<?> obj) throws Exception {
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode node = mapper.readTree(obj.serialize());
-		String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-		return json;
-	}
-
-
-	public static void main(String[] args) throws Exception {
-		SimulatedIDChain simChain = new SimulatedIDChain();
-		simChain.start();
-
-		try {
-			DIDBackend.initialize(simChain.getAdapter());
-
-			InstantData rd = new TestData().getInstantData();
-			DIDDocument doc = rd.getUser1Document();
-			System.out.println(formatJson(doc));
-
-		} finally {
-			simChain.stop();
 		}
 	}
 }

@@ -160,11 +160,11 @@ public class VerifiableCredentialTest {
 		assertEquals(normalizedJson, compact.toString(true));
 		assertEquals(normalizedJson, credential.toString(true));
 
-		// Don't check the compact mode anymore
-		/*
-		assertEquals(compactJson, normalized.toString(false));
-		assertEquals(compactJson, compact.toString(false));
-		assertEquals(compactJson, vc.toString(false));
-		*/
+		// Don't check the compact mode for the old versions
+		if (cd.isLatestVersion()) {
+			assertEquals(compactJson, normalized.toString(false));
+			assertEquals(compactJson, compact.toString(false));
+			assertEquals(compactJson, credential.toString(false));
+		}
 	}
 }
