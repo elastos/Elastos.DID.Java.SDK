@@ -872,7 +872,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		if (hasController()) {
 			for (DIDDocument doc : controllerDocs.values())
-				count += doc.getPublicKeyCount();
+				count += doc.getAuthenticationKeyCount();
 		}
 
 		return count;
@@ -888,7 +888,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		if (hasController()) {
 			for (DIDDocument doc : controllerDocs.values())
-				pks.addAll(doc.getPublicKeys());
+				pks.addAll(doc.getAuthenticationKeys());
 		}
 
 		return pks;
@@ -917,7 +917,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		if (hasController()) {
 			for (DIDDocument doc : controllerDocs.values())
-				pks.addAll(doc.selectPublicKeys(id, type));
+				pks.addAll(doc.selectAuthenticationKeys(id, type));
 		}
 
 		return pks;
@@ -963,7 +963,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (hasController()) {
 			DIDDocument doc = getControllerDocument(id.getDid());
 			if (doc != null)
-				pk = doc.getPublicKey(id);
+				pk = doc.getAuthenticationKey(id);
 		}
 
 		return pk;
@@ -1319,11 +1319,6 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		int count = getEntryCount(publicKeys,
 				(v) -> ((PublicKey)v).isAuthorizationKey());
 
-		if (hasController()) {
-			for (DIDDocument doc : controllerDocs.values())
-				count += doc.getAuthorizationKeyCount();
-		}
-
 		return count;
 	}
 
@@ -1335,11 +1330,6 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	public List<PublicKey> getAuthorizationKeys() {
 		List<PublicKey> pks = getEntries(publicKeys,
 				(v) -> ((PublicKey)v).isAuthorizationKey());
-
-		if (hasController()) {
-			for (DIDDocument doc : controllerDocs.values())
-				pks.addAll(doc.getAuthorizationKeys());
-		}
 
 		return pks;
 	}
@@ -2515,7 +2505,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	public DIDDocument sign(DIDDocument doc, String storepass)
-			throws NotControllerException, DIDStoreException {
+			throws AlreadySignedException, NotControllerException, DIDStoreException {
 		if (doc == null || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
@@ -2524,6 +2514,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		if (!doc.hasController(getSubject()))
 			throw new NotControllerException();
+
+		if (doc.proofs.containsKey(getDefaultPublicKeyId()))
+			throw new AlreadySignedException(getSubject().toString());
 
 		Builder builder = doc.edit(this);
 		try {
@@ -3504,6 +3497,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		public Builder(DIDDocument doc, DIDDocument controller) {
 			this.document = doc;
+			this.document.effectiveController = controller.getSubject();
 			// if (controller.getMetadata().attachedStore())
 			//	this.document.getMetadata().setStore(controller.getMetadata().getStore());
 			this.controllerDoc = controller;
@@ -3906,6 +3900,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 			if (id == null)
 				throw new IllegalArgumentException();
+
+			if (document.isCustomizedDid())
+				throw new UnsupportedOperationException("Customized DID not support authorization.");
 
 	        PublicKey key = document.getEntry(document.publicKeys, id);
 	        if (key == null)

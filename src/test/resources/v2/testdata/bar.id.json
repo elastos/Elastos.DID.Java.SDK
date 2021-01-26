@@ -2,21 +2,21 @@
   "id" : "did:elastos:bar",
   "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g", "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS" ],
   "multisig" : "3:3",
-  "expires" : "2026-01-25T08:13:08Z",
+  "expires" : "2026-01-25T14:55:25Z",
   "proof" : [ {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-01-25T08:13:08Z",
+    "created" : "2021-01-25T14:55:25Z",
     "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "8de1NWNoznjXk0wGIoaLQkI1-oHyUCyA8SqovJ-jp1IpctNxo8_jaajf5c2FBHmQ6QGsJn5h8r44Ps9CQflwkg"
+    "signatureValue" : "iot6XD1DEz3na2hGJIuDl6ZwN5a0JY9RjeivERaghcc4Fcu7y2-gSBKtGXJnvEvXNh7LjdL4XmPamMFFI1uUGg"
   }, {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-01-25T08:13:08Z",
+    "created" : "2021-01-25T14:55:25Z",
     "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "signatureValue" : "2kSLjrZJ9amMA90ceERNWRn5XmiYzAYomdCKGg7hPgdW3Fg3mr01a7gg1f5sPwfiqpI_ICIk3rtQdjm03nE2lg"
+    "signatureValue" : "Vu2BcoN1wrRa4XVurH9-Y2cgtmjXP6VCmd7cR2kcEqhlqAtjs5gVlUcFUF8RqjNMsXJw4qwdeKUSayWR6-2uMw"
   }, {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-01-25T08:13:08Z",
+    "created" : "2021-01-25T14:55:25Z",
     "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
-    "signatureValue" : "LyY3SucZOaA_A6HZvATaizEyaxJqbMqID_oocqdeZF4MyUW3Ks-EcwPxt9zK2IwaMyusgKEJUGIRLIpBdYb_6Q"
+    "signatureValue" : "JwVO-g9KRAyzxxB4mF1QVDDoGD5xFMtM0dZxXpHXfi5I8v3fRgRqEkQbUEto_tn-DY2Qu7rXuVC4zR0uq9IO4Q"
   } ]
 }
