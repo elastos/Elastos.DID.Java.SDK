@@ -463,13 +463,13 @@ public class TestDataGenerator {
 
 		exampleCorp = doc;
 
-		String json = issuer.toString(true);
+		String json = exampleCorp.toString(true);
 		writeTo("examplecorp.id.normalized.json", json);
 
 		json = formatJson(json);
 		writeTo("examplecorp.id.json", json);
 
-		json = issuer.toString(false);
+		json = exampleCorp.toString(false);
 		writeTo("examplecorp.id.compact.json", json);
 
 		System.out.println(doc.isValid() ? "OK" : "Error");
@@ -478,7 +478,7 @@ public class TestDataGenerator {
 	private void createFooBar() throws DIDException, IOException {
 		System.out.print("Generate FooBar DID...");
 
-		DID[] controllers = {users[0].getSubject(), users[2].getSubject(), users[2].getSubject()};
+		DID[] controllers = {users[0].getSubject(), users[1].getSubject(), users[2].getSubject()};
 		DID did = new DID("did:elastos:foobar");
 		DIDDocument doc = users[0].newCustomizedDid(did, controllers, 2, TestConfig.storePass);
 
