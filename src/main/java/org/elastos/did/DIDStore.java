@@ -81,7 +81,7 @@ public final class DIDStore {
 
 	private static final Object NULL = new Object();
 
-	private static final String DID_EXPORT = "did.elastos.export/1.0";
+	private static final String DID_EXPORT = "did.elastos.export/2.0";
 
 	private Cache<Object, Object> cache;
 
@@ -1217,13 +1217,12 @@ public final class DIDStore {
 		cache.invalidateAll();
 	}
 
-	@JsonPropertyOrder({ "type", "created", "id", "document", "credential", "privatekey", "fingerprint" })
+	@JsonPropertyOrder({ "type", "id", "document", "credential", "privatekey",
+						 "created", "fingerprint" })
 	@JsonInclude(Include.NON_NULL)
 	static class DIDExport extends DIDObject<DIDExport> {
 		@JsonProperty("type")
 		private String type;
-		@JsonProperty("created")
-		private Date created;
 		@JsonProperty("id")
 		private DID id;
 		@JsonProperty("document")
@@ -1232,6 +1231,8 @@ public final class DIDStore {
 		private List<Credential> credentials;
 		@JsonProperty("privatekey")
 		private List<PrivateKey> privatekeys;
+		@JsonProperty("created")
+		private Date created;
 		@JsonProperty("fingerprint")
 		private String fingerprint;
 
@@ -1360,9 +1361,6 @@ public final class DIDStore {
 			bytes = type.getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
-			bytes = Long.toString(created.getTime()).getBytes();
-			sha256.update(bytes, 0, bytes.length);
-
 			bytes = id.toString().getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
@@ -1395,6 +1393,9 @@ public final class DIDStore {
 					sha256.update(bytes, 0, bytes.length);
 				}
 			}
+
+			bytes = Long.toString(created.getTime()).getBytes();
+			sha256.update(bytes, 0, bytes.length);
 
 			byte digest[] = new byte[32];
 			sha256.doFinal(digest, 0);
@@ -1783,13 +1784,12 @@ public final class DIDStore {
 		importDid(new File(file), password, storepass);
 	}
 
-	@JsonPropertyOrder({ "type", "created", "mnemonic", "key", "key.pub", "index", "fingerprint" })
+	@JsonPropertyOrder({ "type", "mnemonic", "privateKey", "publicKey",
+						 "index", "default",  "created", "fingerprint" })
 	@JsonInclude(Include.NON_NULL)
 	static class RootIdentityExport extends DIDObject<RootIdentityExport> {
 		@JsonProperty("type")
 		private String type;
-		@JsonProperty("created")
-		private Date created;
 		@JsonProperty("mnemonic")
 		private String mnemonic;
 		@JsonProperty("privateKey")
@@ -1798,11 +1798,13 @@ public final class DIDStore {
 		private String publicKey;
 		@JsonProperty("index")
 		private int index;
-		@JsonProperty("fingerprint")
-		private String fingerprint;
 		@JsonProperty("default")
 		@JsonInclude(Include.NON_NULL)
 		private Boolean isDefault;
+		@JsonProperty("created")
+		private Date created;
+		@JsonProperty("fingerprint")
+		private String fingerprint;
 
 		@JsonCreator
 		protected RootIdentityExport(@JsonProperty(value = "type", required = true) String type) {
@@ -1864,9 +1866,6 @@ public final class DIDStore {
 			bytes = type.getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
-			bytes = Long.toString(created.getTime()).getBytes();
-			sha256.update(bytes, 0, bytes.length);
-
 			if (mnemonic != null) {
 				bytes = mnemonic.getBytes();
 				sha256.update(bytes, 0, bytes.length);
@@ -1881,6 +1880,16 @@ public final class DIDStore {
 			}
 
 			bytes = Integer.toString(index).getBytes();
+			sha256.update(bytes, 0, bytes.length);
+
+			bytes = new byte[1];
+			if (isDefault == null)
+				bytes[0] = 0;
+			else
+				bytes[0] = isDefault ? (byte)1 : 0;
+			sha256.update(bytes, 0, bytes.length);
+
+			bytes = Long.toString(created.getTime()).getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
 			byte digest[] = new byte[32];
