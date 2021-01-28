@@ -1394,7 +1394,7 @@ public final class DIDStore {
 				}
 			}
 
-			bytes = Long.toString(created.getTime()).getBytes();
+			bytes = dateFormat.format(created).getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
 			byte digest[] = new byte[32];
@@ -1874,22 +1874,16 @@ public final class DIDStore {
 			bytes = privateKey.getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
-			if (publicKey != null) {
-				bytes = publicKey.getBytes();
-				sha256.update(bytes, 0, bytes.length);
-			}
+			bytes = publicKey.getBytes();
+			sha256.update(bytes, 0, bytes.length);
 
 			bytes = Integer.toString(index).getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
-			bytes = new byte[1];
-			if (isDefault == null)
-				bytes[0] = 0;
-			else
-				bytes[0] = isDefault ? (byte)1 : 0;
+			bytes = Boolean.toString(isDefault()).getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
-			bytes = Long.toString(created.getTime()).getBytes();
+			bytes = dateFormat.format(created).getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
 			byte digest[] = new byte[32];
