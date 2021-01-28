@@ -766,7 +766,6 @@ public class DIDStoreTest {
 
 		assertTrue(storeDir.exists());
 		assertTrue(restoreDir.exists());
-		// TODO: improve export and import, reopen this again
-		//assertTrue(Utils.equals(restoreDir, storeDir));
+		assertTrue(Utils.equals(restoreDir, storeDir));
 	}
 }
