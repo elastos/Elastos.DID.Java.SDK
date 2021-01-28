@@ -1792,14 +1792,17 @@ public final class DIDStore {
 		private Date created;
 		@JsonProperty("mnemonic")
 		private String mnemonic;
-		@JsonProperty("key")
-		private String key;
-		@JsonProperty("key.pub")
-		private String pubkey;
+		@JsonProperty("privateKey")
+		private String privateKey;
+		@JsonProperty("publicKey")
+		private String publicKey;
 		@JsonProperty("index")
 		private int index;
 		@JsonProperty("fingerprint")
 		private String fingerprint;
+		@JsonProperty("default")
+		@JsonInclude(Include.NON_NULL)
+		private Boolean isDefault;
 
 		@JsonCreator
 		protected RootIdentityExport(@JsonProperty(value = "type", required = true) String type) {
@@ -1819,22 +1822,22 @@ public final class DIDStore {
 			this.mnemonic = reEncrypt(mnemonic, storepass, exportpass);
 		}
 
-		public String getKey(String exportpass, String storepass)
+		public String getPrivateKey(String exportpass, String storepass)
 				throws DIDStoreException {
-			return reEncrypt(key, exportpass, storepass);
+			return reEncrypt(privateKey, exportpass, storepass);
 		}
 
-		public void setKey(String key, String storepass, String exportpass)
+		public void setPrivateKey(String privateKey, String storepass, String exportpass)
 				throws DIDStoreException {
-			this.key = reEncrypt(key, storepass, exportpass);
+			this.privateKey = reEncrypt(privateKey, storepass, exportpass);
 		}
 
-		public String getPubkey() {
-			return pubkey;
+		public String getPublicKey() {
+			return publicKey;
 		}
 
-		public void setPubkey(String pubkey) {
-			this.pubkey = pubkey;
+		public void setPubkey(String publicKey) {
+			this.publicKey = publicKey;
 		}
 
 		public int getIndex() {
@@ -1843,6 +1846,14 @@ public final class DIDStore {
 
 		public void setIndex(int index) {
 			this.index = index;
+		}
+
+		public boolean isDefault() {
+			return isDefault == null ? false : isDefault;
+		}
+
+		public void setDefault() {
+			isDefault = Boolean.valueOf(true);
 		}
 
 		private String calculateFingerprint(String exportpass) {
@@ -1861,11 +1872,11 @@ public final class DIDStore {
 				sha256.update(bytes, 0, bytes.length);
 			}
 
-			bytes = key.getBytes();
+			bytes = privateKey.getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
-			if (pubkey != null) {
-				bytes = pubkey.getBytes();
+			if (publicKey != null) {
+				bytes = publicKey.getBytes();
 				sha256.update(bytes, 0, bytes.length);
 			}
 
@@ -1902,7 +1913,7 @@ public final class DIDStore {
 				throw new MalformedExportDataException(
 						"Invalid export data, missing created time.");
 
-			if (key == null || key.isEmpty())
+			if (privateKey == null || privateKey.isEmpty())
 				throw new MalformedExportDataException(
 						"Invalid export data, missing key.");
 
@@ -1922,12 +1933,15 @@ public final class DIDStore {
 		if (mnemonic != null)
 			rie.setMnemonic(mnemonic, storepass, password);
 
-		rie.setKey(storage.loadRootIdentityPrivateKey(id), storepass, password);
+		rie.setPrivateKey(storage.loadRootIdentityPrivateKey(id), storepass, password);
 
 		RootIdentity identity = storage.loadRootIdentity(id);
 		rie.setPubkey(identity.getPreDerivedPublicKey().serializePublicKeyBase58());
-
 		rie.setIndex(identity.getIndex());
+
+		if (identity.getId().equals(metadata.getDefaultRootIdentity()))
+			rie.setDefault();
+
 		return rie.seal(password);
 	}
 
@@ -2040,13 +2054,16 @@ public final class DIDStore {
 
 		// Save
 		String encryptedMnemonic = rie.getMnemonic(password, storepass);
-		String encryptedPrivateKey = (rie.getKey(password, storepass));
-		String publicKey = rie.getPubkey();
+		String encryptedPrivateKey = (rie.getPrivateKey(password, storepass));
+		String publicKey = rie.getPublicKey();
 		HDKey pk = HDKey.deserializeBase58(publicKey);
 		String id = RootIdentity.getId(pk.serializePublicKey());
 
 		storage.storeRootIdentity(id, encryptedMnemonic, encryptedPrivateKey,
 				publicKey, rie.getIndex());
+
+		if (rie.isDefault() && metadata.getDefaultRootIdentity() == null)
+			metadata.setDefaultRootIdentity(id);
 	}
 
 
@@ -2229,6 +2246,12 @@ public final class DIDStore {
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
+		String fingerprint = metadata.getFingerprint();
+		String currentFingerprint = calcFingerprint(storepass);
+
+		if (fingerprint != null && !currentFingerprint.equals(fingerprint))
+			throw new WrongPasswordException("Password mismatched with previous password.");
+
 		ZipEntry ze;
 		while ((ze = in.getNextEntry()) != null) {
 			if (ze.getName().startsWith("rootIdentity"))
@@ -2237,6 +2260,9 @@ public final class DIDStore {
 				importDid(in, password, storepass);
 			in.closeEntry();
 		}
+
+		if (fingerprint == null || fingerprint.isEmpty())
+			metadata.setFingerprint(currentFingerprint);
 	}
 
 	/**
