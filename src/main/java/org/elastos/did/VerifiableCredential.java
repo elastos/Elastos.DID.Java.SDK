@@ -243,7 +243,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 *
 	 * The default proof type is ECDSAsecp256r1.
 	 */
-	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, CREATED, SIGNATURE })
+	@JsonPropertyOrder({ TYPE, CREATED, VERIFICATION_METHOD, SIGNATURE })
 	@JsonFilter("credentialProofFilter")
 	static public class Proof {
 		@JsonProperty(TYPE)

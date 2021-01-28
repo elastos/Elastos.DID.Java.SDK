@@ -2,21 +2,21 @@
   "id" : "did:elastos:bar",
   "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g", "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS" ],
   "multisig" : "3:3",
-  "expires" : "2026-01-25T14:55:25Z",
+  "expires" : "2026-01-28T06:38:36Z",
   "proof" : [ {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-01-25T14:55:25Z",
+    "created" : "2021-01-28T06:38:36Z",
     "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "iot6XD1DEz3na2hGJIuDl6ZwN5a0JY9RjeivERaghcc4Fcu7y2-gSBKtGXJnvEvXNh7LjdL4XmPamMFFI1uUGg"
+    "signatureValue" : "V3W3P8tUhsj8xF3gcJPKPZkBTzhA75mBSznN0OlwkeOfVvOfPSwWR2IQk-vvkQ4Y2EDWe51VCs7zBJiOz0kByg"
   }, {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-01-25T14:55:25Z",
+    "created" : "2021-01-28T06:38:36Z",
     "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "signatureValue" : "Vu2BcoN1wrRa4XVurH9-Y2cgtmjXP6VCmd7cR2kcEqhlqAtjs5gVlUcFUF8RqjNMsXJw4qwdeKUSayWR6-2uMw"
+    "signatureValue" : "4QXX5SxOFHQcG_AuHD6FnVbxBJPKKvbJmKF7afJ4bVblRzgmXpu5VnYaT76S5_LM2gv-VVWWiafzYJGzhTD7uA"
   }, {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-01-25T14:55:25Z",
+    "created" : "2021-01-28T06:38:36Z",
     "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
-    "signatureValue" : "JwVO-g9KRAyzxxB4mF1QVDDoGD5xFMtM0dZxXpHXfi5I8v3fRgRqEkQbUEto_tn-DY2Qu7rXuVC4zR0uq9IO4Q"
+    "signatureValue" : "vOYwaP2dp8hvoud_qZ_LZgDchh5eeG1MkeoRO4eSMSGETvGS9hYxZv3WsWb8WQpTMpITJsNKeJyNX1EZPd5UJg"
   } ]
 }
