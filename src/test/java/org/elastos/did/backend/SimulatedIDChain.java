@@ -165,8 +165,12 @@ public class SimulatedIDChain {
 			if (tx == null)
 				throw new DIDTransactionException("DID not exists.");
 
-			if (!request.getTransferTicket().isValid())
-				throw new DIDTransactionException("Invalid transfer ticket.");
+			try {
+				if (!request.getTransferTicket().isValid())
+					throw new DIDTransactionException("Invalid transfer ticket.");
+			} catch (DIDResolveException e) {
+				throw new DIDTransactionException(e);
+			}
 
 			if (!request.getTransferTicket().getSubject().equals(request.getDid()))
 				throw new DIDTransactionException("Ticket subject mismatched with target DID.");

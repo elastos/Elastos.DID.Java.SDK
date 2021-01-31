@@ -248,11 +248,11 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	static public class Proof {
 		@JsonProperty(TYPE)
 		private String type;
-		@JsonProperty(VERIFICATION_METHOD)
-		private DIDURL verificationMethod;
 		@JsonProperty(CREATED)
 		@JsonInclude(Include.NON_NULL)
 		private Date created;
+		@JsonProperty(VERIFICATION_METHOD)
+		private DIDURL verificationMethod;
 		@JsonProperty(SIGNATURE)
 		private String signature;
 
@@ -269,8 +269,8 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 				@JsonProperty(value = CREATED) Date created,
 				@JsonProperty(value = SIGNATURE, required = true) String signature) {
 			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+			this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
 			this.verificationMethod = method;
-			this.created = created;
 			this.signature = signature;
 		}
 
