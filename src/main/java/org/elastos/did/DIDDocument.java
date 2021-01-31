@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
@@ -65,6 +64,7 @@ import org.elastos.did.exception.DIDObjectNotExistException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
+import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedDocumentException;
@@ -573,7 +573,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				@JsonProperty(value = CREATOR) DIDURL creator,
 				@JsonProperty(value = SIGNATURE_VALUE, required = true) String signature) {
 			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-			this.created = created;
+			this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
 			this.creator = creator;
 			this.signature = signature;
 		}
@@ -1614,6 +1614,15 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		return _proofs.get(0);
 	}
 
+	protected Proof getProof(DID signer) {
+		for (Proof proof : _proofs) {
+			if (proof.getCreator().getDid().equals(signer))
+				return proof;
+		}
+
+		return null;
+	}
+
 	/**
 	 * Get all Proof objects.
 	 *
@@ -1631,7 +1640,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			throw new MalformedDocumentException("Aleady exist proof from " + proof.getCreator());
 
 		proofs.put(proof.getCreator(), proof);
-		this._proofs = new ArrayList<Proof>(new TreeSet<Proof>(proofs.values()));
+		this._proofs = new ArrayList<Proof>(proofs.values());
+		Collections.sort(this._proofs);
 	}
 
 
@@ -1728,10 +1738,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		if (expires == null)
 			throw new MalformedDocumentException("Missing document expires.");
 
-		if (withProof) {
+		if (withProof)
 			sanitizeProof();
-			this._proofs = new ArrayList<Proof>(new TreeSet<Proof>(proofs.values()));
-		}
 	}
 
 	private void sanitizeControllers() throws MalformedDocumentException {
@@ -2407,17 +2415,27 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		return jpb;
 	}
 
+	public DIDDocument newCustomizedDid(DID did, boolean force, String storepass)
+			throws DIDInvalidException, DIDResolveException, DIDStoreException {
+		return newCustomizedDid(did, null, 0, force, storepass);
+	}
+
 	public DIDDocument newCustomizedDid(DID did, String storepass)
 			throws DIDInvalidException, DIDResolveException, DIDStoreException {
-		return newCustomizedDid(did, null, 0, storepass);
+		return newCustomizedDid(did, false, storepass);
+	}
+
+	public DIDDocument newCustomizedDid(String did, boolean force, String storepass)
+			throws DIDInvalidException, DIDResolveException, DIDStoreException {
+		return newCustomizedDid(DID.valueOf(did), force, storepass);
 	}
 
 	public DIDDocument newCustomizedDid(String did, String storepass)
 			throws DIDInvalidException, DIDResolveException, DIDStoreException {
-		return newCustomizedDid(DID.valueOf(did), storepass);
+		return newCustomizedDid(DID.valueOf(did), false, storepass);
 	}
 
-	public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, String storepass)
+	public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, boolean force, String storepass)
 			throws DIDInvalidException, DIDResolveException, DIDStoreException {
 		checkArgument(did != null, "Invalid DID");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -2442,9 +2460,12 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		log.info("Creating new DID {} with controller {}...", did, getSubject());
 
-		DIDDocument doc = did.resolve(true);
-		if (doc != null)
-			throw new DIDAlreadyExistException(did.toString());
+		DIDDocument doc = null;
+		if (!force) {
+			doc = did.resolve(true);
+			if (doc != null)
+				throw new DIDAlreadyExistException(did.toString());
+		}
 
 		log.info("Creating new DID {} with controller {}...", did, getSubject());
 
@@ -2466,24 +2487,67 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		}
 	}
 
-	public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, String storepass)
+	public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, String storepass)
+			throws DIDInvalidException, DIDResolveException, DIDStoreException {
+		return newCustomizedDid(did, controllers, multisig, false, storepass);
+	}
+
+	public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, boolean force, String storepass)
 			throws DIDInvalidException, DIDResolveException, DIDStoreException {
 		List<DID> _controllers = new ArrayList<DID>(controllers.length);
 		for (String ctrl : controllers)
 			_controllers.add(new DID(ctrl));
 
 		return newCustomizedDid(DID.valueOf(did),_controllers.toArray(new DID[0]),
-				multisig, storepass);
+				multisig, force, storepass);
+	}
+
+	public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, String storepass)
+			throws DIDInvalidException, DIDResolveException, DIDStoreException {
+		return newCustomizedDid(did, controllers, multisig, false, storepass);
+	}
+
+	public TransferTicket createTransferTicket(DID to, String storepass)
+			throws DIDResolveException, NotControllerException, DIDStoreException {
+		checkArgument(to != null, "Invalid to");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkState(getMetadata().attachedStore(), "Not attached with a store");
+		checkState(isCustomizedDid(), "Not a coustomized DID");
+		checkState(getEffectiveController() != null, "No effective controller");
+
+		TransferTicket ticket = new TransferTicket(this, to);
+		try {
+			ticket.seal(getEffectiveControllerDocument(), storepass);
+		} catch (AlreadySignedException ignore) {
+			// Should never happen
+			log.error("INTERNAL - Seal the transfer ticket", ignore);
+			return null;
+		}
+
+		return ticket;
 	}
 
 	public TransferTicket createTransferTicket(DID did, DID to, String storepass)
-			throws DIDResolveException, NotControllerException, DIDStoreException {
+			throws DIDNotFoundException, DIDDeactivatedException, DIDResolveException, NotControllerException, DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 		checkArgument(to != null, "Invalid to");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
 
-		TransferTicket ticket = new TransferTicket(did, to);
+		DIDDocument target = did.resolve(true);
+		if (target == null)
+			throw new DIDNotFoundException(did.toString());
+
+		if (target.isDeactivated())
+			throw new DIDDeactivatedException(did.toString());
+
+		if (!target.isCustomizedDid())
+			throw new IllegalArgumentException("DID " + did + " is not a customized DID");
+
+		if (!target.hasController(getSubject()))
+			throw new NotControllerException(getSubject().toString());
+
+		TransferTicket ticket = new TransferTicket(target, to);
 		try {
 			ticket.seal(this, storepass);
 		} catch (AlreadySignedException ignore) {
@@ -2496,7 +2560,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	public TransferTicket sign(TransferTicket ticket, String storepass)
-			throws NotControllerException, AlreadySignedException, DIDStoreException {
+			throws NotControllerException, AlreadySignedException, DIDStoreException, DIDResolveException {
 		if (ticket == null || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
@@ -2525,6 +2589,52 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			log.error("INTERNAL - sign customized did document", ignore);
 			return null;
 		}
+	}
+
+	public void publish(TransferTicket ticket, String storepass, DIDTransactionDispatcher dispatcher)
+			throws DIDInvalidException, DIDResolveException, NotControllerException, DIDTransactionException, DIDStoreException, InvalidKeyException {
+		checkArgument(ticket.isValid(), "Invalid ticket");
+		checkArgument(ticket.getSubject().equals(getSubject()), "Ticket mismatch with current DID");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkState(getMetadata().attachedStore(), "Not attached with a store");
+		checkState(isCustomizedDid(), "Invalid ticket, target is not a customized DID");
+		checkState(getProof(ticket.getTo()) != null, "Document not signed by " + ticket.getTo());
+		checkState(getEffectiveController() != null, "No effective controller");
+
+		DID did = ticket.getSubject();
+		DIDDocument targetDoc = did.resolve(true);
+		if (targetDoc == null)
+			throw new DIDNotFoundException(did.toString());
+
+		if (targetDoc.isDeactivated())
+			throw new DIDDeactivatedException(did.toString());
+
+		checkState(targetDoc.getMetadata().getTransactionId().equals(ticket.getTransactionId()),
+				"Ticket out date, transaction id mismatch");
+
+		DIDBackend.getInstance().transferDid(this, ticket, getDefaultPublicKeyId(), storepass, dispatcher);
+	}
+
+	public void publish(TransferTicket ticket, String storepass)
+			throws DIDInvalidException, DIDResolveException, NotControllerException, DIDTransactionException, DIDStoreException, InvalidKeyException {
+		publish(ticket, storepass, null);
+	}
+
+	public CompletableFuture<Void> publishAsync(TransferTicket ticket,
+			String storepass, DIDTransactionDispatcher dispatcher) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				publish(ticket, storepass, dispatcher);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public CompletableFuture<Void> publishAsync(TransferTicket ticket, String storepass) {
+		return publishAsync(ticket, storepass, null);
 	}
 
 	/**
@@ -3115,7 +3225,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 */
 	public void deactivate(DID target, DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
-			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
+			throws DIDInvalidException, InvalidKeyException, NotControllerException, DIDStoreException, DIDBackendException {
 		checkArgument(target != null, "Invalid target DID");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
@@ -3127,41 +3237,60 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		else if (targetDoc.isDeactivated())
 			throw new DIDDeactivatedException(target.toString());
 
-		if (targetDoc.getAuthorizationKeyCount() == 0)
-			throw new InvalidKeyException("No authorization key from: " + target);
+		targetDoc.getMetadata().attachStore(getStore());
 
-		List<PublicKey> candidatePks = null;
-		if (signKey == null) {
-			candidatePks = this.getAuthenticationKeys();
-		} else {
-			PublicKey pk = getAuthenticationKey(signKey);
-			if (pk == null)
-				throw new InvalidKeyException("Not an authentication key: " + signKey);
-			candidatePks = new ArrayList<PublicKey>(1);
-			candidatePks.add(pk);
-		}
+		if (!targetDoc.isCustomizedDid()) {
+			if (targetDoc.getAuthorizationKeyCount() == 0)
+				throw new InvalidKeyException("No authorization key from: " + target);
 
-		// Lookup the authorization key id in the target doc
-		DIDURL realSignKey = null;
-		DIDURL targetSignKey = null;
-		lookup: for (PublicKey candidatePk : candidatePks) {
-			for (PublicKey pk : targetDoc.getAuthorizationKeys()) {
-				if (!pk.getController().equals(getSubject()))
-					continue;
+			List<PublicKey> candidatePks = null;
+			if (signKey == null) {
+				candidatePks = this.getAuthenticationKeys();
+			} else {
+				PublicKey pk = getAuthenticationKey(signKey);
+				if (pk == null)
+					throw new InvalidKeyException("Not an authentication key: " + signKey);
+				candidatePks = new ArrayList<PublicKey>(1);
+				candidatePks.add(pk);
+			}
 
-				if (pk.getPublicKeyBase58().equals(candidatePk.getPublicKeyBase58())) {
-					realSignKey = candidatePk.getId();
-					targetSignKey = pk.getId();
-					break lookup;
+			// Lookup the authorization key id in the target doc
+			DIDURL realSignKey = null;
+			DIDURL targetSignKey = null;
+			lookup: for (PublicKey candidatePk : candidatePks) {
+				for (PublicKey pk : targetDoc.getAuthorizationKeys()) {
+					if (!pk.getController().equals(getSubject()))
+						continue;
+
+					if (pk.getPublicKeyBase58().equals(candidatePk.getPublicKeyBase58())) {
+						realSignKey = candidatePk.getId();
+						targetSignKey = pk.getId();
+						break lookup;
+					}
 				}
 			}
+
+			if (realSignKey == null || targetSignKey == null)
+				throw new InvalidKeyException("No matched authorization key.");
+
+			DIDBackend.getInstance().deactivateDid(targetDoc, targetSignKey,
+					this, realSignKey, storepass, dispatcher);
+		} else {
+			if (!targetDoc.hasController(getSubject()))
+				throw new NotControllerException(getSubject().toString());
+
+			if (signKey == null) {
+				signKey = getDefaultPublicKeyId();
+			} else {
+				if (!signKey.equals(getDefaultPublicKeyId()))
+					throw new InvalidKeyException("Not an authentication key: " + signKey);
+			}
+
+			DIDBackend.getInstance().deactivateDid(targetDoc, signKey, storepass, dispatcher);
+
+			if (getStore().containsDid(target))
+				getStore().storeDid(targetDoc);
 		}
-
-		if (realSignKey == null || targetSignKey == null)
-			throw new InvalidKeyException("No matched authorization key.");
-
-		DIDBackend.getInstance().deactivateDid(targetDoc, targetSignKey,
-				this, realSignKey, storepass, dispatcher);
 	}
 
 	/**
@@ -3176,7 +3305,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 */
 	public void deactivate(DID target, DIDURL signKey, String storepass)
-			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
+			throws DIDInvalidException, InvalidKeyException, NotControllerException, DIDStoreException, DIDBackendException {
 		deactivate(target, signKey, storepass, null);
 	}
 
@@ -3192,7 +3321,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 */
 	public void deactivate(String target, String signKey, String storepass, DIDTransactionDispatcher dispatcher)
-			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
+			throws DIDInvalidException, InvalidKeyException, NotControllerException, DIDStoreException, DIDBackendException {
 		deactivate(DID.valueOf(target), canonicalId(signKey), storepass, dispatcher);
 	}
 
@@ -3208,7 +3337,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 */
 	public void deactivate(String target, String signKey, String storepass)
-			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
+			throws DIDInvalidException, InvalidKeyException, NotControllerException, DIDStoreException, DIDBackendException {
 		deactivate(DID.valueOf(target), canonicalId(signKey), storepass, null);
 	}
 
@@ -3223,7 +3352,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 */
 	public void deactivate(DID target, String storepass, DIDTransactionDispatcher dispatcher)
-			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
+			throws DIDInvalidException, InvalidKeyException, NotControllerException, DIDStoreException, DIDBackendException {
 		deactivate(target, null, storepass, dispatcher);
 	}
 
@@ -3238,7 +3367,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 */
 	public void deactivate(DID target, String storepass)
-			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
+			throws DIDInvalidException, InvalidKeyException,NotControllerException, DIDStoreException, DIDBackendException {
 		deactivate(target, null, storepass, null);
 	}
 

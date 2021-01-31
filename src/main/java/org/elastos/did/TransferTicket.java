@@ -28,10 +28,10 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TreeSet;
 
 import org.elastos.did.exception.AlreadySignedException;
 import org.elastos.did.exception.DIDResolveException;
@@ -92,15 +92,15 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 *
 	 * The default proof type is ECDSAsecp256r1.
 	 */
-	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, CREATED, SIGNATURE })
+	@JsonPropertyOrder({ TYPE, CREATED, VERIFICATION_METHOD, SIGNATURE })
 	static public class Proof implements Comparable<Proof> {
 		@JsonProperty(TYPE)
 		private String type;
-		@JsonProperty(VERIFICATION_METHOD)
-		private DIDURL verificationMethod;
 		@JsonProperty(CREATED)
 		@JsonInclude(Include.NON_NULL)
 		private Date created;
+		@JsonProperty(VERIFICATION_METHOD)
+		private DIDURL verificationMethod;
 		@JsonProperty(SIGNATURE)
 		private String signature;
 
@@ -117,8 +117,8 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 				@JsonProperty(value = CREATED) Date created,
 				@JsonProperty(value = SIGNATURE, required = true) String signature) {
 			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+			this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
 			this.verificationMethod = method;
-			this.created = created;
 			this.signature = signature;
 		}
 
@@ -179,14 +179,17 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * @param to (one of ) the new owner's DID
 	 * @throws DIDResolveException if failed resolve the subject DID
 	 */
-	protected TransferTicket(DID did, DID to) throws DIDResolveException {
-		this.id = did;
-		this.doc = did.resolve(true);
-		if (!doc.isCustomizedDid())
-			throw new IllegalArgumentException("DID " + did + " is not a customized DID");
+	protected TransferTicket(DIDDocument target, DID to) throws DIDResolveException {
+		if (!target.isCustomizedDid())
+			throw new IllegalArgumentException("DID " + target.getSubject() + " is not a customized DID");
+
+		target.getMetadata().setTransactionId(target.getSubject().resolve().getMetadata().getTransactionId());
+
+		this.id = target.getSubject();
+		this.doc = target;
 
 		this.to = to;
-		this.txid = this.doc.getMetadata().getTransactionId();
+		this.txid = target.getMetadata().getTransactionId();
 	}
 
 	@JsonCreator
@@ -225,6 +228,13 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 		return txid;
 	}
 
+	private DIDDocument getDocument() throws DIDResolveException {
+		if (doc == null)
+			doc = id.resolve();
+
+		return doc;
+	}
+
 	/**
 	 * Get first Proof object.
 	 *
@@ -254,7 +264,8 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 			throw new MalformedTransferTicketException("Aleady exist proof from " + proof.getVerificationMethod());
 
 		proofs.put(proof.getVerificationMethod(), proof);
-		this._proofs = new ArrayList<Proof>(new TreeSet<Proof>(proofs.values()));
+		this._proofs = new ArrayList<Proof>(proofs.values());
+		Collections.sort(this._proofs);
 	}
 
 	private byte[][] getSigningInputs() {
@@ -272,13 +283,13 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 *
 	 * @return true is the ticket is genuine else false
 	 */
-	public boolean isGenuine() {
-		if (!doc.isGenuine())
+	public boolean isGenuine() throws DIDResolveException {
+		if (!getDocument().isGenuine())
 			return false;
 
 		// Proofs count should match with multisig
-		if ((doc.getControllerCount() > 1 && proofs.size() != doc.getMultiSignature().m()) ||
-				(doc.getControllerCount() <= 1 && proofs.size() != 1))
+		if ((getDocument().getControllerCount() > 1 && proofs.size() != getDocument().getMultiSignature().m()) ||
+				(getDocument().getControllerCount() <= 1 && proofs.size() != 1))
 			return false;
 
 		List<DID> checkedControllers = new ArrayList<DID>(_proofs.size());
@@ -287,7 +298,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 			if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 				return false;
 
-			DIDDocument controllerDoc = doc.getControllerDocument(proof.getVerificationMethod().getDid());
+			DIDDocument controllerDoc = getDocument().getControllerDocument(proof.getVerificationMethod().getDid());
 			if (controllerDoc == null)
 				return false;
 
@@ -301,7 +312,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 			if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId()))
 				return false;
 
-			if (!doc.verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs()))
+			if (!getDocument().verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs()))
 				return false;
 
 			checkedControllers.add(proof.getVerificationMethod().getDid());
@@ -316,14 +327,14 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 *
 	 * @return true is the ticket is valid else false
 	 */
-	public boolean isValid() {
-		if (!doc.isValid())
+	public boolean isValid() throws DIDResolveException {
+		if (!getDocument().isValid())
 			return false;
 
 		if (!isGenuine())
 			return false;
 
-		if (!txid.equals(doc.getMetadata().getTransactionId()))
+		if (!txid.equals(getDocument().getMetadata().getTransactionId()))
 			return false;
 
 		return true;
@@ -336,11 +347,11 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 *
 	 * @return true is the ticket is qualified else false
 	 */
-	public boolean isQualified() {
+	public boolean isQualified() throws DIDResolveException {
 		if (_proofs == null || _proofs.isEmpty())
 			return false;
 
-		DIDDocument.MultiSignature multisig = doc.getMultiSignature();
+		DIDDocument.MultiSignature multisig = getDocument().getMultiSignature();
 		return _proofs.size() == (multisig == null ? 1 : multisig.m());
 	}
 
@@ -353,12 +364,6 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	@Override
 	protected void sanitize(boolean withProof) throws MalformedTransferTicketException {
 		if (withProof) {
-			try {
-				doc = id.resolve();
-			} catch (DIDResolveException e) {
-				throw new  MalformedTransferTicketException("Can not resolve the subject DID");
-			}
-
 			if (_proofs == null || _proofs.isEmpty())
 				throw new MalformedTransferTicketException("Missing ticket proof");
 
@@ -376,7 +381,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	}
 
 	protected void seal(DIDDocument controller, String storepass)
-			throws NotControllerException, AlreadySignedException, DIDStoreException {
+			throws NotControllerException, AlreadySignedException, DIDStoreException, DIDResolveException {
 		if (controller == null || storepass == null || storepass.isEmpty())
 			throw new IllegalArgumentException();
 
