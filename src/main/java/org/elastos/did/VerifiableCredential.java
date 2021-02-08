@@ -687,6 +687,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public boolean isRevoked() throws DIDResolveException {
+		// TODO: needs to improve: use the resolved status if available
 		CredentialBiography bio = DIDBackend.getInstance().resolveCredentialBiography(
 				getId(), getIssuer());
 		return bio.getStatus() == CredentialBiography.Status.REVOKED;
@@ -922,6 +923,20 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
 
+		DIDDocument owner = getSubject().getId().resolve();
+		if (owner == null) {
+			log.error("Publish failed because the credential owner is not published.");
+			throw new DIDNotFoundException(getSubject().getId().toString());
+		}
+		owner.getMetadata().attachStore(getStore());
+
+		DIDDocument issuer = getIssuer().resolve();
+		if (issuer == null) {
+			log.error("Publish failed because the credential issuer is not published.");
+			throw new DIDNotFoundException(getIssuer().toString());
+		}
+		issuer.getMetadata().attachStore(getStore());
+
 		if (isRevoked()) {
 			log.error("Publish failed because the credential is revoked.");
 			throw new CredentialRevokedException(getId().toString());
@@ -943,7 +958,9 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		}
 
 		if (!signer.getSubject().equals(getSubject().getId()) &&
-				!signer.getSubject().equals(getIssuer())) {
+				!signer.getSubject().equals(getIssuer()) &&
+				!owner.hasController(signer.getSubject()) &&
+				!issuer.hasController(signer.getSubject())) {
 			log.error("Publish failed because the invalid signer or signkey.");
 			throw new InvalidKeyException("Not owner or issuer: " + signer.getSubject());
 		}

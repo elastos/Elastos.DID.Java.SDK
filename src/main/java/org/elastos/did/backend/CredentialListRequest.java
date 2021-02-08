@@ -42,11 +42,11 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 		private DID did;
 
 		@JsonProperty(PARAMETER_SKIP)
-		@JsonInclude(Include.NON_NULL)
+		@JsonInclude(Include.NON_DEFAULT)
 		private Integer skip;
 
-		@JsonProperty(PARAMETER_SKIP)
-		@JsonInclude(Include.NON_NULL)
+		@JsonProperty(PARAMETER_LIMIT)
+		@JsonInclude(Include.NON_DEFAULT)
 		private Integer limit;
 
 		public Parameters(DID did, int skip, int limit) {
