@@ -568,6 +568,10 @@ public class DIDBackend {
 		cache.invalidate(request);
 	}
 
+	public void clearCache() {
+		cache.invalidateAll();
+	}
+
 	/**
 	 * Publish 'create' id transaction for the new did.
 	 *

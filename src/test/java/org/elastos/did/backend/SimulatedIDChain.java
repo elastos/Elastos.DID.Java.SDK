@@ -29,9 +29,9 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Calendar;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -66,8 +66,8 @@ public class SimulatedIDChain {
 
 	// For simulate the ID chain
 	private static Random random = new Random();
-	private LinkedList<DIDTransaction> idtxs;
-	private LinkedList<CredentialTransaction> vctxs;
+	private ConcurrentLinkedDeque<DIDTransaction> idtxs;
+	private ConcurrentLinkedDeque<CredentialTransaction> vctxs;
 
 	private static final Logger log = LoggerFactory.getLogger(SimulatedIDChain.class);
 
@@ -75,8 +75,8 @@ public class SimulatedIDChain {
 		this.host = host;
 		this.port = port;
 
-		idtxs = new LinkedList<DIDTransaction>();
-		vctxs = new LinkedList<CredentialTransaction>();
+		idtxs = new ConcurrentLinkedDeque<DIDTransaction>();
+		vctxs = new ConcurrentLinkedDeque<CredentialTransaction>();
 	}
 
 	public SimulatedIDChain(int port) {
@@ -105,6 +105,16 @@ public class SimulatedIDChain {
 		for (DIDTransaction tx : idtxs) {
 			if (tx.getDid().equals(did))
 				return tx;
+		}
+
+		return null;
+	}
+
+	private DIDDocument getLastDidDocument(DID did) {
+		for (DIDTransaction tx : idtxs) {
+			if (tx.getDid().equals(did) &&
+					tx.getRequest().getOperation() != IDChainRequest.Operation.DEACTIVATE)
+				return tx.getRequest().getDocument();
 		}
 
 		return null;
@@ -200,7 +210,7 @@ public class SimulatedIDChain {
 
 		tx = new DIDTransaction(generateTxid(),
 				Calendar.getInstance(Constants.UTC).getTime(), request);
-		idtxs.add(0, tx);
+		idtxs.addFirst(tx);
 		log.trace("ID Transaction[{}] - {} success", request.getOperation(), request.getDid());
 	}
 
@@ -239,11 +249,28 @@ public class SimulatedIDChain {
 	}
 
 	private CredentialTransaction getCredentialRevokeTransaction(DIDURL id, DID signer) {
+		DIDDocument ownerDoc = getLastDidDocument(id.getDid());
+		DIDDocument signerDoc = null;
+		if (signer != null && !signer.equals(id.getDid()))
+			signerDoc = getLastDidDocument(signer);
+
 		for (CredentialTransaction tx : vctxs) {
 			if (tx.getId().equals(id) &&
-					tx.getRequest().getOperation() == IDChainRequest.Operation.REVOKE &&
-					tx.getRequest().getProof().getVerificationMethod().getDid().equals(signer))
-				return tx;
+					tx.getRequest().getOperation() == IDChainRequest.Operation.REVOKE) {
+				DID did = tx.getRequest().getProof().getVerificationMethod().getDid();
+
+				if (did.equals(id.getDid())) // controller revoked
+					return tx;
+
+				if (signer != null && did.equals(signer)) // issuer revoked
+					return tx;
+
+				if (ownerDoc != null && ownerDoc.hasController(did)) // controller revoked
+					return tx;
+
+				if (signerDoc != null && signerDoc.hasController(did)) // issuer revoked
+					return tx;
+			}
 		}
 
 		return null;
@@ -275,34 +302,30 @@ public class SimulatedIDChain {
 			throw new DIDTransactionException("Resove DID error");
 		}
 
-		CredentialTransaction tx;
+		CredentialTransaction declareTx = getCredentialDeclareTransaction(request.getCredentialId());
+		CredentialTransaction revokeTx = null;
 
 		switch (request.getOperation()) {
 		case DECLARE:
-			// Declared already
-			tx = getCredentialDeclareTransaction(request.getCredentialId());
-			if (tx != null)
+			if (declareTx != null) // Declared already
 				throw new DIDTransactionException("Credential already exists.");
 
-			// Revoked by the controller
-			tx = getCredentialRevokeTransaction(request.getCredentialId(),
-					request.getCredential().getSubject().getId());
-			if (tx != null)
-				throw new DIDTransactionException("Credential already revoked by the controller.");
-
-			// Revoked by the issuer
-			tx = getCredentialRevokeTransaction(request.getCredentialId(),
-					request.getCredential().getIssuer());
-			if (tx != null)
-				throw new DIDTransactionException("Credential already revoked by the issuer.");
+			revokeTx = getCredentialRevokeTransaction(
+					request.getCredentialId(), request.getCredential().getIssuer());
+			if (revokeTx != null) // Revoked already
+				throw new DIDTransactionException("Credential already revoked by "
+						+ revokeTx.getRequest().getProof().getVerificationMethod().getDid());
 
 			break;
 
 		case REVOKE:
-			tx = getCredentialRevokeTransaction(request.getCredentialId(),
-					request.getProof().getVerificationMethod().getDid());
-			if (tx != null)
-				throw new DIDTransactionException("Same revoke transaction already exists.");
+			DID issuer = declareTx != null ? declareTx.getRequest().getCredential().getIssuer()
+					: request.getProof().getVerificationMethod().getDid();
+
+			revokeTx = getCredentialRevokeTransaction(request.getCredentialId(), issuer);
+			if (revokeTx != null)
+				throw new DIDTransactionException("Credential already revoked by "
+						+ revokeTx.getRequest().getProof().getVerificationMethod().getDid());
 
 			break;
 
@@ -310,9 +333,9 @@ public class SimulatedIDChain {
 			throw new DIDTransactionException("Invalid opreation.");
 		}
 
-		tx = new CredentialTransaction(generateTxid(),
+		CredentialTransaction tx = new CredentialTransaction(generateTxid(),
 				Calendar.getInstance(Constants.UTC).getTime(), request);
-		vctxs.add(0, tx);
+		vctxs.addFirst(tx);
 		log.trace("VC Transaction[{}] - {} success", request.getOperation(), request.getCredentialId());
 	}
 
@@ -320,26 +343,11 @@ public class SimulatedIDChain {
 		log.debug("Resolveing credential {} ...", request.getId());
 
 		CredentialTransaction declareTx = getCredentialDeclareTransaction(request.getId());
-		CredentialTransaction controllerRevokeTx = getCredentialRevokeTransaction(request.getId(),
-				request.getId().getDid());
 
 		DID issuer = declareTx != null ? declareTx.getRequest().getCredential().getIssuer()
 				: request.getIssuer();
-		CredentialTransaction issuerRevokeTx = issuer != null ? getCredentialRevokeTransaction(
+		CredentialTransaction revokeTx = issuer != null ? getCredentialRevokeTransaction(
 				request.getId(), issuer) : null;
-
-		CredentialTransaction revokeTx = null;
-		if (controllerRevokeTx != null && issuerRevokeTx != null) {
-			if (issuerRevokeTx.getTimestamp().after(controllerRevokeTx.getTimestamp()))
-				revokeTx = controllerRevokeTx;
-			else
-				revokeTx = issuerRevokeTx;
-		} else {
-			if (controllerRevokeTx != null)
-				revokeTx = controllerRevokeTx;
-			else if (issuerRevokeTx != null)
-				revokeTx = issuerRevokeTx;
-		}
 
 		CredentialBiography bio = new CredentialBiography(request.getId());
 		if (revokeTx != null) {
@@ -362,18 +370,28 @@ public class SimulatedIDChain {
 
 	private CredentialListResponse listCredentials(CredentialListRequest request) {
 		int skip = request.getSkip();
-		int limit = request.getLimit() <= CredentialList.MAX_SIZE ?
-				request.getLimit() : CredentialList.MAX_SIZE;
+		int limit = request.getLimit();
+
+		if (skip < 0)
+			skip = 0;
+
+		if (limit <= 0)
+			limit = CredentialList.DEFAULT_SIZE;
+		else if (limit >= CredentialList.MAX_SIZE)
+			limit = CredentialList.MAX_SIZE;
 
 		log.debug("Listing credentials {} {}/{}...", request.getDid(), skip, limit);
 
 		CredentialList cl = new CredentialList(request.getDid());
 		for (CredentialTransaction tx : vctxs) {
+			if (tx.getRequest().getOperation() == IDChainRequest.Operation.REVOKE)
+				continue;
+
 			if (tx.getRequest().getCredential().getSubject().getId().equals(request.getDid())) {
-				if (--skip > 0)
+				if (skip-- > 0)
 					continue;
 
-				if (--limit > 0)
+				if (limit-- > 0)
 					cl.addCredentialId(tx.getId());
 				else
 					break;
@@ -558,10 +576,5 @@ public class SimulatedIDChain {
 				throw new IOException("HTTP Handle error", e);
 			}
 		}
-	}
-
-	public static void main(String args[]) throws Exception {
-		SimulatedIDChain simChain = new SimulatedIDChain();
-		simChain.start();
 	}
 }

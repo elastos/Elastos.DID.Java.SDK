@@ -2139,8 +2139,17 @@ public class DIDDocumentTest {
 	}
 
     @ParameterizedTest
-    @CsvSource({"1,issuer", "1,user1", "1,user2", "1,user3",
-    		"2,examplecorp", "2,foobar", "2,foo", "2,bar", "2,baz"})
+    @CsvSource({
+    	"1,issuer",
+    	"1,user1",
+    	"1,user2",
+    	"1,user3",
+    	"2,examplecorp",
+    	"2,foobar",
+    	"2,foo",
+    	"2,bar",
+    	"2,baz"
+    })
 	public void testParseAndSerializeDocument(int version, String did)
 			throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);

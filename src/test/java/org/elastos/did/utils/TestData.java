@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.elastos.did.DID;
+import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.DIDURL;
@@ -67,6 +68,7 @@ public final class TestData {
 			store.close();
 
 		DIDTestExtension.resetData();
+		DIDBackend.getInstance().clearCache();
 	}
 
 	public static synchronized HDKey generateKeypair()
@@ -293,7 +295,7 @@ public final class TestData {
 			return credential;
 		}
 
-		public synchronized VerifiableCredential getCredential(String did, String vc)
+		public VerifiableCredential getCredential(String did, String vc)
 				throws DIDException, IOException {
 			return getCredential(did, vc, null);
 		}
@@ -311,7 +313,7 @@ public final class TestData {
 			return text;
 		}
 
-		public VerifiablePresentation getPresentation(String did, String vp, String type)
+		public synchronized VerifiablePresentation getPresentation(String did, String vp, String type)
 				throws DIDException, IOException {
 			// Load DID document first for verification
 			getDocument(did);
@@ -399,7 +401,7 @@ public final class TestData {
 		private TransferTicket ttFooBar;
 		private TransferTicket ttBaz;
 
-		public synchronized DIDDocument getIssuerDocument() throws DIDException, IOException {
+		public synchronized DIDDocument getIssuerDocument() throws DIDException {
 			if (idIssuer == null) {
 				getRootIdentity();
 
@@ -449,7 +451,7 @@ public final class TestData {
 			return idIssuer;
 		}
 
-		public synchronized DIDDocument getUser1Document() throws DIDException, IOException {
+		public synchronized DIDDocument getUser1Document() throws DIDException {
 			if (idUser1 == null) {
 				getIssuerDocument();
 
@@ -521,7 +523,7 @@ public final class TestData {
 			return idUser1;
 		}
 
-		public synchronized VerifiableCredential getUser1PassportCredential() throws DIDException, IOException {
+		public synchronized VerifiableCredential getUser1PassportCredential() throws DIDException {
 			if (vcUser1Passport == null) {
 				DIDDocument doc = getUser1Document();
 
@@ -547,7 +549,7 @@ public final class TestData {
 			return vcUser1Passport;
 		}
 
-		public synchronized VerifiableCredential getUser1TwitterCredential() throws DIDException, IOException {
+		public synchronized VerifiableCredential getUser1TwitterCredential() throws DIDException {
 			if (vcUser1Twitter == null) {
 				DIDDocument doc = getUser1Document();
 
@@ -572,12 +574,11 @@ public final class TestData {
 			return vcUser1Twitter;
 		}
 
-		public synchronized VerifiableCredential getUser1JsonCredential() throws DIDException, IOException {
+		public synchronized VerifiableCredential getUser1JsonCredential() throws DIDException {
 			if (vcUser1Json == null) {
 				DIDDocument doc = getUser1Document();
 
 				DIDURL id = new DIDURL(doc.getSubject(), "json");
-				System.out.print("Generate credential: " + id + "...");
 
 				Issuer kycIssuer = new Issuer(idIssuer);
 				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
@@ -597,7 +598,7 @@ public final class TestData {
 			return vcUser1Json;
 		}
 
-		public synchronized VerifiableCredential getUser1JobPositionCredential() throws DIDException, IOException {
+		public synchronized VerifiableCredential getUser1JobPositionCredential() throws DIDException {
 			if (vcUser1JobPosition == null) {
 				getExampleCorpDocument();
 
@@ -623,7 +624,7 @@ public final class TestData {
 			return vcUser1JobPosition;
 		}
 
-		public synchronized VerifiablePresentation getUser1NonemptyPresentation() throws DIDException, IOException {
+		public synchronized VerifiablePresentation getUser1NonemptyPresentation() throws DIDException {
 			if (vpUser1Nonempty == null) {
 				DIDDocument doc = getUser1Document();
 
@@ -645,7 +646,7 @@ public final class TestData {
 			return vpUser1Nonempty;
 		}
 
-		public synchronized VerifiablePresentation getUser1EmptyPresentation() throws DIDException, IOException {
+		public synchronized VerifiablePresentation getUser1EmptyPresentation() throws DIDException {
 			if (vpUser1Empty == null) {
 				DIDDocument doc = getUser1Document();
 
@@ -662,7 +663,7 @@ public final class TestData {
 			return vpUser1Empty;
 		}
 
-		public synchronized DIDDocument getUser2Document() throws DIDException, IOException {
+		public synchronized DIDDocument getUser2Document() throws DIDException {
 			if (idUser2 == null) {
 				DIDDocument doc = identity.newDid(TestConfig.storePass);
 				doc.getMetadata().setAlias("User2");
@@ -688,7 +689,7 @@ public final class TestData {
 			return idUser2;
 		}
 
-		public synchronized DIDDocument getUser3Document() throws DIDException, IOException {
+		public synchronized DIDDocument getUser3Document() throws DIDException {
 			if (idUser3 == null) {
 				DIDDocument doc = identity.newDid(TestConfig.storePass);
 				doc.getMetadata().setAlias("User3");
@@ -700,7 +701,7 @@ public final class TestData {
 			return idUser3;
 		}
 
-		public synchronized DIDDocument getUser4Document() throws DIDException, IOException {
+		public synchronized DIDDocument getUser4Document() throws DIDException {
 			if (idUser4 == null) {
 				DIDDocument doc = identity.newDid(TestConfig.storePass);
 				doc.getMetadata().setAlias("User4");
@@ -712,7 +713,7 @@ public final class TestData {
 			return idUser4;
 		}
 
-		public synchronized DIDDocument getExampleCorpDocument() throws DIDException, IOException {
+		public synchronized DIDDocument getExampleCorpDocument() throws DIDException {
 			if (idExampleCorp == null) {
 				getIssuerDocument();
 
@@ -755,7 +756,7 @@ public final class TestData {
 			return idExampleCorp;
 		}
 
-		public synchronized DIDDocument getFooBarDocument() throws DIDException, IOException {
+		public synchronized DIDDocument getFooBarDocument() throws DIDException {
 			if (idFooBar == null) {
 				getExampleCorpDocument();
 				getUser1Document();
@@ -823,7 +824,7 @@ public final class TestData {
 			return idFooBar;
 		}
 
-		public synchronized VerifiableCredential getFooBarServiceCredential() throws DIDException, IOException {
+		public synchronized VerifiableCredential getFooBarServiceCredential() throws DIDException {
 			if (vcFooBarServices == null) {
 				DIDDocument doc = getFooBarDocument();
 
@@ -848,7 +849,7 @@ public final class TestData {
 			return vcFooBarServices;
 		}
 
-		public synchronized VerifiableCredential getFooBarLicenseCredential() throws DIDException, IOException {
+		public synchronized VerifiableCredential getFooBarLicenseCredential() throws DIDException {
 			if (vcFooBarLicense == null) {
 				getExampleCorpDocument();
 				getUser1Document();
@@ -878,7 +879,7 @@ public final class TestData {
 			return vcFooBarLicense;
 		}
 
-		public synchronized VerifiablePresentation getFooBarNonemptyPresentation() throws DIDException, IOException {
+		public synchronized VerifiablePresentation getFooBarNonemptyPresentation() throws DIDException {
 			if (vpFooBarNonempty == null) {
 				DIDDocument doc = getFooBarDocument();
 
@@ -900,7 +901,7 @@ public final class TestData {
 			return vpFooBarNonempty;
 		}
 
-		public synchronized VerifiablePresentation getFooBarEmptyPresentation() throws DIDException, IOException {
+		public synchronized VerifiablePresentation getFooBarEmptyPresentation() throws DIDException {
 			if (vpFooBarEmpty == null) {
 				DIDDocument doc = getFooBarDocument();
 
@@ -917,7 +918,7 @@ public final class TestData {
 			return vpFooBarEmpty;
 		}
 
-		public synchronized TransferTicket getFooBarTransferTicket() throws DIDException, IOException {
+		public synchronized TransferTicket getFooBarTransferTicket() throws DIDException {
 			if (ttFooBar == null) {
 				DIDDocument doc = getFooBarDocument();
 				DIDDocument user4 = getUser4Document();
@@ -931,7 +932,7 @@ public final class TestData {
 			return ttFooBar;
 		}
 
-		public synchronized DIDDocument getFooDocument() throws DIDException, IOException {
+		public synchronized DIDDocument getFooDocument() throws DIDException {
 			if (idFoo == null) {
 				getUser1Document();
 				getUser2Document();
@@ -952,7 +953,7 @@ public final class TestData {
 			return idFoo;
 		}
 
-		public synchronized VerifiableCredential getFooEmailCredential() throws DIDException, IOException {
+		public synchronized VerifiableCredential getFooEmailCredential() throws DIDException {
 			if (vcFooEmail == null) {
 				getIssuerDocument();
 
@@ -978,7 +979,7 @@ public final class TestData {
 			return vcFooEmail;
 		}
 
-		public synchronized DIDDocument getBarDocument() throws DIDException, IOException {
+		public synchronized DIDDocument getBarDocument() throws DIDException {
 			if (idBar == null) {
 				getUser1Document();
 				getUser2Document();
@@ -998,7 +999,7 @@ public final class TestData {
 			return idBar;
 		}
 
-		public synchronized DIDDocument getBazDocument() throws DIDException, IOException {
+		public synchronized DIDDocument getBazDocument() throws DIDException {
 			if (idBaz == null) {
 				getUser1Document();
 				getUser2Document();
@@ -1016,7 +1017,7 @@ public final class TestData {
 			return idBaz;
 		}
 
-		public synchronized TransferTicket getBazTransferTicket() throws DIDException, IOException {
+		public synchronized TransferTicket getBazTransferTicket() throws DIDException {
 			if (ttBaz == null) {
 				DIDDocument doc = getBazDocument();
 				DIDDocument user4 = getUser4Document();
@@ -1027,6 +1028,120 @@ public final class TestData {
 			}
 
 			return ttBaz;
+		}
+
+		public DIDDocument getDocument(String did) throws DIDException {
+			switch (did) {
+			case "issuer":
+				return getIssuerDocument();
+
+			case "user1":
+				return getUser1Document();
+
+			case "user2":
+				return getUser1Document();
+
+			case "user3":
+				return getUser1Document();
+
+			case "user4":
+				return getUser1Document();
+
+			case "examplecorp":
+				return getExampleCorpDocument();
+
+			case "foobar":
+				return getFooBarDocument();
+
+			case "foo":
+				return getFooDocument();
+
+			case "bar":
+				return getBarDocument();
+
+			case "baz":
+				return getBazDocument();
+
+			default:
+				return null;
+			}
+		}
+
+		public VerifiableCredential getCredential(String did, String vc) throws DIDException {
+			switch (did) {
+			case "user1":
+				switch (vc) {
+				case "passport":
+					return getUser1PassportCredential();
+
+				case "twitter":
+					return getUser1TwitterCredential();
+
+				case "json":
+					return getUser1JsonCredential();
+
+				case "jobposition":
+					return getUser1JobPositionCredential();
+
+				default:
+					return null;
+				}
+
+			case "foobar":
+				switch (vc) {
+				case "services":
+					return getFooBarServiceCredential();
+
+				case "license":
+					return getFooBarLicenseCredential();
+
+				default:
+					return null;
+				}
+
+			case "foo":
+				switch (vc) {
+				case "email":
+					return getFooEmailCredential();
+
+				default:
+					return null;
+				}
+
+			default:
+				return null;
+			}
+		}
+
+		public VerifiablePresentation getPresentation(String did, String vp) throws DIDException {
+			switch (did) {
+			case "user1":
+				switch (vp) {
+				case "nonempty":
+					return getUser1NonemptyPresentation();
+
+				case "empty":
+					return getUser1EmptyPresentation();
+
+				default:
+					return null;
+				}
+
+			case "foobar":
+				switch (vp) {
+				case "nonempty":
+					return getFooBarNonemptyPresentation();
+
+				case "empty":
+					return getFooBarEmptyPresentation();
+
+				default:
+					return null;
+				}
+
+			default:
+				return null;
+			}
 		}
 	}
 }
