@@ -102,7 +102,7 @@ public class TestDataGenerator {
 		props.put("language", "English");
 		props.put("email", "issuer@example.com");
 
-		VerifiableCredential vc = cb.id("profile")
+		VerifiableCredential vc = cb.id("#profile")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -141,27 +141,27 @@ public class TestDataGenerator {
 		DIDDocument.Builder db = doc.edit();
 
 		HDKey temp = TestData.generateKeypair();
-		db.addAuthenticationKey("key2", temp.getPublicKeyBase58());
-		store.storePrivateKey(new DIDURL(doc.getSubject(), "key2"),
+		db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
+		store.storePrivateKey(new DIDURL(doc.getSubject(), "#key2"),
 				temp.serialize(), TestConfig.storePass);
 		writeTo("user1.id.key2.sk", temp.serializeBase58());
 
 		temp = TestData.generateKeypair();
-		db.addAuthenticationKey("key3", temp.getPublicKeyBase58());
-		store.storePrivateKey(new DIDURL(doc.getSubject(), "key3"),
+		db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
+		store.storePrivateKey(new DIDURL(doc.getSubject(), "#key3"),
 				temp.serialize(), TestConfig.storePass);
 		writeTo("user1.id.key3.sk", temp.serializeBase58());
 
 		temp = TestData.generateKeypair();
-		db.addAuthorizationKey("recovery",
+		db.addAuthorizationKey("#recovery",
 				"did:elastos:" + temp.getAddress(),
 				temp.getPublicKeyBase58());
 
-		db.addService("openid", "OpenIdConnectVersion1.0Service",
+		db.addService("#openid", "OpenIdConnectVersion1.0Service",
 				"https://openid.example.com/");
-		db.addService("vcr", "CredentialRepositoryService",
+		db.addService("#vcr", "CredentialRepositoryService",
 				"https://did.example.com/credentials");
-		db.addService("carrier", "CarrierAddress",
+		db.addService("#carrier", "CarrierAddress",
 				"carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d");
 
 		Issuer selfIssuer = new Issuer(doc);
@@ -175,7 +175,7 @@ public class TestDataGenerator {
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
-		VerifiableCredential vcProfile = cb.id("profile")
+		VerifiableCredential vcProfile = cb.id("#profile")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -186,7 +186,7 @@ public class TestDataGenerator {
 		props.clear();
 		props.put("email", "john@example.com");
 
-		VerifiableCredential vcEmail = cb.id("email")
+		VerifiableCredential vcEmail = cb.id("#email")
 				.type("BasicProfileCredential",
 						"InternetAccountCredential", "EmailCredential")
 				.properties(props)
@@ -216,7 +216,7 @@ public class TestDataGenerator {
 		System.out.println(doc.isValid() ? "OK" : "Error");
 
 		// Passport credential
-		id = new DIDURL(doc.getSubject(), "passport");
+		id = new DIDURL(doc.getSubject(), "#passport");
 		System.out.print("Generate credential: " + id + "...");
 
 		cb = selfIssuer.issueFor(doc.getSubject());
@@ -245,7 +245,7 @@ public class TestDataGenerator {
 		System.out.println("OK");
 
 		// Twitter credential
-		id = new DIDURL(doc.getSubject(), "twitter");
+		id = new DIDURL(doc.getSubject(), "#twitter");
 		System.out.print("Generate credential: " + id + "...");
 
 		cb = kycIssuer.issueFor(doc.getSubject());
@@ -273,7 +273,7 @@ public class TestDataGenerator {
 		System.out.println("OK");
 
 		// Json format credential
-		id = new DIDURL(doc.getSubject(), "json");
+		id = new DIDURL(doc.getSubject(), "#json");
 		System.out.print("Generate credential: " + id + "...");
 
 		cb = kycIssuer.issueFor(doc.getSubject());
@@ -449,7 +449,7 @@ public class TestDataGenerator {
 		props.put("website", "https://example.com/");
 		props.put("email", "contact@example.com");
 
-		VerifiableCredential vc = cb.id("profile")
+		VerifiableCredential vc = cb.id("#profile")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -490,20 +490,20 @@ public class TestDataGenerator {
 		DIDDocument.Builder db = doc.edit(users[0]);
 
 		HDKey temp = TestData.generateKeypair();
-		db.addAuthenticationKey("key2", temp.getPublicKeyBase58());
-		store.storePrivateKey(new DIDURL(doc.getSubject(), "key2"),
+		db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
+		store.storePrivateKey(new DIDURL(doc.getSubject(), "#key2"),
 				temp.serialize(), TestConfig.storePass);
 		writeTo("foobar.id.key2.sk", temp.serializeBase58());
 
 		temp = TestData.generateKeypair();
-		db.addAuthenticationKey("key3", temp.getPublicKeyBase58());
-		store.storePrivateKey(new DIDURL(doc.getSubject(), "key3"),
+		db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
+		store.storePrivateKey(new DIDURL(doc.getSubject(), "#key3"),
 				temp.serialize(), TestConfig.storePass);
 		writeTo("foobar.id.key3.sk", temp.serializeBase58());
 
-		db.addService("vault", "Hive.Vault.Service",
+		db.addService("#vault", "Hive.Vault.Service",
 				"https://foobar.com/vault");
-		db.addService("vcr", "CredentialRepositoryService",
+		db.addService("#vcr", "CredentialRepositoryService",
 				"https://foobar.com/credentials");
 
 		Issuer selfIssuer = new Issuer(doc, signKey);
@@ -514,7 +514,7 @@ public class TestDataGenerator {
 		props.put("language", "Chinese");
 		props.put("email", "contact@foobar.com");
 
-		VerifiableCredential vcProfile = cb.id("profile")
+		VerifiableCredential vcProfile = cb.id("#profile")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -525,7 +525,7 @@ public class TestDataGenerator {
 		props.clear();
 		props.put("email", "foobar@example.com");
 
-		VerifiableCredential vcEmail = cb.id("email")
+		VerifiableCredential vcEmail = cb.id("#email")
 				.type("BasicProfileCredential",
 						"InternetAccountCredential", "EmailCredential")
 				.properties(props)
@@ -549,7 +549,7 @@ public class TestDataGenerator {
 
 		System.out.println(doc.isValid() ? "OK" : "Error");
 
-		DIDURL id = new DIDURL(doc.getSubject(), "services");
+		DIDURL id = new DIDURL(doc.getSubject(), "#services");
 		System.out.print("Generate credential: " + id + "...");
 
 		cb = selfIssuer.issueFor(doc.getSubject());
@@ -576,7 +576,7 @@ public class TestDataGenerator {
 		//System.out.println(vcPassport.isValid() ? "OK" : "Error");
 		System.out.println("OK");
 
-		id = new DIDURL(doc.getSubject(), "license");
+		id = new DIDURL(doc.getSubject(), "#license");
 		System.out.print("Generate credential: " + id + "...");
 
 		cb = kycIssuer.issueFor(doc.getSubject());
@@ -673,7 +673,7 @@ public class TestDataGenerator {
 
 		System.out.println(doc.isValid() ? "OK" : "Error");
 
-		DIDURL id = new DIDURL(doc.getSubject(), "email");
+		DIDURL id = new DIDURL(doc.getSubject(), "#email");
 		System.out.print("Generate credential: " + id + "...");
 
 		Issuer kycIssuer = new Issuer(issuer);

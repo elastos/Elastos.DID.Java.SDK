@@ -106,24 +106,24 @@ public class DIDDocumentTest {
 		}
 
 		// PublicKey getter.
-		PublicKey pk = doc.getPublicKey("primary");
+		PublicKey pk = doc.getPublicKey("#primary");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "primary"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#primary"), pk.getId());
 
-		DIDURL id = new DIDURL(doc.getSubject(), "key2");
+		DIDURL id = new DIDURL(doc.getSubject(), "#key2");
 		pk = doc.getPublicKey(id);
 		assertNotNull(pk);
 		assertEquals(id, pk.getId());
 
 		id = doc.getDefaultPublicKeyId();
 		assertNotNull(id);
-		assertEquals(new DIDURL(doc.getSubject(), "primary"), id);
+		assertEquals(new DIDURL(doc.getSubject(), "#primary"), id);
 
 		// Key not exist, should fail.
-		pk = doc.getPublicKey("notExist");
+		pk = doc.getPublicKey("#notExist");
 		assertNull(pk);
 
-		id = new DIDURL(doc.getSubject(), "notExist");
+		id = new DIDURL(doc.getSubject(), "#notExist");
 		pk = doc.getPublicKey(id);
 		assertNull(pk);
 
@@ -131,25 +131,23 @@ public class DIDDocumentTest {
 		id = doc.getDefaultPublicKeyId();
 		pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "primary"),
-				pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#primary"), pks.get(0).getId());
 
 		pks = doc.selectPublicKeys(id, null);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "primary"),
-				pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#primary"), pks.get(0).getId());
 
 		pks = doc.selectPublicKeys((DIDURL) null,
 				Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(4, pks.size());
 
-		pks = doc.selectPublicKeys("key2", Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectPublicKeys("#key2", Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "key2"), pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#key2"), pks.get(0).getId());
 
-		pks = doc.selectPublicKeys("key3", null);
+		pks = doc.selectPublicKeys("#key3", null);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "key3"), pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#key3"), pks.get(0).getId());
 	}
 
 	@Test
@@ -183,7 +181,7 @@ public class DIDDocumentTest {
 		assertEquals(issuer.getDefaultPublicKeyId(), id);
 
 		// Key not exist, should fail.
-		pk = doc.getPublicKey("notExist");
+		pk = doc.getPublicKey("#notExist");
 		assertNull(pk);
 
 		id = new DIDURL(doc.getController(), "#notExist");
@@ -194,16 +192,13 @@ public class DIDDocumentTest {
 		id = doc.getDefaultPublicKeyId();
 		pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getController(), "primary"),
-				pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getController(), "#primary"), pks.get(0).getId());
 
 		pks = doc.selectPublicKeys(id, null);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getController(), "primary"),
-				pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getController(), "#primary"), pks.get(0).getId());
 
-		pks = doc.selectPublicKeys((DIDURL) null,
-				Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectPublicKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
 	}
 
@@ -292,13 +287,14 @@ public class DIDDocumentTest {
 				Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(7, pks.size());
 
-		pks = doc.selectPublicKeys(new DIDURL(user1.getSubject(), "key2"), Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectPublicKeys(new DIDURL(user1.getSubject(), "#key2"),
+				Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(user1.getSubject(), "key2"), pks.get(0).getId());
+		assertEquals(new DIDURL(user1.getSubject(), "#key2"), pks.get(0).getId());
 
-		pks = doc.selectPublicKeys(new DIDURL(doc.getSubject(), "key3"), null);
+		pks = doc.selectPublicKeys(new DIDURL(doc.getSubject(), "#key3"), null);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "key3"), pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#key3"), pks.get(0).getId());
 	}
 
 	@Test
@@ -371,17 +367,17 @@ public class DIDDocumentTest {
 		assertEquals(1, pks.size());
 		assertEquals(id, pks.get(0).getId());
 
-		pks = doc.selectPublicKeys((DIDURL) null,
-				Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectPublicKeys((DIDURL) null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(5, pks.size());
 
-		pks = doc.selectPublicKeys(new DIDURL(user1.getSubject(), "key2"), Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectPublicKeys(new DIDURL(user1.getSubject(), "#key2"),
+				Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(user1.getSubject(), "key2"), pks.get(0).getId());
+		assertEquals(new DIDURL(user1.getSubject(), "#key2"), pks.get(0).getId());
 
-		pks = doc.selectPublicKeys(new DIDURL(user1.getSubject(), "key3"), null);
+		pks = doc.selectPublicKeys(new DIDURL(user1.getSubject(), "#key3"), null);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(user1.getSubject(), "key3"), pks.get(0).getId());
+		assertEquals(new DIDURL(user1.getSubject(), "#key3"), pks.get(0).getId());
 	}
 
     @ParameterizedTest
@@ -396,25 +392,25 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit();
 
 		// Add 2 public keys
-		DIDURL id = new DIDURL(db.getSubject(), "test1");
+		DIDURL id = new DIDURL(db.getSubject(), "#test1");
 		HDKey key = TestData.generateKeypair();
 		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("test2", doc.getSubject().toString(), key.getPublicKeyBase58());
+		db.addPublicKey("#test2", doc.getSubject().toString(), key.getPublicKeyBase58());
 
 		doc = db.seal(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
 		// Check existence
-		PublicKey pk = doc.getPublicKey("test1");
+		PublicKey pk = doc.getPublicKey("#test1");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test1"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test1"), pk.getId());
 
-		pk = doc.getPublicKey("test2");
+		pk = doc.getPublicKey("#test2");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test2"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test2"), pk.getId());
 
 		// Check the final count.
 		assertEquals(6, doc.getPublicKeyCount());
@@ -479,7 +475,7 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit();
 
 		// recovery used by authorization, should failed.
-		DIDURL id = new DIDURL(doc.getSubject(), "recovery");
+		DIDURL id = new DIDURL(doc.getSubject(), "#recovery");
 		assertThrows(UnsupportedOperationException.class, () -> {
 			db.removePublicKey(id);
 	    });
@@ -487,11 +483,11 @@ public class DIDDocumentTest {
 		// force remove public key, should success
 		db.removePublicKey(id, true);
 
-		db.removePublicKey("key2", true);
+		db.removePublicKey("#key2", true);
 
 		// Key not exist, should fail.
 		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removePublicKey("notExistKey", true);
+			db.removePublicKey("#notExistKey", true);
 	    });
 
 		// Can not remove default publickey, should fail.
@@ -505,10 +501,10 @@ public class DIDDocumentTest {
 		assertTrue(doc.isValid());
 
 		// Check existence
-		PublicKey pk = doc.getPublicKey("recovery");
+		PublicKey pk = doc.getPublicKey("#recovery");
 		assertNull(pk);
 
-		pk = doc.getPublicKey("key2");
+		pk = doc.getPublicKey("#key2");
 		assertNull(pk);
 
 		// Check the final count.
@@ -535,13 +531,13 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit(user2);
 
 		// Can not remove the controller's key
-		DIDURL key2 = new DIDURL(user1.getSubject(), "key2");
+		DIDURL key2 = new DIDURL(user1.getSubject(), "#key2");
 		assertThrows(DIDObjectNotExistException.class, () -> {
 			db.removePublicKey(key2);
 	    });
 
 		// key2 used by authentication, should failed.
-		DIDURL id = new DIDURL(doc.getSubject(), "key2");
+		DIDURL id = new DIDURL(doc.getSubject(), "#key2");
 		assertThrows(UnsupportedOperationException.class, () -> {
 			db.removePublicKey(id);
 	    });
@@ -565,7 +561,7 @@ public class DIDDocumentTest {
 		PublicKey pk = doc.getPublicKey("#key2");
 		assertNull(pk);
 
-		pk = doc.getPublicKey("key3");
+		pk = doc.getPublicKey("#key3");
 		assertNull(pk);
 
 		// Check the final count.
@@ -601,27 +597,26 @@ public class DIDDocumentTest {
 		}
 
 		// AuthenticationKey getter
-		PublicKey pk = doc.getAuthenticationKey("primary");
+		PublicKey pk = doc.getAuthenticationKey("#primary");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "primary"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#primary"), pk.getId());
 
-		DIDURL id = new DIDURL(doc.getSubject(), "key3");
+		DIDURL id = new DIDURL(doc.getSubject(), "#key3");
 		pk = doc.getAuthenticationKey(id);
 		assertNotNull(pk);
 		assertEquals(id, pk.getId());
 
 		// Key not exist, should fail.
-		pk = doc.getAuthenticationKey("notExist");
+		pk = doc.getAuthenticationKey("#notExist");
 		assertNull(pk);
 
-		id = new DIDURL(doc.getSubject(), "notExist");
+		id = new DIDURL(doc.getSubject(), "#notExist");
 		pk = doc.getAuthenticationKey(id);
 		assertNull(pk);
 
 		// selector
-		id = new DIDURL(doc.getSubject(), "key3");
-		pks = doc.selectAuthenticationKeys(id,
-				Constants.DEFAULT_PUBLICKEY_TYPE);
+		id = new DIDURL(doc.getSubject(), "#key3");
+		pks = doc.selectAuthenticationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
 		assertEquals(id, pks.get(0).getId());
 
@@ -629,18 +624,16 @@ public class DIDDocumentTest {
 		assertEquals(1, pks.size());
 		assertEquals(id, pks.get(0).getId());
 
-		pks = doc.selectAuthenticationKeys((DIDURL) null,
-				Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectAuthenticationKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(3, pks.size());
 
-		pks = doc.selectAuthenticationKeys("key2",
-				Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectAuthenticationKeys("#key2", Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "key2"), pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#key2"), pks.get(0).getId());
 
-		pks = doc.selectAuthenticationKeys("key2", null);
+		pks = doc.selectAuthenticationKeys("#key2", null);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "key2"), pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#key2"), pks.get(0).getId());
 	}
 
 	@Test
@@ -669,7 +662,7 @@ public class DIDDocumentTest {
 		assertEquals(id, pk.getId());
 
 		// Key not exist, should fail.
-		pk = doc.getAuthenticationKey("notExist");
+		pk = doc.getAuthenticationKey("#notExist");
 		assertNull(pk);
 
 		id = new DIDURL(doc.getController(), "#notExist");
@@ -680,12 +673,12 @@ public class DIDDocumentTest {
 		id = doc.getDefaultPublicKeyId();
 		pks = doc.selectAuthenticationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getController(), "primary"),
+		assertEquals(new DIDURL(doc.getController(), "#primary"),
 				pks.get(0).getId());
 
 		pks = doc.selectPublicKeys(id, null);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getController(), "primary"),
+		assertEquals(new DIDURL(doc.getController(), "#primary"),
 				pks.get(0).getId());
 
 		pks = doc.selectAuthenticationKeys((DIDURL) null,
@@ -771,17 +764,17 @@ public class DIDDocumentTest {
 		assertEquals(1, pks.size());
 		assertEquals(id, pks.get(0).getId());
 
-		pks = doc.selectAuthenticationKeys((DIDURL) null,
-				Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectAuthenticationKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(7, pks.size());
 
-		pks = doc.selectAuthenticationKeys(new DIDURL(user1.getSubject(), "key2"), Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectAuthenticationKeys(new DIDURL(user1.getSubject(), "#key2"),
+				Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(user1.getSubject(), "key2"), pks.get(0).getId());
+		assertEquals(new DIDURL(user1.getSubject(), "#key2"), pks.get(0).getId());
 
-		pks = doc.selectAuthenticationKeys(new DIDURL(doc.getSubject(), "key3"), null);
+		pks = doc.selectAuthenticationKeys(new DIDURL(doc.getSubject(), "#key3"), null);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "key3"), pks.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#key3"), pks.get(0).getId());
 	}
 
 	@Test
@@ -851,17 +844,17 @@ public class DIDDocumentTest {
 		assertEquals(1, pks.size());
 		assertEquals(id, pks.get(0).getId());
 
-		pks = doc.selectAuthenticationKeys((DIDURL) null,
-				Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectAuthenticationKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(5, pks.size());
 
-		pks = doc.selectAuthenticationKeys(new DIDURL(user1.getSubject(), "key2"), Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectAuthenticationKeys(new DIDURL(user1.getSubject(), "#key2"),
+				Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(user1.getSubject(), "key2"), pks.get(0).getId());
+		assertEquals(new DIDURL(user1.getSubject(), "#key2"), pks.get(0).getId());
 
-		pks = doc.selectAuthenticationKeys(new DIDURL(user1.getSubject(), "key3"), null);
+		pks = doc.selectAuthenticationKeys(new DIDURL(user1.getSubject(), "#key3"), null);
 		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(user1.getSubject(), "key3"), pks.get(0).getId());
+		assertEquals(new DIDURL(user1.getSubject(), "#key3"), pks.get(0).getId());
 	}
 
     @ParameterizedTest
@@ -876,34 +869,34 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit();
 
 		// Add 2 public keys for test.
-		DIDURL id = new DIDURL(db.getSubject(), "test1");
+		DIDURL id = new DIDURL(db.getSubject(), "#test1");
 		HDKey key = TestData.generateKeypair();
 		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("test2", doc.getSubject().toString(), key.getPublicKeyBase58());
+		db.addPublicKey("#test2", doc.getSubject().toString(), key.getPublicKeyBase58());
 
 		// Add by reference
-		db.addAuthenticationKey(new DIDURL(doc.getSubject(), "test1"));
+		db.addAuthenticationKey(new DIDURL(doc.getSubject(), "#test1"));
 
-		db.addAuthenticationKey("test2");
+		db.addAuthenticationKey("#test2");
 
 		// Add new keys
 		key = TestData.generateKeypair();
-		db.addAuthenticationKey(new DIDURL(doc.getSubject(), "test3"),
+		db.addAuthenticationKey(new DIDURL(doc.getSubject(), "#test3"),
 				key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
-		db.addAuthenticationKey("test4", key.getPublicKeyBase58());
+		db.addAuthenticationKey("#test4", key.getPublicKeyBase58());
 
 		// Try to add a non existing key, should fail.
 		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.addAuthenticationKey("notExistKey");
+			db.addAuthenticationKey("#notExistKey");
 		});
 
 		// Try to add a key not owned by self, should fail.
 		assertThrows(UnsupportedOperationException.class, () -> {
-			db.addAuthenticationKey("recovery");
+			db.addAuthenticationKey("#recovery");
 		});
 
 		doc = db.seal(TestConfig.storePass);
@@ -911,21 +904,21 @@ public class DIDDocumentTest {
 		assertTrue(doc.isValid());
 
 		// Check existence
-		PublicKey pk = doc.getAuthenticationKey("test1");
+		PublicKey pk = doc.getAuthenticationKey("#test1");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test1"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test1"), pk.getId());
 
-		pk = doc.getAuthenticationKey("test2");
+		pk = doc.getAuthenticationKey("#test2");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test2"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test2"), pk.getId());
 
-		pk = doc.getAuthenticationKey("test3");
+		pk = doc.getAuthenticationKey("#test3");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test3"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test3"), pk.getId());
 
-		pk = doc.getAuthenticationKey("test4");
+		pk = doc.getAuthenticationKey("#test4");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test4"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test4"), pk.getId());
 
 		// Check the final count.
 		assertEquals(8, doc.getPublicKeyCount());
@@ -952,12 +945,12 @@ public class DIDDocumentTest {
 		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("test2", doc.getSubject().toString(), key.getPublicKeyBase58());
+		db.addPublicKey("#test2", doc.getSubject().toString(), key.getPublicKeyBase58());
 
 		// Add by reference
 		db.addAuthenticationKey(new DIDURL(doc.getSubject(), "#test1"));
 
-		db.addAuthenticationKey("test2");
+		db.addAuthenticationKey("#test2");
 
 		// Add new keys
 		key = TestData.generateKeypair();
@@ -965,7 +958,7 @@ public class DIDDocumentTest {
 				key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
-		db.addAuthenticationKey("test4", key.getPublicKeyBase58());
+		db.addAuthenticationKey("#test4", key.getPublicKeyBase58());
 
 		// Try to add a controller's key, should fail.
 		DIDURL key3 = new DIDURL(user1.getSubject(), "#testkey");
@@ -1026,20 +1019,20 @@ public class DIDDocumentTest {
 		// Add 2 public keys for test
 		HDKey key = TestData.generateKeypair();
 		db.addAuthenticationKey(
-				new DIDURL(doc.getSubject(), "test1"),
+				new DIDURL(doc.getSubject(), "#test1"),
 				key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
-		db.addAuthenticationKey("test2", key.getPublicKeyBase58());
+		db.addAuthenticationKey("#test2", key.getPublicKeyBase58());
 
 		// Remote keys
-		db.removeAuthenticationKey(new DIDURL(doc.getSubject(), "test1"))
-			.removeAuthenticationKey("test2")
-			.removeAuthenticationKey("key2");
+		db.removeAuthenticationKey(new DIDURL(doc.getSubject(), "#test1"))
+			.removeAuthenticationKey("#test2")
+			.removeAuthenticationKey("#key2");
 
 		// Key not exist, should fail.
 		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeAuthenticationKey("notExistKey");
+			db.removeAuthenticationKey("#notExistKey");
 		});
 
 		// Default publickey, can not remove, should fail.
@@ -1053,13 +1046,13 @@ public class DIDDocumentTest {
 		assertTrue(doc.isValid());
 
 		// Check existence
-		PublicKey pk = doc.getAuthenticationKey("test1");
+		PublicKey pk = doc.getAuthenticationKey("#test1");
 		assertNull(pk);
 
-		pk = doc.getAuthenticationKey("test2");
+		pk = doc.getAuthenticationKey("#test2");
 		assertNull(pk);
 
-		pk = doc.getAuthenticationKey("key2");
+		pk = doc.getAuthenticationKey("#key2");
 		assertNull(pk);
 
 		// Check the final count.
@@ -1093,7 +1086,7 @@ public class DIDDocumentTest {
 		db.removeAuthenticationKey(new DIDURL(doc.getSubject(), "#key2"))
 			.removeAuthenticationKey("#key3");
 
-		db.removePublicKey("key3");
+		db.removePublicKey("#key3");
 
 		// Key not exist, should fail.
 		assertThrows(DIDObjectNotExistException.class, () -> {
@@ -1149,25 +1142,25 @@ public class DIDDocumentTest {
 		}
 
 		// AuthorizationKey getter
-		PublicKey pk = doc.getAuthorizationKey("recovery");
+		PublicKey pk = doc.getAuthorizationKey("#recovery");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "recovery"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#recovery"), pk.getId());
 
-		DIDURL id = new DIDURL(doc.getSubject(), "recovery");
+		DIDURL id = new DIDURL(doc.getSubject(), "#recovery");
 		pk = doc.getAuthorizationKey(id);
 		assertNotNull(pk);
 		assertEquals(id, pk.getId());
 
 		// Key not exist, should fail.
-		pk = doc.getAuthorizationKey("notExistKey");
+		pk = doc.getAuthorizationKey("#notExistKey");
 		assertNull(pk);
 
-		id = new DIDURL(doc.getSubject(), "notExistKey");
+		id = new DIDURL(doc.getSubject(), "#notExistKey");
 		pk = doc.getAuthorizationKey(id);
 		assertNull(pk);
 
 		// Selector
-		id = new DIDURL(doc.getSubject(), "recovery");
+		id = new DIDURL(doc.getSubject(), "#recovery");
 		pks = doc.selectAuthorizationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
 		assertEquals(id, pks.get(0).getId());
@@ -1176,8 +1169,7 @@ public class DIDDocumentTest {
 		assertEquals(1, pks.size());
 		assertEquals(id, pks.get(0).getId());
 
-		pks = doc.selectAuthorizationKeys((DIDURL) null,
-				Constants.DEFAULT_PUBLICKEY_TYPE);
+		pks = doc.selectAuthorizationKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size());
 	}
 
@@ -1215,62 +1207,62 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit();
 
 		// Add 2 public keys for test.
-		DIDURL id = new DIDURL(db.getSubject(), "test1");
+		DIDURL id = new DIDURL(db.getSubject(), "#test1");
 		HDKey key = TestData.generateKeypair();
 		db.addPublicKey(id,
 				new DID(DID.METHOD, key.getAddress()),
 				key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("test2",
+		db.addPublicKey("#test2",
 				new DID(DID.METHOD, key.getAddress()).toString(),
 				key.getPublicKeyBase58());
 
 		// Add by reference
-		db.addAuthorizationKey(new DIDURL(doc.getSubject(), "test1"));
+		db.addAuthorizationKey(new DIDURL(doc.getSubject(), "#test1"));
 
-		db.addAuthorizationKey("test2");
+		db.addAuthorizationKey("#test2");
 
 		// Add new keys
 		key = TestData.generateKeypair();
-		db.addAuthorizationKey(new DIDURL(doc.getSubject(), "test3"),
+		db.addAuthorizationKey(new DIDURL(doc.getSubject(), "#test3"),
 				new DID(DID.METHOD, key.getAddress()),
 				key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
-		db.addAuthorizationKey("test4",
+		db.addAuthorizationKey("#test4",
 				new DID(DID.METHOD, key.getAddress()).toString(),
 				key.getPublicKeyBase58());
 
 		// Try to add a non existing key, should fail.
 		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.addAuthorizationKey("notExistKey");
+			db.addAuthorizationKey("#notExistKey");
 		});
 
 		// Try to add key owned by self, should fail.
 		assertThrows(UnsupportedOperationException.class, () -> {
-			db.addAuthorizationKey("key2");
+			db.addAuthorizationKey("#key2");
 		});
 
 		doc = db.seal(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		PublicKey pk = doc.getAuthorizationKey("test1");
+		PublicKey pk = doc.getAuthorizationKey("#test1");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test1"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test1"), pk.getId());
 
-		pk = doc.getAuthorizationKey("test2");
+		pk = doc.getAuthorizationKey("#test2");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test2"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test2"), pk.getId());
 
-		pk = doc.getAuthorizationKey("test3");
+		pk = doc.getAuthorizationKey("#test3");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test3"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test3"), pk.getId());
 
-		pk = doc.getAuthorizationKey("test4");
+		pk = doc.getAuthorizationKey("#test4");
 		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "test4"), pk.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#test4"), pk.getId());
 
 		// Check the final key count.
 		assertEquals(8, doc.getPublicKeyCount());
@@ -1322,7 +1314,7 @@ public class DIDDocumentTest {
 		});
 
 		// Try to add controller's, should fail.
-		DIDURL recovery = new DIDURL(user1.getSubject(), "recovery");
+		DIDURL recovery = new DIDURL(user1.getSubject(), "#recovery");
 		assertThrows(UnsupportedOperationException.class, () -> {
 			db.addAuthorizationKey(recovery);
 		});
@@ -1332,16 +1324,16 @@ public class DIDDocumentTest {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		PublicKey pk = doc.getAuthorizationKey("test1");
+		PublicKey pk = doc.getAuthorizationKey("#test1");
 		assertNull(pk);
 
-		pk = doc.getAuthorizationKey("test2");
+		pk = doc.getAuthorizationKey("#test2");
 		assertNull(pk);
 
-		pk = doc.getAuthorizationKey("test3");
+		pk = doc.getAuthorizationKey("#test3");
 		assertNull(pk);
 
-		pk = doc.getAuthorizationKey("test4");
+		pk = doc.getAuthorizationKey("#test4");
 		assertNull(pk);
 
 		// Check the final key count.
@@ -1362,24 +1354,24 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit();
 
 		// Add 2 keys for test.
-		DIDURL id = new DIDURL(db.getSubject(), "test1");
+		DIDURL id = new DIDURL(db.getSubject(), "#test1");
 		HDKey key = TestData.generateKeypair();
 		db.addAuthorizationKey(id,
 				new DID(DID.METHOD, key.getAddress()),
 				key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
-		db.addAuthorizationKey("test2",
+		db.addAuthorizationKey("#test2",
 				new DID(DID.METHOD, key.getAddress()).toString(),
 				key.getPublicKeyBase58());
 
 		// Remove keys.
-		db.removeAuthorizationKey(new DIDURL(doc.getSubject(), "test1"))
-			.removeAuthorizationKey("recovery");
+		db.removeAuthorizationKey(new DIDURL(doc.getSubject(), "#test1"))
+			.removeAuthorizationKey("#recovery");
 
 		// Key not exist, should fail.
 		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeAuthorizationKey("notExistKey");
+			db.removeAuthorizationKey("#notExistKey");
 		});
 
 		doc = db.seal(TestConfig.storePass);
@@ -1387,13 +1379,13 @@ public class DIDDocumentTest {
 		assertTrue(doc.isValid());
 
 		// Check existence
-		PublicKey pk = doc.getAuthorizationKey("test1");
+		PublicKey pk = doc.getAuthorizationKey("#test1");
 		assertNull(pk);
 
-		pk = doc.getAuthorizationKey("test2");
+		pk = doc.getAuthorizationKey("#test2");
 		assertNotNull(pk);
 
-		pk = doc.getAuthorizationKey("recovery");
+		pk = doc.getAuthorizationKey("#recovery");
 		assertNull(pk);
 
 		// Check the final count.
@@ -1466,35 +1458,32 @@ public class DIDDocumentTest {
 		}
 
 		// Credential getter.
-		VerifiableCredential vc = doc.getCredential("profile");
+		VerifiableCredential vc = doc.getCredential("#profile");
 		assertNotNull(vc);
-		assertEquals(new DIDURL(doc.getSubject(), "profile"), vc.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#profile"), vc.getId());
 
-		vc = doc.getCredential(new DIDURL(doc.getSubject(), "email"));
+		vc = doc.getCredential(new DIDURL(doc.getSubject(), "#email"));
 		assertNotNull(vc);
-		assertEquals(new DIDURL(doc.getSubject(), "email"), vc.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#email"), vc.getId());
 
 		// Credential not exist.
-		vc = doc.getCredential("notExistVc");
+		vc = doc.getCredential("#notExistVc");
 		assertNull(vc);
 
 		// Credential selector.
-		vcs = doc.selectCredentials(new DIDURL(doc.getSubject(), "profile"),
+		vcs = doc.selectCredentials(new DIDURL(doc.getSubject(), "#profile"),
 				"SelfProclaimedCredential");
 		assertEquals(1, vcs.size());
-		assertEquals(new DIDURL(doc.getSubject(), "profile"),
+		assertEquals(new DIDURL(doc.getSubject(), "#profile"),
 				vcs.get(0).getId());
 
-		vcs = doc.selectCredentials(new DIDURL(doc.getSubject(), "profile"),
-				null);
+		vcs = doc.selectCredentials(new DIDURL(doc.getSubject(), "#profile"), null);
 		assertEquals(1, vcs.size());
-		assertEquals(new DIDURL(doc.getSubject(), "profile"),
-				vcs.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#profile"), vcs.get(0).getId());
 
 		vcs = doc.selectCredentials((DIDURL) null, "SelfProclaimedCredential");
 		assertEquals(1, vcs.size());
-		assertEquals(new DIDURL(doc.getSubject(), "profile"),
-				vcs.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#profile"), vcs.get(0).getId());
 
 		vcs = doc.selectCredentials((DIDURL) null, "TestingCredential");
 		assertEquals(0, vcs.size());
@@ -1545,19 +1534,15 @@ public class DIDDocumentTest {
 		vcs = doc.selectCredentials(new DIDURL(doc.getSubject(), "#profile"),
 				"SelfProclaimedCredential");
 		assertEquals(1, vcs.size());
-		assertEquals(new DIDURL(doc.getSubject(), "profile"),
-				vcs.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#profile"), vcs.get(0).getId());
 
-		vcs = doc.selectCredentials(new DIDURL(doc.getSubject(), "#profile"),
-				null);
+		vcs = doc.selectCredentials(new DIDURL(doc.getSubject(), "#profile"), null);
 		assertEquals(1, vcs.size());
-		assertEquals(new DIDURL(doc.getSubject(), "profile"),
-				vcs.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#profile"), vcs.get(0).getId());
 
 		vcs = doc.selectCredentials((DIDURL) null, "SelfProclaimedCredential");
 		assertEquals(1, vcs.size());
-		assertEquals(new DIDURL(doc.getSubject(), "#profile"),
-				vcs.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#profile"), vcs.get(0).getId());
 
 		vcs = doc.selectCredentials((DIDURL) null, "TestingCredential");
 		assertEquals(0, vcs.size());
@@ -1594,11 +1579,11 @@ public class DIDDocumentTest {
 		assertTrue(doc.isValid());
 
 		// Check new added credential.
-		vc = doc.getCredential("passport");
+		vc = doc.getCredential("#passport");
 		assertNotNull(vc);
-		assertEquals(new DIDURL(doc.getSubject(), "passport"), vc.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#passport"), vc.getId());
 
-		DIDURL id = new DIDURL(doc.getSubject(), "twitter");
+		DIDURL id = new DIDURL(doc.getSubject(), "#twitter");
 		vc = doc.getCredential(id);
 		assertNotNull(vc);
 		assertEquals(id, vc.getId());
@@ -1674,31 +1659,31 @@ public class DIDDocumentTest {
 		// Add credentials.
 		Map<String, Object> subject = new HashMap<String, Object>();
 		subject.put("passport", "S653258Z07");
-		db.addCredential("passport", subject, TestConfig.storePass);
+		db.addCredential("#passport", subject, TestConfig.storePass);
 
 		String json = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\"}";
-		db.addCredential("name", json, TestConfig.storePass);
+		db.addCredential("#name", json, TestConfig.storePass);
 
 		json = "{\"twitter\":\"@john\"}";
-		db.addCredential("twitter", json, TestConfig.storePass);
+		db.addCredential("#twitter", json, TestConfig.storePass);
 
 		doc = db.seal(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
 		// Check new added credential.
-		VerifiableCredential vc = doc.getCredential("passport");
+		VerifiableCredential vc = doc.getCredential("#passport");
 		assertNotNull(vc);
-		assertEquals(new DIDURL(doc.getSubject(), "passport"), vc.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#passport"), vc.getId());
 		assertTrue(vc.isSelfProclaimed());
 
-		DIDURL id = new DIDURL(doc.getSubject(), "name");
+		DIDURL id = new DIDURL(doc.getSubject(), "#name");
 		vc = doc.getCredential(id);
 		assertNotNull(vc);
 		assertEquals(id, vc.getId());
 		assertTrue(vc.isSelfProclaimed());
 
-		id = new DIDURL(doc.getSubject(), "twitter");
+		id = new DIDURL(doc.getSubject(), "#twitter");
 		vc = doc.getCredential(id);
 		assertNotNull(vc);
 		assertEquals(id, vc.getId());
@@ -1781,18 +1766,18 @@ public class DIDDocumentTest {
 		db.addCredential(vc);
 
 		// Remove credentials
-		db.removeCredential("profile");
+		db.removeCredential("#profile");
 
-		db.removeCredential(new DIDURL(doc.getSubject(), "twitter"));
+		db.removeCredential(new DIDURL(doc.getSubject(), "#twitter"));
 
 		// Credential not exist, should fail.
 		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeCredential("notExistCredential");
+			db.removeCredential("#notExistCredential");
 		});
 
 		DID did = doc.getSubject();
 		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeCredential(new DIDURL(did, "notExistCredential"));
+			db.removeCredential(new DIDURL(did, "#notExistCredential"));
 		});
 
 		doc = db.seal(TestConfig.storePass);
@@ -1800,10 +1785,10 @@ public class DIDDocumentTest {
 		assertTrue(doc.isValid());
 
 		// Check existence
-		vc = doc.getCredential("profile");
+		vc = doc.getCredential("#profile");
 		assertNull(vc);
 
-		vc = doc.getCredential(new DIDURL(doc.getSubject(), "twitter"));
+		vc = doc.getCredential(new DIDURL(doc.getSubject(), "#twitter"));
 		assertNull(vc);
 
 		// Check the final count.
@@ -1881,41 +1866,41 @@ public class DIDDocumentTest {
 		}
 
 		// Service getter, should success.
-		Service svc = doc.getService("openid");
+		Service svc = doc.getService("#openid");
 		assertNotNull(svc);
-		assertEquals(new DIDURL(doc.getSubject(), "openid"), svc.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#openid"), svc.getId());
 		assertEquals("OpenIdConnectVersion1.0Service", svc.getType());
 		assertEquals("https://openid.example.com/", svc.getServiceEndpoint());
 
-		svc = doc.getService(new DIDURL(doc.getSubject(), "vcr"));
+		svc = doc.getService(new DIDURL(doc.getSubject(), "#vcr"));
 		assertNotNull(svc);
-		assertEquals(new DIDURL(doc.getSubject(), "vcr"), svc.getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#vcr"), svc.getId());
 
 		// Service not exist, should fail.
-		svc = doc.getService("notExistService");
+		svc = doc.getService("#notExistService");
 		assertNull(svc);
 
 		// Service selector.
-		svcs = doc.selectServices("vcr", "CredentialRepositoryService");
+		svcs = doc.selectServices("#vcr", "CredentialRepositoryService");
 		assertEquals(1, svcs.size());
-		assertEquals(new DIDURL(doc.getSubject(), "vcr"), svcs.get(0).getId());
+		assertEquals(new DIDURL(doc.getSubject(), "#vcr"), svcs.get(0).getId());
 
-		svcs = doc.selectServices(new DIDURL(doc.getSubject(), "openid"), null);
+		svcs = doc.selectServices(new DIDURL(doc.getSubject(), "#openid"), null);
 		assertEquals(1, svcs.size());
-		assertEquals(new DIDURL(doc.getSubject(), "openid"),
+		assertEquals(new DIDURL(doc.getSubject(), "#openid"),
 				svcs.get(0).getId());
 
 		svcs = doc.selectServices((DIDURL) null, "CarrierAddress");
 		assertEquals(1, svcs.size());
-		assertEquals(new DIDURL(doc.getSubject(), "carrier"),
+		assertEquals(new DIDURL(doc.getSubject(), "#carrier"),
 				svcs.get(0).getId());
 
 		// Service not exist, should return a empty list.
-		svcs = doc.selectServices("notExistService",
+		svcs = doc.selectServices("#notExistService",
 				"CredentialRepositoryService");
 		assertEquals(0, svcs.size());
 
-		svcs = doc.selectServices((DIDURL) null, "notExistType");
+		svcs = doc.selectServices((DIDURL)null, "notExistType");
 		assertEquals(0, svcs.size());
 	}
 
@@ -1966,15 +1951,14 @@ public class DIDDocumentTest {
 		assertEquals(1, svcs.size());
 		assertEquals(new DIDURL(doc.getSubject(), "#vcr"), svcs.get(0).getId());
 
-		svcs = doc.selectServices(new DIDURL(doc.getSubject(), "openid"), null);
+		svcs = doc.selectServices(new DIDURL(doc.getSubject(), "#openid"), null);
 		assertEquals(0, svcs.size());
 
 		// Service not exist, should return a empty list.
-		svcs = doc.selectServices("#notExistService",
-				"CredentialRepositoryService");
+		svcs = doc.selectServices("#notExistService", "CredentialRepositoryService");
 		assertEquals(0, svcs.size());
 
-		svcs = doc.selectServices((DIDURL) null, "notExistType");
+		svcs = doc.selectServices((DIDURL)null, "notExistType");
 		assertEquals(0, svcs.size());
 	}
 
@@ -1990,15 +1974,15 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit();
 
 		// Add services
-		db.addService("test-svc-1", "Service.Testing",
+		db.addService("#test-svc-1", "Service.Testing",
 				"https://www.elastos.org/testing1");
 
-		db.addService(new DIDURL(doc.getSubject(), "test-svc-2"),
+		db.addService(new DIDURL(doc.getSubject(), "#test-svc-2"),
 				"Service.Testing", "https://www.elastos.org/testing2");
 
 		// Service id already exist, should failed.
 		assertThrows(DIDObjectAlreadyExistException.class, () -> {
-			db.addService("vcr", "test", "https://www.elastos.org/test");
+			db.addService("#vcr", "test", "https://www.elastos.org/test");
 		});
 
 		doc = db.seal(TestConfig.storePass);
@@ -2009,8 +1993,7 @@ public class DIDDocumentTest {
 		assertEquals(5, doc.getServiceCount());
 
 		// Try to select new added 2 services
-		List<Service> svcs = doc.selectServices((DIDURL) null,
-				"Service.Testing");
+		List<Service> svcs = doc.selectServices((DIDURL)null, "Service.Testing");
 		assertEquals(2, svcs.size());
 		assertEquals("Service.Testing", svcs.get(0).getType());
 		assertEquals("Service.Testing", svcs.get(1).getType());
@@ -2034,15 +2017,15 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit(user3);
 
 		// Add services
-		db.addService("test-svc-1", "Service.Testing",
+		db.addService("#test-svc-1", "Service.Testing",
 				"https://www.elastos.org/testing1");
 
-		db.addService(new DIDURL(doc.getSubject(), "test-svc-2"),
+		db.addService(new DIDURL(doc.getSubject(), "#test-svc-2"),
 				"Service.Testing", "https://www.elastos.org/testing2");
 
 		// Service id already exist, should failed.
 		assertThrows(DIDObjectAlreadyExistException.class, () -> {
-			db.addService("vcr", "test", "https://www.elastos.org/test");
+			db.addService("#vcr", "test", "https://www.elastos.org/test");
 		});
 
 		doc = db.seal(TestConfig.storePass);
@@ -2054,8 +2037,7 @@ public class DIDDocumentTest {
 		assertEquals(4, doc.getServiceCount());
 
 		// Try to select new added 2 services
-		List<Service> svcs = doc.selectServices((DIDURL) null,
-				"Service.Testing");
+		List<Service> svcs = doc.selectServices((DIDURL)null, "Service.Testing");
 		assertEquals(2, svcs.size());
 		assertEquals("Service.Testing", svcs.get(0).getType());
 		assertEquals("Service.Testing", svcs.get(1).getType());
@@ -2073,23 +2055,23 @@ public class DIDDocumentTest {
 		DIDDocument.Builder db = doc.edit();
 
 		// remove services
-		db.removeService("openid");
+		db.removeService("#openid");
 
-		db.removeService(new DIDURL(doc.getSubject(), "vcr"));
+		db.removeService(new DIDURL(doc.getSubject(), "#vcr"));
 
 		// Service not exist, should fail.
 		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeService("notExistService");
+			db.removeService("#notExistService");
 		});
 
 		doc = db.seal(TestConfig.storePass);
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		Service svc = doc.getService("openid");
+		Service svc = doc.getService("#openid");
 		assertNull(svc);
 
-		svc = doc.getService(new DIDURL(doc.getSubject(), "vcr"));
+		svc = doc.getService(new DIDURL(doc.getSubject(), "#vcr"));
 		assertNull(svc);
 
 		// Check the final count
@@ -2128,10 +2110,10 @@ public class DIDDocumentTest {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		Service svc = doc.getService("openid");
+		Service svc = doc.getService("#openid");
 		assertNull(svc);
 
-		svc = doc.getService(new DIDURL(doc.getSubject(), "vcr"));
+		svc = doc.getService(new DIDURL(doc.getSubject(), "#vcr"));
 		assertNull(svc);
 
 		// Check the final count
@@ -2189,7 +2171,7 @@ public class DIDDocumentTest {
 		assertTrue(doc.isValid());
 
 		byte[] data = new byte[1024];
-		DIDURL pkid = new DIDURL(doc.getSubject(), "primary");
+		DIDURL pkid = new DIDURL(doc.getSubject(), "#primary");
 
 		for (int i = 0; i < 10; i++) {
 			Arrays.fill(data, (byte) i);
@@ -2391,7 +2373,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -2406,7 +2388,7 @@ public class DIDDocumentTest {
     	// Update again
     	db = doc.edit();
     	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key2", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(3, doc.getPublicKeyCount());
     	assertEquals(3, doc.getAuthenticationKeyCount());
@@ -2465,7 +2447,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -2480,7 +2462,7 @@ public class DIDDocumentTest {
     	// Update again
     	db = doc.edit();
     	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key2", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(3, doc.getPublicKeyCount());
     	assertEquals(3, doc.getAuthenticationKeyCount());
@@ -2574,7 +2556,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit(ctrl2);
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	doc = ctrl1.sign(doc, TestConfig.storePass);
     	store.storeDid(doc);
@@ -2590,7 +2572,7 @@ public class DIDDocumentTest {
     	// Update again
     	db = doc.edit(ctrl3);
     	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key2", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	doc = ctrl2.sign(doc, TestConfig.storePass);
     	store.storeDid(doc);
@@ -2735,7 +2717,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -2983,7 +2965,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit(ctrl2);
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	doc = ctrl1.sign(doc, TestConfig.storePass);
     	store.storeDid(doc);
@@ -3049,7 +3031,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3066,7 +3048,7 @@ public class DIDDocumentTest {
     	// Update again
     	db = doc.edit();
     	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key2", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(3, doc.getPublicKeyCount());
     	assertEquals(3, doc.getAuthenticationKeyCount());
@@ -3095,7 +3077,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3112,7 +3094,7 @@ public class DIDDocumentTest {
     	// Update again
     	db = doc.edit();
     	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key2", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(3, doc.getPublicKeyCount());
     	assertEquals(3, doc.getAuthenticationKeyCount());
@@ -3144,7 +3126,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3176,7 +3158,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3205,7 +3187,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3222,7 +3204,7 @@ public class DIDDocumentTest {
     	// Update
     	db = doc.edit();
     	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key2", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(3, doc.getPublicKeyCount());
     	assertEquals(3, doc.getAuthenticationKeyCount());
@@ -3251,7 +3233,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3268,7 +3250,7 @@ public class DIDDocumentTest {
     	// Update
     	db = doc.edit();
     	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key2", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(3, doc.getPublicKeyCount());
     	assertEquals(3, doc.getAuthenticationKeyCount());
@@ -3298,7 +3280,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3329,7 +3311,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3377,7 +3359,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3489,7 +3471,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3602,7 +3584,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	assertEquals(2, doc.getPublicKeyCount());
     	assertEquals(2, doc.getAuthenticationKeyCount());
@@ -3785,7 +3767,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit(ctrl2);
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	doc = ctrl1.sign(doc, TestConfig.storePass);
     	store.storeDid(doc);
@@ -3969,7 +3951,7 @@ public class DIDDocumentTest {
     	// Update
     	DIDDocument.Builder db = doc.edit(ctrl2);
     	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
     	doc = ctrl1.sign(doc, TestConfig.storePass);
     	store.storeDid(doc);
@@ -4003,7 +3985,7 @@ public class DIDDocumentTest {
 
     	DIDDocument target = identity.newDid(TestConfig.storePass);
     	DIDDocument.Builder db = target.edit();
-    	db.authorizationDid("recovery", doc.getSubject().toString());
+    	db.authorizationDid("#recovery", doc.getSubject().toString());
     	target = db.seal(TestConfig.storePass);
     	assertNotNull(target);
     	assertEquals(1, target.getAuthorizationKeyCount());
@@ -4031,7 +4013,7 @@ public class DIDDocumentTest {
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	DIDURL id = new DIDURL(doc.getSubject(), "key-2");
+    	DIDURL id = new DIDURL(doc.getSubject(), "#key-2");
     	db.addAuthenticationKey(id, key.getPublicKeyBase58());
     	store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
     	doc = db.seal(TestConfig.storePass);
@@ -4047,7 +4029,7 @@ public class DIDDocumentTest {
 
     	DIDDocument target = identity.newDid(TestConfig.storePass);
     	db = target.edit();
-    	db.addAuthorizationKey("recovery", doc.getSubject().toString(),
+    	db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
     			key.getPublicKeyBase58());
     	target = db.seal(TestConfig.storePass);
     	assertNotNull(target);
@@ -4076,7 +4058,7 @@ public class DIDDocumentTest {
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	DIDDocument.Builder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
-    	DIDURL id = new DIDURL(doc.getSubject(), "key-2");
+    	DIDURL id = new DIDURL(doc.getSubject(), "#key-2");
     	db.addAuthenticationKey(id, key.getPublicKeyBase58());
     	store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
     	doc = db.seal(TestConfig.storePass);
@@ -4092,7 +4074,7 @@ public class DIDDocumentTest {
 
     	DIDDocument target = identity.newDid(TestConfig.storePass);
     	db = target.edit();
-    	db.addAuthorizationKey("recovery", doc.getSubject().toString(),
+    	db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
     			key.getPublicKeyBase58());
     	target = db.seal(TestConfig.storePass);
     	assertNotNull(target);

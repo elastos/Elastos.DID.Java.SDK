@@ -417,7 +417,7 @@ public final class TestData {
 				props.put("language", "English");
 				props.put("email", "issuer@example.com");
 
-				VerifiableCredential vc = cb.id("profile")
+				VerifiableCredential vc = cb.id("#profile")
 						.type("BasicProfileCredential", "SelfProclaimedCredential")
 						.properties(props)
 						.seal(TestConfig.storePass);
@@ -462,25 +462,25 @@ public final class TestData {
 				DIDDocument.Builder db = doc.edit();
 
 				HDKey temp = TestData.generateKeypair();
-				db.addAuthenticationKey("key2", temp.getPublicKeyBase58());
-				store.storePrivateKey(new DIDURL(doc.getSubject(), "key2"),
+				db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
+				store.storePrivateKey(new DIDURL(doc.getSubject(), "#key2"),
 						temp.serialize(), TestConfig.storePass);
 
 				temp = TestData.generateKeypair();
-				db.addAuthenticationKey("key3", temp.getPublicKeyBase58());
-				store.storePrivateKey(new DIDURL(doc.getSubject(), "key3"),
+				db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
+				store.storePrivateKey(new DIDURL(doc.getSubject(), "#key3"),
 						temp.serialize(), TestConfig.storePass);
 
 				temp = TestData.generateKeypair();
-				db.addAuthorizationKey("recovery",
+				db.addAuthorizationKey("#recovery",
 						"did:elastos:" + temp.getAddress(),
 						temp.getPublicKeyBase58());
 
-				db.addService("openid", "OpenIdConnectVersion1.0Service",
+				db.addService("#openid", "OpenIdConnectVersion1.0Service",
 						"https://openid.example.com/");
-				db.addService("vcr", "CredentialRepositoryService",
+				db.addService("#vcr", "CredentialRepositoryService",
 						"https://did.example.com/credentials");
-				db.addService("carrier", "CarrierAddress",
+				db.addService("#carrier", "CarrierAddress",
 						"carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d");
 
 				Issuer selfIssuer = new Issuer(doc);
@@ -494,7 +494,7 @@ public final class TestData {
 				props.put("email", "john@example.com");
 				props.put("twitter", "@john");
 
-				VerifiableCredential vcProfile = cb.id("profile")
+				VerifiableCredential vcProfile = cb.id("#profile")
 						.type("BasicProfileCredential", "SelfProclaimedCredential")
 						.properties(props)
 						.seal(TestConfig.storePass);
@@ -505,7 +505,7 @@ public final class TestData {
 				props.clear();
 				props.put("email", "john@example.com");
 
-				VerifiableCredential vcEmail = cb.id("email")
+				VerifiableCredential vcEmail = cb.id("#email")
 						.type("BasicProfileCredential",
 								"InternetAccountCredential", "EmailCredential")
 						.properties(props)
@@ -527,7 +527,7 @@ public final class TestData {
 			if (vcUser1Passport == null) {
 				DIDDocument doc = getUser1Document();
 
-				DIDURL id = new DIDURL(doc.getSubject(), "passport");
+				DIDURL id = new DIDURL(doc.getSubject(), "#passport");
 
 				Issuer selfIssuer = new Issuer(doc);
 				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
@@ -553,7 +553,7 @@ public final class TestData {
 			if (vcUser1Twitter == null) {
 				DIDDocument doc = getUser1Document();
 
-				DIDURL id = new DIDURL(doc.getSubject(), "twitter");
+				DIDURL id = new DIDURL(doc.getSubject(), "#twitter");
 
 				Issuer kycIssuer = new Issuer(idIssuer);
 				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
@@ -578,7 +578,7 @@ public final class TestData {
 			if (vcUser1Json == null) {
 				DIDDocument doc = getUser1Document();
 
-				DIDURL id = new DIDURL(doc.getSubject(), "json");
+				DIDURL id = new DIDURL(doc.getSubject(), "#json");
 
 				Issuer kycIssuer = new Issuer(idIssuer);
 				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
@@ -604,7 +604,7 @@ public final class TestData {
 
 				DIDDocument doc = getUser1Document();
 
-				DIDURL id = new DIDURL(doc.getSubject(), "email");
+				DIDURL id = new DIDURL(doc.getSubject(), "#email");
 
 				Issuer kycIssuer = new Issuer(idExampleCorp);
 				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
@@ -728,7 +728,7 @@ public final class TestData {
 				props.put("website", "https://example.com/");
 				props.put("email", "contact@example.com");
 
-				VerifiableCredential vc = cb.id("profile")
+				VerifiableCredential vc = cb.id("#profile")
 						.type("BasicProfileCredential", "SelfProclaimedCredential")
 						.properties(props)
 						.seal(TestConfig.storePass);
@@ -772,18 +772,18 @@ public final class TestData {
 				DIDDocument.Builder db = doc.edit(idUser1);
 
 				HDKey temp = TestData.generateKeypair();
-				db.addAuthenticationKey("key2", temp.getPublicKeyBase58());
-				store.storePrivateKey(new DIDURL(doc.getSubject(), "key2"),
+				db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
+				store.storePrivateKey(new DIDURL(doc.getSubject(), "#key2"),
 						temp.serialize(), TestConfig.storePass);
 
 				temp = TestData.generateKeypair();
-				db.addAuthenticationKey("key3", temp.getPublicKeyBase58());
-				store.storePrivateKey(new DIDURL(doc.getSubject(), "key3"),
+				db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
+				store.storePrivateKey(new DIDURL(doc.getSubject(), "#key3"),
 						temp.serialize(), TestConfig.storePass);
 
-				db.addService("vault", "Hive.Vault.Service",
+				db.addService("#vault", "Hive.Vault.Service",
 						"https://foobar.com/vault");
-				db.addService("vcr", "CredentialRepositoryService",
+				db.addService("#vcr", "CredentialRepositoryService",
 						"https://foobar.com/credentials");
 
 				Issuer selfIssuer = new Issuer(doc, signKey);
@@ -794,7 +794,7 @@ public final class TestData {
 				props.put("language", "Chinese");
 				props.put("email", "contact@foobar.com");
 
-				VerifiableCredential vcProfile = cb.id("profile")
+				VerifiableCredential vcProfile = cb.id("#profile")
 						.type("BasicProfileCredential", "SelfProclaimedCredential")
 						.properties(props)
 						.seal(TestConfig.storePass);
@@ -805,7 +805,7 @@ public final class TestData {
 				props.clear();
 				props.put("email", "foobar@example.com");
 
-				VerifiableCredential vcEmail = cb.id("email")
+				VerifiableCredential vcEmail = cb.id("#email")
 						.type("BasicProfileCredential",
 								"InternetAccountCredential", "EmailCredential")
 						.properties(props)
@@ -828,7 +828,7 @@ public final class TestData {
 			if (vcFooBarServices == null) {
 				DIDDocument doc = getFooBarDocument();
 
-				DIDURL id = new DIDURL(doc.getSubject(), "services");
+				DIDURL id = new DIDURL(doc.getSubject(), "#services");
 
 				Issuer selfIssuer = new Issuer(doc, idUser1.getDefaultPublicKeyId());
 				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
@@ -858,7 +858,7 @@ public final class TestData {
 
 				DIDDocument doc = getFooBarDocument();
 
-				DIDURL id = new DIDURL(doc.getSubject(), "license");
+				DIDURL id = new DIDURL(doc.getSubject(), "#license");
 
 				Issuer kycIssuer = new Issuer(idExampleCorp);
 				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
@@ -959,7 +959,7 @@ public final class TestData {
 
 				DIDDocument doc = getFooDocument();
 
-				DIDURL id = new DIDURL(doc.getSubject(), "email");
+				DIDURL id = new DIDURL(doc.getSubject(), "#email");
 
 				Issuer kycIssuer = new Issuer(idIssuer);
 				VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());

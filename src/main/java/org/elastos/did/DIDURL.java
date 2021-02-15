@@ -56,6 +56,8 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 @JsonSerialize(using = DIDURL.Serializer.class)
 @JsonDeserialize(using = DIDURL.Deserializer.class)
 public class DIDURL implements Comparable<DIDURL> {
+	private final static String SEPS = ":;/?#";
+
 	private DID did;
 	private Map<String, String> parameters;
 	private String path;
@@ -73,17 +75,29 @@ public class DIDURL implements Comparable<DIDURL> {
 	public DIDURL(DID baseRef, String url) throws MalformedDIDURLException {
 		checkArgument(url != null && !url.isEmpty(), "Invalid url parameter");
 
-		// TODO: improve implementation, should support partial DIDURL
-		if (url.startsWith("did:")) {
-			try {
-				ParserHelper.parse(url, false, new Listener());
-			} catch (Exception e) {
-				throw new MalformedDIDURLException(url, e);
+		// Compatible with v1, support fragment without leading '#'
+		if (!url.startsWith("did:")) {
+			boolean noSep = true;
+			char[] chars = url.toCharArray();
+			for (char ch : chars) {
+				if (SEPS.indexOf(ch) >= 0) {
+					noSep = false;
+					break;
+				}
 			}
-		} else {
-			this.did = baseRef;
-			this.fragment = url.startsWith("#") ? url.substring(1) : url;
+
+			if (noSep) // fragment only
+				url = "#" + url;
 		}
+
+		try {
+			ParserHelper.parse(url, false, new Listener());
+		} catch (Exception e) {
+			throw new MalformedDIDURLException(url, e);
+		}
+
+		if (this.did == null && baseRef != null)
+			this.did = baseRef;
 	}
 
 	/**
