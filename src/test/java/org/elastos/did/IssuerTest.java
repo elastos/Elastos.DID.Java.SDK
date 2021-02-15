@@ -86,7 +86,7 @@ public class IssuerTest {
 
 	@Test
 	public void newIssuerTestWithInvalidKey() throws DIDException, IOException {
-		DIDURL signKey = new DIDURL(issuerDoc.getSubject(), "testKey");
+		DIDURL signKey = new DIDURL(issuerDoc.getSubject(), "#testKey");
 		DIDDocument doc = issuerDoc;
 		Exception e = assertThrows(InvalidKeyException.class, () -> {
 			new Issuer(doc, signKey);
@@ -96,7 +96,7 @@ public class IssuerTest {
 
 	@Test
 	public void newIssuerTestWithInvalidKey2() throws DIDException, IOException {
-		DIDURL signKey = new DIDURL(issuerDoc.getSubject(), "recovery");
+		DIDURL signKey = new DIDURL(issuerDoc.getSubject(), "#recovery");
 		DIDDocument doc = issuerDoc;
 		Exception e = assertThrows(InvalidKeyException.class, () -> {
 			new Issuer(doc, signKey);
@@ -117,12 +117,12 @@ public class IssuerTest {
 		Issuer issuer = new Issuer(issuerDoc);
 
 		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
-		VerifiableCredential vc = cb.id("testCredential")
+		VerifiableCredential vc = cb.id("#testCredential")
 			.type("BasicProfileCredential", "InternetAccountCredential")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
-		DIDURL vcId = new DIDURL(testDoc.getSubject(), "testCredential");
+		DIDURL vcId = new DIDURL(testDoc.getSubject(), "#testCredential");
 
 		assertEquals(vcId, vc.getId());
 
@@ -156,12 +156,12 @@ public class IssuerTest {
 		Issuer issuer = new Issuer(issuerDoc);
 
 		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
-		VerifiableCredential vc = cb.id("myCredential")
+		VerifiableCredential vc = cb.id("#myCredential")
 			.type("BasicProfileCredential", "SelfProclaimedCredential")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
-		DIDURL vcId = new DIDURL(issuerDoc.getSubject(), "myCredential");
+		DIDURL vcId = new DIDURL(issuerDoc.getSubject(), "#myCredential");
 
 		assertEquals(vcId, vc.getId());
 
@@ -182,10 +182,9 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 
-	// TODO:
 	//@Test
 	public void IssueKycCredentialForCidTest() throws DIDException, IOException {
-		DIDDocument testDoc = null; // TODO: testData.getInstantData().loadCustomizedDidDocument();
+		DIDDocument testDoc = testData.getInstantData().getBazDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
@@ -198,12 +197,12 @@ public class IssuerTest {
 		Issuer issuer = new Issuer(issuerDoc);
 
 		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
-		VerifiableCredential vc = cb.id("testCredential")
+		VerifiableCredential vc = cb.id("#testCredential")
 			.type("BasicProfileCredential", "InternetAccountCredential")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
-		DIDURL vcId = new DIDURL(testDoc.getSubject(), "testCredential");
+		DIDURL vcId = new DIDURL(testDoc.getSubject(), "#testCredential");
 
 		assertEquals(vcId, vc.getId());
 
@@ -226,10 +225,9 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 
-	// TODO:
-	//@Test
+	@Test
 	public void IssueKycCredentialFromCidTest() throws DIDException, IOException {
-		DIDDocument issuerDoc = null; // TODO: testData.getInstantData().loadCustomizedDidDocument();
+		DIDDocument issuerDoc = testData.getInstantData().getExampleCorpDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
@@ -242,12 +240,12 @@ public class IssuerTest {
 		Issuer issuer = new Issuer(issuerDoc);
 
 		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
-		VerifiableCredential vc = cb.id("testCredential")
+		VerifiableCredential vc = cb.id("#testCredential")
 			.type("BasicProfileCredential", "InternetAccountCredential")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
-		DIDURL vcId = new DIDURL(testDoc.getSubject(), "testCredential");
+		DIDURL vcId = new DIDURL(testDoc.getSubject(), "#testCredential");
 
 		assertEquals(vcId, vc.getId());
 
@@ -270,10 +268,9 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 
-	// TODO:
-	//@Test
+	@Test
 	public void IssueSelfProclaimedCredentialFromCidTest() throws DIDException, IOException {
-		DIDDocument issuerDoc = null; // TODO: testData.getInstantData().loadCustomizedDidDocument();
+		DIDDocument issuerDoc = testData.getInstantData().getExampleCorpDocument();
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Testing Issuer");
@@ -284,12 +281,12 @@ public class IssuerTest {
 		Issuer issuer = new Issuer(issuerDoc);
 
 		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
-		VerifiableCredential vc = cb.id("myCredential")
+		VerifiableCredential vc = cb.id("#myCredential")
 			.type("BasicProfileCredential", "SelfProclaimedCredential")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
-		DIDURL vcId = new DIDURL(issuerDoc.getSubject(), "myCredential");
+		DIDURL vcId = new DIDURL(issuerDoc.getSubject(), "#myCredential");
 
 		assertEquals(vcId, vc.getId());
 
@@ -318,12 +315,12 @@ public class IssuerTest {
 		Issuer issuer = new Issuer(issuerDoc);
 
 		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
-		VerifiableCredential vc = cb.id("myCredential")
+		VerifiableCredential vc = cb.id("#myCredential")
 			.type("BasicProfileCredential", "SelfProclaimedCredential")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
-		DIDURL vcId = new DIDURL(issuerDoc.getSubject(), "myCredential");
+		DIDURL vcId = new DIDURL(issuerDoc.getSubject(), "#myCredential");
 
 		assertEquals(vcId, vc.getId());
 

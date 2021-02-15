@@ -294,7 +294,7 @@ public class DIDStoreTest {
     	assertTrue(file.exists());
     	assertTrue(file.isFile());
 
-    	DIDURL id = new DIDURL(user.getSubject(), "profile");
+    	DIDURL id = new DIDURL(user.getSubject(), "#profile");
     	vc = store.loadCredential(id);
     	assertEquals("MyProfile", vc.getMetadata().getAlias());
     	assertEquals(user.getSubject(), vc.getSubject().getId());
@@ -320,10 +320,10 @@ public class DIDStoreTest {
     	vc = store.loadCredential(new DIDURL(user.getSubject(), "#notExist"));
     	assertNull(vc);
 
-    	id = new DIDURL(user.getSubject(), "twitter");
+    	id = new DIDURL(user.getSubject(), "#twitter");
 		assertTrue(store.containsCredential(id));
 		assertTrue(store.containsCredential(id.toString()));
-		assertFalse(store.containsCredential(new DIDURL(user.getSubject(), "notExists")));
+		assertFalse(store.containsCredential(new DIDURL(user.getSubject(), "#notExists")));
 	}
 
 	@Test
@@ -393,10 +393,10 @@ public class DIDStoreTest {
     	assertTrue(file.exists());
     	assertTrue(file.isFile());
 
-    	boolean deleted = store.deleteCredential(new DIDURL(user.getSubject(), "twitter"));
+    	boolean deleted = store.deleteCredential(new DIDURL(user.getSubject(), "#twitter"));
 		assertTrue(deleted);
 
-		deleted = store.deleteCredential(new DIDURL(user.getSubject(), "passport").toString());
+		deleted = store.deleteCredential(new DIDURL(user.getSubject(), "#passport").toString());
 		assertTrue(deleted);
 
 		deleted = store.deleteCredential(user.getSubject().toString() + "#notExist");
@@ -410,10 +410,10 @@ public class DIDStoreTest {
     			"credentials", "#passport");
     	assertFalse(file.exists());
 
-		assertTrue(store.containsCredential(new DIDURL(user.getSubject(), "email")));
+		assertTrue(store.containsCredential(new DIDURL(user.getSubject(), "#email")));
 		assertTrue(store.containsCredential(user.getSubject().toString() + "#profile"));
 
-		assertFalse(store.containsCredential(new DIDURL(user.getSubject(), "twitter")));
+		assertFalse(store.containsCredential(new DIDURL(user.getSubject(), "#twitter")));
 		assertFalse(store.containsCredential(user.getSubject().toString() + "#passport"));
 	}
 
@@ -548,8 +548,10 @@ public class DIDStoreTest {
        		}
 
        		DIDDocument doc = store.loadDid(did);
-       		//String sig = doc.sign(TestConfig.storePass, data);
-       		//assertTrue(doc.verify(sig, data));
+       		if (!doc.isCustomizedDid() || doc.getControllerCount() <= 1) {
+	       		String sig = doc.sign(TestConfig.storePass, data);
+	       		assertTrue(doc.verify(sig, data));
+       		}
        	}
 	}
 
@@ -603,7 +605,7 @@ public class DIDStoreTest {
         	doc.getMetadata().setAlias(alias);
         	Issuer issuer = new Issuer(doc);
         	VerifiableCredential.Builder cb = issuer.issueFor(doc.getSubject());
-        	VerifiableCredential vc = cb.id("cred-1")
+        	VerifiableCredential vc = cb.id("#cred-1")
         			.type("BasicProfileCredential", "SelfProclaimedCredential")
         			.properties(props)
         			.seal(TestConfig.storePass);
@@ -638,7 +640,7 @@ public class DIDStoreTest {
 	    		DIDDocument doc = store.loadDid(did);
 	    		assertEquals(did, doc.getSubject());
 
-	    		DIDURL id = new DIDURL(did, "cred-1");
+	    		DIDURL id = new DIDURL(did, "#cred-1");
 	    		VerifiableCredential vc = store.loadCredential(id);
 	    		assertEquals(id, vc.getId());
 	    	}

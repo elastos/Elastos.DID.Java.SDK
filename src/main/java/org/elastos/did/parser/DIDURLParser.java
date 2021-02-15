@@ -1,4 +1,4 @@
-// Generated from DIDURL.g4 by ANTLR 4.7.2
+// Generated from DIDURL.g4 by ANTLR 4.9.1
 package org.elastos.did.parser;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class DIDURLParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.9.1", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -135,62 +135,70 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(32);
-			did();
-			setState(35);
+			setState(33);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
+			if (_la==T__4) {
+				{
+				setState(32);
+				did();
+				}
+			}
+
+			setState(37);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__0) {
 				{
-				setState(33);
+				setState(35);
 				match(T__0);
-				setState(34);
+				setState(36);
 				params();
 				}
 			}
 
-			setState(39);
+			setState(41);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__1) {
 				{
-				setState(37);
+				setState(39);
 				match(T__1);
-				setState(38);
+				setState(40);
 				path();
 				}
 			}
 
-			setState(43);
+			setState(45);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__2) {
 				{
-				setState(41);
+				setState(43);
 				match(T__2);
-				setState(42);
+				setState(44);
 				query();
 				}
 			}
 
-			setState(47);
+			setState(49);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__3) {
 				{
-				setState(45);
+				setState(47);
 				match(T__3);
-				setState(46);
+				setState(48);
 				frag();
 				}
 			}
 
-			setState(50);
+			setState(52);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==SPACE) {
 				{
-				setState(49);
+				setState(51);
 				match(SPACE);
 				}
 			}
@@ -235,15 +243,15 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(52);
-			match(T__4);
-			setState(53);
-			match(T__5);
 			setState(54);
-			method();
+			match(T__4);
 			setState(55);
 			match(T__5);
 			setState(56);
+			method();
+			setState(57);
+			match(T__5);
+			setState(58);
 			methodSpecificString();
 			}
 		}
@@ -280,7 +288,7 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(58);
+			setState(60);
 			match(STRING);
 			}
 		}
@@ -317,7 +325,7 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(60);
+			setState(62);
 			match(STRING);
 			}
 		}
@@ -360,21 +368,21 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(62);
+			setState(64);
 			param();
-			setState(67);
+			setState(69);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__0) {
 				{
 				{
-				setState(63);
+				setState(65);
 				match(T__0);
-				setState(64);
+				setState(66);
 				param();
 				}
 				}
-				setState(69);
+				setState(71);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -419,16 +427,16 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(70);
+			setState(72);
 			paramQName();
-			setState(73);
+			setState(75);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__6) {
 				{
-				setState(71);
+				setState(73);
 				match(T__6);
-				setState(72);
+				setState(74);
 				paramValue();
 				}
 			}
@@ -473,19 +481,19 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(78);
+			setState(80);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,7,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,8,_ctx) ) {
 			case 1:
 				{
-				setState(75);
+				setState(77);
 				paramMethod();
-				setState(76);
+				setState(78);
 				match(T__5);
 				}
 				break;
 			}
-			setState(80);
+			setState(82);
 			paramName();
 			}
 		}
@@ -522,7 +530,7 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(82);
+			setState(84);
 			match(STRING);
 			}
 		}
@@ -559,7 +567,7 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(84);
+			setState(86);
 			match(STRING);
 			}
 		}
@@ -596,7 +604,7 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(86);
+			setState(88);
 			match(STRING);
 			}
 		}
@@ -637,21 +645,21 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(88);
+			setState(90);
 			match(STRING);
-			setState(93);
+			setState(95);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__1) {
 				{
 				{
-				setState(89);
+				setState(91);
 				match(T__1);
-				setState(90);
+				setState(92);
 				match(STRING);
 				}
 				}
-				setState(95);
+				setState(97);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -696,21 +704,21 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(96);
+			setState(98);
 			queryParam();
-			setState(101);
+			setState(103);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__7) {
 				{
 				{
-				setState(97);
+				setState(99);
 				match(T__7);
-				setState(98);
+				setState(100);
 				queryParam();
 				}
 				}
-				setState(103);
+				setState(105);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -755,16 +763,16 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(104);
+			setState(106);
 			queryParamName();
-			setState(107);
+			setState(109);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__6) {
 				{
-				setState(105);
+				setState(107);
 				match(T__6);
-				setState(106);
+				setState(108);
 				queryParamValue();
 				}
 			}
@@ -804,7 +812,7 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(109);
+			setState(111);
 			match(STRING);
 			}
 		}
@@ -841,7 +849,7 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(111);
+			setState(113);
 			match(STRING);
 			}
 		}
@@ -878,7 +886,7 @@ public class DIDURLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(113);
+			setState(115);
 			match(STRING);
 			}
 		}
@@ -894,33 +902,34 @@ public class DIDURLParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\rv\4\2\t\2\4\3\t"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\rx\4\2\t\2\4\3\t"+
 		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4"+
-		"\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\3\2\3\2\3\2\5\2"+
-		"&\n\2\3\2\3\2\5\2*\n\2\3\2\3\2\5\2.\n\2\3\2\3\2\5\2\62\n\2\3\2\5\2\65"+
-		"\n\2\3\3\3\3\3\3\3\3\3\3\3\3\3\4\3\4\3\5\3\5\3\6\3\6\3\6\7\6D\n\6\f\6"+
-		"\16\6G\13\6\3\7\3\7\3\7\5\7L\n\7\3\b\3\b\3\b\5\bQ\n\b\3\b\3\b\3\t\3\t"+
-		"\3\n\3\n\3\13\3\13\3\f\3\f\3\f\7\f^\n\f\f\f\16\fa\13\f\3\r\3\r\3\r\7\r"+
-		"f\n\r\f\r\16\ri\13\r\3\16\3\16\3\16\5\16n\n\16\3\17\3\17\3\20\3\20\3\21"+
-		"\3\21\3\21\2\2\22\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \2\2\2p\2\"\3"+
-		"\2\2\2\4\66\3\2\2\2\6<\3\2\2\2\b>\3\2\2\2\n@\3\2\2\2\fH\3\2\2\2\16P\3"+
-		"\2\2\2\20T\3\2\2\2\22V\3\2\2\2\24X\3\2\2\2\26Z\3\2\2\2\30b\3\2\2\2\32"+
-		"j\3\2\2\2\34o\3\2\2\2\36q\3\2\2\2 s\3\2\2\2\"%\5\4\3\2#$\7\3\2\2$&\5\n"+
-		"\6\2%#\3\2\2\2%&\3\2\2\2&)\3\2\2\2\'(\7\4\2\2(*\5\26\f\2)\'\3\2\2\2)*"+
-		"\3\2\2\2*-\3\2\2\2+,\7\5\2\2,.\5\30\r\2-+\3\2\2\2-.\3\2\2\2.\61\3\2\2"+
-		"\2/\60\7\6\2\2\60\62\5 \21\2\61/\3\2\2\2\61\62\3\2\2\2\62\64\3\2\2\2\63"+
-		"\65\7\r\2\2\64\63\3\2\2\2\64\65\3\2\2\2\65\3\3\2\2\2\66\67\7\7\2\2\67"+
-		"8\7\b\2\289\5\6\4\29:\7\b\2\2:;\5\b\5\2;\5\3\2\2\2<=\7\13\2\2=\7\3\2\2"+
-		"\2>?\7\13\2\2?\t\3\2\2\2@E\5\f\7\2AB\7\3\2\2BD\5\f\7\2CA\3\2\2\2DG\3\2"+
-		"\2\2EC\3\2\2\2EF\3\2\2\2F\13\3\2\2\2GE\3\2\2\2HK\5\16\b\2IJ\7\t\2\2JL"+
-		"\5\24\13\2KI\3\2\2\2KL\3\2\2\2L\r\3\2\2\2MN\5\20\t\2NO\7\b\2\2OQ\3\2\2"+
-		"\2PM\3\2\2\2PQ\3\2\2\2QR\3\2\2\2RS\5\22\n\2S\17\3\2\2\2TU\7\13\2\2U\21"+
-		"\3\2\2\2VW\7\13\2\2W\23\3\2\2\2XY\7\13\2\2Y\25\3\2\2\2Z_\7\13\2\2[\\\7"+
-		"\4\2\2\\^\7\13\2\2][\3\2\2\2^a\3\2\2\2_]\3\2\2\2_`\3\2\2\2`\27\3\2\2\2"+
-		"a_\3\2\2\2bg\5\32\16\2cd\7\n\2\2df\5\32\16\2ec\3\2\2\2fi\3\2\2\2ge\3\2"+
-		"\2\2gh\3\2\2\2h\31\3\2\2\2ig\3\2\2\2jm\5\34\17\2kl\7\t\2\2ln\5\36\20\2"+
-		"mk\3\2\2\2mn\3\2\2\2n\33\3\2\2\2op\7\13\2\2p\35\3\2\2\2qr\7\13\2\2r\37"+
-		"\3\2\2\2st\7\13\2\2t!\3\2\2\2\r%)-\61\64EKP_gm";
+		"\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\3\2\5\2$\n\2\3"+
+		"\2\3\2\5\2(\n\2\3\2\3\2\5\2,\n\2\3\2\3\2\5\2\60\n\2\3\2\3\2\5\2\64\n\2"+
+		"\3\2\5\2\67\n\2\3\3\3\3\3\3\3\3\3\3\3\3\3\4\3\4\3\5\3\5\3\6\3\6\3\6\7"+
+		"\6F\n\6\f\6\16\6I\13\6\3\7\3\7\3\7\5\7N\n\7\3\b\3\b\3\b\5\bS\n\b\3\b\3"+
+		"\b\3\t\3\t\3\n\3\n\3\13\3\13\3\f\3\f\3\f\7\f`\n\f\f\f\16\fc\13\f\3\r\3"+
+		"\r\3\r\7\rh\n\r\f\r\16\rk\13\r\3\16\3\16\3\16\5\16p\n\16\3\17\3\17\3\20"+
+		"\3\20\3\21\3\21\3\21\2\2\22\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \2"+
+		"\2\2s\2#\3\2\2\2\48\3\2\2\2\6>\3\2\2\2\b@\3\2\2\2\nB\3\2\2\2\fJ\3\2\2"+
+		"\2\16R\3\2\2\2\20V\3\2\2\2\22X\3\2\2\2\24Z\3\2\2\2\26\\\3\2\2\2\30d\3"+
+		"\2\2\2\32l\3\2\2\2\34q\3\2\2\2\36s\3\2\2\2 u\3\2\2\2\"$\5\4\3\2#\"\3\2"+
+		"\2\2#$\3\2\2\2$\'\3\2\2\2%&\7\3\2\2&(\5\n\6\2\'%\3\2\2\2\'(\3\2\2\2(+"+
+		"\3\2\2\2)*\7\4\2\2*,\5\26\f\2+)\3\2\2\2+,\3\2\2\2,/\3\2\2\2-.\7\5\2\2"+
+		".\60\5\30\r\2/-\3\2\2\2/\60\3\2\2\2\60\63\3\2\2\2\61\62\7\6\2\2\62\64"+
+		"\5 \21\2\63\61\3\2\2\2\63\64\3\2\2\2\64\66\3\2\2\2\65\67\7\r\2\2\66\65"+
+		"\3\2\2\2\66\67\3\2\2\2\67\3\3\2\2\289\7\7\2\29:\7\b\2\2:;\5\6\4\2;<\7"+
+		"\b\2\2<=\5\b\5\2=\5\3\2\2\2>?\7\13\2\2?\7\3\2\2\2@A\7\13\2\2A\t\3\2\2"+
+		"\2BG\5\f\7\2CD\7\3\2\2DF\5\f\7\2EC\3\2\2\2FI\3\2\2\2GE\3\2\2\2GH\3\2\2"+
+		"\2H\13\3\2\2\2IG\3\2\2\2JM\5\16\b\2KL\7\t\2\2LN\5\24\13\2MK\3\2\2\2MN"+
+		"\3\2\2\2N\r\3\2\2\2OP\5\20\t\2PQ\7\b\2\2QS\3\2\2\2RO\3\2\2\2RS\3\2\2\2"+
+		"ST\3\2\2\2TU\5\22\n\2U\17\3\2\2\2VW\7\13\2\2W\21\3\2\2\2XY\7\13\2\2Y\23"+
+		"\3\2\2\2Z[\7\13\2\2[\25\3\2\2\2\\a\7\13\2\2]^\7\4\2\2^`\7\13\2\2_]\3\2"+
+		"\2\2`c\3\2\2\2a_\3\2\2\2ab\3\2\2\2b\27\3\2\2\2ca\3\2\2\2di\5\32\16\2e"+
+		"f\7\n\2\2fh\5\32\16\2ge\3\2\2\2hk\3\2\2\2ig\3\2\2\2ij\3\2\2\2j\31\3\2"+
+		"\2\2ki\3\2\2\2lo\5\34\17\2mn\7\t\2\2np\5\36\20\2om\3\2\2\2op\3\2\2\2p"+
+		"\33\3\2\2\2qr\7\13\2\2r\35\3\2\2\2st\7\13\2\2t\37\3\2\2\2uv\7\13\2\2v"+
+		"!\3\2\2\2\16#\'+/\63\66GMRaio";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

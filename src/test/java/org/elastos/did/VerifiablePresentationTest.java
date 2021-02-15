@@ -81,11 +81,11 @@ public class VerifiablePresentationTest {
 					|| vc.getId().getFragment().equals("passport"));
 		}
 
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "profile")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "email")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "twitter")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "passport")));
-		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "notExist")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "#profile")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "#email")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "#twitter")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "#passport")));
+		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "#notExist")));
 
 		assertTrue(vp.isGenuine());
 		assertTrue(vp.isValid());
@@ -105,7 +105,7 @@ public class VerifiablePresentationTest {
 		assertEquals(user.getSubject(), vp.getSigner());
 
 		assertEquals(0, vp.getCredentialCount());
-		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "notExist")));
+		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "#notExist")));
 
 		assertTrue(vp.isGenuine());
 		assertTrue(vp.isValid());
@@ -194,11 +194,11 @@ public class VerifiablePresentationTest {
 					|| vc.getId().getFragment().equals("passport"));
 		}
 
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "profile")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "email")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "twitter")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "passport")));
-		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "notExist")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "#profile")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "#email")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "#twitter")));
+		assertNotNull(vp.getCredential(new DIDURL(vp.getSigner(), "#passport")));
+		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "#notExist")));
 
 		assertTrue(vp.isGenuine());
 		assertTrue(vp.isValid());
@@ -222,7 +222,7 @@ public class VerifiablePresentationTest {
 		assertEquals(doc.getSubject(), vp.getSigner());
 
 		assertEquals(0, vp.getCredentialCount());
-		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "notExist")));
+		assertNull(vp.getCredential(new DIDURL(vp.getSigner(), "#notExist")));
 
 		assertTrue(vp.isGenuine());
 		assertTrue(vp.isValid());

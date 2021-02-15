@@ -1,4 +1,4 @@
-// Generated from DIDURL.g4 by ANTLR 4.7.2
+// Generated from DIDURL.g4 by ANTLR 4.9.1
 package org.elastos.did.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;

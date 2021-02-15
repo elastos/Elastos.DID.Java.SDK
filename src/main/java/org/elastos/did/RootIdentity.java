@@ -382,7 +382,7 @@ public final class RootIdentity {
 
 		HDKey key = getStore().derive(getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
 		try {
-			DIDURL id = new DIDURL(did, "primary");
+			DIDURL id = new DIDURL(did, "#primary");
 			getStore().storePrivateKey(id, key.serialize(), storepass);
 
 			DIDDocument.Builder db = new DIDDocument.Builder(did, getStore());

@@ -189,7 +189,7 @@ public class IDChainOperationsTest {
 		// Update
 		DIDDocument.Builder db = doc.edit();
 		HDKey key = TestData.generateKeypair();
-		db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
 		doc = db.seal(TestConfig.storePass);
 		assertEquals(2, doc.getPublicKeyCount());
 		assertEquals(2, doc.getAuthenticationKeyCount());
@@ -249,7 +249,7 @@ public class IDChainOperationsTest {
 		// Update again
 		DIDDocument.Builder db = doc.edit();
 		HDKey key = TestData.generateKeypair();
-		db.addAuthenticationKey("key2", key.getPublicKeyBase58());
+		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
 		doc = db.seal(TestConfig.storePass);
 		assertEquals(3, doc.getPublicKeyCount());
 		assertEquals(3, doc.getAuthenticationKeyCount());
@@ -315,7 +315,7 @@ public class IDChainOperationsTest {
 		// Update
 		DIDDocument.Builder db = doc.edit();
 		HDKey key = TestData.generateKeypair();
-		db.addAuthenticationKey("key1", key.getPublicKeyBase58());
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
 		doc = db.seal(TestConfig.storePass);
 		assertEquals(2, doc.getPublicKeyCount());
 		assertEquals(2, doc.getAuthenticationKeyCount());
@@ -379,7 +379,7 @@ public class IDChainOperationsTest {
 		// Update again
 		DIDDocument.Builder db = doc.edit();
 		HDKey key = TestData.generateKeypair();
-		db.addAuthenticationKey("key2", key.getPublicKeyBase58());
+		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
 		doc = db.seal(TestConfig.storePass);
 		assertEquals(3, doc.getPublicKeyCount());
 		assertEquals(3, doc.getAuthenticationKeyCount());
@@ -448,7 +448,7 @@ public class IDChainOperationsTest {
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
-		VerifiableCredential vc = cb.id("profile")
+		VerifiableCredential vc = cb.id("#profile")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -501,7 +501,7 @@ public class IDChainOperationsTest {
 		props.put("nation", "Singapore");
 		props.put("passport", "S653258Z07");
 
-		VerifiableCredential vc = cb.id("passport")
+		VerifiableCredential vc = cb.id("#passport")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -577,7 +577,7 @@ public class IDChainOperationsTest {
 		props.put("zoo", "zoo");
 		props.put("Zoo", "Zoo");
 
-		VerifiableCredential vc = cb.id("test")
+		VerifiableCredential vc = cb.id("#test")
 				.type("TestCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -649,7 +649,7 @@ public class IDChainOperationsTest {
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
-		VerifiableCredential vc = cb.id("profile")
+		VerifiableCredential vc = cb.id("#profile")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -707,7 +707,7 @@ public class IDChainOperationsTest {
 		props.put("nation", "Singapore");
 		props.put("passport", "S653258Z07");
 
-		VerifiableCredential vc = cb.id("passport")
+		VerifiableCredential vc = cb.id("#passport")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -768,7 +768,7 @@ public class IDChainOperationsTest {
 		props.put("zoo", "zoo");
 		props.put("Zoo", "Zoo");
 
-		VerifiableCredential vc = cb.id("test")
+		VerifiableCredential vc = cb.id("#test")
 				.type("TestCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -977,7 +977,7 @@ public class IDChainOperationsTest {
 		DID modifiedDid = dids.get(0);
 		DIDDocument doc = cleanStore.loadDid(modifiedDid);
 		DIDDocument.Builder db = doc.edit();
-		db.addService("test1", "TestType", "http://test.com/");
+		db.addService("#test1", "TestType", "http://test.com/");
 		doc = db.seal(TestConfig.storePass);
 		cleanStore.storeDid(doc);
 		String modifiedSignature = doc.getProof().getSignature();
@@ -1036,7 +1036,7 @@ public class IDChainOperationsTest {
 		String originalSignature = doc.getSignature();
 
 		DIDDocument.Builder db = doc.edit();
-		db.addService("test1", "TestType", "http://test.com/");
+		db.addService("#Stest1", "TestType", "http://test.com/");
 		doc = db.seal(TestConfig.storePass);
 		cleanStore.storeDid(doc);
 
@@ -1098,7 +1098,7 @@ public class IDChainOperationsTest {
 		String originalSignature = doc.getSignature();
 
 		DIDDocument.Builder db = doc.edit();
-		db.addService("test1", "TestType", "http://test.com/");
+		db.addService("#test1", "TestType", "http://test.com/");
 		doc = db.seal(TestConfig.storePass);
 		cleanStore.storeDid(doc);
 
