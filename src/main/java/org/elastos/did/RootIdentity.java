@@ -53,6 +53,17 @@ public final class RootIdentity {
 		}
 
 		/**
+		 *  The default constructor for JSON deserialize creator.
+		 */
+		protected Metadata() {
+			this(null);
+		}
+
+		protected void setId(String id) {
+			this.id = id;
+		}
+
+		/**
 		 * Set transaction id for CredentialMetadata.
 		 *
 		 * @param txid the transaction id string

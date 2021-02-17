@@ -23,6 +23,7 @@
 package org.elastos.did;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -73,7 +74,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	 * @param url the DIDURl string
 	 */
 	public DIDURL(DID baseRef, String url) throws MalformedDIDURLException {
-		checkArgument(url != null && !url.isEmpty(), "Invalid url parameter");
+		checkArgument(url != null && !url.isEmpty(), "Invalid url");
 
 		// Compatible with v1, support fragment without leading '#'
 		if (!url.startsWith("did:")) {
@@ -111,6 +112,8 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	public DIDURL(DID baseRef, DIDURL url) {
+		checkArgument(url != null, "Invalid url");
+
 		this.did = url.did == null ? baseRef : url.did;
 		this.parameters = url.parameters;
 		this.path = url.path;
@@ -223,57 +226,12 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
-	 * Set parameter.
-	 *
-	 * @param name the parameter's name
-	 * @param value the parameter's value
-	 */
-	protected void setParameter(String name, String value) {
-		if (parameters == null)
-			parameters = new LinkedHashMap<String, String>(8);
-
-		parameters.put(name, value);
-	}
-
-	/**
-	 * Remove parameter.
-	 *
-	 * @param name the parameter's name
-	 */
-	protected void removeParameter(String name) {
-		if (parameters != null)
-			parameters.remove(name);
-	}
-
-	/**
-	 * Set the parameters with given parameters map.
-	 * This method will clear current existing parameters.
-	 *
-	 * @param params the parameter's key/value map
-	 */
-	protected void setParameters(Map<String, String> params) {
-		if (params != null && params.size() > 0)
-			parameters = new LinkedHashMap<String, String>(params);
-		else
-			parameters = null;
-	}
-
-	/**
 	 * Get the path of DIDURL.
 	 *
 	 * @return the path string
 	 */
 	public String getPath() {
 		return path;
-	}
-
-	/**
-	 * Set path to DIDURL.
-	 *
-	 * @param path the path string
-	 */
-	protected void setPath(String path) {
-		this.path = path;
 	}
 
 	/**
@@ -295,6 +253,8 @@ public class DIDURL implements Comparable<DIDURL> {
 	 * @return the value string
 	 */
 	public String getQueryParameter(String name) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
+
 		if (query == null || query.size() == 0)
 			return null;
 
@@ -309,48 +269,13 @@ public class DIDURL implements Comparable<DIDURL> {
 	 *         the returned value is true if there is no 'name' parameter.
 	 */
 	public boolean hasQueryParameter(String name) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
+
 		if (query == null || query.size() == 0)
 			return false;
 
 		return query.containsKey(name);
 	}
-
-	/**
-	 * Set query parameter.
-	 *
-	 * @param name the name string of parameter
-	 * @param value the value string of parameter
-	 */
-	protected void setQueryParameter(String name, String value) {
-		if (query == null)
-			query = new LinkedHashMap<String, String>(8);
-
-		query.put(name, value);
-	}
-
-	/**
-	 * Remove query parameter.
-	 *
-	 * @param name the parameter's name
-	 */
-	protected void removeQueryParameter(String name) {
-		if (query != null)
-			query.remove(name);
-	}
-
-	/**
-	 * Set the query parameters with given parameters map.
-	 * This method will clear current existing query parameters.
-	 *
-	 * @param params the parameter's key/value map
-	 */
-	protected void setQueryParameters(Map<String, String> params) {
-		if (params != null && params.size() > 0)
-			query = new LinkedHashMap<String, String>(params);
-		else
-			query = null;
-	}
-
 
 	/**
 	 * Get fragment string of DIDURL.
@@ -359,15 +284,6 @@ public class DIDURL implements Comparable<DIDURL> {
 	 */
 	public String getFragment() {
 		return fragment;
-	}
-
-	/**
-	 * Set fragment string of DIDURL.
-	 *
-	 * @param fragment the fragment string
-	 */
-	protected void setFragment(String fragment) {
-		this.fragment = fragment;
 	}
 
 	/**
@@ -433,6 +349,8 @@ public class DIDURL implements Comparable<DIDURL> {
 
 	@Override
 	public int compareTo(DIDURL id) {
+		checkNotNull(id, "id is null");
+
 		return toString().compareTo(id.toString());
 	}
 
@@ -533,23 +451,25 @@ public class DIDURL implements Comparable<DIDURL> {
 		private String value;
 
 		@Override
-		public void enterDid(DIDURLParser.DidContext ctx) {
-			did = new DID();
-		}
-
-		@Override
 		public void exitMethod(DIDURLParser.MethodContext ctx) {
 			String method = ctx.getText();
 			if (!method.equals(DID.METHOD))
 				throw new IllegalArgumentException("Unknown method: " + method);
 
-			did.setMethod(DID.METHOD);
+			name = method;
 		}
 
 		@Override
 		public void exitMethodSpecificString(
 				DIDURLParser.MethodSpecificStringContext ctx) {
-			did.setMethodSpecificId(ctx.getText());
+			value = ctx.getText();
+		}
+
+		@Override
+		public void exitDid(DIDURLParser.DidContext ctx) {
+			did = new DID(name, value);
+			name = null;
+			value = null;
 		}
 
 		@Override
@@ -572,14 +492,18 @@ public class DIDURL implements Comparable<DIDURL> {
 
 		@Override
 		public void exitParam(DIDURLParser.ParamContext ctx) {
-			setParameter(name, value);
+			if (parameters == null)
+				parameters = new LinkedHashMap<String, String>(8);
+
+			parameters.put(name, value);
+
 			name = null;
 			value = null;
 		}
 
 		@Override
 		public void exitPath(DIDURLParser.PathContext ctx) {
-			setPath("/" + ctx.getText());
+			path = "/" + ctx.getText();
 		}
 
 		@Override
@@ -594,7 +518,11 @@ public class DIDURL implements Comparable<DIDURL> {
 
 		@Override
 		public void exitQueryParam(DIDURLParser.QueryParamContext ctx) {
-			setQueryParameter(name, value);
+			if (query == null)
+				query = new LinkedHashMap<String, String>(8);
+
+			query.put(name, value);
+
 			name = null;
 			value = null;
 		}
@@ -639,76 +567,86 @@ public class DIDURL implements Comparable<DIDURL> {
 		public Builder setParameter(String name, String value) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
-			url.setParameter(name, value);
+			if (url.parameters == null)
+				url.parameters = new LinkedHashMap<String, String>(8);
+
+			url.parameters.put(name, value);
 			return this;
 		}
 
 		public Builder setParameters(Map<String, String> params) {
-			checkArgument(params != null && !params.isEmpty(), "Invalid parameters");
+			if (params != null && params.size() > 0)
+				url.parameters = new LinkedHashMap<String, String>(params);
+			else
+				url.parameters = null;
 
-			url.setParameters(params);
 			return this;
 		}
 
 		public Builder removeParameter(String name) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
-			url.setParameter(name, null);
+			if (url.parameters != null)
+				url.parameters.remove(name);
+
 			return this;
 		}
 
 		public Builder clearParameters() {
-			url.setParameters(null);
+			url.parameters = null;
 			return this;
 		}
 
 		public Builder setPath(String path) {
-			checkArgument(path != null && !path.isEmpty(), "Invalid path");
-
-			url.setPath(path);
+			url.path = path == null || path.isEmpty() ? null : path;
 			return this;
 		}
 
 		public Builder clearPath() {
-			url.setPath(null);
+			url.path = null;
 			return this;
 		}
 
 		public Builder setQueryParameter(String name, String value) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
-			url.setQueryParameter(name, value);
+			if (url.query == null)
+				url.query = new LinkedHashMap<String, String>(8);
+
+			url.query.put(name, value);
 			return this;
 		}
 
 		public Builder setQueryParameters(Map<String, String> params) {
-			checkArgument(params != null && !params.isEmpty(), "Invalid parameters");
+			if (params != null && params.size() > 0)
+				url.query = new LinkedHashMap<String, String>(params);
+			else
+				url.query = null;
 
-			url.setQueryParameters(params);
 			return this;
 		}
 
 		public Builder removeQueryParameter(String name) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
-			url.setQueryParameter(name, null);
+			if (url.query != null)
+				url.query.remove(name);
+
 			return this;
 		}
 
 		public Builder clearQueryParameters() {
-			url.setQueryParameters(null);
+			url.query = null;
 			return this;
 		}
 
 		public Builder setFragment(String fragment) {
-			checkArgument(fragment != null && !fragment.isEmpty(), "Invalid path");
-
-			url.setFragment(fragment);
+			url.fragment = fragment == null || fragment.isEmpty() ? null : fragment;
 			return this;
 		}
 
 		public Builder clearFragment() {
-			url.setFragment(null);
+			url.fragment = null;
 			return this;
 		}
 

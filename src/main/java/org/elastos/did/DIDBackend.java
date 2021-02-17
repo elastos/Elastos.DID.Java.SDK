@@ -77,7 +77,6 @@ public class DIDBackend {
 
 	private static final Logger log = LoggerFactory.getLogger(DIDBackend.class);
 
-	// TODO: add application context support
 	private static DIDBackend instance;
 
 	/**
@@ -125,7 +124,6 @@ public class DIDBackend {
 		};
 
 		// The RemovalListener used for debug purpose.
-		// TODO: comment the RemovalListener
 		/*
 		RemovalListener<ResolveRequest<?, ?>, ResolveResult<?>> listener;
 		listener = new RemovalListener<ResolveRequest<?, ?>, ResolveResult<?>>() {
@@ -148,6 +146,9 @@ public class DIDBackend {
 				// .removalListener(listener)
 				// .recordStats()
 				.build(loader);
+
+		log.info("DID backend initialized, cache(init:{}, max:{}, ttl:{})",
+				initialCacheCapacity, maxCacheCapacity, cacheTtl / 1000);
 	}
 
     /**

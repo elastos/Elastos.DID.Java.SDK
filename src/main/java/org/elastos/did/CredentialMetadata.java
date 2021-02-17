@@ -22,6 +22,8 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.text.ParseException;
 import java.util.Date;
 
@@ -45,6 +47,9 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 
 	private static final Logger log = LoggerFactory.getLogger(CredentialMetadata.class);
 
+	/**
+	 *  The default constructor for JSON deserialize creator.
+	 */
 	protected CredentialMetadata() {
 		this(null);
 	}
@@ -63,6 +68,10 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	 */
 	protected CredentialMetadata(DIDURL id, DIDStore store) {
 		super(store);
+		this.id = id;
+	}
+
+	protected void setId(DIDURL id) {
 		this.id = id;
 	}
 
@@ -90,6 +99,8 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	 * @param timestamp the time published
 	 */
 	protected void setPublished(Date timestamp) {
+		checkArgument(timestamp != null, "Invalid timestamp");
+
 		put(PUBLISHED, timestamp);
 	}
 

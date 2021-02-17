@@ -46,7 +46,7 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata>
 	private DIDStore store;
 
 	/**
-	 * Constructs the AbstractMetadata with the given value.
+	 * Constructs the AbstractMetadata and attach with the store.
 	 *
 	 * @param store the DIDStore
 	 */
@@ -56,9 +56,8 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata>
 	}
 
 	/**
-	 * Constructs the AbstractMetadata with the given value.
-	 *
-	 * @param store the DIDStore
+	 * Constructs the AbstractMetadata.
+	 * The default constructor for JSON deserialize creator.
 	 */
 	protected AbstractMetadata() {
 		this(null);
@@ -69,6 +68,7 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata>
 	 * @param store the DIDStore
 	 */
 	protected void attachStore(DIDStore store) {
+		checkArgument(store != null, "Invalid store");
 		this.store = store;
 	}
 
@@ -234,7 +234,7 @@ public abstract class AbstractMetadata extends DIDObject<AbstractMetadata>
 	 * @param metadata the metadata to be merged.
 	 */
 	protected void merge(AbstractMetadata metadata) {
-		if (metadata == this)
+		if (metadata == this || metadata == null)
 			return;
 
 		metadata.props.forEach((k, v) -> {
