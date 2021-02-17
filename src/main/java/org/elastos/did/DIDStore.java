@@ -50,6 +50,7 @@ import org.elastos.did.crypto.Base64;
 import org.elastos.did.crypto.EcdsaSigner;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDStorageException;
+import org.elastos.did.exception.DIDStoreCryptoException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.MalformedExportDataException;
@@ -97,13 +98,14 @@ public final class DIDStore {
 		private static final String DEFAULT_ROOT_IDENTITY = "defaultRootIdentity";
 
 		protected Metadata(DIDStore store) {
-			super();
+			super(store);
 			put(TYPE, DID_STORE_TYPE);
 			put(VERSION, DID_STORE_VERSION);
-			if (store != null)
-				attachStore(store);
 		}
 
+		/**
+		 *  The default constructor for JSON deserialize creator.
+		 */
 		protected Metadata() {
 			this(null);
 		}
@@ -116,7 +118,9 @@ public final class DIDStore {
 			return getInteger(VERSION);
 		}
 
-		public void setFingerprint(String fingerprint) {
+		private void setFingerprint(String fingerprint) {
+			checkArgument(fingerprint != null && !fingerprint.isEmpty(), "Invalid fingerprint");
+
 			put(FINGERPRINT, fingerprint);
 		}
 
@@ -201,6 +205,9 @@ public final class DIDStore {
 		this.storage = storage;
 		this.metadata = storage.loadMetadata();
 		this.metadata.attachStore(this);
+
+		log.info("DID store opened: {}, cache(init:{}, max:{})",
+				storage.getLocation(), initialCacheCapacity, maxCacheCapacity);
 	}
 
 	/**
@@ -235,8 +242,7 @@ public final class DIDStore {
 		return open(new File(location), initialCacheCapacity, maxCacheCapacity);
 	}
 
-	public static DIDStore open(File location)
-			throws DIDStoreException {
+	public static DIDStore open(File location) throws DIDStoreException {
 		return open(location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 	}
 
@@ -248,8 +254,7 @@ public final class DIDStore {
 	 * @return the DIDStore object
 	 * @throws DIDStoreException Unsupport the specified store type.
 	 */
-	public static DIDStore open(String location)
-			throws DIDStoreException {
+	public static DIDStore open(String location) throws DIDStoreException {
 		return open(location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 	}
 
@@ -275,7 +280,7 @@ public final class DIDStore {
 
 			return Hex.toHexString(digest);
 		} catch (CryptoException e) {
-			throw new DIDStoreException("Calculate fingerprint error.", e);
+			throw new DIDStoreCryptoException("Calculate fingerprint error.", e);
 		}
 	}
 
@@ -287,7 +292,7 @@ public final class DIDStore {
 	 * @return the encrypt result
 	 * @throws DIDStoreException Encrypt data error.
 	 */
-	protected static String encryptToBase64(byte[] input, String passwd)
+	private static String encryptToBase64(byte[] input, String passwd)
 			throws DIDStoreException {
 		try {
 			byte[] cipher = Aes256cbc.encrypt(input, passwd);
@@ -295,7 +300,7 @@ public final class DIDStore {
 			return Base64.encodeToString(cipher,
 					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 		} catch (CryptoException e) {
-			throw new DIDStoreException("Encrypt data error.", e);
+			throw new DIDStoreCryptoException("Encrypt data error.", e);
 		}
 	}
 
@@ -307,7 +312,7 @@ public final class DIDStore {
 	 * @return the original data before encrpting
 	 * @throws DIDStoreException Decrypt private key error.
 	 */
-	protected static byte[] decryptFromBase64(String input, String passwd)
+	private static byte[] decryptFromBase64(String input, String passwd)
 			throws DIDStoreException {
 		try {
 			byte[] cipher = Base64.decode(input,
@@ -387,8 +392,7 @@ public final class DIDStore {
      * @return the HDKey object(private identity)
      * @throws DIDStoreException there is invalid private identity in DIDStore.
      */
-	public RootIdentity loadRootIdentity(String id)
-			throws DIDStoreException {
+	public RootIdentity loadRootIdentity(String id) throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
 		String key = "root-identity:" + id;
@@ -439,7 +443,8 @@ public final class DIDStore {
  	 * @return the mnemonic string
 	 * @throws DIDStoreException there is no mnemonic in DID Store.
 	 */
-	public String exportRootIdentityMnemonic(String id, String storepass) throws DIDStoreException {
+	public String exportRootIdentityMnemonic(String id, String storepass)
+			throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -504,9 +509,14 @@ public final class DIDStore {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
 		boolean success = storage.deleteRootIdentity(id);
-		if (success && metadata.getDefaultRootIdentity() != null &&
-				metadata.getDefaultRootIdentity().equals(id))
+		if (success) {
+			if (metadata.getDefaultRootIdentity() != null &&
+					metadata.getDefaultRootIdentity().equals(id))
 			metadata.setDefaultRootIdentity(null);
+
+			cache.invalidate("root-identity:" + id);
+			cache.invalidate("root-identity:" + id + "#privatekey");
+		}
 
 		return success;
 	}
@@ -532,10 +542,12 @@ public final class DIDStore {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
 		RootIdentity.Metadata metadata = storage.loadRootIdentityMetadata(id);
-		if (metadata != null)
+		if (metadata != null) {
+			metadata.setId(id);
 			metadata.attachStore(this);
-		else
+		} else {
 			metadata = new RootIdentity.Metadata(id, this);
+		}
 
 		return metadata;
 	}
@@ -665,10 +677,12 @@ public final class DIDStore {
 			    @Override
 			    public Object call() throws DIDStorageException {
 					DIDMetadata metadata = storage.loadDidMetadata(did);
-					if (metadata != null)
+					if (metadata != null) {
+						metadata.setDid(did);
 						metadata.attachStore(DIDStore.this);
-					else
+					} else {
 						metadata = new DIDMetadata(did, DIDStore.this);
+					}
 
 					return metadata;
 			    }
@@ -692,8 +706,32 @@ public final class DIDStore {
 	public boolean deleteDid(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 
-		cache.invalidate(did);
-		return storage.deleteDid(did);
+		List<DIDURL> vcs = storage.listCredentials(did);
+		List<DIDURL> keys = storage.listPrivateKeys(did);
+
+		boolean success = storage.deleteDid(did);
+
+		if (success) {
+			cache.invalidate(did);
+			cache.invalidate(new DIDURL(did, ";metadata"));
+
+			cache.invalidateAll(vcs);
+			if (!vcs.isEmpty()) {
+				List<DIDURL> metadata = new ArrayList<DIDURL>(vcs.size());
+				for (DIDURL id : vcs) {
+					DIDURL.Builder builder = new DIDURL.Builder(id);
+					builder.setParameter("metadata", null);
+					DIDURL metadataId = builder.build();
+					metadata.add(metadataId);
+				}
+
+				cache.invalidateAll(metadata);
+			}
+
+			cache.invalidateAll(keys);
+		}
+
+		return success;
 	}
 
     /**
@@ -773,7 +811,7 @@ public final class DIDStore {
 	 */
 	public VerifiableCredential loadCredential(DIDURL id)
 			throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
+		checkArgument(id != null, "Invalid credential id");
 
 		try {
 			Object value = cache.get(id, new Callable<Object>() {
@@ -819,7 +857,7 @@ public final class DIDStore {
 	 */
 	public boolean containsCredential(DIDURL id)
 			throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
+		checkArgument(id != null, "Invalid credential id");
 		return loadCredential(id) != null;
 	}
 
@@ -870,8 +908,8 @@ public final class DIDStore {
      */
 	protected void storeCredentialMetadata(DIDURL id,
 			CredentialMetadata metadata) throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
-		checkArgument(metadata != null, "Invalid metadata");
+		checkArgument(id != null, "Invalid credential id");
+		checkArgument(metadata != null, "Invalid credential metadata");
 
 		storage.storeCredentialMetadata(id, metadata);
 		metadata.attachStore(this);
@@ -892,7 +930,7 @@ public final class DIDStore {
 	 */
 	protected CredentialMetadata loadCredentialMetadata(DIDURL id)
 			throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
+		checkArgument(id != null, "Invalid credential id");
 
 		DIDURL.Builder builder = new DIDURL.Builder(id);
 		builder.setParameter("metadata", null);
@@ -903,10 +941,12 @@ public final class DIDStore {
 			    @Override
 			    public Object call() throws DIDStorageException {
 					CredentialMetadata metadata = storage.loadCredentialMetadata(id);
-					if (metadata != null)
+					if (metadata != null) {
+						metadata.setId(id);
 						metadata.attachStore(DIDStore.this);
-					else
+					} else {
 						metadata = new CredentialMetadata(id, DIDStore.this);
+					}
 
 					return metadata;
 			    }
@@ -928,9 +968,19 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public boolean deleteCredential(DIDURL id) throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
-		cache.invalidate(id);
-		return storage.deleteCredential(id);
+		checkArgument(id != null, "Invalid credential id");
+
+		boolean success = storage.deleteCredential(id);
+		if (success) {
+			cache.invalidate(id);
+
+			DIDURL.Builder builder = new DIDURL.Builder(id);
+			builder.setParameter("metadata", null);
+			DIDURL metadataId = builder.build();
+			cache.invalidate(metadataId);
+		}
+
+		return success;
 	}
 
 	/**
@@ -942,8 +992,7 @@ public final class DIDStore {
 	 *         the returned value is false if there is credentials owned the specific DID.
 	 * @throws DIDStoreException DIDStore error.
 	 */
-	public boolean deleteCredential(String id)
-			throws DIDStoreException {
+	public boolean deleteCredential(String id) throws DIDStoreException {
 		return deleteCredential(DIDURL.valueOf(id));
 	}
 
@@ -1031,7 +1080,7 @@ public final class DIDStore {
 	 */
 	public void storePrivateKey(DIDURL id, byte[] privateKey,
 			String storepass) throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
+		checkArgument(id != null, "Invalid private key id");
 		checkArgument(privateKey != null && privateKey.length != 0, "Invalid private key");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -1069,7 +1118,6 @@ public final class DIDStore {
 		} catch (ExecutionException e) {
 			throw new DIDStoreException("Load did private key failed: " + id, e);
 		}
-
 	}
 
 	/**
@@ -1083,7 +1131,7 @@ public final class DIDStore {
 	 */
 	protected byte[] loadPrivateKey(DIDURL id, String storepass)
 			throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
+		checkArgument(id != null, "Invalid private key id");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		String encryptedKey = loadPrivateKey(id);
@@ -1105,7 +1153,7 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public boolean containsPrivateKey(DIDURL id) throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
+		checkArgument(id != null, "Invalid private key id");
 		return loadPrivateKey(id) != null;
 	}
 
@@ -1158,9 +1206,13 @@ public final class DIDStore {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public boolean deletePrivateKey(DIDURL id) throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
-		cache.invalidate(id);
-		return storage.deletePrivateKey(id);
+		checkArgument(id != null, "Invalid private key id");
+
+		boolean success = storage.deletePrivateKey(id);
+		if (success)
+			cache.invalidate(id);
+
+		return success;
 	}
 
 	/**
@@ -1188,7 +1240,7 @@ public final class DIDStore {
 	 */
 	protected String sign(DIDURL id, String storepass, byte[] digest)
 			throws DIDStoreException {
-		checkArgument(id != null, "Invalid id");
+		checkArgument(id != null, "Invalid private key id");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 		checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
@@ -1209,6 +1261,9 @@ public final class DIDStore {
      */
 	public void changePassword(String oldPassword, String newPassword)
 			throws DIDStoreException {
+		checkArgument(oldPassword != null && !oldPassword.isEmpty(), "Invalid old password");
+		checkArgument(newPassword != null && !newPassword.isEmpty(), "Invalid new password");
+
 		storage.changePassword((data) -> {
 			return DIDStore.reEncrypt(data, oldPassword, newPassword);
 		});

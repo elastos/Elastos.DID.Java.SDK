@@ -45,6 +45,8 @@ public interface DIDStorage {
 		public String reEncrypt(String data) throws DIDStoreException;
 	};
 
+	public String getLocation();
+
 	public void storeMetadata(DIDStore.Metadata metadata) throws DIDStorageException;
 
 	public DIDStore.Metadata loadMetadata() throws DIDStorageException;
@@ -264,6 +266,15 @@ public interface DIDStorage {
 	 * @throws DIDStorageException DIDStorage error.
 	 */
 	public boolean deletePrivateKey(DIDURL id) throws DIDStorageException;
+
+	/**
+	 * List the private keys owned the specified DID.
+	 *
+	 * @param did the owner of private key
+	 * @return the private key array owned the specified DID.
+	 * @throws DIDStorageException DIDStorage error.
+	 */
+	public List<DIDURL> listPrivateKeys(DID did) throws DIDStorageException;
 
     /**
      * Change password for DIDStore.

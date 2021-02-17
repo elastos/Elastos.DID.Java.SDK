@@ -45,6 +45,9 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 
 	private static final Logger log = LoggerFactory.getLogger(DIDMetadata.class);
 
+	/**
+	 *  The default constructor for JSON deserialize creator.
+	 */
 	protected DIDMetadata() {
 		this(null);
 	}
@@ -63,6 +66,10 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 */
 	protected DIDMetadata(DID did, DIDStore store) {
 		super(store);
+		this.did = did;
+	}
+
+	protected void setDid(DID did) {
 		this.did = did;
 	}
 

@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -145,12 +146,25 @@ class FileSystemStorage implements DIDStorage {
 		File file = getDir(currentDataDir);
 		if (!file.exists()) {
 			File oldMetadata = getFile(".meta");
-			if (oldMetadata.exists() && oldMetadata.isFile())
-				upgradeFromV2();
-			else {
-				log.error("Path {} not a DID store", storeRoot.getAbsolutePath());
-				throw new DIDStorageException("Invalid DIDStore \""
-						+ storeRoot.getAbsolutePath() + "\".");
+			if (oldMetadata.exists()) {
+				if (oldMetadata.isFile()) {
+					upgradeFromV2();
+				} else {
+					log.error("Path {} not a DID store", storeRoot.getAbsolutePath());
+					throw new DIDStorageException("Invalid DIDStore \""
+							+ storeRoot.getAbsolutePath() + "\".");
+				}
+			} else {
+				String[] files = storeRoot.list();
+				if (files == null || files.length == 0) {
+					// if an empty folder
+					initializeStore();
+					return;
+				} else {
+					log.error("Path {} not a DID store", storeRoot.getAbsolutePath());
+					throw new DIDStorageException("Invalid DIDStore \""
+							+ storeRoot.getAbsolutePath() + "\".");
+				}
 			}
 		}
 
@@ -282,6 +296,11 @@ class FileSystemStorage implements DIDStorage {
 			if (reader != null)
 				reader.close();
 		}
+	}
+
+	@Override
+	public String getLocation() {
+		return storeRoot.toString();
 	}
 
 	@Override
@@ -433,15 +452,16 @@ class FileSystemStorage implements DIDStorage {
 	@Override
 	public List<RootIdentity> listRootIdentities() throws DIDStorageException {
 		File dir = getDir(currentDataDir, ROOT_IDENTITIES_DIR);
+
 		if (!dir.exists())
-			return new ArrayList<RootIdentity>(0);
+			return Collections.emptyList();
 
 		File[] children = dir.listFiles((file) -> {
 			return file.isDirectory();
 		});
 
 		if (children == null || children.length == 0)
-			return new ArrayList<RootIdentity>(0);
+			return Collections.emptyList();
 
 		ArrayList<RootIdentity> ids = new ArrayList<RootIdentity>(children.length);
 		for (File id : children) {
@@ -467,7 +487,6 @@ class FileSystemStorage implements DIDStorage {
 
 	@Override
 	public String loadRootIdentityMnemonic(String id) throws DIDStorageException {
-		// TODO: support multiple named identity
 		try {
 			File file = getRootIdentityFile(id, ROOT_IDENTITY_MNEMONIC_FILE, false);
 			return readText(file);
@@ -555,14 +574,14 @@ class FileSystemStorage implements DIDStorage {
 	public List<DID> listDids() {
 		File dir = getDir(currentDataDir, DID_DIR);
 		if (!dir.exists())
-			return new ArrayList<DID>(0);
+			return Collections.emptyList();
 
 		File[] children = dir.listFiles((file) -> {
 			return file.isDirectory();
 		});
 
 		if (children == null || children.length == 0)
-			return new ArrayList<DID>(0);
+			return Collections.emptyList();
 
 		ArrayList<DID> dids = new ArrayList<DID>(children.length);
 		for (File didRoot : children) {
@@ -681,14 +700,14 @@ class FileSystemStorage implements DIDStorage {
 	public List<DIDURL> listCredentials(DID did) {
 		File dir = getCredentialsDir(did);
 		if (!dir.exists())
-			return new ArrayList<DIDURL>(0);
+			return Collections.emptyList();
 
 		File[] children = dir.listFiles((file) -> {
 			return file.isDirectory();
 		});
 
 		if (children == null || children.length == 0)
-			return new ArrayList<DIDURL>(0);
+			return Collections.emptyList();
 
 		ArrayList<DIDURL> credentials = new ArrayList<DIDURL>(children.length);
 		for (File credential : children)
@@ -758,6 +777,26 @@ class FileSystemStorage implements DIDStorage {
 		} else {
 			return false;
 		}
+	}
+
+	@Override
+	public List<DIDURL> listPrivateKeys(DID did) throws DIDStorageException {
+		File dir = getPrivateKeysDir(did);
+		if (!dir.exists())
+			return Collections.emptyList();
+
+		File[] keys = dir.listFiles((file) -> {
+			return file.isFile();
+		});
+
+		if (keys == null || keys.length == 0)
+			return Collections.emptyList();
+
+		ArrayList<DIDURL> sks = new ArrayList<DIDURL>(keys.length);
+		for (File key : keys)
+			sks.add(toDIDURL(did, key.getName()));
+
+		return sks;
 	}
 
 	private boolean needReencrypt(File file) {

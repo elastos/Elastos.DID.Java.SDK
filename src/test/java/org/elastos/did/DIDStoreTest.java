@@ -678,6 +678,20 @@ public class DIDStoreTest {
 	}
 
 	@Test
+	public void testOpenStoreOnExistEmptyFolder() throws DIDException {
+		File emptyFolder = new File(TestConfig.tempDir + File.separator + "DIDTest-EmptyStore");
+		if (emptyFolder.exists())
+			Utils.deleteFile(emptyFolder);
+
+		emptyFolder.mkdirs();
+
+		DIDStore store = DIDStore.open(emptyFolder);
+		assertNotNull(store);
+
+		store.close();
+	}
+
+	@Test
 	public void testExportAndImportDid() throws DIDException, IOException {
 		File storeDir = new File(TestConfig.storeRoot);
 

@@ -97,6 +97,8 @@ public class DefaultDIDAdapter implements DIDAdapter {
 
 	@Override
 	public InputStream resolve(String request) throws DIDResolveException {
+		checkArgument(request != null && !request.isEmpty(), "Invalid request");
+
 		try {
 			return performRequest(resolver, request);
 		} catch (IOException e) {
@@ -108,6 +110,5 @@ public class DefaultDIDAdapter implements DIDAdapter {
 	public void createIdTransaction(String payload, String memo)
 			throws DIDTransactionException {
 		throw new UnsupportedOperationException("Not implemented");
-
 	}
 }

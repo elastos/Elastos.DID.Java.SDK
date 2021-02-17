@@ -23,6 +23,7 @@
 package org.elastos.did;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -66,19 +67,13 @@ public class DID implements Comparable<DID> {
 
 	/**
 	 * Get DID object.
-	 */
-	protected DID() {
-	}
-
-	/**
-	 * Get DID object.
 	 *
 	 * @param method the method string. eg: "elastos:did:"
 	 * @param methodSpecificId the method specific id string. eg: "i*******"
 	 */
 	protected DID(String method, String methodSpecificId) {
-		checkArgument(method != null && !method.isEmpty(), "Invalid method parameter");
-		checkArgument(methodSpecificId != null && !methodSpecificId.isEmpty(), "Invalid methodSpecificId parameter");
+		checkArgument(method != null && !method.isEmpty(), "Invalid method");
+		checkArgument(methodSpecificId != null && !methodSpecificId.isEmpty(), "Invalid methodSpecificId");
 
 		this.method = method;
 		this.methodSpecificId = methodSpecificId;
@@ -91,7 +86,7 @@ public class DID implements Comparable<DID> {
 	 * @throws MalformedDIDException if the given did string has wrong format.
 	 */
 	public DID(String did) throws MalformedDIDException {
-		checkArgument(did != null && !did.isEmpty(), "Invalid DID parameter");
+		checkArgument(did != null && !did.isEmpty(), "Invalid DID string");
 
 		try {
 			ParserHelper.parse(did, true, new Listener());
@@ -114,34 +109,12 @@ public class DID implements Comparable<DID> {
 	}
 
 	/**
-	 * Set the did method string.
-	 *
-	 * @param method the did method string
-	 */
-	protected void setMethod(String method) {
-		checkArgument(method != null && !method.isEmpty(), "Invalid method parameter");
-
-		this.method = method;
-	}
-
-	/**
 	 * Get the did method specific id string.
 	 *
 	 * @return the did method specific id string
 	 */
 	public String getMethodSpecificId() {
 		return methodSpecificId;
-	}
-
-	/**
-	 * Set the did method specific id string.
-	 *
-	 * @param methodSpecificId the did method specific id string
-	 */
-	protected void setMethodSpecificId(String methodSpecificId) {
-		checkArgument(methodSpecificId != null && !methodSpecificId.isEmpty(), "Invalid methodSpecificId parameter");
-
-		this.methodSpecificId = methodSpecificId;
 	}
 
 	/**
@@ -302,8 +275,7 @@ public class DID implements Comparable<DID> {
 
 	@Override
 	public int compareTo(DID did) {
-		if (did == null)
-			throw new IllegalArgumentException();
+		checkNotNull(did, "did is null");
 
 		int rc = method.compareTo(did.method);
 		return rc == 0 ? methodSpecificId.compareTo(did.methodSpecificId) : rc;
@@ -363,13 +335,13 @@ public class DID implements Comparable<DID> {
 			if (!method.equals(DID.METHOD))
 				throw new IllegalArgumentException("Unknown method: " + method);
 
-			setMethod(DID.METHOD);
+			DID.this.method = method;
 		}
 
 		@Override
 		public void exitMethodSpecificString(
 				DIDURLParser.MethodSpecificStringContext ctx) {
-			setMethodSpecificId(ctx.getText());
+			DID.this.methodSpecificId = ctx.getText();
 		}
 	}
 }
