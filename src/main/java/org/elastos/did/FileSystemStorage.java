@@ -141,7 +141,7 @@ class FileSystemStorage implements DIDStorage {
 					+ storeRoot.getAbsolutePath() + "\".");
 		}
 
-		postChangePassword();
+		postOperations();
 
 		File file = getDir(currentDataDir);
 		if (!file.exists()) {
@@ -1040,7 +1040,7 @@ class FileSystemStorage implements DIDStorage {
 				DID did = new DID(DID.METHOD, idDir.getName());
 
 				// DID document and metadata
-				file = getFile("ids", idDir.getName(), "document");
+				file = new File(idDir, "document");
 				if (file.exists()) {
 					if (!file.isFile()) {
 						log.error("Abort upgrade DID store, invalid DID document: " + idDir.getName());
@@ -1050,7 +1050,7 @@ class FileSystemStorage implements DIDStorage {
 					DIDDocument doc = DIDDocument.parse(file);
 					storeDid(doc);
 
-					file = getFile("ids", idDir.getName(), ".meta");
+					file = new File(idDir, ".meta");
 					if (file.exists() && file.isFile()) {
 						DIDMetadata dm = upgradeMetadataV2(file, DIDMetadata.class);
 						storeDidMetadata(doc.getSubject(), dm);
@@ -1058,7 +1058,7 @@ class FileSystemStorage implements DIDStorage {
 				}
 
 				// Credentials
-				dir = getDir("ids", idDir.getName(), "credentials");
+				dir = new File(idDir, "credentials");
 				if (dir.exists()) {
 					if (!dir.isDirectory()) {
 						log.error("Abort upgrade DID store, invalid credential directory: {}", idDir.getName());
@@ -1125,30 +1125,54 @@ class FileSystemStorage implements DIDStorage {
 				}
 			}
 
-			dir = getDir(currentDataDir);
-			dir.renameTo(getDir(DATA_DIR));
 			currentDataDir = DATA_DIR;
-
-			int timestamp = (int)(System.currentTimeMillis() / 1000);
-			dir = getDir(DATA_DIR + "-" + timestamp);
-			dir.mkdirs();
-			file = getFile(".meta");
-			file.renameTo(getFile(dir.getName(), ".meta"));
-			file = getDir("private");
-			file.renameTo(getFile(dir.getName(), "private"));
-			file = getDir("ids");
-			file.renameTo(getFile(dir.getName(), "ids"));
+			File stageFile = getFile(true, "postUpgrade");
+			stageFile.createNewFile();
 		} catch (DIDStorageException | IOException | DIDSyntaxException e) {
-			currentDataDir = DATA_DIR;
-
-			File dir = getDir(DATA_DIR + JOURNAL_SUFFIX);
-			if (dir.exists())
-				deleteFile(dir);
-
 			if (e instanceof DIDStorageException)
 				throw (DIDStorageException)e;
 			else
 				throw new DIDStorageException(e);
+		} finally {
+			postUpgrade();
+		}
+	}
+
+	private void postUpgrade() throws DIDStorageException {
+		File dataDir = getDir(DATA_DIR);
+		File dataJournal = getDir(DATA_DIR + JOURNAL_SUFFIX);
+
+		int timestamp = (int)(System.currentTimeMillis() / 1000);
+		File dataDeprecated = getDir(DATA_DIR + "-" + timestamp);
+
+		File stageFile = getFile("postUpgrade");
+
+		if (stageFile.exists()) {
+			if (dataJournal.exists()) {
+				if (dataDir.exists())
+					throw new DIDStorageException("Data conflict when upgrade");
+
+				dataJournal.renameTo(dataDir);
+			}
+
+			dataDeprecated.mkdirs();
+
+			File file = getFile(".meta");
+			if (file.exists())
+				file.renameTo(new File(dataDeprecated, ".meta"));
+
+			file = getDir("private");
+			if (file.exists())
+				file.renameTo(new File(dataDeprecated, "private"));
+
+			file = getDir("ids");
+			if (file.exists())
+				file.renameTo(new File(dataDeprecated, "ids"));
+
+			stageFile.delete();
+		} else {
+			if (dataJournal.exists())
+				deleteFile(dataJournal);
 		}
 	}
 
@@ -1180,5 +1204,19 @@ class FileSystemStorage implements DIDStorage {
 		}
 
 		return newData;
+	}
+
+	private void postOperations() throws DIDStorageException {
+		File stageFile = getFile("postUpgrade");
+		if (stageFile.exists()) {
+			postUpgrade();
+			return;
+		}
+
+		stageFile = getFile("postChangePassword");
+		if (stageFile.exists()) {
+			postChangePassword();
+			return;
+		}
 	}
 }
