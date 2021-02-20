@@ -4804,7 +4804,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 			if (document.proofs != null &&
 					((document.multisig == null && document.proofs.size() == 1) ||
 					(document.multisig != null && document.proofs.size() == document.multisig.m())))
-				throw new IllegalStateException("Document already sealed.");
+				throw new IllegalStateException("Document is qualified.");
 
 			if (document.proofs == null || document.proofs.size() == 0) {
 				if (document.getExpires() == null)
