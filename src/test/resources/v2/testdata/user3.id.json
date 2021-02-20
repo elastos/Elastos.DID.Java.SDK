@@ -7,11 +7,11 @@
     "publicKeyBase58" : "28kW5kLm6qVuJpNJZXwJF1QgCPBNrVCgu4DxWLDACTxhK"
   } ],
   "authentication" : [ "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary" ],
-  "expires" : "2026-01-28T06:38:35Z",
+  "expires" : "2026-02-20T11:35:34Z",
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-01-28T06:38:35Z",
+    "created" : "2021-02-20T11:35:34Z",
     "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
-    "signatureValue" : "br2avMObpOyCUF0rh6XWYYctFElMKGyeQk02muHu8WHw68Iso7TNhHYHrIoTNdzP_RbLyQ4H41yFfFCbIfeh1A"
+    "signatureValue" : "zk3jVvvODHPABp80WHfDMC9Vh4p7IhcTkVyGUsJnwD8XbTBdoDYuHGkRIdDWb-bvSMJShBlsYCDPPvUETMfjTA"
   }
 }

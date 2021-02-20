@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import org.elastos.did.crypto.EcdsaSigner;
 import org.elastos.did.exception.AlreadySignedException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
@@ -201,6 +202,15 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 		this.txid = txid;
 	}
 
+	private TransferTicket(TransferTicket ticket) {
+		this.id = ticket.id;
+		this.to = ticket.to;
+		this.txid = ticket.txid;
+		this.doc = ticket.doc;
+		this.proofs = ticket.proofs;
+		this._proofs = ticket._proofs;
+	}
+
 	/**
 	 * Get the subject DID.
 	 *
@@ -268,16 +278,6 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 		Collections.sort(this._proofs);
 	}
 
-	private byte[][] getSigningInputs() {
-		byte[][] inputs = new byte[][] {
-			id.toString().getBytes(),
-			to.toString().getBytes(),
-			txid.getBytes()
-		};
-
-		return inputs;
-	}
-
 	/**
 	 * Check whether the ticket is tampered or not.
 	 *
@@ -291,6 +291,18 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 		if ((getDocument().getControllerCount() > 1 && proofs.size() != getDocument().getMultiSignature().m()) ||
 				(getDocument().getControllerCount() <= 1 && proofs.size() != 1))
 			return false;
+
+		byte[] digest = null;
+		try {
+			TransferTicket tt = new TransferTicket(this);
+			tt.proofs = null;
+			tt._proofs = null;
+			String json = tt.serialize(true);
+			digest = EcdsaSigner.sha256Digest(json.getBytes());
+		} catch (DIDSyntaxException ignore) {
+			// Should never happen
+			return false;
+		}
 
 		List<DID> checkedControllers = new ArrayList<DID>(_proofs.size());
 
@@ -312,14 +324,13 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 			if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId()))
 				return false;
 
-			if (!getDocument().verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs()))
+			if (!getDocument().verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest))
 				return false;
 
 			checkedControllers.add(proof.getVerificationMethod().getDid());
 		}
 
 		return true;
-
 	}
 
 	/**
@@ -377,6 +388,8 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 
 				addProof(proof);
 			}
+		} else {
+			_proofs = null;
 		}
 	}
 
@@ -395,10 +408,13 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 		if (proofs != null && proofs.containsKey(signKey))
 			throw new AlreadySignedException("Already signed by " + signKey.getDid());
 
-		String sig = controller.sign(storepass, getSigningInputs());
 		try {
+			sanitize(false);
+
+			String json = serialize(true);
+			String sig = controller.sign(storepass, json.getBytes());
 			addProof(new Proof(signKey, sig));
-		} catch (MalformedTransferTicketException ignore) {
+		} catch (DIDSyntaxException ignore) {
 			// should never happen
 		}
 	}
@@ -510,5 +526,4 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 			throws DIDSyntaxException, IOException {
 		return parse(src);
 	}
-
 }

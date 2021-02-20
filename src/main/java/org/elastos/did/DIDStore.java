@@ -1377,7 +1377,7 @@ public final class DIDStore {
 
 		public List<VerifiableCredential> getCredentials() {
 			if (credentials == null)
-				return null;
+				return Collections.emptyList();
 
 			List<VerifiableCredential> vcs = new ArrayList<VerifiableCredential>();
 			for (Credential cred : credentials)
@@ -1394,8 +1394,8 @@ public final class DIDStore {
 					credential.getMetadata().isEmpty() ? null : credential.getMetadata()));
 		}
 
-		public List<PrivateKey> getPrivatekey() {
-			return privatekeys;
+		public List<PrivateKey> getPrivateKeys() {
+			return privatekeys != null ? privatekeys : Collections.emptyList();
 		}
 
 		public void addPrivatekey(DIDURL id, String privatekey, String storepass,
@@ -1571,9 +1571,10 @@ public final class DIDStore {
 	 */
 	public void exportDid(DID did, OutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
-		if (did == null || out == null || password == null ||
-				password.isEmpty() || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
+		checkArgument(out != null, "Invalid output stream");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
 		try {
 			exportDid(did, password, storepass).serialize(out, true);
@@ -1612,9 +1613,10 @@ public final class DIDStore {
 	 */
 	public void exportDid(DID did, Writer out, String password,
 			String storepass) throws DIDStoreException, IOException {
-		if (did == null || out == null || password == null ||
-				password.isEmpty() || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
+		checkArgument(out != null, "Invalid output writer");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
 		try {
 			exportDid(did, password, storepass).serialize(out, true);
@@ -1653,9 +1655,10 @@ public final class DIDStore {
 	 */
 	public void exportDid(DID did, File file, String password, String storepass)
 			throws DIDStoreException, IOException {
-		if (did == null || file == null || password == null ||
-				password.isEmpty() || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
+		checkArgument(file != null, "Invalid output file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
 		try {
 			exportDid(did, password, storepass).serialize(file, true);
@@ -1694,9 +1697,10 @@ public final class DIDStore {
 	 */
 	public void exportDid(DID did, String file, String password, String storepass)
 			throws DIDStoreException, IOException {
-		if (did == null || file == null || file.isEmpty() || password == null ||
-				password.isEmpty() || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
+		checkArgument(file != null && !file.isEmpty(), "Invalid output file name");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
 		exportDid(did, new File(file), password, storepass);
 	}
@@ -1728,20 +1732,16 @@ public final class DIDStore {
 		storage.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
 		List<VerifiableCredential> vcs =  de.getCredentials();
-		if (vcs != null) {
-			for (VerifiableCredential vc : vcs) {
-				log.debug("Importing credential {}...", vc.getId().toString());
-				storage.storeCredential(vc);
-				storage.storeCredentialMetadata(vc.getId(), vc.getMetadata());
-			}
+		for (VerifiableCredential vc : vcs) {
+			log.debug("Importing credential {}...", vc.getId().toString());
+			storage.storeCredential(vc);
+			storage.storeCredentialMetadata(vc.getId(), vc.getMetadata());
 		}
 
-		List<DIDExport.PrivateKey> sks = de.getPrivatekey();
-		if (sks != null) {
-			for (DIDExport.PrivateKey sk : sks) {
-				log.debug("Importing private key {}...", sk.getId().toString());
-				storage.storePrivateKey(sk.getId(), sk.getKey(password, storepass));
-			}
+		List<DIDExport.PrivateKey> sks = de.getPrivateKeys();
+		for (DIDExport.PrivateKey sk : sks) {
+			log.debug("Importing private key {}...", sk.getId().toString());
+			storage.storePrivateKey(sk.getId(), sk.getKey(password, storepass));
 		}
 	}
 
@@ -1757,9 +1757,9 @@ public final class DIDStore {
 	 */
 	public void importDid(InputStream in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (in == null || password == null || password.isEmpty() ||
-				storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(in != null, "Invalid input stream");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
 		DIDExport de;
 		try {
@@ -1782,9 +1782,9 @@ public final class DIDStore {
 	 */
 	public void importDid(Reader in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (in == null || password == null || password.isEmpty() ||
-				storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(in != null, "Invalid input reader");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
 		DIDExport de;
 		try {
@@ -1807,9 +1807,9 @@ public final class DIDStore {
 	 */
 	public void importDid(File file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (file == null || password == null || password.isEmpty() ||
-				storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(file != null, "Invalid input file");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
 		DIDExport de;
 		try {
@@ -1832,9 +1832,9 @@ public final class DIDStore {
 	 */
 	public void importDid(String file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		if (file == null || file.isEmpty() || password == null ||
-				password.isEmpty() || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
+		checkArgument(file != null, "Invalid input file name");
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
 		importDid(new File(file), password, storepass);
 	}
@@ -2099,7 +2099,7 @@ public final class DIDStore {
 			String password, String storepass)
 			throws DIDStoreException, IOException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid identity id");
-		checkArgument(file != null && !file.isEmpty(), "Invalid output file");
+		checkArgument(file != null && !file.isEmpty(), "Invalid output file name");
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -2209,7 +2209,7 @@ public final class DIDStore {
 	 */
 	public void importRootIdentity(String file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		checkArgument(file != null && !file.isEmpty(), "Invalid input file");
+		checkArgument(file != null && !file.isEmpty(), "Invalid input file name");
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -2227,7 +2227,7 @@ public final class DIDStore {
 	 */
 	public void exportStore(ZipOutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
-		checkArgument(out != null, "Invalid output zip stream");
+		checkArgument(out != null, "Invalid zip output stream");
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -2261,7 +2261,7 @@ public final class DIDStore {
 	 */
 	public void exportStore(File zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
-		checkArgument(zipFile != null, "Invalid output zip file");
+		checkArgument(zipFile != null, "Invalid zip output file");
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -2281,7 +2281,7 @@ public final class DIDStore {
 	 */
 	public void exportStore(String zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
-		checkArgument(zipFile != null && !zipFile.isEmpty(), "Invalid output zip file");
+		checkArgument(zipFile != null && !zipFile.isEmpty(), "Invalid zip output file name");
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -2300,7 +2300,7 @@ public final class DIDStore {
 	 */
 	public void importStore(ZipInputStream in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		checkArgument(in != null, "Invalid input zip stream");
+		checkArgument(in != null, "Invalid zip input stream");
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -2335,7 +2335,7 @@ public final class DIDStore {
 	 */
 	public void importStore(File zipFile, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		checkArgument(zipFile != null, "Invalid input zip file");
+		checkArgument(zipFile != null, "Invalid zip input file");
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -2356,7 +2356,7 @@ public final class DIDStore {
 	 */
 	public void importStore(String zipFile, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
-		checkArgument(zipFile != null && !zipFile.isEmpty(), "Invalid input zip file");
+		checkArgument(zipFile != null && !zipFile.isEmpty(), "Invalid zip input file name");
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
