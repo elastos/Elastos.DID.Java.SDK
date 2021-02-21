@@ -35,6 +35,7 @@ import org.elastos.did.DIDDocument;
 import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
+import org.elastos.did.backend.SimulatedIDChain;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.jwt.JwtParser;
@@ -280,13 +281,46 @@ public class Main {
 		}
 	}
 
+	@Command(name = "simchain", mixinStandardHelpOptions = true, version = "Simulated ID Chain 1.0",
+			description = "Simulated ID Chain for testing.")
+	public static class SimChain implements Callable<Integer> {
+		@Option(names = {"-i", "--interface"}, description = "Server interface, default: localhost")
+	    private String host = "localhost";
+
+		@Option(names = {"-p", "--port"}, description = "Server port, default 9123.")
+	    private int port = 9123;
+
+		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
+	    private boolean verbose = false;
+
+		@Override
+		public Integer call() throws Exception {
+			try {
+				SimulatedIDChain simChain = new SimulatedIDChain(host, port);
+				Runtime.getRuntime().addShutdownHook(new Thread(()-> {
+					simChain.stop();
+				}));
+
+				simChain.run();
+			} catch(Exception e) {
+				if (verbose)
+					e.printStackTrace();
+				else
+					System.out.println("Error: " + e.getMessage());
+			}
+
+			return 0;
+		}
+	}
+
 	@Command(name = "org.elastos.did.util.Main", description = "Elastos DID command line tool.",
 		subcommands = {
 		    ResolveDid.class,
 		    VerifyDocument.class,
 		    VerifyCredential.class,
 		    VerifyPresentation.class,
-		    VerifyJwt.class
+		    VerifyJwt.class,
+		    SimChain.class
 		})
 	public static class DIDCommand {
 	}
