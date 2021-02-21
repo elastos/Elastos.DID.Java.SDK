@@ -71,7 +71,7 @@ public class SimulatedIDChain {
 
 	private static final Logger log = LoggerFactory.getLogger(SimulatedIDChain.class);
 
-	private SimulatedIDChain(String host, int port) {
+	public SimulatedIDChain(String host, int port) {
 		this.host = host;
 		this.port = port;
 
@@ -90,6 +90,8 @@ public class SimulatedIDChain {
 	public void reset() {
 		idtxs.clear();
 		vctxs.clear();
+
+		log.info("All data reseted.");
 	}
 
 	private static String generateTxid() {
@@ -430,14 +432,23 @@ public class SimulatedIDChain {
 		executor.setThreadFactory(new HttpServerThreadFactory());
 		server.setExecutor(executor);
 
-		server.createContext("/resolve", new  ResolveHandler());
-		server.createContext("/idtx", new  IdtxHandler());
+		server.createContext("/resolve", new ResolveHandler());
+		server.createContext("/idtx", new IdtxHandler());
+		server.createContext("/reset", new ResetHandler());
+		server.createContext("/shutdown", new ShutdownHandler());
+
 		server.start();
 
 		this.server = server;
 		this.executor = executor;
 
 		log.info("Simulated IDChain started on {}:{}", host, port);
+	}
+
+	public synchronized void run() throws IOException, InterruptedException {
+		start();
+
+		this.wait();
 	}
 
 	public synchronized void stop() {
@@ -448,13 +459,16 @@ public class SimulatedIDChain {
 		executor.shutdown();
 		reset();
 		server = null;
+
+		this.notifyAll();
+
 		log.info("Simulated IDChain stopped");
 	}
 
 	public DIDAdapter getAdapter() {
 		try {
 			return new SimulatedIDChainAdapter(
-				new URL("http", host, port, "/resolver"),
+				new URL("http", host, port, "/resolve"),
 				new URL("http", host, port, "/idtx")
 			);
 		} catch (MalformedURLException ignore) {
@@ -575,6 +589,40 @@ public class SimulatedIDChain {
 				log.error("Error handling the ID chain request", e);
 				throw new IOException("HTTP Handle error", e);
 			}
+		}
+	}
+
+	private class ResetHandler implements HttpHandler {
+		@Override
+		public void handle(HttpExchange exchange) throws IOException {
+			if (!exchange.getRequestMethod().equals("POST")) {
+				log.error("Invalid resolve request, should use POST method");
+				exchange.sendResponseHeaders(400, 0);
+				exchange.getResponseBody().close();
+				return;
+			}
+
+			reset();
+
+			exchange.sendResponseHeaders(200, 0);
+			exchange.getResponseBody().close();
+		}
+	}
+
+	private class ShutdownHandler implements HttpHandler {
+		@Override
+		public void handle(HttpExchange exchange) throws IOException {
+			if (!exchange.getRequestMethod().equals("POST")) {
+				log.error("Invalid resolve request, should use POST method");
+				exchange.sendResponseHeaders(400, 0);
+				exchange.getResponseBody().close();
+				return;
+			}
+
+			exchange.sendResponseHeaders(202, 0);
+			exchange.getResponseBody().close();
+
+			stop();
 		}
 	}
 }
