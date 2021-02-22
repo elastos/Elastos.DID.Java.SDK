@@ -1126,8 +1126,10 @@ class FileSystemStorage implements DIDStorage {
 			}
 
 			currentDataDir = DATA_DIR;
-			File stageFile = getFile(true, "postUpgrade");
-			stageFile.createNewFile();
+			File stageFile = getFile("postUpgrade");
+
+			int timestamp = (int)(System.currentTimeMillis() / 1000);
+			writeText(stageFile, DATA_DIR + "_" + timestamp);
 		} catch (DIDStorageException | IOException | DIDSyntaxException e) {
 			if (e instanceof DIDStorageException)
 				throw (DIDStorageException)e;
@@ -1142,10 +1144,18 @@ class FileSystemStorage implements DIDStorage {
 		File dataDir = getDir(DATA_DIR);
 		File dataJournal = getDir(DATA_DIR + JOURNAL_SUFFIX);
 
-		int timestamp = (int)(System.currentTimeMillis() / 1000);
-		File dataDeprecated = getDir(DATA_DIR + "-" + timestamp);
-
 		File stageFile = getFile("postUpgrade");
+
+		// The fail-back file name
+		int timestamp = (int)(System.currentTimeMillis() / 1000);
+		String fileName = DATA_DIR + "_" + timestamp;
+
+		try {
+			fileName = readText(stageFile);
+		} catch (IOException ignore) {
+		}
+
+		File dataDeprecated = getDir(fileName);
 
 		if (stageFile.exists()) {
 			if (dataJournal.exists()) {
