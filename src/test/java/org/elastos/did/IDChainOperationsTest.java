@@ -833,7 +833,7 @@ public class IDChainOperationsTest {
 		Utils.deleteFile(path);
 
 		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
 				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");
@@ -860,7 +860,7 @@ public class IDChainOperationsTest {
 		Utils.deleteFile(path);
 
 		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
 				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");
@@ -954,7 +954,7 @@ public class IDChainOperationsTest {
 		Utils.deleteFile(path);
 
 		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
 				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");
@@ -1011,7 +1011,7 @@ public class IDChainOperationsTest {
 		Utils.deleteFile(path);
 
 		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
 				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");
@@ -1069,7 +1069,7 @@ public class IDChainOperationsTest {
 		Utils.deleteFile(path);
 
 		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
+		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
 				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
 
 		log.debug("Synchronizing from IDChain...");

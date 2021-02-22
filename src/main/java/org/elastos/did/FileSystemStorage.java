@@ -852,7 +852,7 @@ class FileSystemStorage implements DIDStorage {
 		File dataJournal = getDir(DATA_DIR + JOURNAL_SUFFIX);
 
 		int timestamp = (int)(System.currentTimeMillis() / 1000);
-		File dataDeprecated = getDir(DATA_DIR + "-" + timestamp);
+		File dataDeprecated = getDir(DATA_DIR + "_" + timestamp);
 
 		File stageFile = getFile("postChangePassword");
 

@@ -67,13 +67,15 @@ public class MnemonicTest {
 			Mnemonic mc = Mnemonic.getInstance(lang);
 			String mnemonic = mc.generate();
 			assertTrue(mc.isValid(mnemonic));
+			assertTrue(Mnemonic.checkIsValid(mnemonic));
 
 			DIDStore store = testData.getStore();
-	    	RootIdentity.create(lang, mnemonic, TestConfig.passphrase,
+	    	RootIdentity.create(mnemonic, TestConfig.passphrase,
 	    			true, store, TestConfig.storePass);
 
 			mnemonic = mnemonic + "z";
 			assertFalse(mc.isValid(mnemonic));
+			assertFalse(Mnemonic.checkIsValid(mnemonic));
 		}
 	}
 
@@ -83,5 +85,6 @@ public class MnemonicTest {
 
 		Mnemonic mc = Mnemonic.getInstance(Mnemonic.FRENCH);
 		assertTrue(mc.isValid(mnemonic));
+		assertTrue(Mnemonic.checkIsValid(mnemonic));
 	}
 }
