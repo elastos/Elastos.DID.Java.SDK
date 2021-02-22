@@ -535,17 +535,17 @@ public class DIDBackend {
 	}
 
 	private void createTransaction(IDChainRequest<?> request,
-			DIDTransactionDispatcher dispatcher) throws DIDTransactionException {
+			DIDTransactionAdapter adapter) throws DIDTransactionException {
 		log.info("Create ID transaction...");
 
 		try {
 			String payload = request.serialize(true);
 			log.trace("Transaction paload: '{}', memo: {}", payload, "");
 
-			if (dispatcher == null)
-				dispatcher = getAdapter();
+			if (adapter == null)
+				adapter = getAdapter();
 
-			dispatcher.createIdTransaction(payload, payload);
+			adapter.createIdTransaction(payload, payload);
 		} catch (DIDSyntaxException e) {
 			log.error("INTERNAL - Serialize IDChainRequest failed", e);
 			throw new DIDTransactionException("Serialize IDChainRequest failed", e);
@@ -584,10 +584,10 @@ public class DIDBackend {
 	 * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
 	protected void createDid(DIDDocument doc, DIDURL signKey,
-			String storepass, DIDTransactionDispatcher dispatcher)
+			String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.create(doc, signKey, storepass);
-		createTransaction(request, dispatcher);
+		createTransaction(request, adapter);
 		invalidDidCache(doc.getSubject());
 	}
 
@@ -603,18 +603,18 @@ public class DIDBackend {
 	 * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
 	protected void updateDid(DIDDocument doc, String previousTxid,
-			DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.update(doc, previousTxid, signKey, storepass);
-		createTransaction(request, dispatcher);
+		createTransaction(request, adapter);
 		invalidDidCache(doc.getSubject());
 	}
 
 	protected void transferDid(DIDDocument doc, TransferTicket ticket,
-			DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, InvalidKeyException, DIDTransactionException {
 		DIDRequest request = DIDRequest.transfer(doc, ticket, signKey, storepass);
-		createTransaction(request, dispatcher);
+		createTransaction(request, adapter);
 		invalidDidCache(doc.getSubject());
 	}
 
@@ -629,10 +629,10 @@ public class DIDBackend {
      * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
      */
 	protected void deactivateDid(DIDDocument doc, DIDURL signKey,
-			String storepass, DIDTransactionDispatcher dispatcher)
+			String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.deactivate(doc, signKey, storepass);
-		createTransaction(request, dispatcher);
+		createTransaction(request, adapter);
 		invalidDidCache(doc.getSubject());
 	}
 
@@ -651,40 +651,40 @@ public class DIDBackend {
 	 */
 	protected void deactivateDid(DIDDocument target, DIDURL targetSignKey,
 			DIDDocument signer, DIDURL signKey, String storepass,
-			DIDTransactionDispatcher dispatcher)
+			DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		DIDRequest request = DIDRequest.deactivate(target,
 				targetSignKey, signer, signKey, storepass);
-		createTransaction(request, dispatcher);
+		createTransaction(request, adapter);
 		invalidDidCache(target.getSubject());
 	}
 
 	protected void declareCredential(VerifiableCredential vc, DIDDocument signer,
-			DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		CredentialRequest request = CredentialRequest.declare(vc, signer,
 				signKey, storepass);
-		createTransaction(request, dispatcher);
+		createTransaction(request, adapter);
 		invalidCredentialCache(vc.getId(), null);
 		invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
 	protected void revokeCredential(VerifiableCredential vc, DIDDocument signer,
-			DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		CredentialRequest request = CredentialRequest.revoke(vc, signer,
 				signKey, storepass);
-		createTransaction(request, dispatcher);
+		createTransaction(request, adapter);
 		invalidCredentialCache(vc.getId(), null);
 		invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
 	protected void revokeCredential(DIDURL vc, DIDDocument signer,
-			DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
 		CredentialRequest request = CredentialRequest.revoke(vc, signer,
 				signKey, storepass);
-		createTransaction(request, dispatcher);
+		createTransaction(request, adapter);
 		invalidCredentialCache(vc, null);
 		invalidCredentialCache(vc, signer.getSubject());
 	}

@@ -795,7 +795,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		return false;
 	}
 
-	public void declare(DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void declare(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -840,7 +840,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 			signKey = owner.getDefaultPublicKeyId();
 		}
 
-		DIDBackend.getInstance().declareCredential(this, owner, signKey, storepass, dispatcher);
+		DIDBackend.getInstance().declareCredential(this, owner, signKey, storepass, adapter);
 	}
 
 	public void declare(DIDURL signKey, String storepass)
@@ -849,10 +849,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		declare(signKey, storepass, null);
 	}
 
-	public void declare(String signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void declare(String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, dispatcher);
+		declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, adapter);
 	}
 
 	public void declare(String signKey, String storepass)
@@ -861,10 +861,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, null);
 	}
 
-	public void declare(String storepass, DIDTransactionDispatcher dispatcher)
+	public void declare(String storepass, DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		declare((DIDURL)null, storepass, dispatcher);
+		declare((DIDURL)null, storepass, adapter);
 	}
 
 	public void declare(String storepass)
@@ -874,10 +874,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public CompletableFuture<Void> declareAsync(DIDURL signKey, String storepass,
-			DIDTransactionDispatcher dispatcher) {
+			DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				declare(signKey, storepass, dispatcher);
+				declare(signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -891,10 +891,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public CompletableFuture<Void> declareAsync(String signKey, String storepass,
-			DIDTransactionDispatcher dispatcher) {
+			DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				declare(signKey, storepass, dispatcher);
+				declare(signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -908,8 +908,8 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public CompletableFuture<Void> declareAsync(String storepass,
-			DIDTransactionDispatcher dispatcher) {
-		return declareAsync((DIDURL)null, storepass, dispatcher);
+			DIDTransactionAdapter adapter) {
+		return declareAsync((DIDURL)null, storepass, adapter);
 	}
 
 	public CompletableFuture<Void> declareAsync(String storepass) {
@@ -917,7 +917,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public void revoke(DIDDocument signer, DIDURL signKey, String storepass,
-			DIDTransactionDispatcher dispatcher)
+			DIDTransactionAdapter adapter)
 			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -974,7 +974,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 			signKey = signer.getDefaultPublicKeyId();
 		}
 
-		DIDBackend.getInstance().revokeCredential(this, signer, signKey, storepass, dispatcher);
+		DIDBackend.getInstance().revokeCredential(this, signer, signKey, storepass, adapter);
 	}
 
 	public void revoke(DIDDocument signer, DIDURL signKey, String storepass)
@@ -983,10 +983,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		revoke(signer, signKey, storepass, null);
 	}
 
-	public void revoke(DIDDocument signer, String storepass, DIDTransactionDispatcher dispatcher)
+	public void revoke(DIDDocument signer, String storepass, DIDTransactionAdapter adapter)
 			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		revoke(signer, (DIDURL)null, storepass, dispatcher);
+		revoke(signer, (DIDURL)null, storepass, adapter);
 	}
 
 	public void revoke(DIDDocument signer, String storepass)
@@ -995,10 +995,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		revoke(signer, (DIDURL)null, storepass, null);
 	}
 
-	public void revoke(DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void revoke(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		revoke(null, signKey, storepass, dispatcher);
+		revoke(null, signKey, storepass, adapter);
 	}
 
 	public void revoke(DIDURL signKey, String storepass)
@@ -1008,10 +1008,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public void revoke(DIDDocument signer, String signKey, String storepass,
-			DIDTransactionDispatcher dispatcher)
+			DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		revoke(signer, DIDURL.valueOf(getSubject().getId(), signKey), storepass, dispatcher);
+		revoke(signer, DIDURL.valueOf(getSubject().getId(), signKey), storepass, adapter);
 	}
 
 	public void revoke(DIDDocument signer, String signKey, String storepass)
@@ -1020,10 +1020,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		revoke(signer, signKey, storepass, null);
 	}
 
-	public void revoke(String signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void revoke(String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		revoke(null, signKey, storepass, dispatcher);
+		revoke(null, signKey, storepass, adapter);
 	}
 
 	public void revoke(String signKey, String storepass)
@@ -1032,10 +1032,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		revoke(null, signKey, storepass, null);
 	}
 
-	public void revoke(String storepass, DIDTransactionDispatcher dispatcher)
+	public void revoke(String storepass, DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		revoke(null, (DIDURL)null, storepass, dispatcher);
+		revoke(null, (DIDURL)null, storepass, adapter);
 	}
 
 	public void revoke(String storepass)
@@ -1045,10 +1045,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public CompletableFuture<Void> revokeAsync(DIDURL signKey, String storepass,
-			DIDTransactionDispatcher dispatcher) {
+			DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				revoke(signKey, storepass, dispatcher);
+				revoke(signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -1062,10 +1062,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public CompletableFuture<Void> revokeAsync(String signKey, String storepass,
-			DIDTransactionDispatcher dispatcher) {
+			DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				revoke(signKey, storepass, dispatcher);
+				revoke(signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -1079,8 +1079,8 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public CompletableFuture<Void> revokeAsync(String storepass,
-			DIDTransactionDispatcher dispatcher) {
-		return revokeAsync((DIDURL)null, storepass, dispatcher);
+			DIDTransactionAdapter adapter) {
+		return revokeAsync((DIDURL)null, storepass, adapter);
 	}
 
 	public CompletableFuture<Void> revokeAsync(String storepass) {
@@ -1088,7 +1088,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public static void revoke(DIDURL id, DIDDocument signer, DIDURL signKey,
-			String storepass, DIDTransactionDispatcher dispatcher)
+			String storepass, DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
 		checkArgument(id != null, "Invalid credential id");
@@ -1120,7 +1120,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 			signKey = signer.getDefaultPublicKeyId();
 		}
 
-		DIDBackend.getInstance().revokeCredential(id, signer, signKey, storepass, dispatcher);
+		DIDBackend.getInstance().revokeCredential(id, signer, signKey, storepass, adapter);
 	}
 
 	public static void revoke(DIDURL id, DIDDocument issuer, DIDURL signKey, String storepass)
@@ -1130,11 +1130,11 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public static void revoke(String id, DIDDocument issuer, String signKey,
-			String storepass, DIDTransactionDispatcher dispatcher)
+			String storepass, DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
 		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey),
-				storepass, dispatcher);
+				storepass, adapter);
 	}
 
 	public static void revoke(String id, DIDDocument issuer, String signKey, String storepass)
@@ -1145,10 +1145,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public static void revoke(DIDURL id, DIDDocument issuer, String storepass,
-			DIDTransactionDispatcher dispatcher)
+			DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		revoke(id, issuer, null, storepass, dispatcher);
+		revoke(id, issuer, null, storepass, adapter);
 	}
 
 	public static void revoke(DIDURL id, DIDDocument issuer, String storepass)
@@ -1158,10 +1158,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public static void revoke(String id, DIDDocument issuer, String storepass,
-			DIDTransactionDispatcher dispatcher)
+			DIDTransactionAdapter adapter)
 			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDResolveException, DIDTransactionException {
-		revoke(DIDURL.valueOf(id), issuer, null, storepass, dispatcher);
+		revoke(DIDURL.valueOf(id), issuer, null, storepass, adapter);
 	}
 
 	public static void revoke(String id, DIDDocument issuer, String storepass)
@@ -1171,10 +1171,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public static CompletableFuture<Void> revokeAsync(DIDURL id, DIDDocument issuer,
-			DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher) {
+			DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				revoke(id, issuer, signKey, storepass, dispatcher);
+				revoke(id, issuer, signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -1189,10 +1189,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument issuer,
-			String signKey, String storepass, DIDTransactionDispatcher dispatcher) {
+			String signKey, String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				revoke(id, issuer, signKey, storepass, dispatcher);
+				revoke(id, issuer, signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -1207,8 +1207,8 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public static CompletableFuture<Void> revokeAsync(DIDURL id, DIDDocument issuer,
-			String storepass, DIDTransactionDispatcher dispatcher) {
-		return revokeAsync(id, issuer, null, storepass, dispatcher);
+			String storepass, DIDTransactionAdapter adapter) {
+		return revokeAsync(id, issuer, null, storepass, adapter);
 	}
 
 	public static CompletableFuture<Void> revokeAsync(DIDURL id,
@@ -1217,8 +1217,8 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	}
 
 	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument issuer,
-			String storepass, DIDTransactionDispatcher dispatcher) {
-		return revokeAsync(id, issuer, null, storepass, dispatcher);
+			String storepass, DIDTransactionAdapter adapter) {
+		return revokeAsync(id, issuer, null, storepass, adapter);
 	}
 
 	public static CompletableFuture<Void> revokeAsync(String id,

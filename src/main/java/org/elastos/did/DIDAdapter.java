@@ -29,7 +29,7 @@ import org.elastos.did.exception.DIDResolveException;
 /**
  * The interface to provide DID Adapter method to publish DID Document.
  */
-public interface DIDAdapter extends DIDTransactionDispatcher {
+public interface DIDAdapter extends DIDTransactionAdapter {
 	/**
 	 * Perform the DID related resolve.
 	 *

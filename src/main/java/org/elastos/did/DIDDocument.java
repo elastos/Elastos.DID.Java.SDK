@@ -2591,7 +2591,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		}
 	}
 
-	public void publish(TransferTicket ticket, String storepass, DIDTransactionDispatcher dispatcher)
+	public void publish(TransferTicket ticket, String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, DIDResolveException, NotControllerException, DIDTransactionException, DIDStoreException, InvalidKeyException {
 		checkArgument(ticket.isValid(), "Invalid ticket");
 		checkArgument(ticket.getSubject().equals(getSubject()), "Ticket mismatch with current DID");
@@ -2612,7 +2612,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 		checkState(targetDoc.getMetadata().getTransactionId().equals(ticket.getTransactionId()),
 				"Ticket out date, transaction id mismatch");
 
-		DIDBackend.getInstance().transferDid(this, ticket, getDefaultPublicKeyId(), storepass, dispatcher);
+		DIDBackend.getInstance().transferDid(this, ticket, getDefaultPublicKeyId(), storepass, adapter);
 	}
 
 	public void publish(TransferTicket ticket, String storepass)
@@ -2621,10 +2621,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	}
 
 	public CompletableFuture<Void> publishAsync(TransferTicket ticket,
-			String storepass, DIDTransactionDispatcher dispatcher) {
+			String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				publish(ticket, storepass, dispatcher);
+				publish(ticket, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -2651,7 +2651,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public void publish(DIDURL signKey, boolean force, String storepass,
-			DIDTransactionDispatcher dispatcher)
+			DIDTransactionAdapter adapter)
 			throws DIDInvalidException, InvalidKeyException,
 			DIDStoreException, DIDBackendException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -2721,10 +2721,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 
 		if (lastTxid == null || lastTxid.isEmpty()) {
 			log.info("Try to publish[create] {}...", getSubject());
-			DIDBackend.getInstance().createDid(this, signKey, storepass, dispatcher);
+			DIDBackend.getInstance().createDid(this, signKey, storepass, adapter);
 		} else {
 			log.info("Try to publish[update] {}...", getSubject());
-			DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, dispatcher);
+			DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
 		}
 
 		getMetadata().setPreviousSignature(reolvedSignautre);
@@ -2759,9 +2759,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
 	 * @throws InvalidKeyException there is no an authentication key.
 	 */
-	public void publish(DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void publish(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, DIDBackendException, DIDStoreException, InvalidKeyException {
-		publish(signKey, false, storepass, dispatcher);
+		publish(signKey, false, storepass, adapter);
 	}
 
 	/**
@@ -2791,9 +2791,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
 	 * @throws InvalidKeyException there is no an authentication key.
 	 */
-	public void publish(String signKey, boolean force, String storepass, DIDTransactionDispatcher dispatcher)
+	public void publish(String signKey, boolean force, String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, DIDBackendException, DIDStoreException, InvalidKeyException {
-		publish(canonicalId(signKey), force, storepass, dispatcher);
+		publish(canonicalId(signKey), force, storepass, adapter);
 	}
 
 	/**
@@ -2823,9 +2823,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
 	 * @throws InvalidKeyException there is no an authentication key.
 	 */
-	public void publish(String signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void publish(String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, DIDBackendException, DIDStoreException, InvalidKeyException {
-		publish(canonicalId(signKey), false, storepass, dispatcher);
+		publish(canonicalId(signKey), false, storepass, adapter);
 	}
 
 	/**
@@ -2850,9 +2850,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDBackendException publish did failed because of DIDBackend error.
 	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
 	 */
-	public void publish(String storepass, DIDTransactionDispatcher dispatcher) throws DIDInvalidException,
+	public void publish(String storepass, DIDTransactionAdapter adapter) throws DIDInvalidException,
 			InvalidKeyException, DIDBackendException, DIDStoreException {
-		publish((DIDURL)null, false, storepass, dispatcher);
+		publish((DIDURL)null, false, storepass, adapter);
 	}
 
 	/**
@@ -2879,10 +2879,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> publishAsync(DIDURL signKey, boolean force,
-			String storepass, DIDTransactionDispatcher dispatcher) {
+			String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				publish(signKey, force, storepass, dispatcher);
+				publish(signKey, force, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -2917,10 +2917,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> publishAsync(String signKey, boolean force,
-			String storepass, DIDTransactionDispatcher dispatcher) {
+			String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				publish(signKey, force, storepass, dispatcher);
+				publish(signKey, force, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -2953,8 +2953,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> publishAsync(DIDURL signKey, String storepass,
-			DIDTransactionDispatcher dispatcher) {
-		return publishAsync(signKey, false, storepass, dispatcher);
+			DIDTransactionAdapter adapter) {
+		return publishAsync(signKey, false, storepass, adapter);
 	}
 
 	/**
@@ -2978,8 +2978,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> publishAsync(String signKey, String storepass,
-			DIDTransactionDispatcher dispatcher) {
-		return publishAsync(signKey, false, storepass, dispatcher);
+			DIDTransactionAdapter adapter) {
+		return publishAsync(signKey, false, storepass, adapter);
 	}
 
 	/**
@@ -3001,8 +3001,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @return the new CompletableStage, no result.
 	 */
-	public CompletableFuture<Void> publishAsync(String storepass, DIDTransactionDispatcher dispatcher) {
-		return publishAsync((DIDURL)null, false, storepass, dispatcher);
+	public CompletableFuture<Void> publishAsync(String storepass, DIDTransactionAdapter adapter) {
+		return publishAsync((DIDURL)null, false, storepass, adapter);
 	}
 
 	/**
@@ -3026,7 +3026,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException deactivate did failed because of did store error
 	 * @throws DIDBackendException deactivate did failed because of did backend error
 	 */
-	public void deactivate(DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void deactivate(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 		checkState(getMetadata().attachedStore(), "Not attached with a store");
@@ -3048,7 +3048,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				throw new InvalidKeyException("Not an authentication key: " + signKey);
 		}
 
-		DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, dispatcher);
+		DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);
 
 		if (!getSignature().equals(doc.getSignature()))
 			getStore().storeDid(doc);
@@ -3079,9 +3079,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException deactivate did failed because of did store error
 	 * @throws DIDBackendException deactivate did failed because of did backend error
 	 */
-	public void deactivate(String signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void deactivate(String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
-		deactivate(canonicalId(signKey), storepass, dispatcher);
+		deactivate(canonicalId(signKey), storepass, adapter);
 	}
 
 	/**
@@ -3109,9 +3109,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException deactivate did failed because of did store error
 	 * @throws DIDBackendException deactivate did failed because of did backend error
 	 */
-	public void deactivate(String storepass, DIDTransactionDispatcher dispatcher)
+	public void deactivate(String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, InvalidKeyException, DIDStoreException, DIDBackendException {
-		deactivate((DIDURL)null, storepass, dispatcher);
+		deactivate((DIDURL)null, storepass, adapter);
 	}
 
 	/**
@@ -3137,10 +3137,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> deactivateAsync(DIDURL signKey, String storepass,
-			DIDTransactionDispatcher dispatcher) {
+			DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				deactivate(signKey, storepass, dispatcher);
+				deactivate(signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -3168,10 +3168,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> deactivateAsync(String signKey, String storepass,
-			DIDTransactionDispatcher dispatcher) {
+			DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				deactivate(signKey, storepass, dispatcher);
+				deactivate(signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -3188,7 +3188,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> deactivateAsync(String signKey, String storepass) {
-		return deactivateAsync(signKey, storepass, (DIDTransactionDispatcher)null);
+		return deactivateAsync(signKey, storepass, (DIDTransactionAdapter)null);
 	}
 
 	/**
@@ -3198,8 +3198,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @param storepass the password for DIDStore
 	 * @return the new CompletableStage, no result.
 	 */
-	public CompletableFuture<Void> deactivateAsync(String storepass, DIDTransactionDispatcher dispatcher) {
-		return deactivateAsync((DIDURL)null, storepass, dispatcher);
+	public CompletableFuture<Void> deactivateAsync(String storepass, DIDTransactionAdapter adapter) {
+		return deactivateAsync((DIDURL)null, storepass, adapter);
 	}
 
 	/**
@@ -3224,7 +3224,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException deactivate did failed because of did store error.
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 */
-	public void deactivate(DID target, DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void deactivate(DID target, DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, InvalidKeyException, NotControllerException, DIDStoreException, DIDBackendException {
 		checkArgument(target != null, "Invalid target DID");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -3274,7 +3274,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 				throw new InvalidKeyException("No matched authorization key.");
 
 			DIDBackend.getInstance().deactivateDid(targetDoc, targetSignKey,
-					this, realSignKey, storepass, dispatcher);
+					this, realSignKey, storepass, adapter);
 		} else {
 			if (!targetDoc.hasController(getSubject()))
 				throw new NotControllerException(getSubject().toString());
@@ -3286,7 +3286,7 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 					throw new InvalidKeyException("Not an authentication key: " + signKey);
 			}
 
-			DIDBackend.getInstance().deactivateDid(targetDoc, signKey, storepass, dispatcher);
+			DIDBackend.getInstance().deactivateDid(targetDoc, signKey, storepass, adapter);
 
 			if (getStore().containsDid(target))
 				getStore().storeDid(targetDoc);
@@ -3320,9 +3320,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException deactivate did failed because of did store error.
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 */
-	public void deactivate(String target, String signKey, String storepass, DIDTransactionDispatcher dispatcher)
+	public void deactivate(String target, String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, InvalidKeyException, NotControllerException, DIDStoreException, DIDBackendException {
-		deactivate(DID.valueOf(target), canonicalId(signKey), storepass, dispatcher);
+		deactivate(DID.valueOf(target), canonicalId(signKey), storepass, adapter);
 	}
 
 	/**
@@ -3351,9 +3351,9 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @throws DIDStoreException deactivate did failed because of did store error.
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
 	 */
-	public void deactivate(DID target, String storepass, DIDTransactionDispatcher dispatcher)
+	public void deactivate(DID target, String storepass, DIDTransactionAdapter adapter)
 			throws DIDInvalidException, InvalidKeyException, NotControllerException, DIDStoreException, DIDBackendException {
-		deactivate(target, null, storepass, dispatcher);
+		deactivate(target, null, storepass, adapter);
 	}
 
 	/**
@@ -3380,10 +3380,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> deactivateAsync(DID target,
-			DIDURL signKey, String storepass, DIDTransactionDispatcher dispatcher) {
+			DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				deactivate(target, signKey, storepass, dispatcher);
+				deactivate(target, signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -3416,10 +3416,10 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> deactivateAsync(String target,
-			String signKey, String storepass, DIDTransactionDispatcher dispatcher) {
+			String signKey, String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				deactivate(target, signKey, storepass, dispatcher);
+				deactivate(target, signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -3452,8 +3452,8 @@ public class DIDDocument extends DIDObject<DIDDocument> {
 	 * @return the new CompletableStage, no result.
 	 */
 	public CompletableFuture<Void> deactivateAsync(DID target, String storepass,
-			DIDTransactionDispatcher dispatcher) {
-		return deactivateAsync(target, null, storepass, dispatcher);
+			DIDTransactionAdapter adapter) {
+		return deactivateAsync(target, null, storepass, adapter);
 	}
 
 	/**

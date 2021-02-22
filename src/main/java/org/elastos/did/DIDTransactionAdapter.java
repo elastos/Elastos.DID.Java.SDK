@@ -24,7 +24,7 @@ package org.elastos.did;
 
 import org.elastos.did.exception.DIDTransactionException;
 
-public interface DIDTransactionDispatcher {
+public interface DIDTransactionAdapter {
 	/**
 	 * User need to implement 'createIdTransaction' function.
 	 * An application-defined function that create id transaction to chain.
