@@ -11,11 +11,11 @@ import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDDeactivatedException;
-import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDocumentException;
+import org.elastos.did.exception.MnemonicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.MD5Digest;
@@ -122,10 +122,6 @@ public final class RootIdentity {
 	/**
 	 * Initialize private identity by mnemonic.
 	 *
-	 * @param language the language string
-     *                support language string: "chinese_simplified",
-     *                "chinese_traditional", "czech", "english", "french",
-     *                "italian", "japanese", "korean", "spanish".
 	 * @param mnemonic the mnemonic string
 	 * @param passphrase the password for mnemonic to generate seed
 	 * @param storepass the password for DIDStore
@@ -133,17 +129,16 @@ public final class RootIdentity {
 	 *              force = false, must not create new private identity if there is private identity.
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static RootIdentity create(String language, String mnemonic, String passphrase,
+	public static RootIdentity create(String mnemonic, String passphrase,
 			boolean overwrite, DIDStore store, String storepass) throws DIDStoreException {
 		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid mnemonic");
 		checkArgument(store != null, "Invalid DID store");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		try {
-			Mnemonic mc = Mnemonic.getInstance(language);
-			if (!mc.isValid(mnemonic))
+			if (!Mnemonic.checkIsValid(mnemonic))
 				throw new IllegalArgumentException("Invalid mnemonic.");
-		} catch (DIDException e) {
+		} catch (MnemonicException e) {
 			throw new IllegalArgumentException(e);
 		}
 
@@ -165,18 +160,14 @@ public final class RootIdentity {
 	/**
 	 * Initialize new private identity by mnemonic with unforce mode.
 	 *
-	 * @param language the language string
-     *                support language string: "chinese_simplified",
-     *                "chinese_traditional", "czech", "english", "french",
-     *                "italian", "japanese", "korean", "spanish".
 	 * @param mnemonic the mnemonic string
 	 * @param passphrase the password for mnemonic to generate seed
 	 * @param storepass the password for DIDStore
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static RootIdentity create(String language, String mnemonic, String passphrase,
+	public static RootIdentity create(String mnemonic, String passphrase,
 			DIDStore store, String storepass) throws DIDStoreException {
-		return create(language, mnemonic, passphrase, false, store, storepass);
+		return create(mnemonic, passphrase, false, store, storepass);
 	}
 
 	/**

@@ -35,7 +35,6 @@ import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.DIDURL;
 import org.elastos.did.Issuer;
-import org.elastos.did.Mnemonic;
 import org.elastos.did.RootIdentity;
 import org.elastos.did.TransferTicket;
 import org.elastos.did.VerifiableCredential;
@@ -70,8 +69,8 @@ public class TestDataGenerator {
     	String mnemonic = "amateur file dignity extend cabin jaguar early electric ask video happy access";
     	rootPrivateKey = new HDKey(mnemonic, TestConfig.passphrase);
 
-    	identity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
-    			TestConfig.passphrase, store, TestConfig.storePass);
+    	identity = RootIdentity.create(mnemonic, TestConfig.passphrase,
+    			store, TestConfig.storePass);
 
     	testDataDir = new File(dataRoot + File.separator + "testdata");
     	testDataDir.mkdirs();

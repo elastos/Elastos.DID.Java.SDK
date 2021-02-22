@@ -59,7 +59,7 @@ public class RootIdentityTest {
 
     	assertFalse(store.containsRootIdentities());
 
-    	RootIdentity.create(Mnemonic.ENGLISH, mnemonic, "", store, TestConfig.storePass);
+    	RootIdentity.create(mnemonic, "", store, TestConfig.storePass);
     	assertTrue(store.containsRootIdentities());
 
     	DIDStore store2 = DIDStore.open(TestConfig.storeRoot);

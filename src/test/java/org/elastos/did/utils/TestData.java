@@ -89,8 +89,8 @@ public final class TestData {
 	public synchronized RootIdentity getRootIdentity() throws DIDException {
 		if (identity == null) {
 	    	mnemonic =  Mnemonic.getInstance().generate();
-	    	identity = RootIdentity.create(Mnemonic.ENGLISH, mnemonic,
-	    			TestConfig.passphrase, true, store, TestConfig.storePass);
+	    	identity = RootIdentity.create(mnemonic, TestConfig.passphrase,
+	    			true, store, TestConfig.storePass);
 		}
 
     	return identity;

@@ -22,6 +22,8 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
@@ -32,8 +34,8 @@ import java.util.List;
 import java.util.StringJoiner;
 
 import org.bitcoinj.crypto.MnemonicCode;
-import org.bitcoinj.crypto.MnemonicException;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.exception.MnemonicException;
 
 /**
  * The class represents the mnemonic content.
@@ -104,7 +106,7 @@ public class Mnemonic {
 	 *
 	 * @return the Mnemonic object
 	 */
-	public static Mnemonic getInstance() throws DIDException {
+	public static Mnemonic getInstance() throws MnemonicException {
 		return getInstance(null);
 	}
 
@@ -116,7 +118,7 @@ public class Mnemonic {
 	 * @throws DIDException generate Mnemonic into table failed.
 	 */
 	public static synchronized Mnemonic getInstance(String language)
-			throws DIDException {
+			throws MnemonicException {
 		if (language == null)
 			language = ENGLISH;
 
@@ -134,7 +136,7 @@ public class Mnemonic {
 			mcTable.put(language, m);
 			return m;
 		} catch (IOException | IllegalArgumentException e) {
-			throw new DIDException(e);
+			throw new MnemonicException(e);
 		}
 	}
 
@@ -144,7 +146,7 @@ public class Mnemonic {
 	 * @return the mnemonic string
 	 * @throws DIDException generate Mnemonic into table failed.
 	 */
-	public String generate() throws DIDException {
+	public String generate() throws MnemonicException {
 		try {
 			byte[] entropy = new byte[TWELVE_WORDS_ENTROPY];
 			new SecureRandom().nextBytes(entropy);
@@ -155,8 +157,8 @@ public class Mnemonic {
 	            joiner.add(word);
 
 	        return joiner.toString();
-		} catch (MnemonicException e) {
-			throw new DIDException(e);
+		} catch (org.bitcoinj.crypto.MnemonicException e) {
+			throw new MnemonicException(e);
 		}
 	}
 
@@ -168,8 +170,7 @@ public class Mnemonic {
 	 *         the returned value is false if mnemonic is not valid.
 	 */
 	public boolean isValid(String mnemonic) {
-    	if (mnemonic == null || mnemonic.isEmpty())
-    		throw new IllegalArgumentException();
+		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
 
     	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
 		List<String> words = Arrays.asList(mnemonic.split(" "));
@@ -177,9 +178,39 @@ public class Mnemonic {
     	try {
 	    	mc.check(words);
 		    return true;
-		} catch (MnemonicException e) {
+		} catch (org.bitcoinj.crypto.MnemonicException e) {
 			return false;
 		}
+	}
+
+
+	public static String getLanguage(String mnemonic) throws MnemonicException {
+		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+
+    	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+		List<String> words = Arrays.asList(mnemonic.split(" "));
+
+		String[] langs = { ENGLISH, SPANISH, FRENCH, CZECH, ITALIAN,
+				CHINESE_SIMPLIFIED, CHINESE_TRADITIONAL, JAPANESE, KOREAN };
+
+		for (String lang : langs) {
+			Mnemonic m = getInstance(lang);
+	    	try {
+				m.mc.check(words);
+				return lang;
+	    	} catch (org.bitcoinj.crypto.MnemonicException e) {
+				continue;
+			}
+		}
+
+		return null;
+	}
+
+	public static boolean checkIsValid(String mnemonic) throws MnemonicException {
+		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+
+		String lang = getLanguage(mnemonic);
+		return lang != null;
 	}
 
 	/**
@@ -190,7 +221,12 @@ public class Mnemonic {
 	 * @return the original seed
 	 */
 	public static byte[] toSeed(String mnemonic, String passphrase) {
-    	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+
+		if (passphrase == null)
+			passphrase = "";
+
+		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
     	passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
 
 		List<String> words = Arrays.asList(mnemonic.split(" "));

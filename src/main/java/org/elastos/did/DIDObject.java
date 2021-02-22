@@ -22,6 +22,8 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -297,6 +299,9 @@ public abstract class DIDObject<T> {
 	 */
 	public static<T extends DIDObject<?>> T parse(String content, Class<T> clazz)
 			throws DIDSyntaxException {
+		checkArgument(content != null && !content.isEmpty(), "Invalid JSON content");
+		checkArgument(clazz != null, "Invalid result class object");
+
 		ObjectMapper mapper = getObjectMapper();
 
 		try {
@@ -321,6 +326,9 @@ public abstract class DIDObject<T> {
 	 */
 	public static<T extends DIDObject<?>> T parse(Reader src, Class<T> clazz)
 			throws DIDSyntaxException, IOException {
+		checkArgument(src != null, "Invalid src reader");
+		checkArgument(clazz != null, "Invalid result class object");
+
 		ObjectMapper mapper = getObjectMapper();
 
 		try {
@@ -345,6 +353,9 @@ public abstract class DIDObject<T> {
 	 */
 	public static<T extends DIDObject<?>> T parse(InputStream src, Class<T> clazz)
 			throws DIDSyntaxException, IOException {
+		checkArgument(src != null, "Invalid src input stream");
+		checkArgument(clazz != null, "Invalid result class object");
+
 		ObjectMapper mapper = getObjectMapper();
 
 		try {
@@ -369,6 +380,9 @@ public abstract class DIDObject<T> {
 	 */
 	public static<T extends DIDObject<?>> T parse(File src, Class<T> clazz)
 			throws DIDSyntaxException, IOException {
+		checkArgument(src != null, "Invalid src file");
+		checkArgument(clazz != null, "Invalid result class object");
+
 		ObjectMapper mapper = getObjectMapper();
 
 		try {
@@ -415,6 +429,8 @@ public abstract class DIDObject<T> {
 	 */
 	public void serialize(Writer out, boolean normalized)
 			throws DIDSyntaxException, IOException {
+		checkArgument(out != null, "Invalid out writer");
+
 		try {
 			getObjectMapper(normalized).writeValue(out, this);
 		} catch (JsonProcessingException e) {
@@ -443,6 +459,8 @@ public abstract class DIDObject<T> {
 	 */
 	public void serialize(OutputStream out, boolean normalized)
 			throws DIDSyntaxException, IOException {
+		checkArgument(out != null, "Invalid out stream");
+
 		try {
 			getObjectMapper(normalized).writeValue(out, this);
 		} catch (JsonProcessingException e) {
@@ -471,6 +489,8 @@ public abstract class DIDObject<T> {
 	 */
 	public void serialize(File out, boolean normalized)
 			throws DIDSyntaxException, IOException {
+		checkArgument(out != null, "Invalid out file");
+
 		try {
 			getObjectMapper(normalized).writeValue(out, this);
 		} catch (JsonProcessingException e) {

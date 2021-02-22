@@ -625,7 +625,7 @@ public class DIDStoreTest {
     		store = DIDStore.open(TestConfig.storeRoot, 0, 0);
 
        	String mnemonic =  Mnemonic.getInstance().generate();
-    	RootIdentity.create(Mnemonic.ENGLISH, mnemonic, TestConfig.passphrase,
+    	RootIdentity.create(mnemonic, TestConfig.passphrase,
     			true, store, TestConfig.storePass);
 
     	createDataForPerformanceTest(store);
@@ -662,7 +662,7 @@ public class DIDStoreTest {
 			stores[i] = DIDStore.open(TestConfig.storeRoot + i);
 			assertNotNull(stores[i]);
 			String mnemonic = Mnemonic.getInstance().generate();
-			RootIdentity.create(Mnemonic.ENGLISH, mnemonic, "", stores[i], TestConfig.storePass);
+			RootIdentity.create(mnemonic, "", stores[i], TestConfig.storePass);
 		}
 
 		for (int i = 0; i < stores.length; i++) {
