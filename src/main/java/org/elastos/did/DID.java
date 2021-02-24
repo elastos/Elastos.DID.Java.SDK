@@ -272,7 +272,6 @@ public class DID implements Comparable<DID> {
 		return false;
 	}
 
-
 	@Override
 	public int compareTo(DID did) {
 		checkNotNull(did, "did is null");
