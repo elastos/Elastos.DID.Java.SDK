@@ -211,7 +211,7 @@ public final class RootIdentity {
 		return create(extentedPrivateKey, false, store, storepass);
 	}
 
-	public static RootIdentity create(String preDerivedPublicKey, int index) {
+	protected static RootIdentity create(String preDerivedPublicKey, int index) {
 		HDKey key = preDerivedPublicKey == null ? null : HDKey.deserializeBase58(preDerivedPublicKey);
 
 		return new RootIdentity(key, index);
@@ -233,6 +233,8 @@ public final class RootIdentity {
 	}
 
 	protected static String getId(byte[] key) {
+		checkArgument(key != null && key.length > 0, "Invalid key bytes");
+
 		MD5Digest md5 = new MD5Digest();
 		byte[] digest = new byte[md5.getDigestSize()];
 		md5.update(key, 0, key.length);

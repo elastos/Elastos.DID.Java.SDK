@@ -84,12 +84,76 @@ public final class DIDStore {
 
 	private static final String DID_EXPORT = "did.elastos.export/2.0";
 
-	private Cache<Object, Object> cache;
+	private Cache<Key, Object> cache;
 
 	private DIDStorage storage;
 	private Metadata metadata;
 
 	private static final Logger log = LoggerFactory.getLogger(DIDStore.class);
+
+	static class Key {
+		private static final int TYPE_ROOT_IDENTITY = 0x00;
+		private static final int TYPE_ROOT_IDENTITY_PRIVATEKEY = 0x01;
+		private static final int TYPE_DID_DOCUMENT = 0x10;
+		private static final int TYPE_DID_METADATA = 0x11;
+		private static final int TYPE_DID_PRIVATEKEY = 0x12;
+		private static final int TYPE_CREDENTIAL = 0x20;
+		private static final int TYPE_CREDENTIAL_METADATA = 0x21;
+
+		private int type;
+		private Object id;
+
+		private Key(int type, Object id) {
+			this.type = type;
+			this.id = id;
+		}
+
+		@Override
+		public int hashCode() {
+			return type + id.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this)
+				return true;
+
+			if (obj instanceof Key) {
+				Key key = (Key)obj;
+				return type == key.type ? id.equals(key.id) : false;
+			}
+
+			return false;
+		}
+
+		public static Key forRootIdentity(String id) {
+			return new Key(TYPE_ROOT_IDENTITY, id);
+		}
+
+		public static Key forRootIdentityPrivateKey(String id) {
+			return new Key(TYPE_ROOT_IDENTITY_PRIVATEKEY, id);
+		}
+
+		public static Key forDidDocument(DID did) {
+			return new Key(TYPE_DID_DOCUMENT, did);
+		}
+
+		public static Key forDidMetadata(DID did) {
+			return new Key(TYPE_DID_METADATA, did);
+		}
+
+		private static Key forDidPrivateKey(DIDURL id) {
+			return new Key(TYPE_DID_PRIVATEKEY, id);
+		}
+
+		private static Key forCredential(DIDURL id) {
+			return new Key(TYPE_CREDENTIAL, id);
+		}
+
+		private static Key forCredentialMetadata(DIDURL id) {
+			return new Key(TYPE_CREDENTIAL_METADATA, id);
+		}
+	}
 
 	static class Metadata extends AbstractMetadata {
 		private static final String TYPE = "type";
@@ -259,6 +323,7 @@ public final class DIDStore {
 	}
 
 	public void close() {
+		// log.verbose("Cache statistics: {}", cache.stats().toString());
 		cache.invalidateAll();
 		cache = null;
 		metadata = null;
@@ -377,6 +442,9 @@ public final class DIDStore {
 
 		if (metadata.getDefaultRootIdentity() == null)
 			metadata.setDefaultRootIdentity(identity.getId());
+
+		cache.invalidate(Key.forRootIdentity(identity.getId()));
+		cache.invalidate(Key.forRootIdentityPrivateKey(identity.getId()));
 	}
 
 	protected void storeRootIdentity(RootIdentity identity)
@@ -395,10 +463,8 @@ public final class DIDStore {
 	public RootIdentity loadRootIdentity(String id) throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
-		String key = "root-identity:" + id;
-
 		try {
-			Object value = cache.get(key, new Callable<Object>() {
+			Object value = cache.get(Key.forRootIdentity(id), new Callable<Object>() {
 			    @Override
 			    public Object call() throws DIDStoreException {
 					RootIdentity identity = storage.loadRootIdentity(id);
@@ -443,7 +509,7 @@ public final class DIDStore {
  	 * @return the mnemonic string
 	 * @throws DIDStoreException there is no mnemonic in DID Store.
 	 */
-	public String exportRootIdentityMnemonic(String id, String storepass)
+	protected String exportRootIdentityMnemonic(String id, String storepass)
 			throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -455,7 +521,7 @@ public final class DIDStore {
 			return null;
 	}
 
-	public boolean containsRootIdentityMnemonic(String id) throws DIDStoreException {
+	protected boolean containsRootIdentityMnemonic(String id) throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
 		String encryptedMnemonic = storage.loadRootIdentityMnemonic(id);
@@ -471,10 +537,8 @@ public final class DIDStore {
      */
 	private HDKey loadRootIdentityPrivateKey(String id, String storepass)
 			throws DIDStoreException {
-		String key = "root-identity:" + id + "#privatekey";
-
 		try {
-			Object value = cache.get(key, new Callable<Object>() {
+			Object value = cache.get(Key.forRootIdentityPrivateKey(id), new Callable<Object>() {
 			    @Override
 			    public Object call() throws DIDStorageException {
 					String encryptedKey = storage.loadRootIdentityPrivateKey(id);
@@ -514,8 +578,8 @@ public final class DIDStore {
 					metadata.getDefaultRootIdentity().equals(id))
 			metadata.setDefaultRootIdentity(null);
 
-			cache.invalidate("root-identity:" + id);
-			cache.invalidate("root-identity:" + id + "#privatekey");
+			cache.invalidate(Key.forRootIdentity(id));
+			cache.invalidate(Key.forRootIdentityPrivateKey(id));
 		}
 
 		return success;
@@ -573,7 +637,7 @@ public final class DIDStore {
 		for (VerifiableCredential vc : doc.getCredentials())
 			storeCredential(vc);
 
-		cache.put(doc.getSubject(), doc);
+		cache.put(Key.forDidDocument(doc.getSubject()), doc);
 	}
 
 	/**
@@ -587,7 +651,7 @@ public final class DIDStore {
 		checkArgument(did != null, "Invalid did");
 
 		try {
-			Object value = cache.get(did, new Callable<Object>() {
+			Object value = cache.get(Key.forDidDocument(did), new Callable<Object>() {
 			    @Override
 			    public Object call() throws DIDStoreException {
 					DIDDocument doc = storage.loadDid(did);
@@ -657,8 +721,7 @@ public final class DIDStore {
 		storage.storeDidMetadata(did, metadata);
 		metadata.attachStore(this);
 
-		DIDURL id = new DIDURL(did, ";metadata");
-		cache.put(id, metadata);
+		cache.put(Key.forDidMetadata(did), metadata);
 	}
 
 	/**
@@ -671,9 +734,8 @@ public final class DIDStore {
 	protected DIDMetadata loadDidMetadata(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 
-		DIDURL id = new DIDURL(did, ";metadata");
 		try {
-			Object value = cache.get(id , new Callable<Object>() {
+			Object value = cache.get(Key.forDidMetadata(did) , new Callable<Object>() {
 			    @Override
 			    public Object call() throws DIDStorageException {
 					DIDMetadata metadata = storage.loadDidMetadata(did);
@@ -706,29 +768,20 @@ public final class DIDStore {
 	public boolean deleteDid(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 
-		List<DIDURL> vcs = storage.listCredentials(did);
-		List<DIDURL> keys = storage.listPrivateKeys(did);
-
 		boolean success = storage.deleteDid(did);
 
 		if (success) {
-			cache.invalidate(did);
-			cache.invalidate(new DIDURL(did, ";metadata"));
+			cache.invalidate(Key.forDidDocument(did));
+			cache.invalidate(Key.forDidMetadata(did));
 
-			cache.invalidateAll(vcs);
-			if (!vcs.isEmpty()) {
-				List<DIDURL> metadata = new ArrayList<DIDURL>(vcs.size());
-				for (DIDURL id : vcs) {
-					DIDURL.Builder builder = new DIDURL.Builder(id);
-					builder.setParameter("metadata", null);
-					DIDURL metadataId = builder.build();
-					metadata.add(metadataId);
+			// invalidate every thing belongs to this did
+			for (Key key : cache.asMap().keySet()) {
+				if (key.id instanceof DIDURL) {
+					DIDURL id = (DIDURL)key.id;
+					if (id.getDid().equals(did))
+						cache.invalidate(key);
 				}
-
-				cache.invalidateAll(metadata);
 			}
-
-			cache.invalidateAll(keys);
 		}
 
 		return success;
@@ -798,7 +851,7 @@ public final class DIDStore {
 			credential.getMetadata().attachStore(this);
 		}
 
-		cache.put(credential.getId(), credential);
+		cache.put(Key.forCredential(credential.getId()), credential);
 	}
 
 	/**
@@ -814,7 +867,7 @@ public final class DIDStore {
 		checkArgument(id != null, "Invalid credential id");
 
 		try {
-			Object value = cache.get(id, new Callable<Object>() {
+			Object value = cache.get(Key.forCredential(id), new Callable<Object>() {
 			    @Override
 			    public Object call() throws DIDStoreException {
 			    	VerifiableCredential vc = storage.loadCredential(id);
@@ -914,10 +967,7 @@ public final class DIDStore {
 		storage.storeCredentialMetadata(id, metadata);
 		metadata.attachStore(this);
 
-		DIDURL.Builder builder = new DIDURL.Builder(id);
-		builder.setParameter("metadata", null);
-		DIDURL metadataId = builder.build();
-		cache.put(metadataId, metadata);
+		cache.put(Key.forCredentialMetadata(id), metadata);
 	}
 
 	/**
@@ -932,12 +982,8 @@ public final class DIDStore {
 			throws DIDStoreException {
 		checkArgument(id != null, "Invalid credential id");
 
-		DIDURL.Builder builder = new DIDURL.Builder(id);
-		builder.setParameter("metadata", null);
-		DIDURL metadataId = builder.build();
-
 		try {
-			Object value = cache.get(metadataId , new Callable<Object>() {
+			Object value = cache.get(Key.forCredentialMetadata(id), new Callable<Object>() {
 			    @Override
 			    public Object call() throws DIDStorageException {
 					CredentialMetadata metadata = storage.loadCredentialMetadata(id);
@@ -972,12 +1018,8 @@ public final class DIDStore {
 
 		boolean success = storage.deleteCredential(id);
 		if (success) {
-			cache.invalidate(id);
-
-			DIDURL.Builder builder = new DIDURL.Builder(id);
-			builder.setParameter("metadata", null);
-			DIDURL metadataId = builder.build();
-			cache.invalidate(metadataId);
+			cache.invalidate(Key.forCredential(id));
+			cache.invalidate(Key.forCredentialMetadata(id));
 		}
 
 		return success;
@@ -1087,7 +1129,7 @@ public final class DIDStore {
 		String encryptedKey = encrypt(privateKey, storepass);
 		storage.storePrivateKey(id, encryptedKey);
 
-		cache.put(id, encryptedKey);
+		cache.put(Key.forDidPrivateKey(id), encryptedKey);
 	}
 
 	/**
@@ -1106,7 +1148,7 @@ public final class DIDStore {
 
 	private String loadPrivateKey(DIDURL id) throws DIDStoreException {
 		try {
-			Object value = cache.get(id, new Callable<Object>() {
+			Object value = cache.get(Key.forDidPrivateKey(id), new Callable<Object>() {
 			    @Override
 			    public Object call() throws DIDStoreException {
 					String encryptedKey = storage.loadPrivateKey(id);
@@ -1210,7 +1252,7 @@ public final class DIDStore {
 
 		boolean success = storage.deletePrivateKey(id);
 		if (success)
-			cache.invalidate(id);
+			cache.invalidate(Key.forDidPrivateKey(id));
 
 		return success;
 	}
