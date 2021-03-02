@@ -245,14 +245,7 @@ public class DIDBackend {
 			throws DIDResolveException {
 		log.debug("Resolving request {}...", request);
 
-		String requestJson = null;
-		try {
-			requestJson = request.serialize(true);
-		} catch (DIDSyntaxException e) {
-			log.error("INTERNAL - Serialize resolve request", e);
-			throw new DIDResolveException("Can not serialize the request", e);
-		}
-
+		String requestJson = request.serialize(true);
 		InputStream is = getAdapter().resolve(requestJson);
 
 		ResolveResponse<?, ?> response = null;
@@ -538,18 +531,13 @@ public class DIDBackend {
 			DIDTransactionAdapter adapter) throws DIDTransactionException {
 		log.info("Create ID transaction...");
 
-		try {
-			String payload = request.serialize(true);
-			log.trace("Transaction paload: '{}', memo: {}", payload, "");
+		String payload = request.serialize(true);
+		log.trace("Transaction paload: '{}', memo: {}", payload, "");
 
-			if (adapter == null)
-				adapter = getAdapter();
+		if (adapter == null)
+			adapter = getAdapter();
 
-			adapter.createIdTransaction(payload, payload);
-		} catch (DIDSyntaxException e) {
-			log.error("INTERNAL - Serialize IDChainRequest failed", e);
-			throw new DIDTransactionException("Serialize IDChainRequest failed", e);
-		}
+		adapter.createIdTransaction(payload, payload);
 
 		log.info("ID transaction complete.");
 	}

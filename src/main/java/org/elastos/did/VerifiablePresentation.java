@@ -40,8 +40,6 @@ import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedPresentationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -75,8 +73,6 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	protected final static String REALM = "realm";
 	protected final static String VERIFICATION_METHOD = "verificationMethod";
 	protected final static String SIGNATURE = "signature";
-
-	private static final Logger log = LoggerFactory.getLogger(VerifiablePresentation.class);
 
 	@JsonProperty(TYPE)
 	private String type;
@@ -203,12 +199,13 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @param vp the source VerifiablePresentation object.
 	 */
-	protected VerifiablePresentation(VerifiablePresentation vp) {
+	private VerifiablePresentation(VerifiablePresentation vp, boolean withProof) {
 		this.type = vp.type;
 		this.created = vp.created;
 		this.credentials = vp.credentials;
 		this._credentials = vp._credentials;
-		this.proof = vp.proof;
+		if (withProof)
+			this.proof = vp.proof;
 	}
 
 	/**
@@ -361,15 +358,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 				return false;
 		}
 
-		VerifiablePresentation vp = new VerifiablePresentation(this);
-		vp.proof = null;
-		String json;
-		try {
-			json = vp.serialize(true);
-		} catch (DIDSyntaxException ignore) {
-			log.error("INTERNAL - serialize presentation", ignore);
-			return false;
-		}
+		VerifiablePresentation vp = new VerifiablePresentation(this, false);
+		String json = vp.serialize(true);
 
 		return signerDoc.verify(proof.getVerificationMethod(),
 				proof.getSignature(), json.getBytes(),
@@ -425,15 +415,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 				return false;
 		}
 
-		VerifiablePresentation vp = new VerifiablePresentation(this);
-		vp.proof = null;
-		String json;
-		try {
-			json = vp.serialize(true);
-		} catch (DIDSyntaxException ignore) {
-			log.error("INTERNAL - serialize presentation", ignore);
-			return false;
-		}
+		VerifiablePresentation vp = new VerifiablePresentation(this, false);
+		String json = vp.serialize(true);
 
 		return signerDoc.verify(proof.getVerificationMethod(),
 				proof.getSignature(), json.getBytes(),
@@ -724,25 +707,12 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
 			presentation.sanitize(false);
 
-			String json;
-			try {
-				json = presentation.serialize(true);
-			} catch (DIDSyntaxException e) {
-				// should never happen
-				// re-throw it after up-cast
-				throw (MalformedPresentationException)e;
-			}
+			String json = presentation.serialize(true);
 
-			try {
-				String sig = signer.sign(signKey, storepass, json.getBytes(),
-						realm.getBytes(), nonce.getBytes());
-				Proof proof = new Proof(signKey, realm, nonce, sig);
-				presentation.proof = proof;
-			} catch (InvalidKeyException ignore) {
-				// should never happen
-				log.error("INTERNAL - Signing digest", ignore);
-				throw new DIDStoreException(ignore);
-			}
+			String sig = signer.sign(signKey, storepass, json.getBytes(),
+					realm.getBytes(), nonce.getBytes());
+			Proof proof = new Proof(signKey, realm, nonce, sig);
+			presentation.proof = proof;
 
 			// Invalidate builder
 			VerifiablePresentation vp = presentation;

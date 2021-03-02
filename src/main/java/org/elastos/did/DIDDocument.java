@@ -73,6 +73,7 @@ import org.elastos.did.exception.NotAttachedWithStoreException;
 import org.elastos.did.exception.NotControllerException;
 import org.elastos.did.exception.NotCustomizedDIDException;
 import org.elastos.did.exception.NotPrimitiveDIDException;
+import org.elastos.did.exception.UnknownInternalException;
 import org.elastos.did.jwt.JwtBuilder;
 import org.elastos.did.jwt.JwtParserBuilder;
 import org.elastos.did.jwt.KeyProvider;
@@ -703,7 +704,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param doc the document be copied
 	 */
-	protected DIDDocument(DIDDocument doc, boolean withProof) {
+	private DIDDocument(DIDDocument doc, boolean withProof) {
 		this.subject = doc.subject;
 		this.controllers = doc.controllers;
 		this.controllerDocs = doc.controllerDocs;
@@ -2013,16 +2014,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		if (proofs.size() != expectedProofs)
 			return false;
 
-		byte[] digest = null;
-		try {
-			DIDDocument doc = new DIDDocument(this, false);
-			String json = doc.serialize(true);
-			digest = EcdsaSigner.sha256Digest(json.getBytes());
-		} catch (DIDSyntaxException ignore) {
-			// Should never happen
-			log.error("INTERNAL - Serialize document", ignore);
-			return false;
-		}
+		DIDDocument doc = new DIDDocument(this, false);
+		String json = doc.serialize(true);
+		byte[] digest = EcdsaSigner.sha256Digest(json.getBytes());
 
 		// Document should signed(only) by default public key.
 		if (!isCustomizedDid()) {
@@ -2452,8 +2446,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			getStore().storeDid(doc);
 			return doc;
 		} catch (MalformedDocumentException ignore) {
-			log.error("INTERNAL - Seal DID document", ignore);
-			throw new DIDStoreException(ignore);
+			throw new UnknownInternalException(ignore);
 		}
 	}
 
@@ -2552,8 +2545,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		try {
 			return builder.seal(storepass);
 		} catch (MalformedDocumentException ignore) {
-			log.error("INTERNAL - sign customized did document", ignore);
-			return null;
+			throw new UnknownInternalException(ignore);
 		}
 	}
 
@@ -3490,7 +3482,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param content the string JSON content for building the object.
 	 * @return the DIDDocument object.
-	 * @throws DIDSyntaxException if a parse error occurs.
+	 * @throws MalformedDocumentException if a parse error occurs.
 	 */
 	public static DIDDocument parse(String content) throws MalformedDocumentException {
 		try {
@@ -3508,7 +3500,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param src Reader object used to read JSON content for building the object
 	 * @return the DIDDocument object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static DIDDocument parse(Reader src)
@@ -3528,7 +3520,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param src InputStream object used to read JSON content for building the object
 	 * @return the DIDDocument object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static DIDDocument parse(InputStream src)
@@ -3548,7 +3540,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param src File object used to read JSON content for building the object
 	 * @return the DIDDocument object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static DIDDocument parse(File src)
@@ -3568,7 +3560,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param content the string JSON content for building the object
 	 * @return the DIDDocument object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedDocumentException if a parse error occurs
 	 * @deprecated use {@link #parse(String)} instead
 	 */
 	@Deprecated
@@ -3581,7 +3573,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param src Reader object used to read JSON content for building the object
 	 * @return the DIDDocument object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(Reader)} instead
 	 */
@@ -3596,7 +3588,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param src InputStream object used to read JSON content for building the object
 	 * @return the DIDDocument object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(InputStream)} instead
 	 */
@@ -3611,7 +3603,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param src File object used to read JSON content for building the object
 	 * @return the DIDDocument object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(File)} instead
 	 */
@@ -4391,8 +4383,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 				addCredential(vc);
 			} catch (MalformedCredentialException ignore) {
-				// Should never happen
-				log.error("INTERNAL - Create credential", ignore);
+				throw new UnknownInternalException(ignore);
 			}
 
 			return this;
@@ -4554,8 +4545,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 				addCredential(vc);
 			} catch (MalformedCredentialException ignore) {
-				// Should never happen
-				log.error("INTERNAL - Create credential", ignore);
+				throw new UnknownInternalException(ignore);
 			}
 
 			return this;
@@ -4951,20 +4941,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			if (document.proofs.containsKey(signerDoc.getSubject()))
 				throw new AlreadySignedException(signerDoc.getSubject().toString());
 
-			try {
-				String json = document.serialize(true);
-				String sig = document.sign(signKey, storepass, json.getBytes());
-				Proof proof = new Proof(signKey, sig);
-				document.proofs.put(proof.getCreator().getDid(), proof);
-				document._proofs = new ArrayList<Proof>(document.proofs.values());
-				Collections.sort(document._proofs);
-			} catch (InvalidKeyException ignore) {
-				log.error("INTERNAL - Sealing document", ignore);
-			} catch (DIDSyntaxException e) {
-				// should never happen
-				// re-throw it after up-cast
-				throw (MalformedDocumentException)e;
-			}
+			String json = document.serialize(true);
+			String sig = document.sign(signKey, storepass, json.getBytes());
+			Proof proof = new Proof(signKey, sig);
+			document.proofs.put(proof.getCreator().getDid(), proof);
+			document._proofs = new ArrayList<Proof>(document.proofs.values());
+			Collections.sort(document._proofs);
 
 			// Invalidate builder
 			DIDDocument doc = document;
