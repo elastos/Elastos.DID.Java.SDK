@@ -22,12 +22,15 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -35,10 +38,15 @@ import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import org.elastos.did.exception.AlreadySealedException;
+import org.elastos.did.exception.DIDNotFoundException;
+import org.elastos.did.exception.DIDObjectAlreadyExistException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
+import org.elastos.did.exception.IllegalUsage;
 import org.elastos.did.exception.InvalidKeyException;
+import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedPresentationException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -78,12 +86,13 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	private String type;
 	@JsonProperty(CREATED)
 	private Date created;
-	private Map<DIDURL, VerifiableCredential> credentials;
 	@JsonProperty(VERIFIABLE_CREDENTIAL)
 	private List<VerifiableCredential> _credentials;
 	@JsonProperty(PROOF)
 	@JsonInclude(Include.NON_NULL)
 	private Proof proof;
+
+	private Map<DIDURL, VerifiableCredential> credentials;
 
 	/**
 	 * The proof information for verifiable presentation.
@@ -241,7 +250,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return the Credential array
 	 */
 	public List<VerifiableCredential> getCredentials() {
-		return new ArrayList<VerifiableCredential>(credentials.values());
+		return Collections.unmodifiableList(_credentials);
 	}
 
 	/**
@@ -251,8 +260,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return the Credential object
 	 */
 	public VerifiableCredential getCredential(DIDURL id) {
-		if (id == null)
-			throw new IllegalArgumentException();
+		checkArgument(id != null, "Invalid credential id");
 
 		return credentials.get(id);
 	}
@@ -292,19 +300,19 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws MalformedPresentationException if the presentation object is invalid
 	 */
 	@Override
-	protected void sanitize(boolean withProof) throws MalformedPresentationException {
+	protected void sanitize() throws MalformedPresentationException {
 		if (type == null || type.length() == 0)
 			throw new MalformedPresentationException("Missing presentation type");
 
 		if (created == null)
 			throw new MalformedPresentationException("Missing presentation create timestamp");
 
-		if (withProof && _credentials != null && _credentials.size() > 0) {
+		if (_credentials != null && _credentials.size() > 0) {
 			for (VerifiableCredential vc : _credentials) {
 				try {
 					vc.sanitize();
-				} catch (DIDSyntaxException e) {
-					throw new MalformedPresentationException(e.getMessage(), e);
+				} catch (MalformedCredentialException e) {
+					throw new MalformedPresentationException("credential invalid: " + vc.getId(), e);
 				}
 
 				if (credentials.containsKey(vc.getId()))
@@ -316,13 +324,11 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
 		this._credentials = new ArrayList<VerifiableCredential>(credentials.values());
 
-		if (withProof) {
-			if (proof == null)
-				throw new MalformedPresentationException("Missing presentation proof");
+		if (proof == null)
+			throw new MalformedPresentationException("Missing presentation proof");
 
-			if (proof.getVerificationMethod().getDid() == null)
-				throw new MalformedPresentationException("Incomplete presentation verification method");
-		}
+		if (proof.getVerificationMethod().getDid() == null)
+			throw new MalformedPresentationException("Invalid verification method");
 	}
 
 	/**
@@ -393,6 +399,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	public boolean isValid() throws DIDResolveException {
 		DID signer = getSigner();
 		DIDDocument signerDoc = signer.resolve();
+		if (signerDoc == null)
+			return false;
 
 		// Check the validity of signer' document.
 		if (!signerDoc.isValid())
@@ -450,8 +458,15 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
 	public static VerifiablePresentation parse(String content)
-			throws DIDSyntaxException {
-		return parse(content, VerifiablePresentation.class);
+			throws MalformedPresentationException {
+		try {
+			return parse(content, VerifiablePresentation.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedPresentationException)
+				throw (MalformedPresentationException)e;
+			else
+				throw new MalformedPresentationException(e);
+		}
 	}
 
 	/**
@@ -463,8 +478,15 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiablePresentation parse(Reader src)
-			throws DIDSyntaxException, IOException {
-		return parse(src, VerifiablePresentation.class);
+			throws MalformedPresentationException, IOException {
+		try {
+			return parse(src, VerifiablePresentation.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedPresentationException)
+				throw (MalformedPresentationException)e;
+			else
+				throw new MalformedPresentationException(e);
+		}
 	}
 
 	/**
@@ -476,8 +498,15 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiablePresentation parse(InputStream src)
-			throws DIDSyntaxException, IOException {
-		return parse(src, VerifiablePresentation.class);
+			throws MalformedPresentationException, IOException {
+		try {
+			return parse(src, VerifiablePresentation.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedPresentationException)
+				throw (MalformedPresentationException)e;
+			else
+				throw new MalformedPresentationException(e);
+		}
 	}
 
 	/**
@@ -489,8 +518,15 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiablePresentation parse(File src)
-			throws DIDSyntaxException, IOException {
-		return parse(src, VerifiablePresentation.class);
+			throws MalformedPresentationException, IOException {
+		try {
+			return parse(src, VerifiablePresentation.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedPresentationException)
+				throw (MalformedPresentationException)e;
+			else
+				throw new MalformedPresentationException(e);
+		}
 	}
 
 	/**
@@ -504,7 +540,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 */
 	@Deprecated
 	public static VerifiablePresentation fromJson(String content)
-			throws DIDSyntaxException {
+			throws MalformedPresentationException {
 		return parse(content);
 	}
 
@@ -519,7 +555,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 */
 	@Deprecated
 	public static VerifiablePresentation fromJson(Reader src)
-			throws DIDSyntaxException, IOException {
+			throws MalformedPresentationException, IOException {
 		return parse(src);
 	}
 
@@ -534,7 +570,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 */
 	@Deprecated
 	public static VerifiablePresentation fromJson(InputStream src)
-			throws DIDSyntaxException, IOException {
+			throws MalformedPresentationException, IOException {
 		return parse(src);
 	}
 
@@ -549,7 +585,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 */
 	@Deprecated
 	public static VerifiablePresentation fromJson(File src)
-			throws DIDSyntaxException, IOException {
+			throws MalformedPresentationException, IOException {
 		return parse(src);
 	}
 
@@ -564,25 +600,30 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws InvalidKeyException if the signKey is invalid
 	 */
 	public static Builder createFor(DID did, DIDURL signKey, DIDStore store)
-			throws DIDStoreException, InvalidKeyException {
-		if (did == null || store == null)
-			throw new IllegalArgumentException();
+			throws DIDStoreException {
+		checkArgument(did != null, "Invalid did");
+		checkArgument(store != null, "Invalid store");
 
 		DIDDocument signer = store.loadDid(did);
 		if (signer == null)
-			throw new DIDStoreException("Can not load DID."); // TODO: checkme!!!
+			throw new DIDNotFoundException(did.toString());
 
 		if (signKey == null) {
 			signKey = signer.getDefaultPublicKeyId();
 		} else {
 			if (!signer.isAuthenticationKey(signKey))
-				throw new InvalidKeyException("Not an authentication key.");
+				throw new InvalidKeyException(signKey.toString());
 		}
 
 		if (!signer.hasPrivateKey(signKey))
-			throw new InvalidKeyException("No private key.");
+			throw new InvalidKeyException("No private key: " + signKey);
 
 		return new Builder(signer, signKey);
+	}
+
+	public static Builder createFor(String did, String signKey, DIDStore store)
+			throws DIDStoreException {
+		return createFor(DID.valueOf(did), DIDURL.valueOf(DID.valueOf(did), signKey), store);
 	}
 
 	/**
@@ -595,8 +636,13 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws InvalidKeyException if the signKey is invalid
 	 */
 	public static Builder createFor(DID did, DIDStore store)
-			throws DIDStoreException, InvalidKeyException {
+			throws DIDStoreException {
 		return createFor(did, null, store);
+	}
+
+	public static Builder createFor(String did, DIDStore store)
+			throws DIDStoreException {
+		return createFor(DID.valueOf(did), null, store);
 	}
 
 	/**
@@ -621,6 +667,10 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			this.presentation = new VerifiablePresentation();
 		}
 
+		private void checkNotSealed() throws AlreadySealedException{
+			if (presentation == null)
+				throw new AlreadySealedException();
+		}
 		/**
 		 * Add Credentials to Presentation.
 		 *
@@ -628,17 +678,14 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		 * @return the Presentation Builder object
 		 */
 		public Builder credentials(VerifiableCredential ... credentials) {
-			if (presentation == null)
-				throw new IllegalStateException("Presentation already sealed.");
+			checkNotSealed();
 
 			for (VerifiableCredential vc : credentials) {
 				if (!vc.getSubject().getId().equals(signer.getSubject()))
-					throw new IllegalArgumentException("Credential '" +
-							vc.getId() + "' not match with requested did");
+					throw new IllegalUsage(vc.getId().toString());
 
 				if (presentation.credentials.containsKey(vc.getId()))
-					throw new IllegalArgumentException("Credential '" +
-							vc.getId() + "' already exists in the presentation");
+					throw new DIDObjectAlreadyExistException(vc.getId().toString());
 
 				// TODO: integrity check?
 				// if (!vc.isValid())
@@ -658,11 +705,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		 * @return the Presentation Builder object
 		 */
 		public Builder realm(String realm) {
-			if (presentation == null)
-				throw new IllegalStateException("Presentation already sealed.");
-
-			if (realm == null || realm.isEmpty())
-				throw new IllegalArgumentException();
+			checkNotSealed();
+			checkArgument(realm != null && !realm.isEmpty(), "Invalid realm");
 
 			this.realm = realm;
 			return this;
@@ -675,11 +719,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		 * @return the Presentation Builder object
 		 */
 		public Builder nonce(String nonce) {
-			if (presentation == null)
-				throw new IllegalStateException("Presentation already sealed.");
-
-			if (nonce == null || nonce.isEmpty())
-				throw new IllegalArgumentException();
+			checkNotSealed();
+			checkArgument(nonce != null && !nonce.isEmpty(), "Invalid nonce");
 
 			this.nonce = nonce;
 			return this;
@@ -696,19 +737,15 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		 */
 		public VerifiablePresentation seal(String storepass)
 				throws MalformedPresentationException, DIDStoreException  {
-			if (presentation == null)
-				throw new IllegalStateException("Presentation already sealed.");
-
-			if (storepass == null || storepass.isEmpty())
-				throw new IllegalArgumentException();
+			checkNotSealed();
+			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 			Calendar cal = Calendar.getInstance(Constants.UTC);
 			presentation.created = cal.getTime();
 
-			presentation.sanitize(false);
+			presentation._credentials = new ArrayList<VerifiableCredential>(presentation.credentials.values());
 
 			String json = presentation.serialize(true);
-
 			String sig = signer.sign(signKey, storepass, json.getBytes(),
 					realm.getBytes(), nonce.getBytes());
 			Proof proof = new Proof(signKey, realm, nonce, sig);

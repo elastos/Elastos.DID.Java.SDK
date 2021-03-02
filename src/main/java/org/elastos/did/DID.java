@@ -132,10 +132,14 @@ public class DID implements Comparable<DID> {
 	 * @return the DIDMetadata object
 	 * @throws DIDResolveException
 	 */
-	public synchronized DIDMetadata getMetadata() throws DIDResolveException {
+	public synchronized DIDMetadata getMetadata() {
 		if (metadata == null) {
-			DIDDocument doc = DIDBackend.getInstance().resolveDid(this);
-			setMetadata(doc != null ? doc.getMetadata() : new DIDMetadata(this));
+			try {
+				DIDDocument resolved = resolve();
+				metadata = resolved != null ? resolved.getMetadata() : new DIDMetadata(this);
+			} catch (DIDResolveException e) {
+				metadata = new DIDMetadata(this);
+			}
 		}
 
 		return metadata;
