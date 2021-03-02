@@ -211,13 +211,15 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 		this.txid = txid;
 	}
 
-	private TransferTicket(TransferTicket ticket) {
+	private TransferTicket(TransferTicket ticket, boolean withProof) {
 		this.id = ticket.id;
 		this.to = ticket.to;
 		this.txid = ticket.txid;
 		this.doc = ticket.doc;
-		this.proofs = ticket.proofs;
-		this._proofs = ticket._proofs;
+		if (withProof) {
+			this.proofs = ticket.proofs;
+			this._proofs = ticket._proofs;
+		}
 	}
 
 	/**
@@ -296,17 +298,9 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 				(doc.getControllerCount() <= 1 && proofs.size() != 1))
 			return false;
 
-		byte[] digest = null;
-		try {
-			TransferTicket tt = new TransferTicket(this);
-			tt.proofs = null;
-			tt._proofs = null;
-			String json = tt.serialize(true);
-			digest = EcdsaSigner.sha256Digest(json.getBytes());
-		} catch (DIDSyntaxException ignore) {
-			// Should never happen
-			return false;
-		}
+		TransferTicket tt = new TransferTicket(this, false);
+		String json = tt.serialize(true);
+		byte[] digest = EcdsaSigner.sha256Digest(json.getBytes());
 
 		List<DID> checkedControllers = new ArrayList<DID>(_proofs.size());
 
@@ -436,14 +430,10 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 
 		_proofs = null;
 
-		try {
-			String json = serialize(true);
-			String sig = controller.sign(storepass, json.getBytes());
-			Proof proof = new Proof(signKey, sig);
-			proofs.put(proof.getVerificationMethod().getDid(), proof);
-		} catch (DIDSyntaxException ignore) {
-			// should never happen
-		}
+		String json = serialize(true);
+		String sig = controller.sign(storepass, json.getBytes());
+		Proof proof = new Proof(signKey, sig);
+		proofs.put(proof.getVerificationMethod().getDid(), proof);
 
 		this._proofs = new ArrayList<Proof>(proofs.values());
 		Collections.sort(this._proofs);

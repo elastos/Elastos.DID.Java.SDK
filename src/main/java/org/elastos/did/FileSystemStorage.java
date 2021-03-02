@@ -125,7 +125,7 @@ class FileSystemStorage implements DIDStorage {
 
 			File file = getFile(true, currentDataDir, METADATA);
 			metadata.serialize(file);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (IOException e) {
 			log.error("Initialize DID store error", e);
 			throw new DIDStorageException("Initialize DIDStore \""
 					+ storeRoot.getAbsolutePath() + "\" error.", e);
@@ -312,7 +312,7 @@ class FileSystemStorage implements DIDStorage {
 				file.delete();
 			else
 				metadata.serialize(file);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new DIDStorageException("Store DIDStore metadata error", e);
 		}
 	}
@@ -349,7 +349,7 @@ class FileSystemStorage implements DIDStorage {
 				file.delete();
 			else
 				metadata.serialize(file);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new DIDStorageException("Store root identity metadata error: " + id, e);
 		}
 	}
@@ -516,7 +516,7 @@ class FileSystemStorage implements DIDStorage {
 				file.delete();
 			else
 				metadata.serialize(file);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new DIDStorageException("Store DID metadata error: " + did, e);
 		}
 	}
@@ -540,7 +540,7 @@ class FileSystemStorage implements DIDStorage {
 		try {
 			File file = getDidFile(doc.getSubject(), true);
 			doc.serialize(file, true);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new DIDStorageException("Store DID document error: " +
 					doc.getSubject(), e);
 		}
@@ -621,7 +621,7 @@ class FileSystemStorage implements DIDStorage {
 				file.delete();
 			else
 				metadata.serialize(file);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new DIDStorageException("Store credential metadata error: " + id, e);
 		}
 	}
@@ -646,7 +646,7 @@ class FileSystemStorage implements DIDStorage {
 		try {
 			File file = getCredentialFile(credential.getId(), true);
 			credential.serialize(file, true);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new DIDStorageException("Store credential error: " +
 					credential.getId(), e);
 		}
@@ -1130,11 +1130,8 @@ class FileSystemStorage implements DIDStorage {
 
 			int timestamp = (int)(System.currentTimeMillis() / 1000);
 			writeText(stageFile, DATA_DIR + "_" + timestamp);
-		} catch (DIDStorageException | IOException | DIDSyntaxException e) {
-			if (e instanceof DIDStorageException)
-				throw (DIDStorageException)e;
-			else
-				throw new DIDStorageException(e);
+		} catch (IOException | DIDSyntaxException e) {
+			throw new DIDStorageException(e);
 		} finally {
 			postUpgrade();
 		}

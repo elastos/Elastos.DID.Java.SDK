@@ -1618,12 +1618,7 @@ public final class DIDStore {
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
-		try {
-			exportDid(did, password, storepass).serialize(out, true);
-		} catch (DIDSyntaxException ignore) {
-			// Should never happen
-			log.error("INTERNAL - Serialize exported private identity", ignore);
-		}
+		exportDid(did, password, storepass).serialize(out, true);
 	}
 
 	/**
@@ -1660,12 +1655,7 @@ public final class DIDStore {
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
-		try {
-			exportDid(did, password, storepass).serialize(out, true);
-		} catch (DIDSyntaxException ignore) {
-			// Should never happen
-			log.error("INTERNAL - Serialize exported private identity", ignore);
-		}
+		exportDid(did, password, storepass).serialize(out, true);
 	}
 
 	/**
@@ -1702,12 +1692,7 @@ public final class DIDStore {
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invaid store password");
 
-		try {
-			exportDid(did, password, storepass).serialize(file, true);
-		} catch (DIDSyntaxException ignore) {
-			// Should never happen
-			log.error("INTERNAL - Serialize exported private identity", ignore);
-		}
+		exportDid(did, password, storepass).serialize(file, true);
 	}
 
 	/**
@@ -2064,12 +2049,7 @@ public final class DIDStore {
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		try {
-			exportRootIdentity(id, password, storepass).serialize(out);
-		} catch (DIDSyntaxException ignore) {
-			// Should never happen
-			log.error("INTERNAL - Serialize exported private identity", ignore);
-		}
+		exportRootIdentity(id, password, storepass).serialize(out);
 	}
 
 	/**
@@ -2091,12 +2071,7 @@ public final class DIDStore {
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		try {
-			exportRootIdentity(id, password, storepass).serialize(out);
-		} catch (DIDSyntaxException ignore) {
-			// Should never happen
-			log.error("INTERNAL - Serialize exported private identity", ignore);
-		}
+		exportRootIdentity(id, password, storepass).serialize(out);
 	}
 
 	/**
@@ -2118,12 +2093,7 @@ public final class DIDStore {
 		checkArgument(password != null && !password.isEmpty(), "Invalid password");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-		try {
-			exportRootIdentity(id, password, storepass).serialize(file);
-		} catch (DIDSyntaxException ignore) {
-			// Should never heppen
-			log.error("INTERNAL - Serialize exported private identity", ignore);
-		}
+		exportRootIdentity(id, password, storepass).serialize(file);
 	}
 
 	/**

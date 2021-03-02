@@ -35,11 +35,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.elastos.did.exception.DIDSyntaxException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.elastos.did.exception.UnknownInternalException;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
@@ -69,8 +70,6 @@ public abstract class DIDEntity<T> {
 
 	protected final static SimpleDateFormat isoDateFormat =
 			new SimpleDateFormat(Constants.DATE_FORMAT_ISO_8601);
-
-	private static final Logger log = LoggerFactory.getLogger(DIDEntity.class);
 
 	protected final static String CONTEXT_KEY = "org.elastos.did.context";
 
@@ -282,7 +281,7 @@ public abstract class DIDEntity<T> {
 			T o = mapper.treeToValue(content, clazz);
 			o.sanitize();
 			return o;
-		} catch (IOException e) {
+		} catch (JsonProcessingException e) {
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
 	}
@@ -308,7 +307,7 @@ public abstract class DIDEntity<T> {
 			T o = mapper.readValue(content, clazz);
 			o.sanitize();
 			return o;
-		} catch (IOException e) {
+		} catch (JsonProcessingException e) {
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
 	}
@@ -335,7 +334,7 @@ public abstract class DIDEntity<T> {
 			T o = mapper.readValue(src, clazz);
 			o.sanitize();
 			return o;
-		} catch (JsonProcessingException e) {
+		} catch (JsonParseException | JsonMappingException e) {
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
 	}
@@ -362,7 +361,7 @@ public abstract class DIDEntity<T> {
 			T o = mapper.readValue(src, clazz);
 			o.sanitize();
 			return o;
-		} catch (JsonProcessingException e) {
+		} catch (JsonParseException | JsonMappingException e) {
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
 	}
@@ -389,7 +388,7 @@ public abstract class DIDEntity<T> {
 			T o = mapper.readValue(src, clazz);
 			o.sanitize();
 			return o;
-		} catch (JsonProcessingException e) {
+		} catch (JsonParseException | JsonMappingException e) {
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
 	}
@@ -401,11 +400,11 @@ public abstract class DIDEntity<T> {
 	 * @return the serialized JSON string
 	 * @throws DIDSyntaxException if a serialization error occurs
 	 */
-	public String serialize(boolean normalized) throws DIDSyntaxException {
+	public String serialize(boolean normalized) {
 		try {
 			return getObjectMapper(normalized).writeValueAsString(this);
 		} catch (JsonProcessingException e) {
-			throw DIDSyntaxException.instantiateFor(getClass(), e.getMessage(), e);
+			throw new UnknownInternalException(e);
 		}
 	}
 
@@ -415,7 +414,7 @@ public abstract class DIDEntity<T> {
 	 * @return the serialized JSON string
 	 * @throws DIDSyntaxException if a serialization error occurs
 	 */
-	public String serialize() throws DIDSyntaxException {
+	public String serialize() {
 		return serialize(NORMALIZED_DEFAULT);
 	}
 
@@ -427,14 +426,13 @@ public abstract class DIDEntity<T> {
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 */
-	public void serialize(Writer out, boolean normalized)
-			throws DIDSyntaxException, IOException {
+	public void serialize(Writer out, boolean normalized) throws IOException {
 		checkArgument(out != null, "Invalid out writer");
 
 		try {
 			getObjectMapper(normalized).writeValue(out, this);
-		} catch (JsonProcessingException e) {
-			throw DIDSyntaxException.instantiateFor(getClass(), e.getMessage(), e);
+		} catch (JsonGenerationException | JsonMappingException e) {
+			throw new UnknownInternalException(e);
 		}
 	}
 
@@ -445,7 +443,7 @@ public abstract class DIDEntity<T> {
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 */
-	public void serialize(Writer out) throws DIDSyntaxException, IOException {
+	public void serialize(Writer out) throws IOException {
 		serialize(out, NORMALIZED_DEFAULT);
 	}
 
@@ -457,14 +455,13 @@ public abstract class DIDEntity<T> {
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 */
-	public void serialize(OutputStream out, boolean normalized)
-			throws DIDSyntaxException, IOException {
+	public void serialize(OutputStream out, boolean normalized) throws IOException {
 		checkArgument(out != null, "Invalid out stream");
 
 		try {
 			getObjectMapper(normalized).writeValue(out, this);
-		} catch (JsonProcessingException e) {
-			throw DIDSyntaxException.instantiateFor(getClass(), e.getMessage(), e);
+		} catch (JsonGenerationException | JsonMappingException e) {
+			throw new UnknownInternalException(e);
 		}
 	}
 
@@ -475,7 +472,7 @@ public abstract class DIDEntity<T> {
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 */
-	public void serialize(OutputStream out) throws DIDSyntaxException, IOException {
+	public void serialize(OutputStream out) throws IOException {
 		serialize(out, NORMALIZED_DEFAULT);
 	}
 
@@ -487,14 +484,13 @@ public abstract class DIDEntity<T> {
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 */
-	public void serialize(File out, boolean normalized)
-			throws DIDSyntaxException, IOException {
+	public void serialize(File out, boolean normalized) throws IOException {
 		checkArgument(out != null, "Invalid out file");
 
 		try {
 			getObjectMapper(normalized).writeValue(out, this);
-		} catch (JsonProcessingException e) {
-			throw DIDSyntaxException.instantiateFor(getClass(), e.getMessage(), e);
+		} catch (JsonGenerationException | JsonMappingException e) {
+			throw new UnknownInternalException(e);
 		}
 	}
 
@@ -505,7 +501,7 @@ public abstract class DIDEntity<T> {
 	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 */
-	public void serialize(File out) throws DIDSyntaxException, IOException {
+	public void serialize(File out) throws IOException {
 		serialize(out, NORMALIZED_DEFAULT);
 	}
 
@@ -516,12 +512,7 @@ public abstract class DIDEntity<T> {
 	 * @return a JSON string representation of the object
 	 */
 	public String toString(boolean normalized) {
-		try {
-			return serialize(normalized);
-		} catch (DIDSyntaxException ignore) {
-			log.error("INTERNAL - Serialize to string.", ignore);
-			return "";
-		}
+		return serialize(normalized);
 	}
 
 	/**
@@ -543,7 +534,7 @@ public abstract class DIDEntity<T> {
 	 * @deprecated use {@link #serialize(boolean)} instead
 	 */
 	@Deprecated
-	public String toJson(boolean normalized) throws DIDSyntaxException {
+	public String toJson(boolean normalized) {
 		return serialize(normalized);
 	}
 
@@ -555,7 +546,7 @@ public abstract class DIDEntity<T> {
 	 * @deprecated use {@link #serialize()} instead
 	 */
 	@Deprecated
-	public String toJson() throws DIDSyntaxException {
+	public String toJson() {
 		return serialize();
 	}
 
@@ -569,8 +560,7 @@ public abstract class DIDEntity<T> {
 	 * @deprecated use {@link #serialize(Writer, boolean)} instead
 	 */
 	@Deprecated
-	public void toJson(Writer out, boolean normalized)
-			throws DIDSyntaxException, IOException {
+	public void toJson(Writer out, boolean normalized) throws IOException {
 		serialize(out, normalized);
 	}
 
@@ -583,7 +573,7 @@ public abstract class DIDEntity<T> {
 	 * @deprecated use {@link #serialize(Writer)} instead
 	 */
 	@Deprecated
-	public void toJson(Writer out) throws DIDSyntaxException, IOException {
+	public void toJson(Writer out) throws IOException {
 		serialize(out);
 	}
 
@@ -597,8 +587,7 @@ public abstract class DIDEntity<T> {
 	 * @deprecated use {@link #serialize(OutputStream, boolean)} instead
 	 */
 	@Deprecated
-	public void toJson(OutputStream out, boolean normalized)
-			throws DIDSyntaxException, IOException {
+	public void toJson(OutputStream out, boolean normalized) throws IOException {
 		serialize(out, normalized);
 	}
 
@@ -611,7 +600,7 @@ public abstract class DIDEntity<T> {
 	 * @deprecated use {@link #serialize(OutputStream)} instead
 	 */
 	@Deprecated
-	public void toJson(OutputStream out) throws DIDSyntaxException, IOException {
+	public void toJson(OutputStream out) throws IOException {
 		serialize(out);
 	}
 
@@ -625,8 +614,7 @@ public abstract class DIDEntity<T> {
 	 * @deprecated use {@link #serialize(File, boolean)} instead
 	 */
 	@Deprecated
-	public void toJson(File out, boolean normalized)
-			throws DIDSyntaxException, IOException {
+	public void toJson(File out, boolean normalized) throws IOException {
 		serialize(out, normalized);
 	}
 
@@ -639,7 +627,7 @@ public abstract class DIDEntity<T> {
 	 * @deprecated use {@link #serialize(File)} instead
 	 */
 	@Deprecated
-	public void toJson(File out) throws DIDSyntaxException, IOException {
+	public void toJson(File out) throws IOException {
 		serialize(out);
 	}
 }

@@ -348,14 +348,15 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *
 	 * @param vc the source credential object
 	 */
-	protected VerifiableCredential(VerifiableCredential vc) {
+	private VerifiableCredential(VerifiableCredential vc, boolean withProof) {
 		this.id = vc.id;
 		this.type = vc.type;
 		this.issuer = vc.issuer;
 		this.issuanceDate = vc.issuanceDate;
 		this.expirationDate = vc.expirationDate;
 		this.subject = vc.subject;
-		this.proof = vc.proof;
+		if (withProof)
+			this.proof = vc.proof;
 	}
 
 	/**
@@ -646,16 +647,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 			return false; // TODO: should throw an exception?
 
-		VerifiableCredential vc = new VerifiableCredential(this);
-		vc.proof = null;
-		String json;
-		try {
-			json = vc.serialize(true);
-		} catch (DIDSyntaxException ignore) {
-			log.error("INTERNAL - serialize credential", ignore);
-			return false;
-		}
-
+		VerifiableCredential vc = new VerifiableCredential(this, false);
+		String json = vc.serialize(true);
 		if (!issuerDoc.verify(proof.getVerificationMethod(),
 				proof.getSignature(), json.getBytes()))
 			return false;
@@ -739,16 +732,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 			return false; // TODO: should throw an exception.
 
-		VerifiableCredential vc = new VerifiableCredential(this);
-		vc.proof = null;
-		String json;
-		try {
-			json = vc.serialize(true);
-		} catch (DIDSyntaxException ignore) {
-			log.error("INTERNAL - serialize credential", ignore);
-			return false;
-		}
-
+		VerifiableCredential vc = new VerifiableCredential(this, false);
+		String json = vc.serialize(true);
 		if (!issuerDoc.verify(proof.getVerificationMethod(),
 				proof.getSignature(), json.getBytes()))
 			return false;
@@ -1815,15 +1800,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 			credential.sanitize(false);
 
-			String json;
-			try {
-				json = credential.serialize(true);
-			} catch (DIDSyntaxException e) {
-				// should never happen
-				// re-throw it after up-cast
-				throw (MalformedCredentialException)e;
-			}
-
+			String json = credential.serialize(true);
 			String sig = issuer.sign(storepass, json.getBytes());
 
 			Proof proof = new Proof(issuer.getSignKey(), sig);
