@@ -22,7 +22,7 @@
 
 package org.elastos.did.exception;
 
-public class CredentialRevokedException extends CredentialInvalidException {
+public class CredentialRevokedException extends IllegalStateException {
 	private static final long serialVersionUID = -5404568007296739958L;
 
 	/**

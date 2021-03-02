@@ -278,15 +278,8 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	 *
 	 * @return true is the ticket is genuine else false
 	 */
-	public boolean isGenuine() {
-		DIDDocument doc = null;
-
-		try {
-			doc = getDocument();
-		} catch (DIDResolveException e) {
-			return false;
-		}
-
+	public boolean isGenuine() throws DIDResolveException {
+		DIDDocument doc = getDocument();
 		if (doc == null)
 			return false;
 
@@ -337,13 +330,17 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	 * @return true is the ticket is valid else false
 	 */
 	public boolean isValid() throws DIDResolveException {
-		if (!getDocument().isValid())
+		DIDDocument doc = getDocument();
+		if (doc == null)
+			return false;
+
+		if (!doc.isValid())
 			return false;
 
 		if (!isGenuine())
 			return false;
 
-		if (!txid.equals(getDocument().getMetadata().getTransactionId()))
+		if (!txid.equals(doc.getMetadata().getTransactionId()))
 			return false;
 
 		return true;
@@ -356,16 +353,12 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	 *
 	 * @return true is the ticket is qualified else false
 	 */
-	public boolean isQualified() {
+	public boolean isQualified() throws DIDResolveException {
 		if (proofs == null || proofs.isEmpty())
 			return false;
 
-		try {
-			DIDDocument.MultiSignature multisig = getDocument().getMultiSignature();
-			return proofs.size() == (multisig == null ? 1 : multisig.m());
-		} catch (DIDResolveException e) {
-			return false;
-		}
+		DIDDocument.MultiSignature multisig = getDocument().getMultiSignature();
+		return proofs.size() == (multisig == null ? 1 : multisig.m());
 	}
 
 	/**
@@ -404,20 +397,24 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 
 	protected void seal(DIDDocument controller, String storepass)
 			throws DIDStoreException {
-		if (isQualified())
-			return;
+		try {
+			if (isQualified())
+				return;
 
-		if (controller.isCustomizedDid()) {
-			if (controller.getEffectiveController() == null)
-				throw new NoEffectiveControllerException(controller.getSubject().toString());
-		} else {
-			try {
-				if (!getDocument().hasController(controller.getSubject()))
-					throw new NotControllerException(controller.getSubject().toString());
-			} catch (DIDResolveException e) {
-				// Should never happen
-				throw new UnknownInternalException(e);
+			if (controller.isCustomizedDid()) {
+				if (controller.getEffectiveController() == null)
+					throw new NoEffectiveControllerException(controller.getSubject().toString());
+			} else {
+				try {
+					if (!getDocument().hasController(controller.getSubject()))
+						throw new NotControllerException(controller.getSubject().toString());
+				} catch (DIDResolveException e) {
+					// Should never happen
+					throw new UnknownInternalException(e);
+				}
 			}
+		} catch (DIDResolveException ignore) {
+			throw new UnknownInternalException(ignore);
 		}
 
 		DIDURL signKey = controller.getDefaultPublicKeyId();

@@ -1976,9 +1976,19 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @return the DIDMetadata object
 	 */
-	public DIDMetadata getMetadata() {
-		if (metadata == null)
+	public synchronized DIDMetadata getMetadata() {
+		if (metadata == null) {
+			/*
+			// This will cause resolve recursively
+			try {
+				DIDDocument resolved = getSubject().resolve();
+				metadata = resolved != null ? resolved.getMetadata() : new DIDMetadata(getSubject());
+			} catch (DIDResolveException e) {
+				metadata = new DIDMetadata(getSubject());
+			}
+			*/
 			metadata = new DIDMetadata(getSubject());
+		}
 
 		return metadata;
 	}
@@ -2061,7 +2071,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *         the returned value is false if the did document is not genuine.
 	 */
 	public boolean isDeactivated() {
-		return getMetadata() != null ? getMetadata().isDeactivated() : false;
+		return getMetadata().isDeactivated();
 	}
 
 	/**

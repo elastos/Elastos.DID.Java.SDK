@@ -22,7 +22,7 @@
 
 package org.elastos.did.exception;
 
-public class CredentialAlreadyExistException extends CredentialInvalidException {
+public class CredentialAlreadyExistException extends IllegalStateException {
 	private static final long serialVersionUID = -9206775914276417550L;
 
 	/**

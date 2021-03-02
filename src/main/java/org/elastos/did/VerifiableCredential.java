@@ -23,7 +23,6 @@
 package org.elastos.did;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,22 +42,22 @@ import java.util.concurrent.CompletionException;
 import org.elastos.did.backend.CredentialBiography;
 import org.elastos.did.backend.CredentialTransaction;
 import org.elastos.did.backend.IDChainRequest;
+import org.elastos.did.exception.AlreadySealedException;
 import org.elastos.did.exception.CredentialAlreadyExistException;
 import org.elastos.did.exception.CredentialExpiredException;
-import org.elastos.did.exception.CredentialInvalidException;
 import org.elastos.did.exception.CredentialNotGenuineException;
 import org.elastos.did.exception.CredentialRevokedException;
 import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDException;
-import org.elastos.did.exception.DIDInvalidException;
 import org.elastos.did.exception.DIDNotFoundException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedDIDURLException;
+import org.elastos.did.exception.NotAttachedWithStoreException;
+import org.elastos.did.exception.UnknownInternalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,8 +232,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			try {
 				return getObjectMapper().writeValueAsString(properties);
 			} catch (JsonProcessingException ignore) {
-				log.error("INTERNAL - Serialize credential subject", ignore);
-				return null;
+				throw new UnknownInternalException(ignore);
 			}
 		}
 	}
@@ -359,6 +357,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			this.proof = vc.proof;
 	}
 
+	private void checkAttachedStore() throws NotAttachedWithStoreException {
+		if (!getMetadata().attachedStore())
+			throw new NotAttachedWithStoreException();
+	}
+
 	/**
 	 * Get the credential id.
 	 *
@@ -392,11 +395,6 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		checkArgument(type != null && !type.isEmpty(), "Invalid credential type");
 		this.type = new ArrayList<String>(type);
 		Collections.sort(this.type);
-	}
-
-	private void setType(String[] type) {
-		checkArgument(type != null && type.length > 0, "Invalid credential type");
-		setType(Arrays.asList(type));
 	}
 
 	/**
@@ -481,7 +479,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @throws MalformedCredentialException if the credential object is invalid
 	 */
 	@Override
-	protected void sanitize(boolean withProof) throws MalformedCredentialException {
+	protected void sanitize() throws MalformedCredentialException {
 		if (id == null)
 			throw new MalformedCredentialException("Missing credential id");
 
@@ -497,7 +495,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (subject.id == null)
 			throw new MalformedCredentialException("Missing credential subject id");
 
-		if (withProof && proof == null)
+		if (proof == null)
 			throw new MalformedCredentialException("Missing credential proof");
 
 		// Update id references
@@ -507,10 +505,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (id.getDid() == null)
 			id.setDid(subject.id);
 
-		if (withProof) {
-			if (proof.verificationMethod.getDid() == null)
-				proof.verificationMethod.setDid(issuer);
-		}
+		if (proof.verificationMethod.getDid() == null)
+			proof.verificationMethod.setDid(issuer);
 	}
 
 	/**
@@ -557,9 +553,19 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *
 	 * @return the Credential Meta data object
 	 */
-	public CredentialMetadata getMetadata() {
-		if (metadata == null)
+	public synchronized CredentialMetadata getMetadata() {
+		if (metadata == null) {
+			/*
+			// This will cause resolve recursively
+			try {
+				VerifiableCredential resolved = VerifiableCredential.resolve(getId(), getIssuer());
+				metadata = resolved != null ? resolved.getMetadata() : new CredentialMetadata(getId());
+			} catch (DIDResolveException e) {
+				metadata = new CredentialMetadata(getId());
+			}
+			*/
 			metadata = new CredentialMetadata(getId());
+		}
 
 		return metadata;
 	}
@@ -595,12 +601,12 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		DIDDocument controllerDoc = subject.id.resolve();
-		if (controllerDoc.isExpired())
+		if (controllerDoc != null && controllerDoc.isExpired())
 			return true;
 
 		if (!isSelfProclaimed()) {
 			DIDDocument issuerDoc = issuer.resolve();
-			if (issuerDoc.isExpired())
+			if (issuerDoc != null && issuerDoc.isExpired())
 				return true;
 		}
 
@@ -637,7 +643,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		DIDDocument issuerDoc = issuer.resolve();
 		if (issuerDoc == null)
-			throw new DIDResolveException("Can not resolve the issuer's DID");
+			throw new DIDNotFoundException(issuer.toString());
+
+		if (!issuerDoc.isGenuine())
+			return false;
 
 		// Credential should signed by any authentication key.
 		if (!issuerDoc.isAuthenticationKey(proof.getVerificationMethod()))
@@ -653,12 +662,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 				proof.getSignature(), json.getBytes()))
 			return false;
 
-		if (!issuerDoc.isGenuine())
-			return false;
-
 		if (!isSelfProclaimed()) {
 			DIDDocument controllerDoc = subject.id.resolve();
-			if (!controllerDoc.isGenuine())
+			if (controllerDoc != null && !controllerDoc.isGenuine())
 				return false;
 		}
 
@@ -684,10 +690,17 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	public boolean isRevoked() throws DIDResolveException {
-		// TODO: needs to improve: use the resolved status if available
+		if (getMetadata().isRevoked())
+			return true;
+
 		CredentialBiography bio = DIDBackend.getInstance().resolveCredentialBiography(
 				getId(), getIssuer());
-		return bio.getStatus() == CredentialBiography.Status.REVOKED;
+		boolean revoked = bio.getStatus() == CredentialBiography.Status.REVOKED;
+
+		if (revoked)
+			getMetadata().setRevoked(revoked);
+
+		return revoked;
 	}
 
 	public CompletableFuture<Boolean> isRevokedAsync() {
@@ -719,10 +732,12 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 				return false;
 		}
 
-		if (isRevoked())
-			return false;
-
 		DIDDocument issuerDoc = issuer.resolve();
+		if (issuerDoc == null)
+			throw new DIDNotFoundException(issuer.toString());
+
+		if (!issuerDoc.isValid())
+			return false;
 
 		// Credential should signed by any authentication key.
 		if (!issuerDoc.isAuthenticationKey(proof.getVerificationMethod()))
@@ -738,12 +753,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 				proof.getSignature(), json.getBytes()))
 			return false;
 
-		if (!issuerDoc.isValid())
-			return false;
 
 		if (!isSelfProclaimed()) {
 			DIDDocument controllerDoc = subject.id.resolve();
-			if (!controllerDoc.isValid())
+			if (controllerDoc != null && !controllerDoc.isValid())
 				return false;
 		}
 
@@ -785,10 +798,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	public void declare(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
-		checkState(getMetadata().attachedStore(), "Not attached with a store");
+		checkAttachedStore();
 
 		if (!isGenuine()) {
 			log.error("Publish failed because the credential is not genuine.");
@@ -820,7 +832,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			owner.getMetadata().attachStore(getStore());
 		}
 
-		checkState(signKey != null || owner.getDefaultPublicKeyId() != null, "No effective controller");
+		if (signKey == null && owner.getDefaultPublicKeyId() == null)
+			throw new InvalidKeyException("Unknown sign key");
 
 		if (signKey != null) {
 			if (!owner.isAuthenticationKey(signKey))
@@ -833,32 +846,27 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	public void declare(DIDURL signKey, String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		declare(signKey, storepass, null);
 	}
 
 	public void declare(String signKey, String storepass, DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, adapter);
 	}
 
 	public void declare(String signKey, String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, null);
 	}
 
 	public void declare(String storepass, DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		declare((DIDURL)null, storepass, adapter);
 	}
 
 	public void declare(String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		declare((DIDURL)null, storepass, null);
 	}
 
@@ -906,11 +914,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	public void revoke(DIDDocument signer, DIDURL signKey, String storepass,
-			DIDTransactionAdapter adapter)
-			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
-		checkState(getMetadata().attachedStore(), "Not attached with a store");
+		checkAttachedStore();
 
 		DIDDocument owner = getSubject().getId().resolve();
 		if (owner == null) {
@@ -954,7 +960,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			throw new InvalidKeyException("Not owner or issuer: " + signer.getSubject());
 		}
 
-		checkState(signKey != null || signer.getDefaultPublicKeyId() != null, "Unknown sign key");
+		if (signKey == null && signer.getDefaultPublicKeyId() == null)
+			throw new InvalidKeyException("Unknown sign key");
 
 		if (signKey != null) {
 			if (!signer.isAuthenticationKey(signKey))
@@ -967,69 +974,56 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	public void revoke(DIDDocument signer, DIDURL signKey, String storepass)
-			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(signer, signKey, storepass, null);
 	}
 
 	public void revoke(DIDDocument signer, String storepass, DIDTransactionAdapter adapter)
-			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(signer, (DIDURL)null, storepass, adapter);
 	}
 
 	public void revoke(DIDDocument signer, String storepass)
-			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(signer, (DIDURL)null, storepass, null);
 	}
 
 	public void revoke(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(null, signKey, storepass, adapter);
 	}
 
 	public void revoke(DIDURL signKey, String storepass)
-			throws DIDNotFoundException, InvalidKeyException, CredentialRevokedException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(null, signKey, storepass, null);
 	}
 
 	public void revoke(DIDDocument signer, String signKey, String storepass,
-			DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
 		revoke(signer, DIDURL.valueOf(getSubject().getId(), signKey), storepass, adapter);
 	}
 
 	public void revoke(DIDDocument signer, String signKey, String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(signer, signKey, storepass, null);
 	}
 
 	public void revoke(String signKey, String storepass, DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(null, signKey, storepass, adapter);
 	}
 
 	public void revoke(String signKey, String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(null, signKey, storepass, null);
 	}
 
 	public void revoke(String storepass, DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(null, (DIDURL)null, storepass, adapter);
 	}
 
-	public void revoke(String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+	public void revoke(String storepass) throws DIDStoreException, DIDBackendException {
 		revoke(null, (DIDURL)null, storepass, null);
 	}
 
@@ -1078,12 +1072,12 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 	public static void revoke(DIDURL id, DIDDocument signer, DIDURL signKey,
 			String storepass, DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		checkArgument(id != null, "Invalid credential id");
 		checkArgument(signer != null, "Invalid issuer's document");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
-		checkState(signer.getMetadata().attachedStore(), "Issuer document not attached with a store");
+		if (!signer.getMetadata().attachedStore())
+			throw new NotAttachedWithStoreException(signer.getSubject().toString());
 
 		CredentialBiography bio = DIDBackend.getInstance().resolveCredentialBiography(id, signer.getSubject());
 		if (bio.getStatus() == CredentialBiography.Status.REVOKED) {
@@ -1100,7 +1094,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			}
 		}
 
-		checkState(signKey != null || signer.getDefaultPublicKeyId() != null, "Unknown sign key");
+		if (signKey == null && signer.getDefaultPublicKeyId() == null)
+			throw new InvalidKeyException("Unknown sign key");
 
 		if (signKey != null) {
 			if (!signer.isAuthenticationKey(signKey))
@@ -1113,49 +1108,40 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	public static void revoke(DIDURL id, DIDDocument issuer, DIDURL signKey, String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(id, issuer, signKey, storepass, null);
 	}
 
 	public static void revoke(String id, DIDDocument issuer, String signKey,
 			String storepass, DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+					throws DIDStoreException, DIDBackendException {
 		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey),
 				storepass, adapter);
 	}
 
 	public static void revoke(String id, DIDDocument issuer, String signKey, String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey),
 				storepass, null);
 	}
 
 	public static void revoke(DIDURL id, DIDDocument issuer, String storepass,
-			DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
 		revoke(id, issuer, null, storepass, adapter);
 	}
 
 	public static void revoke(DIDURL id, DIDDocument issuer, String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(id, issuer, null, storepass, null);
 	}
 
 	public static void revoke(String id, DIDDocument issuer, String storepass,
-			DIDTransactionAdapter adapter)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
 		revoke(DIDURL.valueOf(id), issuer, null, storepass, adapter);
 	}
 
 	public static void revoke(String id, DIDDocument issuer, String storepass)
-			throws CredentialInvalidException, DIDInvalidException, InvalidKeyException,
-			DIDStoreException, DIDResolveException, DIDTransactionException {
+			throws DIDStoreException, DIDBackendException {
 		revoke(DIDURL.valueOf(id), issuer, null, storepass, null);
 	}
 
@@ -1493,8 +1479,15 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
 	public static VerifiableCredential parse(String content)
-			throws DIDSyntaxException {
-		return parse(content, VerifiableCredential.class);
+			throws MalformedCredentialException {
+		try {
+			return parse(content, VerifiableCredential.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedCredentialException)
+				throw (MalformedCredentialException)e;
+			else
+				throw new MalformedCredentialException(e);
+		}
 	}
 
 	/**
@@ -1506,8 +1499,15 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiableCredential parse(Reader src)
-			throws DIDSyntaxException, IOException {
-		return parse(src, VerifiableCredential.class);
+			throws MalformedCredentialException, IOException {
+		try {
+			return parse(src, VerifiableCredential.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedCredentialException)
+				throw (MalformedCredentialException)e;
+			else
+				throw new MalformedCredentialException(e);
+		}
 	}
 
 	/**
@@ -1519,8 +1519,15 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiableCredential parse(InputStream src)
-			throws DIDSyntaxException, IOException {
-		return parse(src, VerifiableCredential.class);
+			throws MalformedCredentialException, IOException {
+		try {
+			return parse(src, VerifiableCredential.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedCredentialException)
+				throw (MalformedCredentialException)e;
+			else
+				throw new MalformedCredentialException(e);
+		}
 	}
 
 	/**
@@ -1532,8 +1539,15 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiableCredential parse(File src)
-			throws DIDSyntaxException, IOException {
-		return parse(src, VerifiableCredential.class);
+			throws MalformedCredentialException, IOException {
+		try {
+			return parse(src, VerifiableCredential.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedCredentialException)
+				throw (MalformedCredentialException)e;
+			else
+				throw new MalformedCredentialException(e);
+		}
 	}
 
 	/**
@@ -1547,7 +1561,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 */
 	@Deprecated
 	public static VerifiableCredential fromJson(String content)
-			throws DIDSyntaxException {
+			throws MalformedCredentialException {
 		return parse(content);
 	}
 
@@ -1562,7 +1576,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 */
 	@Deprecated
 	public static VerifiableCredential fromJson(Reader src)
-			throws DIDSyntaxException, IOException {
+			throws MalformedCredentialException, IOException {
 		return parse(src);
 	}
 
@@ -1577,7 +1591,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 */
 	@Deprecated
 	public static VerifiableCredential fromJson(InputStream src)
-			throws DIDSyntaxException, IOException {
+			throws MalformedCredentialException, IOException {
 		return parse(src);
 	}
 
@@ -1592,7 +1606,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 */
 	@Deprecated
 	public static VerifiableCredential fromJson(File src)
-			throws DIDSyntaxException, IOException {
+			throws MalformedCredentialException, IOException {
 		return parse(src);
 	}
 
@@ -1622,6 +1636,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			credential.subject = new Subject(target);
 		}
 
+		private void checkNotSealed() throws AlreadySealedException {
+			if (credential == null)
+				throw new AlreadySealedException();
+		}
+
 		/**
 		 * Set Credential id.
 		 *
@@ -1629,11 +1648,12 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 * @return the Builder object
 		 */
 		public Builder id(DIDURL id) {
-			if (credential == null)
-				throw new IllegalStateException("Credential already sealed.");
+			checkNotSealed();
+			checkArgument(id != null && (id.getDid() == null || id.getDid().equals(target)),
+					"Invalid id");
 
-			if (id == null || !id.getDid().equals(target))
-				throw new IllegalArgumentException();
+			if (id.getDid() == null)
+				id = new DIDURL(target, id);
 
 			credential.id = id;
 			return this;
@@ -1646,9 +1666,6 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 * @return the Builder object
 		 */
 		public Builder id(String id) {
-			if (credential == null)
-				throw new IllegalStateException("Credential already sealed.");
-
 			return id(DIDURL.valueOf(target, id));
 		}
 
@@ -1659,13 +1676,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 * @return the Builder object
 		 */
 		public Builder type(String ... types) {
-			if (credential == null)
-				throw new IllegalStateException("Credential already sealed.");
+			checkNotSealed();
+			checkArgument(types != null && types.length > 0, "Invalid types");
 
-			if (types == null || types.length == 0)
-				throw new IllegalArgumentException();
-
-			credential.setType(types);
+			credential.setType(Arrays.asList(types));
 			return this;
 		}
 
@@ -1679,11 +1693,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		private Builder defaultExpirationDate() {
-			if (credential == null)
-				throw new IllegalStateException("Credential already sealed.");
+			checkNotSealed();
 
 			credential.expirationDate = getMaxExpires().getTime();
-
 			return this;
 		}
 
@@ -1694,11 +1706,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 * @return the Builder object
 		 */
 		public Builder expirationDate(Date expirationDate) {
-			if (credential == null)
-				throw new IllegalStateException("Credential already sealed.");
-
-			if (expirationDate == null)
-				return this;
+			checkNotSealed();
+			checkArgument(expirationDate != null, "Invalid expiration date");
 
 			Calendar cal = Calendar.getInstance(Constants.UTC);
 			cal.setTime(expirationDate);
@@ -1719,17 +1728,15 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 * @return the Builder object
 		 */
 		public Builder properties(Map<String, Object> properties) {
-			if (credential == null)
-				throw new IllegalStateException("Credential already sealed.");
-
-			if (properties == null || properties.size() == 0)
-				throw new IllegalArgumentException();
+			checkNotSealed();
 
 			credential.subject.properties.clear();
-			if (properties != null && !properties.isEmpty()) {
-				credential.subject.properties.putAll(properties);
-				credential.subject.properties.remove(ID);
-			}
+
+			if (properties == null || properties.size() == 0)
+				return this;
+
+			credential.subject.properties.putAll(properties);
+			credential.subject.properties.remove(ID);
 			return this;
 		}
 
@@ -1740,21 +1747,18 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 * @return the Builder object
 		 */
 		public Builder properties(String json) {
-			if (credential == null)
-				throw new IllegalStateException("Credential already sealed.");
-
-			if (json == null || json.isEmpty())
-				throw new IllegalArgumentException();
+			checkNotSealed();
+			checkArgument(json != null && !json.isEmpty(), "Invalid json");
 
 			ObjectMapper mapper = getObjectMapper();
-			Map<String, Object> props;
 			try {
-				props = mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
-			} catch (IOException e) {
-				throw new IllegalArgumentException(e);
+				Map<String, Object> props = mapper.readValue(json,
+						new TypeReference<Map<String, Object>>() {});
+				return properties(props);
+			} catch (JsonProcessingException e) {
+				throw new IllegalArgumentException("Invalid json", e);
 			}
 
-			return properties(props);
 		}
 
 		/**
@@ -1765,14 +1769,27 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 * @return the Builder object
 		 */
 		public Builder propertie(String name, Object value) {
-			if (credential == null)
-				throw new IllegalStateException("Credential already sealed.");
-
-			if (name == null || name.isEmpty() || name.equals(ID))
-				throw new IllegalArgumentException();
+			checkNotSealed();
+			checkArgument(name != null && !name.isEmpty() && !name.equals(ID), "Invalid name");
 
 			credential.subject.setProperty(name, value);
 			return this;
+		}
+
+		private void sanitize() throws MalformedCredentialException {
+			if (credential.id == null)
+				throw new MalformedCredentialException("Missing credential id");
+
+			if (credential.type == null || credential.type.isEmpty())
+				throw new MalformedCredentialException("Missing credential type");
+
+			Calendar cal = Calendar.getInstance(Constants.UTC);
+			credential.issuanceDate = cal.getTime();
+
+			if (!credential.hasExpirationDate())
+				defaultExpirationDate();
+
+			credential.proof = null;
 		}
 
 		/**
@@ -1786,23 +1803,13 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 */
 		public VerifiableCredential seal(String storepass)
 				throws MalformedCredentialException, DIDStoreException {
-			if (credential == null)
-				throw new IllegalStateException("Credential already sealed.");
+			checkNotSealed();
+			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-			if (storepass == null || storepass.isEmpty())
-				throw new IllegalArgumentException();
-
-			Calendar cal = Calendar.getInstance(Constants.UTC);
-			credential.issuanceDate = cal.getTime();
-
-			if (!credential.hasExpirationDate())
-				defaultExpirationDate();
-
-			credential.sanitize(false);
+			sanitize();
 
 			String json = credential.serialize(true);
 			String sig = issuer.sign(storepass, json.getBytes());
-
 			Proof proof = new Proof(issuer.getSignKey(), sig);
 			credential.proof = proof;
 
