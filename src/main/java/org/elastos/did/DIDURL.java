@@ -26,10 +26,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.elastos.did.DIDObject.SerializeContext;
+import org.elastos.did.DIDEntity.SerializeContext;
 import org.elastos.did.VerifiableCredential.Proof;
 import org.elastos.did.exception.MalformedDIDURLException;
 import org.elastos.did.parser.DIDURLBaseListener;
@@ -93,6 +94,13 @@ public class DIDURL implements Comparable<DIDURL> {
 
 		try {
 			ParserHelper.parse(url, false, new Listener());
+
+			if (parameters == null || parameters.isEmpty())
+				parameters = Collections.emptyMap();
+
+			if (query == null || query.isEmpty())
+				query = Collections.emptyMap();
+
 		} catch (Exception e) {
 			throw new MalformedDIDURLException(url, e);
 		}
@@ -126,16 +134,15 @@ public class DIDURL implements Comparable<DIDURL> {
 		this.did = did;
 	}
 
-	// NOTICE: Deep copy constructor for internal use.
+	// Deep-copy constructor
 	private DIDURL(DIDURL url) {
 		this.did = url.did;
-		this.parameters = (url.parameters == null || url.parameters.size() == 0) ?
-				null : new LinkedHashMap<String, String>(url.parameters);
+		this.parameters = url.parameters.isEmpty() ? Collections.emptyMap() :
+				new LinkedHashMap<String, String>(url.parameters);
 		this.path = url.path;
-		this.query = (url.query == null || url.query.size() == 0) ?
-				null : new LinkedHashMap<String, String>(url.query);
+		this.query = url.query.isEmpty() ? Collections.emptyMap() :
+				new LinkedHashMap<String, String>(url.query);
 		this.fragment = url.fragment;
-		// this.metadata = url.metadata;
 	}
 
 	public static DIDURL valueOf(DID baseRef, String url) throws MalformedDIDURLException {
@@ -191,11 +198,15 @@ public class DIDURL implements Comparable<DIDURL> {
 	 *
 	 * @return the parameters string
 	 */
-	public String getParameters() {
-		if (parameters == null || parameters.size() == 0)
+	public String getParametersString() {
+		if (parameters.isEmpty())
 			return null;
 
 		return mapToString(parameters, ";");
+	}
+
+	public Map<String, String> getParameters() {
+		return Collections.unmodifiableMap(parameters);
 	}
 
 	/**
@@ -205,9 +216,7 @@ public class DIDURL implements Comparable<DIDURL> {
  	 * @return the parameter string
 	 */
 	public String getParameter(String name) {
-		if (parameters == null || parameters.size() == 0)
-			return null;
-
+		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 		return parameters.get(name);
 	}
 
@@ -219,9 +228,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	 *         the returned value is true if there is no 'name' parameter.
 	 */
 	public boolean hasParameter(String name) {
-		if (parameters == null || parameters.size() == 0)
-			return false;
-
+		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 		return parameters.containsKey(name);
 	}
 
@@ -239,11 +246,15 @@ public class DIDURL implements Comparable<DIDURL> {
 	 *
 	 * @return the query string
 	 */
-	public String getQuery() {
-		if (query == null || query.size() == 0)
+	public String getQueryString() {
+		if (query.isEmpty())
 			return null;
 
 		return mapToString(query, "&");
+	}
+
+	public Map<String, String> getQuery() {
+		return Collections.unmodifiableMap(query);
 	}
 
 	/**
@@ -254,10 +265,6 @@ public class DIDURL implements Comparable<DIDURL> {
 	 */
 	public String getQueryParameter(String name) {
 		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
-
-		if (query == null || query.size() == 0)
-			return null;
-
 		return query.get(name);
 	}
 
@@ -270,10 +277,6 @@ public class DIDURL implements Comparable<DIDURL> {
 	 */
 	public boolean hasQueryParameter(String name) {
 		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
-
-		if (query == null || query.size() == 0)
-			return false;
-
 		return query.containsKey(name);
 	}
 
@@ -310,13 +313,13 @@ public class DIDURL implements Comparable<DIDURL> {
 			builder.append(did);
 
 		if (parameters != null && !parameters.isEmpty())
-			builder.append(";").append(getParameters());
+			builder.append(";").append(getParametersString());
 
 		if (path != null && !path.isEmpty())
 			builder.append(path);
 
 		if (query != null && !query.isEmpty())
-			builder.append("?").append(getQuery());
+			builder.append("?").append(getQueryString());
 
 		if (fragment != null && !fragment.isEmpty())
 			builder.append("#").append(getFragment());
@@ -357,9 +360,6 @@ public class DIDURL implements Comparable<DIDURL> {
 	private int mapHashCode(Map<String, String> map) {
 		int hash = 0;
 
-		if (map == null)
-			return hash;
-
 		for (Map.Entry<String, String> entry : map.entrySet()) {
 			hash += entry.getKey().hashCode();
 			if (entry.getValue() != null)
@@ -395,7 +395,7 @@ public class DIDURL implements Comparable<DIDURL> {
 		public void serialize(DIDURL id, JsonGenerator gen,
 				SerializerProvider provider) throws IOException {
 			SerializeContext context = (SerializeContext)provider.getConfig()
-					.getAttributes().getAttribute(DIDObject.CONTEXT_KEY);
+					.getAttributes().getAttribute(DIDEntity.CONTEXT_KEY);
 			// TODO: checkme
 			DID base = null;
 			if (!context.isNormalized())
@@ -537,15 +537,19 @@ public class DIDURL implements Comparable<DIDURL> {
 		private DIDURL url;
 
 		public Builder(String url) {
-			this.url = new DIDURL(url);
+			this(new DIDURL(url));
 		}
 
 		public Builder(DIDURL url) {
-			this.url = new DIDURL(url);
+			this.url = new DIDURL(url.getDid());
+			this.url.parameters = new LinkedHashMap<String, String>(url.parameters);
+			this.url.path = url.path;
+			this.url.query = new LinkedHashMap<String, String>(url.query);
+			this.url.fragment = url.fragment;
 		}
 
 		public Builder(DID did) {
-			this.url = new DIDURL(did);
+			this(new DIDURL(did));
 		}
 
 		public Builder setDid(DID did) {
@@ -567,18 +571,15 @@ public class DIDURL implements Comparable<DIDURL> {
 		public Builder setParameter(String name, String value) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
-			if (url.parameters == null)
-				url.parameters = new LinkedHashMap<String, String>(8);
-
 			url.parameters.put(name, value);
 			return this;
 		}
 
 		public Builder setParameters(Map<String, String> params) {
+			url.parameters.clear();
+
 			if (params != null && params.size() > 0)
-				url.parameters = new LinkedHashMap<String, String>(params);
-			else
-				url.parameters = null;
+				url.parameters.putAll(params);
 
 			return this;
 		}
@@ -586,14 +587,13 @@ public class DIDURL implements Comparable<DIDURL> {
 		public Builder removeParameter(String name) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
-			if (url.parameters != null)
-				url.parameters.remove(name);
+			url.parameters.remove(name);
 
 			return this;
 		}
 
 		public Builder clearParameters() {
-			url.parameters = null;
+			url.parameters.clear();
 			return this;
 		}
 
@@ -610,18 +610,15 @@ public class DIDURL implements Comparable<DIDURL> {
 		public Builder setQueryParameter(String name, String value) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
-			if (url.query == null)
-				url.query = new LinkedHashMap<String, String>(8);
-
 			url.query.put(name, value);
 			return this;
 		}
 
 		public Builder setQueryParameters(Map<String, String> params) {
+			url.query.clear();
+
 			if (params != null && params.size() > 0)
-				url.query = new LinkedHashMap<String, String>(params);
-			else
-				url.query = null;
+				url.query.putAll(params);
 
 			return this;
 		}
@@ -629,14 +626,12 @@ public class DIDURL implements Comparable<DIDURL> {
 		public Builder removeQueryParameter(String name) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
-			if (url.query != null)
-				url.query.remove(name);
-
+			url.query.remove(name);
 			return this;
 		}
 
 		public Builder clearQueryParameters() {
-			url.query = null;
+			url.query.clear();
 			return this;
 		}
 

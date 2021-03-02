@@ -20,27 +20,43 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.backend;
+package org.elastos.did.exception;
 
-import org.elastos.did.DIDEntity;
-import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.MalformedResolveResultException;
+public class NotPrimitiveDIDException extends IllegalStateException {
+	private static final long serialVersionUID = -2043595727792101843L;
 
-public abstract class ResolveResult<T> extends DIDEntity<T> {
 	/**
-	 * Post sanitize routine after deserialization.
-	 *
-	 * @throws MalformedResolveResultException if the DID object is invalid
+	 * Constructs the NotPrimitiveDIDException.
 	 */
-	@Override
-	protected void sanitize() throws MalformedResolveResultException {
-		try {
-			sanitize(true);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedResolveResultException)
-				throw (MalformedResolveResultException)e;
-			else
-				throw new MalformedResolveResultException(e);
-		}
-	}
+	public NotPrimitiveDIDException() {
+        super();
+    }
+
+	/**
+	 * Constructs the NotPrimitiveDIDException with the given message.
+	 *
+	 * @param message the message string
+	 */
+    public NotPrimitiveDIDException(String message) {
+        super(message);
+    }
+
+    /**
+     * Constructs the NotPrimitiveDIDException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
+    public NotPrimitiveDIDException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Constructs the NotPrimitiveDIDException with the given reason.
+     *
+     * @param cause the reason
+     */
+    public NotPrimitiveDIDException(Throwable cause) {
+        super(cause);
+    }
 }

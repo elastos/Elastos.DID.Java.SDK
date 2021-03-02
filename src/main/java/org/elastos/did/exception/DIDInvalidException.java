@@ -22,6 +22,7 @@
 
 package org.elastos.did.exception;
 
+// TODO: to be delete
 public class DIDInvalidException extends DIDException {
 	private static final long serialVersionUID = -1722646147124938447L;
 

@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.elastos.did.exception.DIDAlreadyExistException;
 import org.elastos.did.exception.DIDException;
-import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestConfig;
 import org.elastos.did.utils.TestData;
@@ -150,7 +150,7 @@ public class RootIdentityTest {
 	    assertTrue(doc.isValid());
 	    assertEquals(did, doc.getSubject());
 
-	    Exception e = assertThrows(DIDStoreException.class, () -> {
+	    Exception e = assertThrows(DIDAlreadyExistException.class, () -> {
 	    	identity.newDid(TestConfig.storePass);
 	    });
 	    assertEquals("DID already exists in the store.", e.getMessage());

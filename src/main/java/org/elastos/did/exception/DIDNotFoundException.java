@@ -25,7 +25,7 @@ package org.elastos.did.exception;
 /**
  * Thrown to indicate that the DID is not found.
  */
-public class DIDNotFoundException extends DIDInvalidException {
+public class DIDNotFoundException extends IllegalStateException {
 	private static final long serialVersionUID = -5041281250210822765L;
 
 	/**

@@ -25,7 +25,7 @@ package org.elastos.did.exception;
 /**
  * Thrown to indicate that the key is invalid.
  */
-public class InvalidKeyException extends DIDException {
+public class InvalidKeyException extends IllegalArgumentException {
 	private static final long serialVersionUID = 830761196969735364L;
 
 	/**

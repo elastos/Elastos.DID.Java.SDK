@@ -22,7 +22,7 @@
 
 package org.elastos.did.exception;
 
-public class DIDNotUpToDateException extends DIDInvalidException {
+public class DIDNotUpToDateException extends IllegalStateException {
 	private static final long serialVersionUID = 6615124266302301082L;
 
 	/**

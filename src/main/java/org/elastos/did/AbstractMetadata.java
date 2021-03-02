@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
  * The class defines the base interface of Meta data.
  *
  */
-public abstract class AbstractMetadata extends DIDObject<AbstractMetadata>
+public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 		implements Cloneable {
 	private final static String ALIAS = "alias";
 

@@ -256,7 +256,7 @@ public class DIDURLTest {
 
 	@Test
 	public void testGetParameters() {
-		assertEquals(params.substring(1), url.getParameters());
+		assertEquals(params.substring(1), url.getParametersString());
 	}
 
 	@Test
@@ -288,7 +288,7 @@ public class DIDURLTest {
 
 	@Test
 	public void testGetQuery() {
-		assertEquals(query.substring(1), url.getQuery());
+		assertEquals(query.substring(1), url.getQueryString());
 	}
 
 	@Test

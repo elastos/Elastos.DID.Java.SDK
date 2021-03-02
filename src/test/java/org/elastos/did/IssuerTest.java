@@ -29,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -126,9 +125,9 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
-		assertFalse(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
+		assertTrue(vc.getType().contains("BasicProfileCredential"));
+		assertTrue(vc.getType().contains("InternetAccountCredential"));
+		assertFalse(vc.getType().contains("SelfProclaimedCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(testDoc.getSubject(), vc.getSubject().getId());
@@ -165,9 +164,9 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
-		assertFalse(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
+		assertTrue(vc.getType().contains("BasicProfileCredential"));
+		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
+		assertFalse(vc.getType().contains("InternetAccountCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());
@@ -206,9 +205,9 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
-		assertFalse(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
+		assertTrue(vc.getType().contains("BasicProfileCredential"));
+		assertTrue(vc.getType().contains("InternetAccountCredential"));
+		assertFalse(vc.getType().contains("SelfProclaimedCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(testDoc.getSubject(), vc.getSubject().getId());
@@ -249,9 +248,9 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
-		assertFalse(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
+		assertTrue(vc.getType().contains("BasicProfileCredential"));
+		assertTrue(vc.getType().contains("InternetAccountCredential"));
+		assertFalse(vc.getType().contains("SelfProclaimedCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(testDoc.getSubject(), vc.getSubject().getId());
@@ -290,9 +289,9 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
-		assertFalse(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
+		assertTrue(vc.getType().contains("BasicProfileCredential"));
+		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
+		assertFalse(vc.getType().contains("InternetAccountCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());
@@ -324,9 +323,9 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(Arrays.asList(vc.getType()).contains("BasicProfileCredential"));
-		assertTrue(Arrays.asList(vc.getType()).contains("SelfProclaimedCredential"));
-		assertFalse(Arrays.asList(vc.getType()).contains("InternetAccountCredential"));
+		assertTrue(vc.getType().contains("BasicProfileCredential"));
+		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
+		assertFalse(vc.getType().contains("InternetAccountCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());

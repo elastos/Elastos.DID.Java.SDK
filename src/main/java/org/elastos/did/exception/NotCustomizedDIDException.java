@@ -20,23 +20,43 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.exception;
 
-/**
- * The class is the base object for PublicKey and Credential.
- */
-public interface DIDEntry {
-	/**
-	 * Get the entry id.
-	 *
-	 * @return the identifier object
-	 */
-	public DIDURL getId();
+public class NotCustomizedDIDException extends IllegalStateException {
+	private static final long serialVersionUID = 7135798211922961974L;
 
 	/**
-	 * Get the entry type.
-	 *
-	 * @return the type string or array
+	 * Constructs the NotCustomizedDIDException.
 	 */
-	public Object getType();
+	public NotCustomizedDIDException() {
+        super();
+    }
+
+	/**
+	 * Constructs the NotCustomizedDIDException with the given message.
+	 *
+	 * @param message the message string
+	 */
+    public NotCustomizedDIDException(String message) {
+        super(message);
+    }
+
+    /**
+     * Constructs the NotCustomizedDIDException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
+    public NotCustomizedDIDException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Constructs the NotCustomizedDIDException with the given reason.
+     *
+     * @param cause the reason
+     */
+    public NotCustomizedDIDException(Throwable cause) {
+        super(cause);
+    }
 }

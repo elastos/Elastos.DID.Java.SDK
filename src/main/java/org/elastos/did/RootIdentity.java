@@ -9,13 +9,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.elastos.did.DIDStore.ConflictHandle;
 import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.HDKey;
-import org.elastos.did.exception.DIDBackendException;
+import org.elastos.did.exception.DIDAlreadyExistException;
 import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
-import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.exception.MalformedDocumentException;
 import org.elastos.did.exception.MnemonicException;
+import org.elastos.did.exception.RootIdentityAlreadyExistException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.MD5Digest;
@@ -78,11 +78,7 @@ public final class RootIdentity {
 		 * @return the transaction string
 		 */
 		public DID getDefaultDid() {
-			try {
-				return DID.valueOf(get(DEFAULT_DID));
-			} catch (MalformedDIDException e) {
-				return null;
-			}
+			return DID.valueOf(get(DEFAULT_DID));
 		}
 
 		@Override
@@ -136,8 +132,7 @@ public final class RootIdentity {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		try {
-			if (!Mnemonic.checkIsValid(mnemonic))
-				throw new IllegalArgumentException("Invalid mnemonic.");
+			checkArgument(Mnemonic.checkIsValid(mnemonic), "Invalid mnemonic.");
 		} catch (MnemonicException e) {
 			throw new IllegalArgumentException(e);
 		}
@@ -148,7 +143,7 @@ public final class RootIdentity {
 		RootIdentity identity = new RootIdentity(mnemonic, passphrase);
 
 		if (store.containsRootIdentity(identity.getId()) && !overwrite)
-			throw new DIDStoreException("Already has private identity.");
+			throw new RootIdentityAlreadyExistException(identity.getId());
 
 		identity.setMetadata(new Metadata(identity.getId(), store));
 		store.storeRootIdentity(identity, storepass);
@@ -190,7 +185,7 @@ public final class RootIdentity {
 		RootIdentity identity = new RootIdentity(rootPrivateKey);
 
 		if (store.containsRootIdentity(identity.getId()) && !overwrite)
-			throw new DIDStoreException("Already has private identity.");
+			throw new RootIdentityAlreadyExistException(identity.getId());
 
 		identity.setMetadata(new Metadata(identity.getId(), store));
 		store.storeRootIdentity(identity, storepass);
@@ -359,7 +354,7 @@ public final class RootIdentity {
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
 	public DIDDocument newDid(int index, boolean overwrite, String storepass)
-			throws DIDDeactivatedException, DIDResolveException, DIDStoreException {
+			throws DIDResolveException, DIDStoreException {
 		checkArgument(index >= 0, "Invalid index");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -370,7 +365,7 @@ public final class RootIdentity {
 				throw new DIDDeactivatedException(did.toString());
 
 			if (!overwrite)
-				throw new DIDStoreException("DID already exists in the store.");
+				throw new DIDAlreadyExistException("DID already exists in the store.");
 		}
 
 		doc = did.resolve();
@@ -378,7 +373,7 @@ public final class RootIdentity {
 			if (doc.isDeactivated())
 				throw new DIDDeactivatedException(did.toString());
 
-			throw new DIDStoreException("DID already published.");
+			throw new DIDAlreadyExistException("DID already published.");
 		}
 
 
@@ -404,7 +399,7 @@ public final class RootIdentity {
 	}
 
 	public DIDDocument newDid(int index, String storepass)
-			throws DIDDeactivatedException, DIDResolveException, DIDStoreException {
+			throws DIDResolveException, DIDStoreException {
 		return newDid(index, false, storepass);
 	}
 
@@ -416,7 +411,7 @@ public final class RootIdentity {
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
 	public synchronized DIDDocument newDid(boolean overwrite, String storepass)
-			throws DIDDeactivatedException, DIDResolveException, DIDStoreException {
+			throws DIDResolveException, DIDStoreException {
 		DIDDocument doc = newDid(getIndex(), overwrite, storepass);
 		incrementIndex();
 		return doc;
@@ -430,8 +425,12 @@ public final class RootIdentity {
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
 	public DIDDocument newDid(String storepass)
-			throws DIDDeactivatedException, DIDResolveException, DIDStoreException {
+			throws DIDResolveException, DIDStoreException {
 		return newDid(false, storepass);
+	}
+
+	public boolean hasMnemonic() throws DIDStoreException {
+		return getStore().containsRootIdentityMnemonic(getId());
 	}
 
 	/**
@@ -448,7 +447,7 @@ public final class RootIdentity {
 	}
 
 	public boolean synchronize(int index, ConflictHandle handle)
-			throws DIDBackendException, DIDStoreException {
+			throws DIDResolveException, DIDStoreException {
 		checkArgument(index >= 0, "Invalid index");
 
 		if (handle == null)
@@ -496,7 +495,7 @@ public final class RootIdentity {
 	}
 
 	public boolean synchronize(int index)
-			throws DIDBackendException, DIDStoreException {
+			throws DIDResolveException, DIDStoreException {
 		return synchronize(index, null);
 	}
 
@@ -504,7 +503,7 @@ public final class RootIdentity {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
 				synchronize(index, handle);
-			} catch (DIDBackendException | DIDStoreException e) {
+			} catch (DIDResolveException | DIDStoreException e) {
 				throw new CompletionException(e);
 			}
 		});
@@ -520,11 +519,11 @@ public final class RootIdentity {
 	 * Synchronize DIDStore.
 	 *
 	 * @param handle the handle to ConflictHandle
-	 * @throws DIDBackendException synchronize did faile with resolve error.
+	 * @throws DIDResolveException synchronize did faile with resolve error.
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
 	public void synchronize(ConflictHandle handle)
-			throws DIDBackendException, DIDStoreException {
+			throws DIDResolveException, DIDStoreException {
 		log.info("Synchronize root identity {}...", getId());
 
 		int lastIndex = getIndex() - 1;
@@ -555,11 +554,11 @@ public final class RootIdentity {
 	 * ConflictHandle uses default method.
 	 *
 	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException synchronize did faile with resolve error.
+	 * @throws DIDResolveException synchronize did faile with resolve error.
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
 	public void synchronize()
-			throws DIDBackendException, DIDStoreException {
+			throws DIDResolveException, DIDStoreException {
 		synchronize(null);
 	}
 
@@ -575,7 +574,7 @@ public final class RootIdentity {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
 				synchronize(handle);
-			} catch (DIDBackendException | DIDStoreException e) {
+			} catch (DIDResolveException | DIDStoreException e) {
 				throw new CompletionException(e);
 			}
 		});
