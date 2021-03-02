@@ -25,7 +25,7 @@ package org.elastos.did.exception;
 /**
  * Thrown to indicate that the DID is expired.
  */
-public class DIDExpiredException extends DIDInvalidException {
+public class DIDExpiredException extends IllegalStateException {
 	private static final long serialVersionUID = 7370450942574972182L;
 
 	/**

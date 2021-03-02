@@ -20,27 +20,43 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.backend;
+package org.elastos.did.exception;
 
-import org.elastos.did.DIDEntity;
-import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.MalformedResolveResultException;
+public class DIDObjectHasReference extends UnsupportedOperationException {
+	private static final long serialVersionUID = -4762287234931129061L;
 
-public abstract class ResolveResult<T> extends DIDEntity<T> {
 	/**
-	 * Post sanitize routine after deserialization.
-	 *
-	 * @throws MalformedResolveResultException if the DID object is invalid
+	 * Constructs the DIDObjectHasReference.
 	 */
-	@Override
-	protected void sanitize() throws MalformedResolveResultException {
-		try {
-			sanitize(true);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedResolveResultException)
-				throw (MalformedResolveResultException)e;
-			else
-				throw new MalformedResolveResultException(e);
-		}
-	}
+	public DIDObjectHasReference() {
+        super();
+    }
+
+	/**
+	 * Constructs the DIDObjectHasReference with the given message.
+	 *
+	 * @param message the message string
+	 */
+    public DIDObjectHasReference(String message) {
+        super(message);
+    }
+
+    /**
+     * Constructs the DIDObjectHasReference with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
+    public DIDObjectHasReference(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Constructs the DIDObjectHasReference with the given reason.
+     *
+     * @param cause the reason
+     */
+    public DIDObjectHasReference(Throwable cause) {
+        super(cause);
+    }
 }

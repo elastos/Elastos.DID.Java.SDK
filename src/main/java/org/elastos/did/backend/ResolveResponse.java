@@ -22,7 +22,7 @@
 
 package org.elastos.did.backend;
 
-import org.elastos.did.DIDObject;
+import org.elastos.did.DIDEntity;
 import org.elastos.did.exception.MalformedResolveResultException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 	ResolveResponse.RESULT,
 	ResolveResponse.ERROR })
 @JsonInclude(Include.NON_NULL)
-public abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DIDObject<T> {
+public abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
 	private static final String JSON_RPC_VERSION = "2.0";
 
 	protected static final String ID = "id";

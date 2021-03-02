@@ -20,27 +20,43 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.backend;
+package org.elastos.did.exception;
 
-import org.elastos.did.DIDEntity;
-import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.MalformedResolveResultException;
+public class RootIdentityAlreadyExistException extends IllegalStateException {
+	private static final long serialVersionUID = -7962741794379789111L;
 
-public abstract class ResolveResult<T> extends DIDEntity<T> {
 	/**
-	 * Post sanitize routine after deserialization.
-	 *
-	 * @throws MalformedResolveResultException if the DID object is invalid
+	 * Constructs the RootIdentityAlreadyExistException.
 	 */
-	@Override
-	protected void sanitize() throws MalformedResolveResultException {
-		try {
-			sanitize(true);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedResolveResultException)
-				throw (MalformedResolveResultException)e;
-			else
-				throw new MalformedResolveResultException(e);
-		}
-	}
+	public RootIdentityAlreadyExistException() {
+        super();
+    }
+
+	/**
+	 * Constructs the RootIdentityAlreadyExistException with the given message.
+	 *
+	 * @param message the message string
+	 */
+    public RootIdentityAlreadyExistException(String message) {
+        super(message);
+    }
+
+    /**
+     * Constructs the RootIdentityAlreadyExistException with the given message and the reason.
+     *
+     * @param message the message string
+     * @param cause the reason
+     */
+    public RootIdentityAlreadyExistException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Constructs the RootIdentityAlreadyExistException with the given reason.
+     *
+     * @param cause the reason
+     */
+    public RootIdentityAlreadyExistException(Throwable cause) {
+        super(cause);
+    }
 }

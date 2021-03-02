@@ -586,7 +586,7 @@ public final class DIDStore {
 	}
 
 	public List<RootIdentity> listRootIdentities() throws DIDStoreException {
-		return storage.listRootIdentities();
+		return Collections.unmodifiableList(storage.listRootIdentities());
 	}
 
 	public boolean containsRootIdentities() throws DIDStoreException {
@@ -812,24 +812,24 @@ public final class DIDStore {
 			did.setMetadata(metadata);
 		}
 
-		return dids;
+		return Collections.unmodifiableList(dids);
 	}
 
 	public List<DID> selectDids(DIDFilter filter) throws DIDStoreException {
-		List<DID> src = listDids();
+		List<DID> dids = listDids();
 
 		if (filter != null) {
 			List<DID> dest = new ArrayList<DID>();
 
-			for (DID did : src) {
+			for (DID did : dids) {
 				if (filter.select(did))
 					dest.add(did);
 			}
 
-			return dest;
-		} else {
-			return src;
+			dids = dest;
 		}
+
+		return Collections.unmodifiableList(dids);
 	}
 
 	/**
@@ -1054,7 +1054,7 @@ public final class DIDStore {
 			id.setMetadata(metadata);
 		}
 
-		return ids;
+		return Collections.unmodifiableList(ids);
 	}
 
 	/**
@@ -1081,20 +1081,20 @@ public final class DIDStore {
 			throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 
-		List<DIDURL> src = listCredentials(did);
+		List<DIDURL> vcs = listCredentials(did);
 
 		if (filter != null) {
 			List<DIDURL> dest = new ArrayList<DIDURL>();
 
-			for (DIDURL id : src) {
+			for (DIDURL id : vcs) {
 				if (filter.select(id))
 					dest.add(id);
 			}
 
-			return dest;
-		} else {
-			return src;
+			vcs = dest;
 		}
+
+		return Collections.unmodifiableList(vcs);
 	}
 
 	/**
@@ -1317,7 +1317,7 @@ public final class DIDStore {
 	@JsonPropertyOrder({ "type", "id", "document", "credential", "privatekey",
 						 "created", "fingerprint" })
 	@JsonInclude(Include.NON_NULL)
-	static class DIDExport extends DIDObject<DIDExport> {
+	static class DIDExport extends DIDEntity<DIDExport> {
 		@JsonProperty("type")
 		private String type;
 		@JsonProperty("id")
@@ -1574,7 +1574,7 @@ public final class DIDStore {
 		de.setDocument(doc);
 
 		if (storage.containsCredentials(did)) {
-			List<DIDURL> ids = listCredentials(did);
+			List<DIDURL> ids = new ArrayList<DIDURL>(listCredentials(did));
 			Collections.sort(ids);
 			for (DIDURL id : ids) {
 				log.debug("Exporting credential {}...", id.toString());
@@ -1884,7 +1884,7 @@ public final class DIDStore {
 	@JsonPropertyOrder({ "type", "mnemonic", "privateKey", "publicKey",
 						 "index", "default",  "created", "fingerprint" })
 	@JsonInclude(Include.NON_NULL)
-	static class RootIdentityExport extends DIDObject<RootIdentityExport> {
+	static class RootIdentityExport extends DIDEntity<RootIdentityExport> {
 		@JsonProperty("type")
 		private String type;
 		@JsonProperty("mnemonic")

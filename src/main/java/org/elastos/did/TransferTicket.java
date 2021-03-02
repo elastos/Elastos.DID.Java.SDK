@@ -22,6 +22,8 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +42,10 @@ import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.MalformedDocumentException;
 import org.elastos.did.exception.MalformedTransferTicketException;
+import org.elastos.did.exception.NoEffectiveControllerException;
 import org.elastos.did.exception.NotControllerException;
+import org.elastos.did.exception.NotCustomizedDIDException;
+import org.elastos.did.exception.UnknownInternalException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -61,7 +66,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  */
 @JsonPropertyOrder({ TransferTicket.ID, TransferTicket.TO,
 	TransferTicket.TXID, TransferTicket.PROOF })
-public class TransferTicket extends DIDObject<TransferTicket> {
+public class TransferTicket extends DIDEntity<TransferTicket> {
 	protected final static String ID = "id";
 	protected final static String TO = "to";
 	protected final static String TXID = "txid";
@@ -81,12 +86,13 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	@JsonProperty(TXID)
 	private String txid;
 
-	private HashMap<DIDURL, Proof> proofs;
 	@JsonProperty(PROOF)
-	@JsonInclude(Include.NON_NULL)
+	@JsonInclude(Include.NON_EMPTY)
 	@JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,
 			JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
 	private List<Proof> _proofs;
+
+	private HashMap<DID, Proof> proofs;
 
 	/**
 	 * The proof information for DID transfer ticket.
@@ -181,8 +187,11 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * @throws DIDResolveException if failed resolve the subject DID
 	 */
 	protected TransferTicket(DIDDocument target, DID to) throws DIDResolveException {
+		checkArgument(target != null, "Invalid target DID document");
+		checkArgument(to != null, "Invalid to DID");
+
 		if (!target.isCustomizedDid())
-			throw new IllegalArgumentException("DID " + target.getSubject() + " is not a customized DID");
+			throw new NotCustomizedDIDException(target.getSubject().toString());
 
 		target.getMetadata().setTransactionId(target.getSubject().resolve().getMetadata().getTransactionId());
 
@@ -238,22 +247,12 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 		return txid;
 	}
 
-	private DIDDocument getDocument() throws DIDResolveException {
-		if (doc == null)
-			doc = id.resolve();
-
-		return doc;
-	}
-
 	/**
 	 * Get first Proof object.
 	 *
 	 * @return the Proof object
 	 */
 	public Proof getProof() {
-		if (_proofs == null || _proofs.isEmpty())
-			return null;
-
 		return _proofs.get(0);
 	}
 
@@ -263,33 +262,38 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * @return list of the Proof objects
 	 */
 	public List<Proof> getProofs() {
-		return new ArrayList<Proof>(_proofs);
+		return Collections.unmodifiableList(_proofs);
 	}
 
-	private void addProof(Proof proof) throws MalformedTransferTicketException {
-		if (proofs == null)
-			proofs = new HashMap<DIDURL, Proof>();
+	private DIDDocument getDocument() throws DIDResolveException {
+		if (doc == null)
+			doc = id.resolve();
 
-		if (proofs.containsKey(proof.getVerificationMethod()))
-			throw new MalformedTransferTicketException("Aleady exist proof from " + proof.getVerificationMethod());
-
-		proofs.put(proof.getVerificationMethod(), proof);
-		this._proofs = new ArrayList<Proof>(proofs.values());
-		Collections.sort(this._proofs);
+		return doc;
 	}
-
 	/**
 	 * Check whether the ticket is tampered or not.
 	 *
 	 * @return true is the ticket is genuine else false
 	 */
-	public boolean isGenuine() throws DIDResolveException {
-		if (!getDocument().isGenuine())
+	public boolean isGenuine() {
+		DIDDocument doc = null;
+
+		try {
+			doc = getDocument();
+		} catch (DIDResolveException e) {
+			return false;
+		}
+
+		if (doc == null)
+			return false;
+
+		if (!doc.isGenuine())
 			return false;
 
 		// Proofs count should match with multisig
-		if ((getDocument().getControllerCount() > 1 && proofs.size() != getDocument().getMultiSignature().m()) ||
-				(getDocument().getControllerCount() <= 1 && proofs.size() != 1))
+		if ((doc.getControllerCount() > 1 && proofs.size() != doc.getMultiSignature().m()) ||
+				(doc.getControllerCount() <= 1 && proofs.size() != 1))
 			return false;
 
 		byte[] digest = null;
@@ -310,7 +314,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 			if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 				return false;
 
-			DIDDocument controllerDoc = getDocument().getControllerDocument(proof.getVerificationMethod().getDid());
+			DIDDocument controllerDoc = doc.getControllerDocument(proof.getVerificationMethod().getDid());
 			if (controllerDoc == null)
 				return false;
 
@@ -324,7 +328,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 			if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId()))
 				return false;
 
-			if (!getDocument().verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest))
+			if (!doc.verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest))
 				return false;
 
 			checkedControllers.add(proof.getVerificationMethod().getDid());
@@ -358,12 +362,16 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 *
 	 * @return true is the ticket is qualified else false
 	 */
-	public boolean isQualified() throws DIDResolveException {
-		if (_proofs == null || _proofs.isEmpty())
+	public boolean isQualified() {
+		if (proofs == null || proofs.isEmpty())
 			return false;
 
-		DIDDocument.MultiSignature multisig = getDocument().getMultiSignature();
-		return _proofs.size() == (multisig == null ? 1 : multisig.m());
+		try {
+			DIDDocument.MultiSignature multisig = getDocument().getMultiSignature();
+			return proofs.size() == (multisig == null ? 1 : multisig.m());
+		} catch (DIDResolveException e) {
+			return false;
+		}
 	}
 
 	/**
@@ -373,50 +381,72 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * @throws MalformedDocumentException if the document object is invalid
 	 */
 	@Override
-	protected void sanitize(boolean withProof) throws MalformedTransferTicketException {
-		if (withProof) {
-			if (_proofs == null || _proofs.isEmpty())
-				throw new MalformedTransferTicketException("Missing ticket proof");
+	protected void sanitize() throws MalformedTransferTicketException {
+		if (_proofs == null || _proofs.isEmpty())
+			throw new MalformedTransferTicketException("Missing ticket proof");
 
-			for (Proof proof : _proofs) {
-				if (proof.getVerificationMethod() == null) {
-					throw new MalformedTransferTicketException("Missing verification method");
-				} else {
-					if (proof.getVerificationMethod().getDid() == null)
-						throw new MalformedTransferTicketException("Invalid verification method");
-				}
+		// CAUTION: can not resolve the target document here!
+		//          will cause recursive resolve.
 
-				addProof(proof);
+		proofs = new HashMap<DID, Proof>();
+
+		for (Proof proof : _proofs) {
+			if (proof.getVerificationMethod() == null) {
+				throw new MalformedTransferTicketException("Missing verification method");
+			} else {
+				if (proof.getVerificationMethod().getDid() == null)
+					throw new MalformedTransferTicketException("Invalid verification method");
 			}
-		} else {
-			_proofs = null;
+
+			if (proofs.containsKey(proof.getVerificationMethod().getDid()))
+				throw new MalformedTransferTicketException("Aleady exist proof from " + proof.getVerificationMethod().getDid());
+
+			proofs.put(proof.getVerificationMethod().getDid(), proof);
 		}
+
+		this._proofs = new ArrayList<Proof>(proofs.values());
+		Collections.sort(this._proofs);
 	}
 
 	protected void seal(DIDDocument controller, String storepass)
-			throws NotControllerException, AlreadySignedException, DIDStoreException, DIDResolveException {
-		if (controller == null || storepass == null || storepass.isEmpty())
-			throw new IllegalArgumentException();
-
+			throws DIDStoreException {
 		if (isQualified())
 			return;
 
-		if (!doc.hasController(controller.getSubject()))
-			throw new NotControllerException("Not a contoller");
+		if (controller.isCustomizedDid()) {
+			if (controller.getEffectiveController() == null)
+				throw new NoEffectiveControllerException(controller.getSubject().toString());
+		} else {
+			try {
+				if (!getDocument().hasController(controller.getSubject()))
+					throw new NotControllerException(controller.getSubject().toString());
+			} catch (DIDResolveException e) {
+				// Should never happen
+				throw new UnknownInternalException(e);
+			}
+		}
 
 		DIDURL signKey = controller.getDefaultPublicKeyId();
-		if (proofs != null && proofs.containsKey(signKey))
-			throw new AlreadySignedException("Already signed by " + signKey.getDid());
+		if (proofs == null) {
+			proofs = new HashMap<DID, Proof>();
+		} else {
+			if (proofs.containsKey(signKey.getDid()))
+				throw new AlreadySignedException(signKey.getDid().toString());
+		}
+
+		_proofs = null;
 
 		try {
-			sanitize(false);
-
 			String json = serialize(true);
 			String sig = controller.sign(storepass, json.getBytes());
-			addProof(new Proof(signKey, sig));
+			Proof proof = new Proof(signKey, sig);
+			proofs.put(proof.getVerificationMethod().getDid(), proof);
 		} catch (DIDSyntaxException ignore) {
 			// should never happen
 		}
+
+		this._proofs = new ArrayList<Proof>(proofs.values());
+		Collections.sort(this._proofs);
 	}
 
 	/**
@@ -426,8 +456,15 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * @return the TransferTicket object.
 	 * @throws DIDSyntaxException if a parse error occurs.
 	 */
-	public static TransferTicket parse(String content) throws DIDSyntaxException {
-		return parse(content, TransferTicket.class);
+	public static TransferTicket parse(String content) throws MalformedTransferTicketException {
+		try {
+			return parse(content, TransferTicket.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedTransferTicketException)
+				throw (MalformedTransferTicketException)e;
+			else
+				throw new MalformedTransferTicketException(e);
+		}
 	}
 
 	/**
@@ -439,8 +476,15 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * @throws IOException if an IO error occurs
 	 */
 	public static TransferTicket parse(Reader src)
-			throws DIDSyntaxException, IOException {
-		return parse(src, TransferTicket.class);
+			throws MalformedTransferTicketException, IOException {
+		try {
+			return parse(src, TransferTicket.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedTransferTicketException)
+				throw (MalformedTransferTicketException)e;
+			else
+				throw new MalformedTransferTicketException(e);
+		}
 	}
 
 	/**
@@ -452,8 +496,15 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * @throws IOException if an IO error occurs
 	 */
 	public static TransferTicket parse(InputStream src)
-			throws DIDSyntaxException, IOException {
-		return parse(src, TransferTicket.class);
+			throws MalformedTransferTicketException, IOException {
+		try {
+			return parse(src, TransferTicket.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedTransferTicketException)
+				throw (MalformedTransferTicketException)e;
+			else
+				throw new MalformedTransferTicketException(e);
+		}
 	}
 
 	/**
@@ -465,8 +516,15 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * @throws IOException if an IO error occurs
 	 */
 	public static TransferTicket parse(File src)
-			throws DIDSyntaxException, IOException {
-		return parse(src, TransferTicket.class);
+			throws MalformedTransferTicketException, IOException {
+		try {
+			return parse(src, TransferTicket.class);
+		} catch (DIDSyntaxException e) {
+			if (e instanceof MalformedTransferTicketException)
+				throw (MalformedTransferTicketException)e;
+			else
+				throw new MalformedTransferTicketException(e);
+		}
 	}
 
 	/**
@@ -478,7 +536,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 * @deprecated use {@link #parse(String)} instead
 	 */
 	@Deprecated
-	public static TransferTicket fromJson(String content) throws DIDSyntaxException {
+	public static TransferTicket fromJson(String content) throws MalformedTransferTicketException {
 		return parse(content);
 	}
 
@@ -493,7 +551,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 */
 	@Deprecated
 	public static TransferTicket fromJson(Reader src)
-			throws DIDSyntaxException, IOException {
+			throws MalformedTransferTicketException, IOException {
 		return parse(src);
 	}
 
@@ -508,7 +566,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 */
 	@Deprecated
 	public static TransferTicket fromJson(InputStream src)
-			throws DIDSyntaxException, IOException {
+			throws MalformedTransferTicketException, IOException {
 		return parse(src);
 	}
 
@@ -523,7 +581,7 @@ public class TransferTicket extends DIDObject<TransferTicket> {
 	 */
 	@Deprecated
 	public static TransferTicket fromJson(File src)
-			throws DIDSyntaxException, IOException {
+			throws MalformedTransferTicketException, IOException {
 		return parse(src);
 	}
 }

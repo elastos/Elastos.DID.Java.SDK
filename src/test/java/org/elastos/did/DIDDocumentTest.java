@@ -48,6 +48,7 @@ import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDNotUpToDateException;
 import org.elastos.did.exception.DIDObjectAlreadyExistException;
 import org.elastos.did.exception.DIDObjectNotExistException;
+import org.elastos.did.exception.NotPrimitiveDIDException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestConfig;
 import org.elastos.did.utils.TestData;
@@ -1300,22 +1301,22 @@ public class DIDDocumentTest {
 				new DID(DID.METHOD, key.getAddress()).toString(),
 				key.getPublicKeyBase58());
 
-		assertThrows(UnsupportedOperationException.class, () -> {
+		assertThrows(NotPrimitiveDIDException.class, () -> {
 			db.addAuthorizationKey(new DIDURL(did, "#test1"));
 		});
 
-		assertThrows(UnsupportedOperationException.class, () -> {
+		assertThrows(NotPrimitiveDIDException.class, () -> {
 			db.addAuthorizationKey("#test2");
 		});
 
 		// Try to add a non existing key, should fail.
-		assertThrows(UnsupportedOperationException.class, () -> {
+		assertThrows(NotPrimitiveDIDException.class, () -> {
 			db.addAuthorizationKey("#notExistKey");
 		});
 
 		// Try to add controller's, should fail.
 		DIDURL recovery = new DIDURL(user1.getSubject(), "#recovery");
-		assertThrows(UnsupportedOperationException.class, () -> {
+		assertThrows(NotPrimitiveDIDException.class, () -> {
 			db.addAuthorizationKey(recovery);
 		});
 

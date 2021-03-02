@@ -25,7 +25,7 @@ package org.elastos.did.exception;
 /**
  * Not a controller, can not perform operation.
  */
-public class NotControllerException extends DIDException {
+public class NotControllerException extends IllegalArgumentException {
 	private static final long serialVersionUID = 4789410432579474532L;
 
 	/**

@@ -25,7 +25,7 @@ package org.elastos.did.exception;
 /**
  * Thrown to indicate that the DIDBackend has error.
  */
-public class DIDDeactivatedException extends DIDInvalidException {
+public class DIDDeactivatedException extends IllegalStateException {
 	private static final long serialVersionUID = -3106736642975911944L;
 
 	/**

@@ -61,7 +61,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 	VerifiablePresentation.CREATED,
 	VerifiablePresentation.VERIFIABLE_CREDENTIAL,
 	VerifiablePresentation.PROOF })
-public class VerifiablePresentation extends DIDObject<VerifiablePresentation> {
+public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	/**
 	 * Default presentation type
 	 */

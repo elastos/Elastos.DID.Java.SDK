@@ -842,7 +842,7 @@ public class IDChainOperationsTest {
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-		List<DID> restoredDids = cleanStore.listDids();
+		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
@@ -873,7 +873,7 @@ public class IDChainOperationsTest {
 
 		f.join();
 
-		List<DID> restoredDids = cleanStore.listDids();
+		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
@@ -901,7 +901,7 @@ public class IDChainOperationsTest {
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-		List<DID> restoredDids = store.listDids();
+		List<DID> restoredDids = new ArrayList<DID>(store.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
@@ -935,7 +935,7 @@ public class IDChainOperationsTest {
 
 		f.join();
 
-		List<DID> restoredDids = store.listDids();
+		List<DID> restoredDids = new ArrayList<DID>(store.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
@@ -963,7 +963,7 @@ public class IDChainOperationsTest {
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-		List<DID> restoredDids = cleanStore.listDids();
+		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
@@ -988,7 +988,7 @@ public class IDChainOperationsTest {
 		duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
-		restoredDids = cleanStore.listDids();
+		restoredDids = new ArrayList<DID>(cleanStore.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
@@ -1020,7 +1020,7 @@ public class IDChainOperationsTest {
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-		List<DID> restoredDids = cleanStore.listDids();
+		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
@@ -1046,7 +1046,7 @@ public class IDChainOperationsTest {
 		duration = (System.currentTimeMillis() - start + 500) / 1000;
 		log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
-		restoredDids = cleanStore.listDids();
+		restoredDids = new ArrayList<DID>(cleanStore.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
@@ -1082,7 +1082,7 @@ public class IDChainOperationsTest {
 
 		f.join();
 
-		List<DID> restoredDids = cleanStore.listDids();
+		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
@@ -1112,7 +1112,7 @@ public class IDChainOperationsTest {
 
 		f.join();
 
-		restoredDids = cleanStore.listDids();
+		restoredDids = new ArrayList<DID>(cleanStore.listDids());
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 

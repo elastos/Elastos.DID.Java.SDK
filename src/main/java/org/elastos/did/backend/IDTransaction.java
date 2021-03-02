@@ -24,7 +24,7 @@ package org.elastos.did.backend;
 
 import java.util.Date;
 
-import org.elastos.did.DIDObject;
+import org.elastos.did.DIDEntity;
 import org.elastos.did.exception.MalformedIDChainRequestException;
 import org.elastos.did.exception.MalformedIDChainTransactionException;
 
@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({ IDTransaction.TXID,
 	IDTransaction.TIMESTAMP,
 	IDTransaction.OPERATION })
-public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDObject<T> {
+public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDEntity<T> {
 	protected final static String TXID = "txid";
 	protected final static String TIMESTAMP = "timestamp";
 	protected final static String OPERATION = "operation";

@@ -22,7 +22,7 @@
 
 package org.elastos.did.exception;
 
-public class DIDAlreadyExistException extends DIDInvalidException {
+public class DIDAlreadyExistException extends IllegalStateException {
 	private static final long serialVersionUID = 5549559944671144039L;
 
 	/**

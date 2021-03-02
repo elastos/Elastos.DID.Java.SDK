@@ -25,7 +25,7 @@ package org.elastos.did.backend;
 import org.elastos.did.Constants;
 import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
-import org.elastos.did.DIDObject;
+import org.elastos.did.DIDEntity;
 import org.elastos.did.DIDURL;
 import org.elastos.did.TransferTicket;
 import org.elastos.did.crypto.Base64;
@@ -48,7 +48,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 @JsonPropertyOrder({ IDChainRequest.HEADER,
 	IDChainRequest.PAYLOAD,
 	IDChainRequest.PROOF })
-public abstract class IDChainRequest<T> extends DIDObject<T> {
+public abstract class IDChainRequest<T> extends DIDEntity<T> {
 	/**
 	 * The specification string of IDChain DID Request
 	 */
@@ -366,8 +366,8 @@ public abstract class IDChainRequest<T> extends DIDObject<T> {
 		return doc.verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs());
 	}
 
-	protected static<T extends DIDObject<?>> T parse(JsonNode content, Class<T> clazz)
+	protected static<T extends DIDEntity<?>> T parse(JsonNode content, Class<T> clazz)
 			throws DIDSyntaxException {
-		return DIDObject.parse(content, clazz);
+		return DIDEntity.parse(content, clazz);
 	}
 }

@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -91,7 +92,7 @@ import com.fasterxml.jackson.databind.ser.PropertyWriter;
 	VerifiableCredential.CREDENTIAL_SUBJECT,
 	VerifiableCredential.PROOF })
 @JsonFilter("credentialFilter")
-public class VerifiableCredential extends DIDObject<VerifiableCredential> implements DIDEntry {
+public class VerifiableCredential extends DIDEntity<VerifiableCredential> implements DIDObject {
 	protected final static String ID = "id";
 	protected final static String TYPE = "type";
 	protected final static String ISSUER = "issuer";
@@ -108,7 +109,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	@JsonProperty(ID)
 	private DIDURL id;
 	@JsonProperty(TYPE)
-	private String[] type;
+	private List<String> type;
 	@JsonProperty(ISSUER)
 	private DID issuer;
 	@JsonProperty(ISSUANCE_DATE)
@@ -374,9 +375,8 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * @return the type array
 	 */
 	@Override
-	public String[] getType() {
-		// Make a copy
-		return Arrays.copyOf(type, type.length);
+	public List<String> getType() {
+		return Collections.unmodifiableList(type);
 	}
 
 	/**
@@ -387,11 +387,15 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 	 * @param type the type names in String array
 	 */
 	@JsonSetter(TYPE)
+	private void setType(List<String> type) {
+		checkArgument(type != null && !type.isEmpty(), "Invalid credential type");
+		this.type = new ArrayList<String>(type);
+		Collections.sort(this.type);
+	}
+
 	private void setType(String[] type) {
-		if (type != null && type.length != 0) {
-			this.type = Arrays.copyOf(type,  type.length);
-			Arrays.sort(this.type);
-		}
+		checkArgument(type != null && type.length > 0, "Invalid credential type");
+		setType(Arrays.asList(type));
 	}
 
 	/**
@@ -480,7 +484,7 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 		if (id == null)
 			throw new MalformedCredentialException("Missing credential id");
 
-		if (type == null || type.length == 0)
+		if (type == null || type.isEmpty())
 			throw new MalformedCredentialException("Missing credential type");
 
 		if (issuanceDate == null)
@@ -1737,8 +1741,10 @@ public class VerifiableCredential extends DIDObject<VerifiableCredential> implem
 				throw new IllegalArgumentException();
 
 			credential.subject.properties.clear();
-			credential.subject.properties.putAll(properties);
-			credential.subject.properties.remove(ID);
+			if (properties != null && !properties.isEmpty()) {
+				credential.subject.properties.putAll(properties);
+				credential.subject.properties.remove(ID);
+			}
 			return this;
 		}
 

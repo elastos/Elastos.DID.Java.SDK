@@ -25,7 +25,7 @@ package org.elastos.did.exception;
 /**
  * Object already signed by the specific DID.
  */
-public class AlreadySignedException extends DIDException {
+public class AlreadySignedException extends IllegalStateException {
 	private static final long serialVersionUID = -7009590984618280753L;
 
 	/**
