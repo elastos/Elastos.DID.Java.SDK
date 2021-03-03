@@ -54,6 +54,7 @@ import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -150,6 +151,12 @@ public class DIDBackend {
 				initialCacheCapacity, maxCacheCapacity, cacheTtl / 1000);
 	}
 
+	/*
+	public String cacheStat() {
+		return cache.stats().toString();
+	}
+	*/
+
     /**
 	 * Initialize the DIDBackend with the adapter and the cache specification.
      *
@@ -212,12 +219,9 @@ public class DIDBackend {
 	}
 
 	private String generateRequestId() {
-		StringBuffer sb = new StringBuffer();
-
-		while(sb.length() < 16)
-			sb.append(Integer.toHexString(random.nextInt()));
-
-		return sb.toString();
+		byte[] bin = new byte[16];
+	    random.nextBytes(bin);
+	    return Hex.toHexString(bin);
 	}
 
 	/**
@@ -553,6 +557,11 @@ public class DIDBackend {
 		CredentialResolveRequest request = new CredentialResolveRequest(generateRequestId());
 		request.setParameters(id, signer);
 		cache.invalidate(request);
+
+		if (signer != null) {
+			request.setParameters(id, null);
+			cache.invalidate(request);
+		}
 	}
 
 	public void clearCache() {

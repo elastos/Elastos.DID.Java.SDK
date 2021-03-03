@@ -22,14 +22,14 @@
 
 package org.elastos.did.jwt;
 
-import java.io.IOException;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.elastos.did.exception.UnknownInternalException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -62,8 +62,6 @@ public class Claims implements Map<String, Object> {
 	public static final String ID = "jti";
 
 	private io.jsonwebtoken.Claims impl;
-
-	private static final Logger log = LoggerFactory.getLogger(Claims.class);
 
 	protected Claims(io.jsonwebtoken.Claims impl) {
 		this.impl = impl;
@@ -302,13 +300,14 @@ public class Claims implements Map<String, Object> {
 	 * Returns the JWTs claim ({@code claimName}) value as a type
 	 * {@code requiredType}, or {@code null} if not present.
 	 *
-	 * @param claimName    name of claim
+	 * @param key    name of claim
 	 * @param requiredType the type of the value expected to be returned
 	 * @param <T>          the type of the value expected to be returned
 	 * @return the JWT {@code claimName} value or {@code null} if not present.
 	 */
-	public <T> T get(String claimName, Class<T> requiredType) {
-		return impl.get(claimName, requiredType);
+	public <T> T get(String key, Class<T> requiredType) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+		return impl.get(key, requiredType);
 	}
 
 	@Override
@@ -323,6 +322,7 @@ public class Claims implements Map<String, Object> {
 
 	@Override
 	public boolean containsKey(Object key) {
+		checkArgument(key != null, "Invalid key");
 		return impl.containsKey(key);
 	}
 
@@ -333,6 +333,7 @@ public class Claims implements Map<String, Object> {
 
 	@Override
 	public Object get(Object key) {
+		checkArgument(key != null, "Invalid key");
 		return impl.get(key);
 	}
 
@@ -344,6 +345,8 @@ public class Claims implements Map<String, Object> {
 	 * @return the value string to which the specified key is mapped
 	 */
 	public String getAsJson(Object key) {
+		checkArgument(key != null, "Invalid key");
+
 		Object v = impl.get(key);
 		if (v == null)
 			return null;
@@ -352,13 +355,14 @@ public class Claims implements Map<String, Object> {
 		try {
 			return mapper.writeValueAsString(v);
 		} catch (JsonProcessingException e) {
-			log.error("INTERNAL - Can not serialize field", e);
-			return null;
+			throw new UnknownInternalException(e);
 		}
 	}
 
 	@Override
 	public Object put(String key, Object value) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+
 		return impl.put(key, value);
 	}
 
@@ -372,17 +376,22 @@ public class Claims implements Map<String, Object> {
 	 *         if the implementation supports null values.)
 	 */
 	public Object putWithJson(String key, String json) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+		checkArgument(json != null && !json.isEmpty(), "Invalid json");
+
 		return impl.put(key, json2Map(json));
 	}
 
 	@Override
 	public Object remove(Object key) {
+		checkArgument(key != null, "Invalid key");
 		return impl.remove(key);
 	}
 
 	@Override
-	public void putAll(Map<? extends String, ? extends Object> m) {
-		impl.putAll(m);
+	public void putAll(Map<? extends String, ? extends Object> map) {
+		checkArgument(map != null, "Invalid map");
+		impl.putAll(map);
 	}
 
 	/**
@@ -391,6 +400,7 @@ public class Claims implements Map<String, Object> {
 	 * @param json the json string
 	 */
 	public void putAllWithJson(String json) {
+		checkArgument(json != null && !json.isEmpty(), "Invalid json");
 		impl.putAll(json2Map(json));
 	}
 
@@ -428,7 +438,7 @@ public class Claims implements Map<String, Object> {
 					new TypeReference<Map<String, Object>>(){});
 
 			return map;
-		} catch (IOException e) {
+		} catch (JsonProcessingException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}

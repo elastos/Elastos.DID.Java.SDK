@@ -16,6 +16,7 @@ import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.MalformedDocumentException;
 import org.elastos.did.exception.MnemonicException;
 import org.elastos.did.exception.RootIdentityAlreadyExistException;
+import org.elastos.did.exception.UnknownInternalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.MD5Digest;
@@ -391,8 +392,7 @@ public final class RootIdentity {
 
 			return doc;
 		} catch (MalformedDocumentException ignore) {
-			log.error("INTERNAL - Seal DID document", ignore);
-			throw new DIDStoreException(ignore);
+			throw new UnknownInternalException(ignore);
 		} finally {
 			key.wipe();
 		}

@@ -43,20 +43,16 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 
 		@JsonProperty(PARAMETER_SKIP)
 		@JsonInclude(Include.NON_DEFAULT)
-		private Integer skip;
+		private int skip;
 
 		@JsonProperty(PARAMETER_LIMIT)
 		@JsonInclude(Include.NON_DEFAULT)
-		private Integer limit;
+		private int limit;
 
 		public Parameters(DID did, int skip, int limit) {
 			this.did = did;
-
-			if (skip > 0)
-				this.skip = skip;
-
-			if (limit > 0)
-				this.limit = limit;
+			this.skip = skip;
+			this.limit = limit;
 		}
 
 		public Parameters(DID did, int limit) {
@@ -71,13 +67,8 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 		@Override
 		public int hashCode() {
 			int hash = did.hashCode();
-
-			if (skip != null)
-				hash += skip.hashCode();
-
-			if (limit != null)
-				hash += limit.hashCode();
-
+			hash += Integer.hashCode(skip);
+			hash += Integer.hashCode(limit);
 			return hash;
 		}
 
@@ -91,14 +82,10 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 			if (!did.equals(p.did))
 				return false;
 
-			int lSkip = this.skip == null ? 0 : this.skip.intValue();
-			int rSkip = p.skip == null ? 0 : p.skip.intValue();
-			if (lSkip != rSkip)
+			if (skip != p.skip)
 				return false;
 
-			int lLimit = this.limit == null ? 0 : this.limit.intValue();
-			int rLimit = p.limit == null ? 0 : p.limit.intValue();
-			return lLimit == rLimit;
+			return limit == p.limit;
 		}
 	}
 
@@ -136,23 +123,19 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 	}
 
 	public int getSkip() {
-		return getParameters().skip == null ? 0 : getParameters().skip;
+		return getParameters().skip;
 	}
 
 	public int getLimit() {
-		return getParameters().limit == null ? 0 : getParameters().limit;
+		return getParameters().limit;
 	}
 
 	@Override
 	public String toString() {
 		DIDURL.Builder builder = new DIDURL.Builder(getParameters().did);
 		builder.setPath("/credentials");
-
-		builder.setQueryParameter(PARAMETER_SKIP, getParameters().skip == null ?
-				"0" : getParameters().skip.toString());
-
-		builder.setQueryParameter(PARAMETER_LIMIT, getParameters().limit == null ?
-				"0" : getParameters().limit.toString());
+		builder.setQueryParameter(PARAMETER_SKIP, Integer.toString(getParameters().skip));
+		builder.setQueryParameter(PARAMETER_LIMIT, Integer.toString(getParameters().limit));
 
 		return builder.build().toString();
 	}

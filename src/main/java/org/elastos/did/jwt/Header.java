@@ -22,6 +22,8 @@
 
 package org.elastos.did.jwt;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -186,6 +188,7 @@ public class Header implements Map<String, Object> {
 
 	@Override
 	public boolean containsKey(Object key) {
+		checkArgument(key != null, "Invalid key");
 		return getImpl().containsKey(key);
 	}
 
@@ -196,22 +199,26 @@ public class Header implements Map<String, Object> {
 
 	@Override
 	public Object get(Object key) {
+		checkArgument(key != null, "Invalid key");
 		return getImpl().get(key);
 	}
 
 	@Override
 	public Object put(String key, Object value) {
+		checkArgument(key != null && !key.isEmpty(), "Invalid key");
 		return getImpl().put(key, value);
 	}
 
 	@Override
 	public Object remove(Object key) {
+		checkArgument(key != null, "Invalid key");
 		return getImpl().remove(key);
 	}
 
 	@Override
-	public void putAll(Map<? extends String, ? extends Object> m) {
-		getImpl().putAll(m);
+	public void putAll(Map<? extends String, ? extends Object> map) {
+		checkArgument(map != null, "Invalid map");
+		getImpl().putAll(map);
 	}
 
 	@Override

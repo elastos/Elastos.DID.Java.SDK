@@ -22,6 +22,8 @@
 
 package org.elastos.did.backend;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -46,6 +48,7 @@ import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -72,6 +75,9 @@ public class SimulatedIDChain {
 	private static final Logger log = LoggerFactory.getLogger(SimulatedIDChain.class);
 
 	public SimulatedIDChain(String host, int port) {
+		checkArgument(host != null && !host.isEmpty(), "Invalid host");
+		checkArgument(port > 0, "Invalid port");
+
 		this.host = host;
 		this.port = port;
 
@@ -95,12 +101,9 @@ public class SimulatedIDChain {
 	}
 
 	private static String generateTxid() {
-        StringBuffer sb = new StringBuffer();
-        while(sb.length() < 32){
-            sb.append(Integer.toHexString(random.nextInt()));
-        }
-
-        return sb.toString();
+		byte[] bin = new byte[16];
+	    random.nextBytes(bin);
+	    return Hex.toHexString(bin);
     }
 
 	private DIDTransaction getLastDidTransaction(DID did) {

@@ -22,6 +22,8 @@
 
 package org.elastos.did.backend;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -40,6 +42,8 @@ public class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 	@Override
 	public void createIdTransaction(String payload, String memo)
 			throws DIDTransactionException {
+		checkArgument(payload != null && !payload.isEmpty(), "Invalid payload");
+
 		try {
 			InputStream is = performRequest(idtxEndpoint, payload);
 			if (is != null)

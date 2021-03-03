@@ -102,12 +102,12 @@ public class RootIdentityTest {
     	doc.getMetadata().setAlias(alias);
     	assertTrue(doc.isValid());
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
 
     	// test alias
@@ -127,12 +127,12 @@ public class RootIdentityTest {
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
     	assertTrue(doc.isValid());
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.getSubject(), resolved.getSubject());
     	assertEquals(doc.getProof().getSignature(),

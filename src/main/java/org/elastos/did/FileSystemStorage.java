@@ -30,7 +30,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,6 +41,7 @@ import org.elastos.did.exception.DIDStorageException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDStoreVersionMismatch;
 import org.elastos.did.exception.DIDSyntaxException;
+import org.elastos.did.exception.UnknownInternalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1189,10 +1189,8 @@ class FileSystemStorage implements DIDStorage {
 		T newData = null;
 		try {
 			newData = clazz.getDeclaredConstructor().newInstance();
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			log.error("INTERNAL - instantiate {}", clazz.getName());
-			return null;
+		} catch (Exception e) {
+			throw new UnknownInternalException(e);
 		}
 
 		Map<String, String> props = oldData.getProperties();

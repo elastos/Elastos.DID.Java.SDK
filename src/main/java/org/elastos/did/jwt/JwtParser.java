@@ -22,6 +22,8 @@
 
 package org.elastos.did.jwt;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * A parser for reading JWT strings.
  */
@@ -78,6 +80,8 @@ public class JwtParser {
 	 */
 	public Jwt<?> parse(String jwt) throws ExpiredJwtException,
 			MalformedJwtException, JwsSignatureException {
+		checkArgument(jwt != null && !jwt.isEmpty(), "Invalid jwt");
+
 		try {
 			return new Jwt<String>(impl.parse(jwt));
 		} catch (io.jsonwebtoken.ExpiredJwtException e) {
@@ -125,6 +129,8 @@ public class JwtParser {
 	public Jwt<String> parsePlaintextJwt(String plaintextJwt)
 			throws UnsupportedJwtException, MalformedJwtException,
 			JwsSignatureException {
+		checkArgument(plaintextJwt != null && !plaintextJwt.isEmpty(), "Invalid plaintextJwt");
+
 		try {
 			return new Jwt<String>(impl.parsePlaintextJwt(plaintextJwt));
 		} catch (io.jsonwebtoken.UnsupportedJwtException e) {
@@ -173,6 +179,8 @@ public class JwtParser {
 	public Jwt<Claims> parseClaimsJwt(String claimsJwt)
 			throws ExpiredJwtException, UnsupportedJwtException,
 			MalformedJwtException, JwsSignatureException {
+		checkArgument(claimsJwt != null && !claimsJwt.isEmpty(), "Invalid claimsJwt");
+
 		try {
 			return new Jwt<Claims>(impl.parseClaimsJwt(claimsJwt));
 		} catch (io.jsonwebtoken.ExpiredJwtException e) {
@@ -219,6 +227,8 @@ public class JwtParser {
 	public Jws<String> parsePlaintextJws(String plaintextJws)
 			throws UnsupportedJwtException, MalformedJwtException,
 			JwsSignatureException {
+		checkArgument(plaintextJws != null && !plaintextJws.isEmpty(), "Invalid plaintextJws");
+
 		try {
 			return new Jws<String>(impl.parsePlaintextJws(plaintextJws));
 		} catch (io.jsonwebtoken.UnsupportedJwtException e) {
@@ -265,6 +275,8 @@ public class JwtParser {
 	public Jws<Claims> parseClaimsJws(String claimsJws)
 			throws ExpiredJwtException, UnsupportedJwtException,
 			MalformedJwtException, JwsSignatureException {
+		checkArgument(claimsJws != null && !claimsJws.isEmpty(), "Invalid claimsJws");
+
 		try {
 			return new Jws<Claims>(impl.parseClaimsJws(claimsJws));
 		} catch (io.jsonwebtoken.ExpiredJwtException e) {

@@ -53,7 +53,6 @@ public class CredentialList extends ResolveResult<CredentialList> {
 
 	protected CredentialList(DID did) {
 		this.did = did;
-		this.credentialIds = new ArrayList<DIDURL>(DEFAULT_SIZE);
 	}
 
 	public DID getDid() {
@@ -61,21 +60,22 @@ public class CredentialList extends ResolveResult<CredentialList> {
 	}
 
 	public List<DIDURL> getCredentialIds() {
-		if (credentialIds == null || credentialIds.size() == 0)
-			return null;
-
-		return Collections.unmodifiableList(credentialIds);
+		return Collections.unmodifiableList(credentialIds != null ?
+				credentialIds : Collections.emptyList());
 	}
 
 	public int size() {
-		return credentialIds.size();
+		return credentialIds != null ? credentialIds.size() : 0;
 	}
 
 	public DIDURL getCredentialId(int index) {
-		return credentialIds.get(index);
+		return credentialIds != null ? credentialIds.get(index) : null;
 	}
 
-	protected void addCredentialId(DIDURL id) {
+	protected synchronized void addCredentialId(DIDURL id) {
+		if (credentialIds == null)
+			this.credentialIds = new ArrayList<DIDURL>(DEFAULT_SIZE);
+
 		credentialIds.add(id);
 	}
 

@@ -146,7 +146,7 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 	}
 
 	public List<CredentialTransaction> getAllTransactions() {
-		return txs != null ? Collections.unmodifiableList(txs) : null;
+		return Collections.unmodifiableList(txs != null ? txs : Collections.emptyList());
 	}
 
 	/**
