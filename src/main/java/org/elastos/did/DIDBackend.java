@@ -52,7 +52,6 @@ import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.DIDTransactionException;
-import org.elastos.did.exception.InvalidKeyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +70,7 @@ public class DIDBackend {
 	private static Random random = new Random();
 
 	private DIDAdapter adapter;
-	private ResolveHandle resolveHandle;
+	private LocalResolveHandle resolveHandle;
 
 	private LoadingCache<ResolveRequest<?, ?>, ResolveResult<?>> cache;
 
@@ -82,7 +81,7 @@ public class DIDBackend {
 	/**
 	 * The interface to indicate how to get local did document, if this did is not published to chain.
 	 */
-	public interface ResolveHandle {
+	public interface LocalResolveHandle {
 		/**
 		 * Resolve DID content(DIDDocument).
 		 *
@@ -162,7 +161,7 @@ public class DIDBackend {
 	public static synchronized void initialize(DIDAdapter adapter,
 			int initialCacheCapacity, int maxCacheCapacity, int cacheTtl) {
 		checkArgument(adapter != null, "Invalid adapter");
-		//checkArgument(initialCacheCapacity <= maxCacheCapacity, "Invalid cache capacity");
+		checkArgument(initialCacheCapacity <= maxCacheCapacity, "Invalid cache capacity");
 
 		initialCacheCapacity = initialCacheCapacity < maxCacheCapacity ?
 				initialCacheCapacity : maxCacheCapacity;
@@ -179,7 +178,6 @@ public class DIDBackend {
      * @param int cacheTtl the live time for the cached entries, 0 for default
      */
 	public static void initialize(DIDAdapter adapter, int maxCacheCapacity, int cacheTtl) {
-
 		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY, maxCacheCapacity, cacheTtl);
 	}
 
@@ -227,7 +225,7 @@ public class DIDBackend {
 	 *
 	 * @return the DIDAdapter object from DIDBackend.
 	 */
-	protected DIDAdapter getAdapter() {
+	private DIDAdapter getAdapter() {
 		return adapter;
 	}
 
@@ -237,7 +235,7 @@ public class DIDBackend {
      *
 	 * @param handle the ResolveHandle object
 	 */
-	public void setResolveHandle(ResolveHandle handle) {
+	public void setResolveHandle(LocalResolveHandle handle) {
 		resolveHandle = handle;
 	}
 
@@ -569,11 +567,10 @@ public class DIDBackend {
 	 * @param storepass the password for DIDStore
 	 * @throws DIDTransactionException publishing did failed because of did transaction error.
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
-	 * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
 	protected void createDid(DIDDocument doc, DIDURL signKey,
 			String storepass, DIDTransactionAdapter adapter)
-			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+			throws DIDTransactionException, DIDStoreException {
 		DIDRequest request = DIDRequest.create(doc, signKey, storepass);
 		createTransaction(request, adapter);
 		invalidDidCache(doc.getSubject());
@@ -588,11 +585,10 @@ public class DIDBackend {
 	 * @param storepass the password for DIDStore
 	 * @throws DIDTransactionException publishing did failed because of did transaction error.
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
-	 * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
 	protected void updateDid(DIDDocument doc, String previousTxid,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+			throws DIDTransactionException, DIDStoreException {
 		DIDRequest request = DIDRequest.update(doc, previousTxid, signKey, storepass);
 		createTransaction(request, adapter);
 		invalidDidCache(doc.getSubject());
@@ -600,7 +596,7 @@ public class DIDBackend {
 
 	protected void transferDid(DIDDocument doc, TransferTicket ticket,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-			throws DIDStoreException, InvalidKeyException, DIDTransactionException {
+			throws DIDStoreException, DIDTransactionException {
 		DIDRequest request = DIDRequest.transfer(doc, ticket, signKey, storepass);
 		createTransaction(request, adapter);
 		invalidDidCache(doc.getSubject());
@@ -614,11 +610,10 @@ public class DIDBackend {
      * @param storepass the password for DIDStore
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
-     * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
      */
 	protected void deactivateDid(DIDDocument doc, DIDURL signKey,
 			String storepass, DIDTransactionAdapter adapter)
-			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+			throws DIDTransactionException, DIDStoreException {
 		DIDRequest request = DIDRequest.deactivate(doc, signKey, storepass);
 		createTransaction(request, adapter);
 		invalidDidCache(doc.getSubject());
@@ -632,15 +627,13 @@ public class DIDBackend {
 	 * @param signer the signer's DIDDocument object
 	 * @param signKey the key to sign
 	 * @param storepass the password for DIDStore
-     * @throws DIDResolveException publishing did failed because of resolve target did error.
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
-     * @throws InvalidKeyException sign key is not an authentication key if sign key exists.
 	 */
 	protected void deactivateDid(DIDDocument target, DIDURL targetSignKey,
 			DIDDocument signer, DIDURL signKey, String storepass,
 			DIDTransactionAdapter adapter)
-			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+			throws DIDTransactionException, DIDStoreException {
 		DIDRequest request = DIDRequest.deactivate(target,
 				targetSignKey, signer, signKey, storepass);
 		createTransaction(request, adapter);
@@ -649,7 +642,7 @@ public class DIDBackend {
 
 	protected void declareCredential(VerifiableCredential vc, DIDDocument signer,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+			throws DIDTransactionException, DIDStoreException {
 		CredentialRequest request = CredentialRequest.declare(vc, signer,
 				signKey, storepass);
 		createTransaction(request, adapter);
@@ -659,7 +652,7 @@ public class DIDBackend {
 
 	protected void revokeCredential(VerifiableCredential vc, DIDDocument signer,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+			throws DIDTransactionException, DIDStoreException {
 		CredentialRequest request = CredentialRequest.revoke(vc, signer,
 				signKey, storepass);
 		createTransaction(request, adapter);
@@ -669,7 +662,7 @@ public class DIDBackend {
 
 	protected void revokeCredential(DIDURL vc, DIDDocument signer,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-			throws DIDTransactionException, DIDStoreException, InvalidKeyException {
+			throws DIDTransactionException, DIDStoreException {
 		CredentialRequest request = CredentialRequest.revoke(vc, signer,
 				signKey, storepass);
 		createTransaction(request, adapter);

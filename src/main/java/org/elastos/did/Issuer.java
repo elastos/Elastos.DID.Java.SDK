@@ -22,11 +22,12 @@
 
 package org.elastos.did;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.elastos.did.VerifiableCredential.Builder;
+import org.elastos.did.exception.DIDNotFoundException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A issuer is the DID to issue Credential. Issuer includes issuer's did and
@@ -36,8 +37,6 @@ public class Issuer {
 	private DIDDocument self;
 	private DIDURL signKey;
 
-	private static final Logger log = LoggerFactory.getLogger(Issuer.class);
-
 	/**
 	 * Constructs Issuer object with the given value.
 	 *
@@ -46,10 +45,8 @@ public class Issuer {
 	 * @throws DIDStoreException there is no store to attatch
 	 * @throws InvalidKeyException the sign key is not an authenication key.
 	 */
-	public Issuer(DIDDocument doc, DIDURL signKey)
-			throws DIDStoreException, InvalidKeyException {
-		if (doc == null)
-			throw new IllegalArgumentException();
+	public Issuer(DIDDocument doc, DIDURL signKey) throws DIDStoreException {
+		checkArgument(doc != null, "Invalid document");
 
 		init(doc, signKey);
 	}
@@ -62,8 +59,7 @@ public class Issuer {
 	 * @throws DIDStoreException there is no store to attatch
 	 * @throws InvalidKeyException the sign key is not an authenication key.
 	 */
-	public Issuer(DIDDocument doc, String signKey)
-			throws DIDStoreException, InvalidKeyException {
+	public Issuer(DIDDocument doc, String signKey) throws DIDStoreException {
 		this(doc, DIDURL.valueOf(doc.getSubject(), signKey));
 	}
 
@@ -74,8 +70,7 @@ public class Issuer {
 	 * @throws DIDStoreException there is no store to attach
 	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
-	public Issuer(DIDDocument doc)
-			throws DIDStoreException, InvalidKeyException {
+	public Issuer(DIDDocument doc) throws DIDStoreException {
 		this(doc, (DIDURL)null);
 	}
 
@@ -88,14 +83,13 @@ public class Issuer {
 	 * @throws DIDStoreException there is no store to attach
 	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
-	public Issuer(DID did, DIDURL signKey, DIDStore store)
-			throws DIDStoreException, InvalidKeyException {
-		if (did == null || store == null)
-			throw new IllegalArgumentException();
+	public Issuer(DID did, DIDURL signKey, DIDStore store) throws DIDStoreException {
+		checkArgument(did != null, "Invalid did");
+		checkArgument(store != null, "Invalid store");
 
 		DIDDocument doc = store.loadDid(did);
 		if (doc == null)
-			throw new DIDStoreException("Can not load DID.");
+			throw new DIDNotFoundException(did.toString());
 
 		init(doc, signKey);
 	}
@@ -110,7 +104,7 @@ public class Issuer {
 	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
 	public Issuer(String did, String signKey, DIDStore store)
-			throws DIDStoreException, InvalidKeyException {
+			throws DIDStoreException {
 		this(DID.valueOf(did), DIDURL.valueOf(did, signKey), store);
 	}
 
@@ -122,8 +116,7 @@ public class Issuer {
 	 * @throws DIDStoreException there is no store to attach
 	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
-	public Issuer(DID did, DIDStore store)
-			throws DIDStoreException, InvalidKeyException {
+	public Issuer(DID did, DIDStore store) throws DIDStoreException {
 		this(did, null, store);
 	}
 
@@ -135,29 +128,26 @@ public class Issuer {
 	 * @throws DIDStoreException there is no store to attach
 	 * @throws InvalidKeyException the sign key is not an authentication key
 	 */
-	public Issuer(String did, DIDStore store)
-			throws DIDStoreException, InvalidKeyException {
+	public Issuer(String did, DIDStore store) throws DIDStoreException {
 		this(DID.valueOf(did), null, store);
 	}
 
-	private void init(DIDDocument doc, DIDURL signKey)
-			throws DIDStoreException, InvalidKeyException {
+	private void init(DIDDocument doc, DIDURL signKey) throws DIDStoreException {
 		this.self = doc;
 
 		if (signKey == null) {
 			signKey = self.getDefaultPublicKeyId();
 			if (signKey == null)
-				throw new InvalidKeyException("Need explict sign key");
+				throw new InvalidKeyException("Need explict sign key or effective controller");
 		} else {
 			if (!self.isAuthenticationKey(signKey))
-				throw new InvalidKeyException("Not an authentication key.");
+				throw new InvalidKeyException(signKey.toString());
 		}
 
 		if (!doc.hasPrivateKey(signKey))
-			throw new InvalidKeyException("No private key.");
+			throw new InvalidKeyException("No private key: " + signKey);
 
 		this.signKey = signKey;
-
 	}
 
 	/**
@@ -187,14 +177,8 @@ public class Issuer {
 		return signKey;
 	}
 
-	public String sign(String storepass, byte[] data) throws DIDStoreException {
-		try {
-			return self.sign(signKey, storepass, data);
-		} catch (InvalidKeyException ignore) {
-			// should never happen
-			log.error("INTERNAL - Signing digest", ignore);
-			throw new DIDStoreException(ignore);
-		}
+	protected String sign(String storepass, byte[] data) throws DIDStoreException {
+		return self.sign(signKey, storepass, data);
 	}
 
 	/**
@@ -204,8 +188,7 @@ public class Issuer {
 	 * @return the VerifiableCredential builder to issuer Credential
 	 */
 	public Builder issueFor(DID did) {
-		if (did == null)
-			throw new IllegalArgumentException();
+		checkArgument(did != null, "Invalid did");
 
 		return new Builder(this, did);
 	}

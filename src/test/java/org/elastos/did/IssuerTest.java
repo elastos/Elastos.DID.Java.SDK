@@ -87,20 +87,18 @@ public class IssuerTest {
 	public void newIssuerTestWithInvalidKey() throws DIDException, IOException {
 		DIDURL signKey = new DIDURL(issuerDoc.getSubject(), "#testKey");
 		DIDDocument doc = issuerDoc;
-		Exception e = assertThrows(InvalidKeyException.class, () -> {
+		assertThrows(InvalidKeyException.class, () -> {
 			new Issuer(doc, signKey);
 		});
-		assertEquals("No private key.", e.getMessage());
 	}
 
 	@Test
 	public void newIssuerTestWithInvalidKey2() throws DIDException, IOException {
 		DIDURL signKey = new DIDURL(issuerDoc.getSubject(), "#recovery");
 		DIDDocument doc = issuerDoc;
-		Exception e = assertThrows(InvalidKeyException.class, () -> {
+		assertThrows(InvalidKeyException.class, () -> {
 			new Issuer(doc, signKey);
 		});
-		assertEquals("Not an authentication key.", e.getMessage());
 	}
 
 	@Test
