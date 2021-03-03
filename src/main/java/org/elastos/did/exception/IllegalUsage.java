@@ -22,7 +22,7 @@
 
 package org.elastos.did.exception;
 
-public class IllegalUsage extends UnsupportedOperationException {
+public class IllegalUsage extends IllegalArgumentException {
 	private static final long serialVersionUID = -8745944921459980506L;
 
 	/**

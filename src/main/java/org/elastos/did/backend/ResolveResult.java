@@ -23,7 +23,6 @@
 package org.elastos.did.backend;
 
 import org.elastos.did.DIDEntity;
-import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.MalformedResolveResultException;
 
 public abstract class ResolveResult<T> extends DIDEntity<T> {
@@ -34,13 +33,5 @@ public abstract class ResolveResult<T> extends DIDEntity<T> {
 	 */
 	@Override
 	protected void sanitize() throws MalformedResolveResultException {
-		try {
-			sanitize(true);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedResolveResultException)
-				throw (MalformedResolveResultException)e;
-			else
-				throw new MalformedResolveResultException(e);
-		}
 	}
 }

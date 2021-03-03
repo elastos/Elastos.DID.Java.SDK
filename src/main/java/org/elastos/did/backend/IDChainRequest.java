@@ -22,6 +22,8 @@
 
 package org.elastos.did.backend;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.elastos.did.Constants;
 import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
@@ -32,6 +34,7 @@ import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
+import org.elastos.did.exception.MalformedTransferTicketException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -188,17 +191,16 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 		}
 
 		@JsonSetter(TICKET)
-		private void setTicket(String ticket) throws MalformedIDChainRequestException {
-			if (ticket == null || ticket.isEmpty())
-				throw new MalformedIDChainRequestException("Missing ticket");
+		private void setTicket(String ticket) {
+			checkArgument(ticket != null && !ticket.isEmpty(), "Invalid ticket");
 
 			String json = new String(Base64.decode(ticket,
 					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
 
 			try {
 				this.transferTicket = TransferTicket.parse(json);
-			} catch (DIDSyntaxException e) {
-				throw new MalformedIDChainRequestException("Invalid ticket", e);
+			} catch (MalformedTransferTicketException e) {
+				throw new IllegalArgumentException("Invalid ticket", e);
 			}
 
 			this.ticket = ticket;
@@ -325,16 +327,8 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 
 	protected abstract DIDDocument getSignerDocument() throws DIDResolveException;
 
-	// Helper method for DIDTransaction
-	protected void sanitizeHelper() throws MalformedIDChainRequestException {
-		try {
-			sanitize(true);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedIDChainRequestException)
-				throw (MalformedIDChainRequestException)e;
-			else
-				throw new MalformedIDChainRequestException(e);
-		}
+	@Override
+	protected void sanitize() throws MalformedIDChainRequestException {
 	}
 
 	/**

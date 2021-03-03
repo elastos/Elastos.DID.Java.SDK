@@ -54,7 +54,6 @@ import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDExpiredException;
-import org.elastos.did.exception.DIDInvalidException;
 import org.elastos.did.exception.DIDNotFoundException;
 import org.elastos.did.exception.DIDNotGenuineException;
 import org.elastos.did.exception.DIDNotUpToDateException;
@@ -3037,7 +3036,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param signKey the key to sign
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the current DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key
 	 * @throws DIDStoreException deactivate did failed because of did store error
 	 * @throws DIDBackendException deactivate did failed because of did backend error
@@ -3077,7 +3075,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param signKey the key to sign
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the current DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key
 	 * @throws DIDStoreException deactivate did failed because of did store error
 	 * @throws DIDBackendException deactivate did failed because of did backend error
@@ -3092,7 +3089,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param signKey the key to sign
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the current DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key
 	 * @throws DIDStoreException deactivate did failed because of did store error
 	 * @throws DIDBackendException deactivate did failed because of did backend error
@@ -3107,7 +3103,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param signKey the key to sign
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the current DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key
 	 * @throws DIDStoreException deactivate did failed because of did store error
 	 * @throws DIDBackendException deactivate did failed because of did backend error
@@ -3122,7 +3117,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * Specify the default key to sign.
 	 *
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the current DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key
 	 * @throws DIDStoreException deactivate did failed because of did store error
 	 * @throws DIDBackendException deactivate did failed because of did backend error
@@ -3137,7 +3131,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * Specify the default key to sign.
 	 *
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the current DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key
 	 * @throws DIDStoreException deactivate did failed because of did store error
 	 * @throws DIDBackendException deactivate did failed because of did backend error
@@ -3236,7 +3229,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @param target the target DID
 	 * @param signKey the authorizor's key to sign
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the target DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key.
 	 * @throws DIDStoreException deactivate did failed because of did store error.
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
@@ -3318,7 +3310,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @param target the target DID
 	 * @param signKey the authorizor's key to sign
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the target DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key.
 	 * @throws DIDStoreException deactivate did failed because of did store error.
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
@@ -3334,7 +3325,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @param target the target DID string
 	 * @param signKey the authorizor's key to sign
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the target DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key.
 	 * @throws DIDStoreException deactivate did failed because of did store error.
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
@@ -3350,7 +3340,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @param target the target DID string
 	 * @param signKey the authorizor's key to sign
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the target DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key.
 	 * @throws DIDStoreException deactivate did failed because of did store error.
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
@@ -3365,7 +3354,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param target the target DID string
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the target DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key.
 	 * @throws DIDStoreException deactivate did failed because of did store error.
 	 * @throws DIDBackendException deactivate did failed because of did backend error.
@@ -3380,7 +3368,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param target the target DID string
 	 * @param storepass the password for DIDStore
-	 * @throws DIDInvalidException the target DID is invalid
 	 * @throws InvalidKeyException there is no an authentication key.
 	 * @throws DIDStoreException deactivate did failed because of did store error.
 	 * @throws DIDBackendException deactivate did failed because of did backend error.

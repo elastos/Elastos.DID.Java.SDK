@@ -45,7 +45,7 @@ import org.bitcoinj.crypto.HDKeyDerivation;
 import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.params.MainNetParams;
 import org.elastos.did.Mnemonic;
-import org.elastos.did.exception.InvalidKeyException;
+import org.elastos.did.exception.UnknownInternalException;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.crypto.params.ECPublicKeyParameters;
@@ -185,7 +185,7 @@ public class HDKey {
 		return derive(index, false);
 	}
 
-    public KeyPair getJCEKeyPair() throws InvalidKeyException {
+    public KeyPair getJCEKeyPair() {
     	ECParameterSpec paramSpec = new ECNamedCurveSpec(
         		"secp256r1", CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(),
         		CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
@@ -214,7 +214,7 @@ public class HDKey {
 	    		priv = keyFactory.generatePrivate(privSpec);
 	    	}
 		} catch (InvalidKeySpecException e) {
-			throw new InvalidKeyException();
+			throw new UnknownInternalException(e);
 		}
     	return new KeyPair(pub, priv);
     }

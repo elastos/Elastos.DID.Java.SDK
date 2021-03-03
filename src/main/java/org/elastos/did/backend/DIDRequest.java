@@ -32,8 +32,7 @@ import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.elastos.did.exception.UnknownInternalException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -41,8 +40,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * The DID request class.
  */
 public class DIDRequest extends IDChainRequest<DIDRequest> {
-	private static final Logger log = LoggerFactory.getLogger(DIDRequest.class);
-
 	private DID did;
 	private DIDDocument doc;
 
@@ -75,18 +72,15 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @param storepass the password for DIDStore
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
-	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public static DIDRequest create(DIDDocument doc, DIDURL signKey,
-			String storepass) throws DIDStoreException, InvalidKeyException {
+			String storepass) throws DIDStoreException {
 		DIDRequest request = new DIDRequest(Operation.CREATE);
 		request.setPayload(doc);
 		try {
 			request.seal(signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
-			// should never happen
-			log.error("INTERNAL - Seal the DID request", ignore);
-			return null;
+			throw new UnknownInternalException(ignore);
 		}
 
 		return request;
@@ -101,19 +95,15 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @param storepass the password for DIDStore
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
-	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public static DIDRequest update(DIDDocument doc, String previousTxid,
-			DIDURL signKey, String storepass)
-			throws DIDStoreException, InvalidKeyException {
+			DIDURL signKey, String storepass) throws DIDStoreException {
 		DIDRequest request = new DIDRequest(Operation.UPDATE, previousTxid);
 		request.setPayload(doc);
 		try {
 			request.seal(signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
-			// should never happen
-			log.error("INTERNAL - Seal the DID request", ignore);
-			return null;
+			throw new UnknownInternalException(ignore);
 		}
 
 		return request;
@@ -128,18 +118,15 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @param storepass the password for DIDStore
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
-	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public static DIDRequest transfer(DIDDocument doc, TransferTicket ticket,
-			DIDURL signKey, String storepass) throws DIDStoreException, InvalidKeyException {
+			DIDURL signKey, String storepass) throws DIDStoreException {
 		DIDRequest request = new DIDRequest(Operation.TRANSFER, ticket);
 		request.setPayload(doc);
 		try {
 			request.seal(signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
-			// should never happen
-			log.error("INTERNAL - Seal the DID request", ignore);
-			return null;
+			throw new UnknownInternalException(ignore);
 		}
 
 		return request;
@@ -154,18 +141,15 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @param storepass the password for DIDStore
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
-	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public static DIDRequest deactivate(DIDDocument doc, DIDURL signKey,
-			String storepass) throws DIDStoreException, InvalidKeyException {
+			String storepass) throws DIDStoreException {
 		DIDRequest request = new DIDRequest(Operation.DEACTIVATE);
 		request.setPayload(doc);
 		try {
 			request.seal(signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
-			// should never happen
-			log.error("INTERNAL - Seal the DID request", ignore);
-			return null;
+			throw new UnknownInternalException(ignore);
 		}
 
 		return request;
@@ -180,21 +164,16 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @param signKey the key to sign Request
 	 * @param storepass the password for DIDStore
 	 * @return the IDChainRequest object
-	 * @throws DIDResolveException the target DID can not resolved
 	 * @throws DIDStoreException there is no store to attach
-	 * @throws InvalidKeyException there is no an authentication key
 	 */
 	public static DIDRequest deactivate(DIDDocument target, DIDURL targetSignKey,
-			DIDDocument doc, DIDURL signKey, String storepass)
-			throws DIDStoreException, InvalidKeyException {
+			DIDDocument doc, DIDURL signKey, String storepass) throws DIDStoreException {
 		DIDRequest request = new DIDRequest(Operation.DEACTIVATE);
 		request.setPayload(target);
 		try {
 			request.seal(targetSignKey, doc, signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
-			// should never happen
-			log.error("INTERNAL - Seal the DID request", ignore);
-			return null;
+			throw new UnknownInternalException(ignore);
 		}
 
 		return request;
@@ -251,7 +230,7 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	}
 
 	@Override
-	protected void sanitize(boolean withProof) throws MalformedIDChainRequestException {
+	protected void sanitize() throws MalformedIDChainRequestException {
 		Header header = getHeader();
 
 		if (header == null)
@@ -288,35 +267,34 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 		if (payload == null || payload.isEmpty())
 			throw new MalformedIDChainRequestException("Missing payload");
 
-		if (withProof) {
-			Proof proof = getProof();
-			if (proof == null)
-				throw new MalformedIDChainRequestException("Missing proof");
+		Proof proof = getProof();
+		if (proof == null)
+			throw new MalformedIDChainRequestException("Missing proof");
 
-			try {
-				if (header.getOperation() != Operation.DEACTIVATE) {
-					String json = new String(Base64.decode(payload,
-							Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
+		try {
+			if (header.getOperation() != Operation.DEACTIVATE) {
+				String json = new String(Base64.decode(payload,
+						Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
 
-					doc = DIDDocument.parse(json);
-					did = doc.getSubject();
-				} else {
-					did = new DID(payload);
-				}
-			} catch (DIDException e) {
-				throw new MalformedIDChainRequestException("Invalid payload", e);
+				doc = DIDDocument.parse(json);
+				did = doc.getSubject();
+			} else {
+				did = new DID(payload);
 			}
-
-			proof.qualifyVerificationMethod(did);
+		} catch (DIDException e) {
+			throw new MalformedIDChainRequestException("Invalid payload", e);
 		}
+
+		proof.qualifyVerificationMethod(did);
 	}
 
 	private void seal(DIDURL signKey, String storepass)
-			throws MalformedIDChainRequestException, DIDStoreException, InvalidKeyException {
+			throws MalformedIDChainRequestException, DIDStoreException {
 		if (!doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key.");
 
-		sanitize(false);
+		if (getPayload() == null || getPayload().isEmpty())
+			throw new MalformedIDChainRequestException("Missing payload");
 
 		String signature = doc.sign(signKey, storepass, getSigningInputs());
 		setProof(new Proof(signKey, signature));
@@ -324,14 +302,15 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 
 	private void seal(DIDURL targetSignKey, DIDDocument doc,
 			DIDURL signKey, String storepass)
-			throws MalformedIDChainRequestException, DIDStoreException, InvalidKeyException {
+			throws MalformedIDChainRequestException, DIDStoreException {
 		if (!this.doc.isAuthorizationKey(targetSignKey))
 			throw new InvalidKeyException("Not an authorization key: " + targetSignKey);
 
 		if (!doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key: " + signKey);
 
-		sanitize(false);
+		if (getPayload() == null || getPayload().isEmpty())
+			throw new MalformedIDChainRequestException("Missing payload");
 
 		String signature = doc.sign(signKey, storepass, getSigningInputs());
 		setProof(new Proof(targetSignKey, signature));
