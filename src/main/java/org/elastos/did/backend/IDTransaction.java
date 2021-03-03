@@ -92,7 +92,7 @@ public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
 			throw new MalformedIDChainTransactionException("Missing request");
 
 		try {
-			request.sanitizeHelper();
+			request.sanitize();
 		} catch (MalformedIDChainRequestException e) {
 			throw new MalformedIDChainTransactionException("Invalid request", e);
 		}

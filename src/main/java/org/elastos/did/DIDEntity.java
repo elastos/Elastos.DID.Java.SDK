@@ -197,19 +197,6 @@ public abstract class DIDEntity<T> {
 	 * @throws DIDSyntaxException if the DID object is invalid
 	 */
 	protected void sanitize() throws DIDSyntaxException {
-		sanitize(true);
-	}
-
-	/**
-	 * Sanitize routine before sealing or after deserialization.
-	 *
-	 * @param withProof check the proof object or not. Normally, when withProof
-	 *                  is true, it means that the post check after
-	 *                  deserialization; when withProof is false, it means that
-	 *                  the check before sealing the DID object
-	 * @throws DIDSyntaxException if the DID object is invalid
-	 */
-	protected void sanitize(boolean withProof) throws DIDSyntaxException {
 	}
 
 	/**

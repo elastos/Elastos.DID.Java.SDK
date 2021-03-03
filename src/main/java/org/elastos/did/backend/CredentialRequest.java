@@ -31,8 +31,7 @@ import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.elastos.did.exception.UnknownInternalException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -41,8 +40,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  */
 
 public class CredentialRequest extends IDChainRequest<CredentialRequest> {
-	private static final Logger log = LoggerFactory.getLogger(CredentialRequest.class);
-
 	private DIDURL id;
 	private VerifiableCredential vc;
 	private DIDDocument signer;
@@ -70,20 +67,17 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @param storepass the password for DIDStore
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
-	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public static CredentialRequest declare(VerifiableCredential vc,
 			DIDDocument signer, DIDURL signKey, String storepass)
-			throws DIDStoreException, InvalidKeyException {
+			throws DIDStoreException {
 		CredentialRequest request = new CredentialRequest(Operation.DECLARE);
 		request.setPayload(vc);
 		request.setSigner(signer);
 		try {
 			request.seal(signer, signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
-			// should never happen
-			log.error("INTERNAL - Seal the credential request", ignore);
-			return null;
+			throw new UnknownInternalException(ignore);
 		}
 
 		return request;
@@ -98,20 +92,17 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @param storepass the password for DIDStore
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
-	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public static CredentialRequest revoke(VerifiableCredential vc,
 			DIDDocument doc, DIDURL signKey, String storepass)
-			throws DIDStoreException, InvalidKeyException {
+			throws DIDStoreException {
 		CredentialRequest request = new CredentialRequest(Operation.REVOKE);
 		request.setPayload(vc);
 		request.setSigner(doc);
 		try {
 			request.seal(doc, signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
-			// should never happen
-			log.error("INTERNAL - Seal the credential request", ignore);
-			return null;
+			throw new UnknownInternalException(ignore);
 		}
 
 		return request;
@@ -126,20 +117,16 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @param storepass the password for DIDStore
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
-	 * @throws InvalidKeyException there is no an authentication key.
 	 */
 	public static CredentialRequest revoke(DIDURL id, DIDDocument doc,
-			DIDURL signKey, String storepass)
-			throws DIDStoreException, InvalidKeyException {
+			DIDURL signKey, String storepass) throws DIDStoreException {
 		CredentialRequest request = new CredentialRequest(Operation.REVOKE);
 		request.setPayload(id);
 		request.setSigner(doc);
 		try {
 			request.seal(doc, signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
-			// should never happen
-			log.error("INTERNAL - Seal the credential request", ignore);
-			return null;
+			throw new UnknownInternalException(ignore);
 		}
 
 		return request;
@@ -179,7 +166,7 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	}
 
 	@Override
-	protected void sanitize(boolean withProof) throws MalformedIDChainRequestException {
+	protected void sanitize() throws MalformedIDChainRequestException {
 		Header header = getHeader();
 
 		if (header == null)
@@ -204,35 +191,34 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		if (payload == null || payload.isEmpty())
 			throw new MalformedIDChainRequestException("Missing payload");
 
-		if (withProof) {
-			Proof proof = getProof();
-			if (proof == null)
-				throw new MalformedIDChainRequestException("Missing proof");
+		Proof proof = getProof();
+		if (proof == null)
+			throw new MalformedIDChainRequestException("Missing proof");
 
-			try {
-				if (header.getOperation() == Operation.DECLARE) {
-					String json = new String(Base64.decode(payload,
-							Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
+		try {
+			if (header.getOperation() == Operation.DECLARE) {
+				String json = new String(Base64.decode(payload,
+						Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
 
-					vc = VerifiableCredential.parse(json);
-					id = vc.getId();
-				} else {
-					id = new DIDURL(payload);
-				}
-			} catch (DIDException e) {
-				throw new MalformedIDChainRequestException("Invalid payload", e);
+				vc = VerifiableCredential.parse(json);
+				id = vc.getId();
+			} else {
+				id = new DIDURL(payload);
 			}
-
-			proof.qualifyVerificationMethod(id.getDid());
+		} catch (DIDException e) {
+			throw new MalformedIDChainRequestException("Invalid payload", e);
 		}
+
+		proof.qualifyVerificationMethod(id.getDid());
 	}
 
 	public void seal(DIDDocument doc, DIDURL signKey, String storepass)
-			throws MalformedIDChainRequestException, DIDStoreException, InvalidKeyException {
+			throws MalformedIDChainRequestException, DIDStoreException {
 		if (!doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key.");
 
-		sanitize(false);
+		if (getPayload() == null || getPayload().isEmpty())
+			throw new MalformedIDChainRequestException("Missing payload");
 
 		String signature = doc.sign(signKey, storepass, getSigningInputs());
 		setProof(new Proof(signKey, signature));
