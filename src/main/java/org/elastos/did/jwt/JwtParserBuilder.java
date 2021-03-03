@@ -240,10 +240,8 @@ public class JwtParserBuilder {
 	 * @param key the algorithm-specific signature verification key id to use to
 	 *            validate any discovered JWS digital signature.
 	 * @return the parser builder for method chaining.
-	 * @throws InvalidKeyException the key is invalid.
 	 */
-	public JwtParserBuilder setSigningKey(String key)
-			throws InvalidKeyException {
+	public JwtParserBuilder setSigningKey(String key) {
 		PublicKey pk = keyProvider.getPublicKey(key);
 		impl.setSigningKey(pk);
 		return this;

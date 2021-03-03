@@ -22,12 +22,13 @@
 
 package org.elastos.did.jwt;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.security.PrivateKey;
 import java.util.Date;
 import java.util.Map;
 
 import org.elastos.did.exception.DIDStoreException;
-import org.elastos.did.exception.InvalidKeyException;
 
 import io.jsonwebtoken.CompressionCodec;
 import io.jsonwebtoken.CompressionCodecs;
@@ -48,6 +49,9 @@ public class JwtBuilder {
 	 * @param keyProvider the KeyProvider object
 	 */
 	public JwtBuilder(String issuer, KeyProvider keyProvider) {
+		checkArgument(issuer != null && !issuer.isEmpty(), "Invalid issuer");
+		checkArgument(keyProvider != null, "Invalid provider");
+
 		this.issuer = issuer;
 		this.keyProvider = keyProvider;
 		this.impl = Jwts.builder();
@@ -173,6 +177,7 @@ public class JwtBuilder {
 	 * @return the builder for method chaining.
 	 */
 	public JwtBuilder setPayload(String payload) {
+		checkArgument(payload != null && !payload.isEmpty(), "Invalid payload");
 		impl.setPayload(payload);
 		return this;
 	}
@@ -235,7 +240,7 @@ public class JwtBuilder {
 	 */
 	public JwtBuilder setClaims(Map<String, Object> claims) {
 		impl.setClaims(claims);
-		if (!claims.containsKey(Claims.ISSUER))
+		if (claims != null && !claims.containsKey(Claims.ISSUER))
 			impl.setIssuer(issuer);
 
 		return this;
@@ -249,6 +254,7 @@ public class JwtBuilder {
 	 * @return the builder for method chaining.
 	 */
 	JwtBuilder setClaimsWithJson(String jsonClaims) {
+		checkArgument(jsonClaims != null && !jsonClaims.isEmpty(), "Invalid jsonClaims");
 		return setClaims(Claims.json2Map(jsonClaims));
 	}
 
@@ -279,6 +285,7 @@ public class JwtBuilder {
 	 * @return the builder for method chaining.
 	 */
 	JwtBuilder addClaimsWithJson(String jsonClaims) {
+		checkArgument(jsonClaims != null && !jsonClaims.isEmpty(), "Invalid jsonClaims");
 		return addClaims(Claims.json2Map(jsonClaims));
 	}
 
@@ -596,6 +603,7 @@ public class JwtBuilder {
 	 * @return the builder instance for method chaining.
 	 */
 	public JwtBuilder claim(String name, Object value) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
 		impl.claim(name, value);
 		return this;
 	}
@@ -631,6 +639,7 @@ public class JwtBuilder {
 	 * @return the builder instance for method chaining.
 	 */
 	public JwtBuilder claimWithJson(String name, String jsonValue) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
 		return claim(name, Claims.json2Map(jsonValue));
 	}
 
@@ -642,10 +651,11 @@ public class JwtBuilder {
 	 * @param password  the password for DID store
 	 * @return the builder instance for method chaining.
 	 * @throws DIDStoreException DIDStore error.
-	 * @throws InvalidKeyException there is no an authenication key.
 	 */
 	public JwtBuilder signWith(String key, String password)
-			throws InvalidKeyException, DIDStoreException {
+			throws DIDStoreException {
+		checkArgument(password != null && !password.isEmpty(), "Invalid password");
+
 		PrivateKey sk = keyProvider.getPrivateKey(key, password);
 		impl.setHeaderParam(JwsHeader.KEY_ID, key);
 		impl.signWith(sk);
@@ -661,12 +671,7 @@ public class JwtBuilder {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	public JwtBuilder sign(String password) throws DIDStoreException {
-		try {
-			return signWith(null, password);
-		} catch (InvalidKeyException ignore) {
-			// Should nerver happen
-			return null;
-		}
+		return signWith(null, password);
 	}
 
 	/**

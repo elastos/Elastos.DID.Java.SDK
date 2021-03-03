@@ -106,7 +106,7 @@ public class IDChainOperationsTest {
 		log.debug("Publish new DID {}...OK({}s)", did, duration);
 
 		testData.waitForWalletAvaliable();
-		DIDDocument resolved = did.resolve(true);
+		DIDDocument resolved = did.resolve();
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
 		assertEquals(doc.toString(true), resolved.toString(true));
@@ -179,7 +179,7 @@ public class IDChainOperationsTest {
 		assertNotNull(doc);
 		DID did = doc.getSubject();
 
-		DIDDocument resolved = did.resolve(true);
+		DIDDocument resolved = did.resolve();
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
 		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
@@ -202,7 +202,7 @@ public class IDChainOperationsTest {
         log.debug("Update DID {}...OK({}s)", did, duration);
 
 		testData.waitForWalletAvaliable();
-		resolved = did.resolve(true);
+		resolved = did.resolve();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
@@ -239,7 +239,7 @@ public class IDChainOperationsTest {
 		assertNotNull(doc);
 		DID did = doc.getSubject();
 
-		DIDDocument resolved = did.resolve(true);
+		DIDDocument resolved = did.resolve();
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
 		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
@@ -262,7 +262,7 @@ public class IDChainOperationsTest {
         log.debug("Update DID {}...OK({}s)", did, duration);
 
 		testData.waitForWalletAvaliable();
-		resolved = did.resolve(true);
+		resolved = did.resolve();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
@@ -468,7 +468,7 @@ public class IDChainOperationsTest {
         log.debug("Publish new DID {}...OK({}s)", did, duration);
 
 		testData.waitForWalletAvaliable();
-		DIDDocument resolved = did.resolve(true);
+		DIDDocument resolved = did.resolve();
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
 		assertEquals(doc.toString(true), resolved.toString(true));
@@ -487,7 +487,7 @@ public class IDChainOperationsTest {
 		assertNotNull(doc);
 		DID did = doc.getSubject();
 
-		DIDDocument resolved = did.resolve(true);
+		DIDDocument resolved = did.resolve();
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
 		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
@@ -521,7 +521,7 @@ public class IDChainOperationsTest {
         log.debug("Update DID {}...OK({}s)", did, duration);
 
 		testData.waitForWalletAvaliable();
-		resolved = did.resolve(true);
+		resolved = did.resolve();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
@@ -558,7 +558,7 @@ public class IDChainOperationsTest {
 		assertNotNull(doc);
 		DID did = doc.getSubject();
 
-		DIDDocument resolved = did.resolve(true);
+		DIDDocument resolved = did.resolve();
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
 		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
@@ -597,7 +597,7 @@ public class IDChainOperationsTest {
         log.debug("Update DID {}...OK({}s)", did, duration);
 
 		testData.waitForWalletAvaliable();
-		resolved = did.resolve(true);
+		resolved = did.resolve();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());

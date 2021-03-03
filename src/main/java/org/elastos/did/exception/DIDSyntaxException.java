@@ -22,26 +22,6 @@
 
 package org.elastos.did.exception;
 
-import org.elastos.did.CredentialMetadata;
-import org.elastos.did.DIDDocument;
-import org.elastos.did.DIDMetadata;
-import org.elastos.did.TransferTicket;
-import org.elastos.did.VerifiableCredential;
-import org.elastos.did.VerifiablePresentation;
-import org.elastos.did.backend.CredentialBiography;
-import org.elastos.did.backend.CredentialList;
-import org.elastos.did.backend.CredentialListRequest;
-import org.elastos.did.backend.CredentialListResponse;
-import org.elastos.did.backend.CredentialRequest;
-import org.elastos.did.backend.CredentialResolveRequest;
-import org.elastos.did.backend.CredentialResolveResponse;
-import org.elastos.did.backend.CredentialTransaction;
-import org.elastos.did.backend.DIDBiography;
-import org.elastos.did.backend.DIDRequest;
-import org.elastos.did.backend.DIDResolveRequest;
-import org.elastos.did.backend.DIDResolveResponse;
-import org.elastos.did.backend.DIDTransaction;
-
 /**
  * Thrown to indicate that the DID syntax has error.
  */
@@ -87,40 +67,64 @@ public class DIDSyntaxException extends DIDException {
 			String message, Throwable cause) {
 		DIDSyntaxException ex;
 
-		String fqn = clazz.getCanonicalName();
-		if (fqn.equals(DIDDocument.class.getCanonicalName()))
+		switch (clazz.getSimpleName()) {
+		case "DIDDocument":
 			ex = new MalformedDocumentException(message, cause);
-		else if (fqn.equals(VerifiableCredential.class.getCanonicalName()))
+			break;
+
+		case "VerifiableCredential":
 			ex = new MalformedCredentialException(message, cause);
-		else if (fqn.equals(VerifiablePresentation.class.getCanonicalName()))
+			break;
+
+		case "VerifiablePresentation":
 			ex = new MalformedPresentationException(message, cause);
-		else if (fqn.equals(TransferTicket.class.getCanonicalName()))
+			break;
+
+		case "TransferTicket":
 			ex = new MalformedTransferTicketException(message, cause);
-		else if (fqn.equals(DIDMetadata.class.getCanonicalName()) ||
-				fqn.equals(CredentialMetadata.class.getCanonicalName()))
+			break;
+
+		case "DIDMetadata":
+		case "CredentialMetadata":
 			ex = new MalformedMetadataException(message, cause);
-		else if (fqn.equals(DIDRequest.class.getCanonicalName()) ||
-				fqn.equals(CredentialRequest.class.getCanonicalName()))
+			break;
+
+		case "DIDRequest":
+		case "CredentialRequest":
 			ex = new MalformedIDChainRequestException(message, cause);
-		else if (fqn.equals(DIDTransaction.class.getCanonicalName()) ||
-				fqn.equals(CredentialTransaction.class.getCanonicalName()))
+			break;
+
+		case "DIDTransaction":
+		case "CredentialTransaction":
 			ex = new MalformedIDChainTransactionException(message, cause);
-		else if (fqn.equals(DIDBiography.class.getCanonicalName()) ||
-				fqn.equals(CredentialBiography.class.getCanonicalName()) ||
-				fqn.equals(CredentialList.class.getCanonicalName()))
+			break;
+
+		case "DIDBiography":
+		case "CredentialBiography":
+		case "CredentialList":
 			ex = new MalformedResolveResultException(message, cause);
-		else if (fqn.equals(DIDResolveRequest.class.getCanonicalName()) ||
-				fqn.equals(CredentialResolveRequest.class.getCanonicalName()) ||
-				fqn.equals(CredentialListRequest.class.getCanonicalName()))
+			break;
+
+		case "DIDResolveRequest":
+		case "CredentialResolveRequest":
+		case "CredentialListRequest":
 			ex = new MalformedResolveRequestException(message, cause);
-		else if (fqn.equals(DIDResolveResponse.class.getCanonicalName()) ||
-				fqn.equals(CredentialResolveResponse.class.getCanonicalName()) ||
-				fqn.equals(CredentialListResponse.class.getCanonicalName()))
+			break;
+
+		case "DIDResolveResponse":
+		case "CredentialResolveResponse":
+		case "CredentialListResponse":
 			ex = new MalformedResolveResponseException(message, cause);
-		else if (fqn.endsWith("Export"))
+			break;
+
+		case "DIDExport":
+		case "RootIdentityExport":
 			ex = new MalformedExportDataException(message, cause);
-		else
+			break;
+
+		default:
 			ex = new DIDSyntaxException(message, cause);
+		}
 
 		return ex;
 	}

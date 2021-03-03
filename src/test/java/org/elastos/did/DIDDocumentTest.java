@@ -2244,12 +2244,12 @@ public class DIDDocumentTest {
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	DIDDocument resolved = controller.getSubject().resolve(true);
+    	DIDDocument resolved = controller.getSubject().resolve();
     	assertNull(resolved);
 
     	controller.publish(TestConfig.storePass);
 
-    	resolved = controller.getSubject().resolve(true);
+    	resolved = controller.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(controller.getSubject(), resolved.getSubject());
     	assertEquals(controller.getProof().getSignature(),
@@ -2265,12 +2265,12 @@ public class DIDDocumentTest {
     	assertEquals(did, doc.getSubject());
     	assertEquals(controller.getSubject(), doc.getController());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(controller.getSubject(), resolved.getController());
@@ -2289,7 +2289,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl1.isValid());
     	ctrl1.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = ctrl1.getSubject().resolve(true);
+    	DIDDocument resolved = ctrl1.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl1.getSubject(), resolved.getSubject());
     	assertEquals(ctrl1.getProof().getSignature(),
@@ -2301,7 +2301,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl2.isValid());
     	ctrl2.publish(TestConfig.storePass);
 
-    	resolved = ctrl2.getSubject().resolve(true);
+    	resolved = ctrl2.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl2.getSubject(), resolved.getSubject());
     	assertEquals(ctrl2.getProof().getSignature(),
@@ -2313,7 +2313,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl3.isValid());
     	ctrl3.publish(TestConfig.storePass);
 
-    	resolved = ctrl3.getSubject().resolve(true);
+    	resolved = ctrl3.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl3.getSubject(), resolved.getSubject());
     	assertEquals(ctrl3.getProof().getSignature(),
@@ -2344,13 +2344,13 @@ public class DIDDocumentTest {
     	Collections.sort(ctrls);
     	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.setEffectiveController(ctrl1.getSubject());
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(doc.getProof().getSignature(),
@@ -2368,7 +2368,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -2383,7 +2383,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -2398,7 +2398,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 	}
@@ -2411,12 +2411,12 @@ public class DIDDocumentTest {
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	DIDDocument resolved = controller.getSubject().resolve(true);
+    	DIDDocument resolved = controller.getSubject().resolve();
     	assertNull(resolved);
 
     	controller.publish(TestConfig.storePass);
 
-    	resolved = controller.getSubject().resolve(true);
+    	resolved = controller.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(controller.getSubject(), resolved.getSubject());
     	assertEquals(controller.getProof().getSignature(),
@@ -2432,12 +2432,12 @@ public class DIDDocumentTest {
     	assertEquals(did, doc.getSubject());
     	assertEquals(controller.getSubject(), doc.getController());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(controller.getSubject(), resolved.getController());
@@ -2457,7 +2457,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -2472,7 +2472,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
     }
@@ -2486,7 +2486,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl1.isValid());
     	ctrl1.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = ctrl1.getSubject().resolve(true);
+    	DIDDocument resolved = ctrl1.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl1.getSubject(), resolved.getSubject());
     	assertEquals(ctrl1.getProof().getSignature(),
@@ -2498,7 +2498,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl2.isValid());
     	ctrl2.publish(TestConfig.storePass);
 
-    	resolved = ctrl2.getSubject().resolve(true);
+    	resolved = ctrl2.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl2.getSubject(), resolved.getSubject());
     	assertEquals(ctrl2.getProof().getSignature(),
@@ -2510,7 +2510,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl3.isValid());
     	ctrl3.publish(TestConfig.storePass);
 
-    	resolved = ctrl3.getSubject().resolve(true);
+    	resolved = ctrl3.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl3.getSubject(), resolved.getSubject());
     	assertEquals(ctrl3.getProof().getSignature(),
@@ -2541,13 +2541,13 @@ public class DIDDocumentTest {
     	Collections.sort(ctrls);
     	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.setEffectiveController(ctrl1.getSubject());
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(doc.getProof().getSignature(),
@@ -2565,7 +2565,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
     	assertEquals(4, resolved.getPublicKeyCount());
@@ -2581,7 +2581,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
     	assertEquals(5, resolved.getPublicKeyCount());
@@ -2596,12 +2596,12 @@ public class DIDDocumentTest {
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	DIDDocument resolved = controller.getSubject().resolve(true);
+    	DIDDocument resolved = controller.getSubject().resolve();
     	assertNull(resolved);
 
     	controller.publish(TestConfig.storePass);
 
-    	resolved = controller.getSubject().resolve(true);
+    	resolved = controller.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(controller.getSubject(), resolved.getSubject());
     	assertEquals(controller.getProof().getSignature(),
@@ -2617,12 +2617,12 @@ public class DIDDocumentTest {
     	assertEquals(did, doc.getSubject());
     	assertEquals(controller.getSubject(), doc.getController());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(controller.getSubject(), resolved.getController());
@@ -2635,12 +2635,12 @@ public class DIDDocumentTest {
     	DIDDocument newController = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	resolved = newController.getSubject().resolve(true);
+    	resolved = newController.getSubject().resolve();
     	assertNull(resolved);
 
     	newController.publish(TestConfig.storePass);
 
-    	resolved = newController.getSubject().resolve(true);
+    	resolved = newController.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(newController.getSubject(), resolved.getSubject());
     	assertEquals(newController.getProof().getSignature(),
@@ -2663,7 +2663,7 @@ public class DIDDocumentTest {
     	// transfer
     	doc.publish(ticket, TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(newController.getSubject(), resolved.getController());
@@ -2681,12 +2681,12 @@ public class DIDDocumentTest {
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	DIDDocument resolved = controller.getSubject().resolve(true);
+    	DIDDocument resolved = controller.getSubject().resolve();
     	assertNull(resolved);
 
     	controller.publish(TestConfig.storePass);
 
-    	resolved = controller.getSubject().resolve(true);
+    	resolved = controller.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(controller.getSubject(), resolved.getSubject());
     	assertEquals(controller.getProof().getSignature(),
@@ -2702,12 +2702,12 @@ public class DIDDocumentTest {
     	assertEquals(did, doc.getSubject());
     	assertEquals(controller.getSubject(), doc.getController());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(controller.getSubject(), resolved.getController());
@@ -2727,7 +2727,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -2735,12 +2735,12 @@ public class DIDDocumentTest {
     	DIDDocument newController = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	resolved = newController.getSubject().resolve(true);
+    	resolved = newController.getSubject().resolve();
     	assertNull(resolved);
 
     	newController.publish(TestConfig.storePass);
 
-    	resolved = newController.getSubject().resolve(true);
+    	resolved = newController.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(newController.getSubject(), resolved.getSubject());
     	assertEquals(newController.getProof().getSignature(),
@@ -2762,7 +2762,7 @@ public class DIDDocumentTest {
     	// transfer
     	doc.publish(ticket, TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(newController.getSubject(), resolved.getController());
@@ -2781,7 +2781,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl1.isValid());
     	ctrl1.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = ctrl1.getSubject().resolve(true);
+    	DIDDocument resolved = ctrl1.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl1.getSubject(), resolved.getSubject());
     	assertEquals(ctrl1.getProof().getSignature(),
@@ -2793,7 +2793,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl2.isValid());
     	ctrl2.publish(TestConfig.storePass);
 
-    	resolved = ctrl2.getSubject().resolve(true);
+    	resolved = ctrl2.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl2.getSubject(), resolved.getSubject());
     	assertEquals(ctrl2.getProof().getSignature(),
@@ -2805,7 +2805,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl3.isValid());
     	ctrl3.publish(TestConfig.storePass);
 
-    	resolved = ctrl3.getSubject().resolve(true);
+    	resolved = ctrl3.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl3.getSubject(), resolved.getSubject());
     	assertEquals(ctrl3.getProof().getSignature(),
@@ -2836,13 +2836,13 @@ public class DIDDocumentTest {
     	Collections.sort(ctrls);
     	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.setEffectiveController(ctrl1.getSubject());
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(doc.getProof().getSignature(),
@@ -2876,7 +2876,7 @@ public class DIDDocumentTest {
     	// transfer
     	doc.publish(ticket, TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
 
     	assertEquals(did, resolved.getSubject());
@@ -2895,7 +2895,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl1.isValid());
     	ctrl1.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = ctrl1.getSubject().resolve(true);
+    	DIDDocument resolved = ctrl1.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl1.getSubject(), resolved.getSubject());
     	assertEquals(ctrl1.getProof().getSignature(),
@@ -2907,7 +2907,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl2.isValid());
     	ctrl2.publish(TestConfig.storePass);
 
-    	resolved = ctrl2.getSubject().resolve(true);
+    	resolved = ctrl2.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl2.getSubject(), resolved.getSubject());
     	assertEquals(ctrl2.getProof().getSignature(),
@@ -2919,7 +2919,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl3.isValid());
     	ctrl3.publish(TestConfig.storePass);
 
-    	resolved = ctrl3.getSubject().resolve(true);
+    	resolved = ctrl3.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl3.getSubject(), resolved.getSubject());
     	assertEquals(ctrl3.getProof().getSignature(),
@@ -2950,13 +2950,13 @@ public class DIDDocumentTest {
     	Collections.sort(ctrls);
     	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.setEffectiveController(ctrl1.getSubject());
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(doc.getProof().getSignature(),
@@ -2974,7 +2974,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
     	assertEquals(4, resolved.getPublicKeyCount());
@@ -3007,7 +3007,7 @@ public class DIDDocumentTest {
     	// transfer
     	doc.publish(ticket, TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
 
     	assertEquals(did, resolved.getSubject());
@@ -3026,7 +3026,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3041,7 +3041,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3058,7 +3058,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 	}
@@ -3072,7 +3072,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3087,7 +3087,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3118,7 +3118,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3150,7 +3150,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3168,7 +3168,7 @@ public class DIDDocumentTest {
 
     	doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 	}
@@ -3182,7 +3182,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3197,7 +3197,7 @@ public class DIDDocumentTest {
 
 		doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3214,7 +3214,7 @@ public class DIDDocumentTest {
 
 		doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 	}
@@ -3228,7 +3228,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3243,7 +3243,7 @@ public class DIDDocumentTest {
 
    		doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3274,7 +3274,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3290,7 +3290,7 @@ public class DIDDocumentTest {
 
     	doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 	}
@@ -3304,7 +3304,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3321,7 +3321,7 @@ public class DIDDocumentTest {
 
     	doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 	}
@@ -3335,13 +3335,13 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
     	doc.deactivate(TestConfig.storePass);
 
-    	doc = doc.getSubject().resolve(true);
+    	doc = doc.getSubject().resolve();
     	assertTrue(doc.isDeactivated());
 	}
 
@@ -3354,7 +3354,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -3369,12 +3369,12 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
     	doc.deactivate(TestConfig.storePass);
-    	doc = doc.getSubject().resolve(true);
+    	doc = doc.getSubject().resolve();
     	assertTrue(doc.isDeactivated());
 	}
 
@@ -3386,12 +3386,12 @@ public class DIDDocumentTest {
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	DIDDocument resolved = controller.getSubject().resolve(true);
+    	DIDDocument resolved = controller.getSubject().resolve();
     	assertNull(resolved);
 
     	controller.publish(TestConfig.storePass);
 
-    	resolved = controller.getSubject().resolve(true);
+    	resolved = controller.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(controller.getSubject(), resolved.getSubject());
     	assertEquals(controller.getProof().getSignature(),
@@ -3407,12 +3407,12 @@ public class DIDDocumentTest {
     	assertEquals(did, doc.getSubject());
     	assertEquals(controller.getSubject(), doc.getController());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(controller.getSubject(), resolved.getController());
@@ -3423,7 +3423,7 @@ public class DIDDocumentTest {
 
     	// Deactivate
     	doc.deactivate(TestConfig.storePass);
-    	doc = doc.getSubject().resolve(true);
+    	doc = doc.getSubject().resolve();
     	assertTrue(doc.isDeactivated());
     }
 
@@ -3435,12 +3435,12 @@ public class DIDDocumentTest {
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	DIDDocument resolved = controller.getSubject().resolve(true);
+    	DIDDocument resolved = controller.getSubject().resolve();
     	assertNull(resolved);
 
     	controller.publish(TestConfig.storePass);
 
-    	resolved = controller.getSubject().resolve(true);
+    	resolved = controller.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(controller.getSubject(), resolved.getSubject());
     	assertEquals(controller.getProof().getSignature(),
@@ -3456,12 +3456,12 @@ public class DIDDocumentTest {
     	assertEquals(did, doc.getSubject());
     	assertEquals(controller.getSubject(), doc.getController());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(controller.getSubject(), resolved.getController());
@@ -3481,13 +3481,13 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
     	// Deactivate
     	doc.deactivate(TestConfig.storePass);
-    	doc = doc.getSubject().resolve(true);
+    	doc = doc.getSubject().resolve();
     	assertTrue(doc.isDeactivated());
     }
 
@@ -3499,12 +3499,12 @@ public class DIDDocumentTest {
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	DIDDocument resolved = controller.getSubject().resolve(true);
+    	DIDDocument resolved = controller.getSubject().resolve();
     	assertNull(resolved);
 
     	controller.publish(TestConfig.storePass);
 
-    	resolved = controller.getSubject().resolve(true);
+    	resolved = controller.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(controller.getSubject(), resolved.getSubject());
     	assertEquals(controller.getProof().getSignature(),
@@ -3520,12 +3520,12 @@ public class DIDDocumentTest {
     	assertEquals(did, doc.getSubject());
     	assertEquals(controller.getSubject(), doc.getController());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(controller.getSubject(), resolved.getController());
@@ -3536,7 +3536,7 @@ public class DIDDocumentTest {
 
     	// Deactivate
     	controller.deactivate(did, TestConfig.storePass);
-    	doc = did.resolve(true);
+    	doc = did.resolve();
     	assertTrue(doc.isDeactivated());
     }
 
@@ -3548,12 +3548,12 @@ public class DIDDocumentTest {
     	DIDDocument controller = identity.newDid(TestConfig.storePass);
     	assertTrue(controller.isValid());
 
-    	DIDDocument resolved = controller.getSubject().resolve(true);
+    	DIDDocument resolved = controller.getSubject().resolve();
     	assertNull(resolved);
 
     	controller.publish(TestConfig.storePass);
 
-    	resolved = controller.getSubject().resolve(true);
+    	resolved = controller.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(controller.getSubject(), resolved.getSubject());
     	assertEquals(controller.getProof().getSignature(),
@@ -3569,12 +3569,12 @@ public class DIDDocumentTest {
     	assertEquals(did, doc.getSubject());
     	assertEquals(controller.getSubject(), doc.getController());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(controller.getSubject(), resolved.getController());
@@ -3594,13 +3594,13 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
     	// Deactivate
     	controller.deactivate(did, TestConfig.storePass);
-    	doc = did.resolve(true);
+    	doc = did.resolve();
     	assertTrue(doc.isDeactivated());
     }
 
@@ -3613,7 +3613,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl1.isValid());
     	ctrl1.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = ctrl1.getSubject().resolve(true);
+    	DIDDocument resolved = ctrl1.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl1.getSubject(), resolved.getSubject());
     	assertEquals(ctrl1.getProof().getSignature(),
@@ -3625,7 +3625,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl2.isValid());
     	ctrl2.publish(TestConfig.storePass);
 
-    	resolved = ctrl2.getSubject().resolve(true);
+    	resolved = ctrl2.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl2.getSubject(), resolved.getSubject());
     	assertEquals(ctrl2.getProof().getSignature(),
@@ -3637,7 +3637,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl3.isValid());
     	ctrl3.publish(TestConfig.storePass);
 
-    	resolved = ctrl3.getSubject().resolve(true);
+    	resolved = ctrl3.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl3.getSubject(), resolved.getSubject());
     	assertEquals(ctrl3.getProof().getSignature(),
@@ -3668,13 +3668,13 @@ public class DIDDocumentTest {
     	Collections.sort(ctrls);
     	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.setEffectiveController(ctrl1.getSubject());
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(doc.getProof().getSignature(),
@@ -3684,7 +3684,7 @@ public class DIDDocumentTest {
 
     	// Deactivate
     	doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
-    	doc = doc.getSubject().resolve(true);
+    	doc = doc.getSubject().resolve();
     	assertTrue(doc.isDeactivated());
 	}
 
@@ -3697,7 +3697,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl1.isValid());
     	ctrl1.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = ctrl1.getSubject().resolve(true);
+    	DIDDocument resolved = ctrl1.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl1.getSubject(), resolved.getSubject());
     	assertEquals(ctrl1.getProof().getSignature(),
@@ -3709,7 +3709,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl2.isValid());
     	ctrl2.publish(TestConfig.storePass);
 
-    	resolved = ctrl2.getSubject().resolve(true);
+    	resolved = ctrl2.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl2.getSubject(), resolved.getSubject());
     	assertEquals(ctrl2.getProof().getSignature(),
@@ -3721,7 +3721,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl3.isValid());
     	ctrl3.publish(TestConfig.storePass);
 
-    	resolved = ctrl3.getSubject().resolve(true);
+    	resolved = ctrl3.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl3.getSubject(), resolved.getSubject());
     	assertEquals(ctrl3.getProof().getSignature(),
@@ -3752,13 +3752,13 @@ public class DIDDocumentTest {
     	Collections.sort(ctrls);
     	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.setEffectiveController(ctrl1.getSubject());
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(doc.getProof().getSignature(),
@@ -3776,7 +3776,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
     	assertEquals(4, resolved.getPublicKeyCount());
@@ -3784,7 +3784,7 @@ public class DIDDocumentTest {
 
     	// Deactivate
     	doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
-    	doc = doc.getSubject().resolve(true);
+    	doc = doc.getSubject().resolve();
     	assertTrue(doc.isDeactivated());
 	}
 
@@ -3797,7 +3797,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl1.isValid());
     	ctrl1.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = ctrl1.getSubject().resolve(true);
+    	DIDDocument resolved = ctrl1.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl1.getSubject(), resolved.getSubject());
     	assertEquals(ctrl1.getProof().getSignature(),
@@ -3809,7 +3809,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl2.isValid());
     	ctrl2.publish(TestConfig.storePass);
 
-    	resolved = ctrl2.getSubject().resolve(true);
+    	resolved = ctrl2.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl2.getSubject(), resolved.getSubject());
     	assertEquals(ctrl2.getProof().getSignature(),
@@ -3821,7 +3821,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl3.isValid());
     	ctrl3.publish(TestConfig.storePass);
 
-    	resolved = ctrl3.getSubject().resolve(true);
+    	resolved = ctrl3.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl3.getSubject(), resolved.getSubject());
     	assertEquals(ctrl3.getProof().getSignature(),
@@ -3852,13 +3852,13 @@ public class DIDDocumentTest {
     	Collections.sort(ctrls);
     	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.setEffectiveController(ctrl1.getSubject());
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(doc.getProof().getSignature(),
@@ -3868,7 +3868,7 @@ public class DIDDocumentTest {
 
     	// Deactivate
     	ctrl1.deactivate(did, TestConfig.storePass);
-    	doc = did.resolve(true);
+    	doc = did.resolve();
     	assertTrue(doc.isDeactivated());
 	}
 
@@ -3881,7 +3881,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl1.isValid());
     	ctrl1.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = ctrl1.getSubject().resolve(true);
+    	DIDDocument resolved = ctrl1.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl1.getSubject(), resolved.getSubject());
     	assertEquals(ctrl1.getProof().getSignature(),
@@ -3893,7 +3893,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl2.isValid());
     	ctrl2.publish(TestConfig.storePass);
 
-    	resolved = ctrl2.getSubject().resolve(true);
+    	resolved = ctrl2.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl2.getSubject(), resolved.getSubject());
     	assertEquals(ctrl2.getProof().getSignature(),
@@ -3905,7 +3905,7 @@ public class DIDDocumentTest {
     	assertTrue(ctrl3.isValid());
     	ctrl3.publish(TestConfig.storePass);
 
-    	resolved = ctrl3.getSubject().resolve(true);
+    	resolved = ctrl3.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(ctrl3.getSubject(), resolved.getSubject());
     	assertEquals(ctrl3.getProof().getSignature(),
@@ -3936,13 +3936,13 @@ public class DIDDocumentTest {
     	Collections.sort(ctrls);
     	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNull(resolved);
 
     	doc.setEffectiveController(ctrl1.getSubject());
     	doc.publish(TestConfig.storePass);
 
-    	resolved = did.resolve(true);
+    	resolved = did.resolve();
     	assertNotNull(resolved);
     	assertEquals(did, resolved.getSubject());
     	assertEquals(doc.getProof().getSignature(),
@@ -3960,7 +3960,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve(true);
+    	resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
     	assertEquals(4, resolved.getPublicKeyCount());
@@ -3968,7 +3968,7 @@ public class DIDDocumentTest {
 
     	// Deactivate
     	ctrl2.deactivate(did, TestConfig.storePass);
-    	doc = did.resolve(true);
+    	doc = did.resolve();
     	assertTrue(doc.isDeactivated());
 	}
 
@@ -3981,7 +3981,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -4001,10 +4001,10 @@ public class DIDDocumentTest {
     	assertEquals(target.toString(), resolved.toString());
 
     	doc.deactivate(target.getSubject(), TestConfig.storePass);
-    	target = target.getSubject().resolve(true);
+    	target = target.getSubject().resolve();
     	assertTrue(target.isDeactivated());
 
-    	doc = doc.getSubject().resolve(true);
+    	doc = doc.getSubject().resolve();
     	assertFalse(doc.isDeactivated());
 	}
 
@@ -4025,7 +4025,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -4046,10 +4046,10 @@ public class DIDDocumentTest {
     	assertEquals(target.toString(), resolved.toString());
 
     	doc.deactivate(target.getSubject(), id, TestConfig.storePass);
-    	target = target.getSubject().resolve(true);
+    	target = target.getSubject().resolve();
     	assertTrue(target.isDeactivated());
 
-    	doc = doc.getSubject().resolve(true);
+    	doc = doc.getSubject().resolve();
     	assertFalse(doc.isDeactivated());
 	}
 
@@ -4070,7 +4070,7 @@ public class DIDDocumentTest {
 
     	doc.publish(TestConfig.storePass);
 
-    	DIDDocument resolved = doc.getSubject().resolve(true);
+    	DIDDocument resolved = doc.getSubject().resolve();
     	assertNotNull(resolved);
     	assertEquals(doc.toString(), resolved.toString());
 
@@ -4091,10 +4091,10 @@ public class DIDDocumentTest {
     	assertEquals(target.toString(), resolved.toString());
 
     	doc.deactivate(target.getSubject(), TestConfig.storePass);
-    	target = target.getSubject().resolve(true);
+    	target = target.getSubject().resolve();
     	assertTrue(target.isDeactivated());
 
-    	doc = doc.getSubject().resolve(true);
+    	doc = doc.getSubject().resolve();
     	assertFalse(doc.isDeactivated());
 	}
 }

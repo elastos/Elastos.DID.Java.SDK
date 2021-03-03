@@ -152,7 +152,7 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 	}
 
 	public List<DIDTransaction> getAllTransactions() {
-		return txs != null ? Collections.unmodifiableList(txs) : null;
+		return Collections.unmodifiableList(txs != null ? txs : Collections.emptyList());
 	}
 
 	/**

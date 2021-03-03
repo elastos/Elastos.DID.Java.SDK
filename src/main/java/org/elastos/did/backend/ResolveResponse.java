@@ -23,6 +23,7 @@
 package org.elastos.did.backend;
 
 import org.elastos.did.DIDEntity;
+import org.elastos.did.exception.MalformedResolveResponseException;
 import org.elastos.did.exception.MalformedResolveResultException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -119,15 +120,19 @@ public abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DID
 	}
 
 	@Override
-	protected void sanitize() throws MalformedResolveResultException {
+	protected void sanitize() throws MalformedResolveResponseException {
 		if (jsonRpcVersion == null || !jsonRpcVersion.equals(JSON_RPC_VERSION))
-			throw new MalformedResolveResultException("Invalid JsonRPC version");
+			throw new MalformedResolveResponseException("Invalid JsonRPC version");
 
 		if (result == null && error == null)
-			throw new MalformedResolveResultException("Missing result or error");
+			throw new MalformedResolveResponseException("Missing result or error");
 
-		if (result != null)
-			result.sanitize();
+		if (result != null) {
+			try {
+				result.sanitize();
+			} catch (MalformedResolveResultException e) {
+				throw new MalformedResolveResponseException("Invalid result", e);
+			}
+		}
 	}
-
 }

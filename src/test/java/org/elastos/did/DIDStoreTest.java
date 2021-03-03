@@ -133,7 +133,7 @@ public class DIDStoreTest {
         	doc.getMetadata().setAlias(alias);
         	assertTrue(doc.isValid());
 
-        	DIDDocument resolved = doc.getSubject().resolve(true);
+        	DIDDocument resolved = doc.getSubject().resolve();
         	assertNull(resolved);
 
         	doc.publish(TestConfig.storePass);
@@ -146,7 +146,7 @@ public class DIDStoreTest {
         	assertTrue(file.exists());
         	assertTrue(file.isFile());
 
-        	resolved = doc.getSubject().resolve(true);
+        	resolved = doc.getSubject().resolve();
         	assertNotNull(resolved);
         	store.storeDid(resolved);
         	assertEquals(alias, resolved.getMetadata().getAlias());
@@ -427,7 +427,7 @@ public class DIDStoreTest {
         	doc.getMetadata().setAlias(alias);
         	assertTrue(doc.isValid());
 
-        	DIDDocument resolved = doc.getSubject().resolve(true);
+        	DIDDocument resolved = doc.getSubject().resolve();
         	assertNull(resolved);
 
         	doc.publish(TestConfig.storePass);
@@ -444,7 +444,7 @@ public class DIDStoreTest {
         	assertTrue(file.exists());
         	assertTrue(file.isFile());
 
-        	resolved = doc.getSubject().resolve(true);
+        	resolved = doc.getSubject().resolve();
         	assertNotNull(resolved);
         	store.storeDid(resolved);
         	assertEquals(alias, resolved.getMetadata().getAlias());
