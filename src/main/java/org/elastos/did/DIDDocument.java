@@ -80,6 +80,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.SHA256Digest;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -127,7 +129,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	protected final static String PUBLICKEY = "publicKey";
 	protected final static String TYPE = "type";
 	protected final static String CONTROLLER = "controller";
-	protected static final String MULTI_SIGNATURE = "multisig";
+	protected final static String MULTI_SIGNATURE = "multisig";
 	protected final static String PUBLICKEY_BASE58 = "publicKeyBase58";
 	protected final static String AUTHENTICATION = "authentication";
 	protected final static String AUTHORIZATION = "authorization";
@@ -532,6 +534,22 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		@JsonProperty(SERVICE_ENDPOINT)
 		private String endpoint;
 
+		private Map<String, Object> properties;
+
+		protected Service(DIDURL id, String type, String endpoint,
+				Map<String, Object> properties) {
+			this.id = id;
+			this.type = type;
+			this.endpoint = endpoint;
+
+			if (properties != null && !properties.isEmpty()) {
+				this.properties = new TreeMap<String, Object>(properties);
+				this.properties.remove(ID);
+				this.properties.remove(TYPE);
+				this.properties.remove(SERVICE_ENDPOINT);
+			}
+		}
+
 		/**
 		 * Constructs Service with the given value.
 		 *
@@ -543,9 +561,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		protected Service(@JsonProperty(value = ID, required = true) DIDURL id,
 				@JsonProperty(value = TYPE, required = true) String type,
 				@JsonProperty(value = SERVICE_ENDPOINT, required = true) String endpoint) {
-			this.id = id;
-			this.type = type;
-			this.endpoint = endpoint;
+			this(id, type, endpoint, null);
 		}
 
 		/**
@@ -575,6 +591,42 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 */
 		public String getServiceEndpoint() {
 			return endpoint;
+		}
+
+		/**
+		 * Helper getter method for properties serialization.
+		 * NOTICE: Should keep the alphabetic serialization order.
+		 *
+		 * @return a String to Object map include all application defined
+		 *         properties
+		 */
+		@JsonAnyGetter
+		@JsonPropertyOrder(alphabetic = true)
+		private Map<String, Object> _getProperties() {
+			return properties;
+		}
+
+		/**
+		 * Helper setter method for properties deserialization.
+		 *
+		 * @param name the property name
+		 * @param value the property value
+		 */
+		@JsonAnySetter
+		private void setProperty(String name, Object value) {
+			if (name.equals(ID) || name.equals(TYPE) || name.equals(SERVICE_ENDPOINT))
+				return;
+
+			if (properties == null)
+				properties = new TreeMap<String, Object>();
+
+			properties.put(name, value);
+		}
+
+		public Map<String, Object> getProperties() {
+			// TODO: make it unmodifiable recursively
+			 return Collections.unmodifiableMap(properties != null ?
+					 properties : Collections.emptyMap());
 		}
 	}
 
@@ -4710,14 +4762,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * @param endpoint the service point's adderss
 		 * @return the DID Document Builder
 		 */
-		public Builder addService(DIDURL id, String type, String endpoint) {
+		public Builder addService(DIDURL id, String type, String endpoint,
+				Map<String, Object> properties) {
 			checkNotSealed();
 			checkArgument(id != null && (id.getDid() == null || id.getDid().equals(getSubject())),
 					"Invalid publicKey id");
 			checkArgument(type != null && !type.isEmpty(), "Invalid type");
 			checkArgument(endpoint != null && !endpoint.isEmpty(), "Invalid endpoint");
 
-			Service svc = new Service(canonicalId(id), type, endpoint);
+			Service svc = new Service(canonicalId(id), type, endpoint, properties);
 	        if (document.services == null)
 	        	document.services = new TreeMap<DIDURL, Service>();
 	        else {
@@ -4732,6 +4785,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			return this;
 		}
 
+		public Builder addService(String id, String type, String endpoint,
+				Map<String, Object> properties) {
+			return addService(canonicalId(id), type, endpoint, properties);
+		}
+
+		public Builder addService(DIDURL id, String type, String endpoint) {
+			return addService(id, type, endpoint, null);
+		}
+
 		/**
 		 * Add Service.
 		 *
@@ -4741,7 +4803,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * @return the DID Document Builder
 		 */
 		public Builder addService(String id, String type, String endpoint) {
-			return addService(canonicalId(id), type, endpoint);
+			return addService(canonicalId(id), type, endpoint, null);
 		}
 
         /**

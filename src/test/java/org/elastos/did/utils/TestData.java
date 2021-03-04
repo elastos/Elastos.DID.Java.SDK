@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -480,13 +481,40 @@ public final class TestData {
 						"https://openid.example.com/");
 				db.addService("#vcr", "CredentialRepositoryService",
 						"https://did.example.com/credentials");
+
+				Map<String, Object> map = new HashMap<String, Object>();
+				map.put("abc", "helloworld");
+				map.put("foo", 123);
+				map.put("bar", "foobar");
+				map.put("foobar", "lalala...");
+				map.put("date", Calendar.getInstance().getTime());
+				map.put("ABC", "Helloworld");
+				map.put("FOO", 678);
+				map.put("BAR", "Foobar");
+				map.put("FOOBAR", "Lalala...");
+				map.put("DATE", Calendar.getInstance().getTime());
+
+				Map<String, Object> props = new HashMap<String, Object>();
+				props.put("abc", "helloworld");
+				props.put("foo", 123);
+				props.put("bar", "foobar");
+				props.put("foobar", "lalala...");
+				props.put("date", Calendar.getInstance().getTime());
+				props.put("map", map);
+				props.put("ABC", "Helloworld");
+				props.put("FOO", 678);
+				props.put("BAR", "Foobar");
+				props.put("FOOBAR", "Lalala...");
+				props.put("DATE", Calendar.getInstance().getTime());
+				props.put("MAP", map);
+
 				db.addService("#carrier", "CarrierAddress",
-						"carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d");
+						"carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d", map);
 
 				Issuer selfIssuer = new Issuer(doc);
 				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
-				Map<String, Object> props = new HashMap<String, Object>();
+				props = new HashMap<String, Object>();
 				props.put("name", "John");
 				props.put("gender", "Male");
 				props.put("nation", "Singapore");
@@ -783,13 +811,40 @@ public final class TestData {
 
 				db.addService("#vault", "Hive.Vault.Service",
 						"https://foobar.com/vault");
+
+				Map<String, Object> map = new HashMap<String, Object>();
+				map.put("abc", "helloworld");
+				map.put("foo", 123);
+				map.put("bar", "foobar");
+				map.put("foobar", "lalala...");
+				map.put("date", Calendar.getInstance().getTime());
+				map.put("ABC", "Helloworld");
+				map.put("FOO", 678);
+				map.put("BAR", "Foobar");
+				map.put("FOOBAR", "Lalala...");
+				map.put("DATE", Calendar.getInstance().getTime());
+
+				Map<String, Object> props = new HashMap<String, Object>();
+				props.put("abc", "helloworld");
+				props.put("foo", 123);
+				props.put("bar", "foobar");
+				props.put("foobar", "lalala...");
+				props.put("date", Calendar.getInstance().getTime());
+				props.put("map", map);
+				props.put("ABC", "Helloworld");
+				props.put("FOO", 678);
+				props.put("BAR", "Foobar");
+				props.put("FOOBAR", "Lalala...");
+				props.put("DATE", Calendar.getInstance().getTime());
+				props.put("MAP", map);
+
 				db.addService("#vcr", "CredentialRepositoryService",
-						"https://foobar.com/credentials");
+						"https://foobar.com/credentials", props);
 
 				Issuer selfIssuer = new Issuer(doc, signKey);
 				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
-				Map<String, Object> props = new HashMap<String, Object>();
+				props = new HashMap<String, Object>();
 				props.put("name", "Foo Bar Inc");
 				props.put("language", "Chinese");
 				props.put("email", "contact@foobar.com");

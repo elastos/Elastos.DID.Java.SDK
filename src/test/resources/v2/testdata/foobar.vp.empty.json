@@ -1,12 +1,12 @@
 {
   "type" : "VerifiablePresentation",
-  "created" : "2021-02-20T11:35:35Z",
+  "created" : "2021-03-04T09:09:45Z",
   "verifiableCredential" : [ ],
   "proof" : {
     "type" : "ECDSAsecp256r1",
     "verificationMethod" : "did:elastos:foobar#key2",
     "realm" : "https://example.com/",
     "nonce" : "873172f58701a9ee686f0630204fee59",
-    "signature" : "abs-Rub8PK6TXNro2TW8zB98jM0BOMfqdzrhbp6GSgMCbE7cN1Ui9NgyArHFb6oizCHJ9miEYbR0V_Qzuyz9NQ"
+    "signature" : "l3yw_lc9DquHEabcBEZVuMCG_f0ij8krbw0xIiWZ2xlcmjHK1P_Fhw5UEv8COQp1eodKFj7kYpNEkC0UAAhC8Q"
   }
 }

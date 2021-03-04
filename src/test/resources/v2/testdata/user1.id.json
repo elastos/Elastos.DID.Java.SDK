@@ -4,12 +4,12 @@
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#key2",
     "type" : "ECDSAsecp256r1",
     "controller" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "publicKeyBase58" : "24PtaQR4W6jU8bhgQZqBrqRWg9GGPAzrDr6wBqsk6qqva"
+    "publicKeyBase58" : "hyWvmyLPvsXPTWeWgm7rRsCGwgu3hpbRrd1oaSQL5uta"
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#key3",
     "type" : "ECDSAsecp256r1",
     "controller" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "publicKeyBase58" : "cE1VLRC6vjDgqkzJ3XDbNNg3U1siU2hK4NBb3hDDjBxk"
+    "publicKeyBase58" : "23AfRNewoyWffnAcb5bEk9D83U6PTFtArHBtmXACzUTe7"
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
     "type" : "ECDSAsecp256r1",
@@ -18,8 +18,8 @@
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#recovery",
     "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:ibFWF2r9pkWPsEd25zdDFSAiRDEbs5LG1Y",
-    "publicKeyBase58" : "dTibakoefWV8KWJcDGvPDDaqRRSRTVcPcJUwKN6b22Tc"
+    "controller" : "did:elastos:ih86qUpaQB3LwrT6QHngLdiFXfbqBPykNS",
+    "publicKeyBase58" : "mDxXh8DoFMXbUb2hkEr6cy5FQm85ssxcRXAVo1jtUbHT"
   } ],
   "authentication" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#key2", "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#key3", "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary" ],
   "authorization" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#recovery" ],
@@ -27,24 +27,24 @@
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#email",
     "type" : [ "BasicProfileCredential", "EmailCredential", "InternetAccountCredential" ],
     "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-    "issuanceDate" : "2021-02-20T11:35:34Z",
-    "expirationDate" : "2026-02-20T11:35:34Z",
+    "issuanceDate" : "2021-03-04T09:09:44Z",
+    "expirationDate" : "2026-03-04T09:09:44Z",
     "credentialSubject" : {
       "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
       "email" : "john@example.com"
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-02-20T11:35:34Z",
+      "created" : "2021-03-04T09:09:44Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "2Rtbtc5NFDhJvG_SPVyHS1I4UIjs4gFDxrAog2PlE7y8_IgQLgOstHTSdw9U-k9ce6_OnlES8ZfzrnGfaZKxbQ"
+      "signature" : "uNY5S3NkhivGnHUCCROsLBFfWmuFQ6VdFhwyuj4auaRlUBVNpHB6KUhRUrTtQiEA7-ElirCXJZ0ksrmd6GuXIg"
     }
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#profile",
     "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
     "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "issuanceDate" : "2021-02-20T11:35:33Z",
-    "expirationDate" : "2026-02-20T11:35:33Z",
+    "issuanceDate" : "2021-03-04T09:09:44Z",
+    "expirationDate" : "2026-03-04T09:09:44Z",
     "credentialSubject" : {
       "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
       "email" : "john@example.com",
@@ -56,15 +56,49 @@
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-02-20T11:35:34Z",
+      "created" : "2021-03-04T09:09:44Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "KJl7OP327xD0rAl1cIJGgG9EKUqak8pDF0H2UICzU4uRGen6C3k5-4GWSZ0AimaAK7G20IN2HD8ZWAjkwP1F1w"
+      "signature" : "5oSMDkj9-VEACBBh4B9IVDXbIcNg9NEZZGAgMZ4TfaRLP0Vo8iRkiuIMUsTWoOzrt1Wbbf3sW3byBGKQkKQRnA"
     }
   } ],
   "service" : [ {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#carrier",
     "type" : "CarrierAddress",
-    "serviceEndpoint" : "carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d"
+    "serviceEndpoint" : "carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d",
+    "ABC" : "Helloworld",
+    "BAR" : "Foobar",
+    "DATE" : "2021-03-04T09:09:44Z",
+    "FOO" : 678,
+    "FOOBAR" : "Lalala...",
+    "MAP" : {
+      "ABC" : "Helloworld",
+      "BAR" : "Foobar",
+      "DATE" : "2021-03-04T09:09:44Z",
+      "FOO" : 678,
+      "FOOBAR" : "Lalala...",
+      "abc" : "helloworld",
+      "bar" : "foobar",
+      "date" : "2021-03-04T09:09:44Z",
+      "foo" : 123,
+      "foobar" : "lalala..."
+    },
+    "abc" : "helloworld",
+    "bar" : "foobar",
+    "date" : "2021-03-04T09:09:44Z",
+    "foo" : 123,
+    "foobar" : "lalala...",
+    "map" : {
+      "ABC" : "Helloworld",
+      "BAR" : "Foobar",
+      "DATE" : "2021-03-04T09:09:44Z",
+      "FOO" : 678,
+      "FOOBAR" : "Lalala...",
+      "abc" : "helloworld",
+      "bar" : "foobar",
+      "date" : "2021-03-04T09:09:44Z",
+      "foo" : 123,
+      "foobar" : "lalala..."
+    }
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#openid",
     "type" : "OpenIdConnectVersion1.0Service",
@@ -74,11 +108,11 @@
     "type" : "CredentialRepositoryService",
     "serviceEndpoint" : "https://did.example.com/credentials"
   } ],
-  "expires" : "2026-02-20T11:35:33Z",
+  "expires" : "2026-03-04T09:09:44Z",
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-02-20T11:35:34Z",
+    "created" : "2021-03-04T09:09:44Z",
     "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "gWDVv_tmcO0YTUAYQEacGPkSVYCX4jdDqXTmPCGYh7XBfi77GTsZa6ulrK-Iw19rRqSK9_yhzKbBw9ntKiSKKQ"
+    "signatureValue" : "VqeLSOSv0Uyz4jHsbHi1sCcehEHERsXyJUSTh33e2kXEyyQssQgc07resvfMPnLYOYr9s167_3QmelbFTdwdCg"
   }
 }

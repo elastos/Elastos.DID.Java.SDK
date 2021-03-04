@@ -254,6 +254,10 @@ public final class RootIdentity {
 		metadata.setAlias(alias);
 	}
 
+	public void setAsDefault() throws DIDStoreException {
+		getStore().setDefaultRootIdentity(this);
+	}
+
 	public DID getDefaultDid() {
 		return metadata.getDefaultDid();
 	}
