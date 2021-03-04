@@ -453,6 +453,15 @@ public final class DIDStore {
 		storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
 	}
 
+	protected void setDefaultRootIdentity(RootIdentity identity) throws DIDStoreException {
+		checkArgument(identity != null, "Invalid identity");
+
+		if (!containsRootIdentity(identity.getId()))
+			throw new IllegalArgumentException("Invalid identity, not exists in the store");
+
+		metadata.setDefaultRootIdentity(identity.getId());
+	}
+
     /**
      * Load private identity from DIDStore.
      *
@@ -485,8 +494,16 @@ public final class DIDStore {
 
 	public RootIdentity loadRootIdentity() throws DIDStoreException {
 		String id = metadata.getDefaultRootIdentity();
-		if (id == null || id.isEmpty())
-			return null;
+		if (id == null || id.isEmpty()) {
+			List<RootIdentity> ids = storage.listRootIdentities();
+			if (ids.size() != 1) {
+				return null;
+			} else {
+				RootIdentity identity = ids.get(0);
+				metadata.setDefaultRootIdentity(identity.getId());
+				return identity;
+			}
+		}
 
 		return loadRootIdentity(id);
 	}

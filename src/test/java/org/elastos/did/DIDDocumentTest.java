@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -1873,10 +1874,14 @@ public class DIDDocumentTest {
 		assertEquals(new DIDURL(doc.getSubject(), "#openid"), svc.getId());
 		assertEquals("OpenIdConnectVersion1.0Service", svc.getType());
 		assertEquals("https://openid.example.com/", svc.getServiceEndpoint());
+		Map<String, Object> props = svc.getProperties();
+		assertTrue(props.isEmpty());
 
 		svc = doc.getService(new DIDURL(doc.getSubject(), "#vcr"));
 		assertNotNull(svc);
 		assertEquals(new DIDURL(doc.getSubject(), "#vcr"), svc.getId());
+		props = svc.getProperties();
+		assertTrue(props.isEmpty());
 
 		// Service not exist, should fail.
 		svc = doc.getService("#notExistService");
@@ -1896,6 +1901,14 @@ public class DIDDocumentTest {
 		assertEquals(1, svcs.size());
 		assertEquals(new DIDURL(doc.getSubject(), "#carrier"),
 				svcs.get(0).getId());
+		props = svcs.get(0).getProperties();
+		if (version == 1) {
+			assertTrue(props.isEmpty());
+		} else {
+			assertEquals(12, props.size());
+			assertEquals("lalala...", props.get("foobar"));
+			assertEquals("Lalala...", props.get("FOOBAR"));
+		}
 
 		// Service not exist, should return a empty list.
 		svcs = doc.selectServices("#notExistService",
@@ -1939,10 +1952,16 @@ public class DIDDocumentTest {
 		assertEquals(new DIDURL(doc.getSubject(), "#vault"), svc.getId());
 		assertEquals("Hive.Vault.Service", svc.getType());
 		assertEquals("https://foobar.com/vault", svc.getServiceEndpoint());
+		Map<String, Object> props = svc.getProperties();
+		assertTrue(props.isEmpty());
 
 		svc = doc.getService(new DIDURL(doc.getSubject(), "#vcr"));
 		assertNotNull(svc);
 		assertEquals(new DIDURL(doc.getSubject(), "#vcr"), svc.getId());
+		props = svc.getProperties();
+		assertEquals(12, props.size());
+		assertEquals("lalala...", props.get("foobar"));
+		assertEquals("Lalala...", props.get("FOOBAR"));
 
 		// Service not exist, should fail.
 		svc = doc.getService("#notExistService");
@@ -2001,6 +2020,76 @@ public class DIDDocumentTest {
 		assertEquals("Service.Testing", svcs.get(1).getType());
 	}
 
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+	public void testAddServiceWithDescription(int version) throws DIDException, IOException {
+		testData.getRootIdentity();
+
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("abc", "helloworld");
+		map.put("foo", 123);
+		map.put("bar", "foobar");
+		map.put("foobar", "lalala...");
+		map.put("date", Calendar.getInstance().getTime());
+		map.put("ABC", "Helloworld");
+		map.put("FOO", 678);
+		map.put("BAR", "Foobar");
+		map.put("FOOBAR", "Lalala...");
+		map.put("DATE", Calendar.getInstance().getTime());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("abc", "helloworld");
+		props.put("foo", 123);
+		props.put("bar", "foobar");
+		props.put("foobar", "lalala...");
+		props.put("date", Calendar.getInstance().getTime());
+		props.put("map", map);
+		props.put("ABC", "Helloworld");
+		props.put("FOO", 678);
+		props.put("BAR", "Foobar");
+		props.put("FOOBAR", "Lalala...");
+		props.put("DATE", Calendar.getInstance().getTime());
+		props.put("MAP", map);
+
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		DIDDocument.Builder db = doc.edit();
+
+		// Add services
+		db.addService("#test-svc-1", "Service.Testing",
+				"https://www.elastos.org/testing1", props);
+
+		db.addService(new DIDURL(doc.getSubject(), "#test-svc-2"),
+				"Service.Testing", "https://www.elastos.org/testing2", props);
+
+		db.addService(new DIDURL(doc.getSubject(), "#test-svc-3"),
+				"Service.Testing", "https://www.elastos.org/testing3");
+
+		// Service id already exist, should failed.
+		assertThrows(DIDObjectAlreadyExistException.class, () -> {
+			db.addService("#vcr", "test", "https://www.elastos.org/test", props);
+		});
+
+		doc = db.seal(TestConfig.storePass);
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		// Check the final count
+		assertEquals(6, doc.getServiceCount());
+
+		// Try to select new added 2 services
+		List<Service> svcs = doc.selectServices((DIDURL)null, "Service.Testing");
+		assertEquals(3, svcs.size());
+		assertEquals("Service.Testing", svcs.get(0).getType());
+		assertTrue(!svcs.get(0).getProperties().isEmpty());
+		assertEquals("Service.Testing", svcs.get(1).getType());
+		assertTrue(!svcs.get(1).getProperties().isEmpty());
+		assertEquals("Service.Testing", svcs.get(2).getType());
+		assertTrue(svcs.get(2).getProperties().isEmpty());
+	}
+
     @Test
 	public void testAddServiceWithCid() throws DIDException, IOException {
 		TestData.CompatibleData cd = testData.getCompatibleData(2);
@@ -2043,6 +2132,83 @@ public class DIDDocumentTest {
 		assertEquals(2, svcs.size());
 		assertEquals("Service.Testing", svcs.get(0).getType());
 		assertEquals("Service.Testing", svcs.get(1).getType());
+	}
+
+    @Test
+	public void testAddServiceWithCidAndDescription() throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(2);
+		testData.getRootIdentity();
+
+		cd.getDocument("issuer");
+		DIDDocument user1 = cd.getDocument("user1");
+		cd.getDocument("user2");
+		DIDDocument user3 = cd.getDocument("user3");
+		cd.getDocument("examplecorp");
+
+		DIDDocument doc = cd.getDocument("foobar");
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		DIDDocument.Builder db = doc.edit(user3);
+
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("abc", "helloworld");
+		map.put("foo", 123);
+		map.put("bar", "foobar");
+		map.put("foobar", "lalala...");
+		map.put("date", Calendar.getInstance().getTime());
+		map.put("ABC", "Helloworld");
+		map.put("FOO", 678);
+		map.put("BAR", "Foobar");
+		map.put("FOOBAR", "Lalala...");
+		map.put("DATE", Calendar.getInstance().getTime());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("abc", "helloworld");
+		props.put("foo", 123);
+		props.put("bar", "foobar");
+		props.put("foobar", "lalala...");
+		props.put("date", Calendar.getInstance().getTime());
+		props.put("map", map);
+		props.put("ABC", "Helloworld");
+		props.put("FOO", 678);
+		props.put("BAR", "Foobar");
+		props.put("FOOBAR", "Lalala...");
+		props.put("DATE", Calendar.getInstance().getTime());
+		props.put("MAP", map);
+
+		// Add services
+		db.addService("#test-svc-1", "Service.Testing",
+				"https://www.elastos.org/testing1", props);
+
+		db.addService(new DIDURL(doc.getSubject(), "#test-svc-2"),
+				"Service.Testing", "https://www.elastos.org/testing2", props);
+
+		db.addService(new DIDURL(doc.getSubject(), "#test-svc-3"),
+				"Service.Testing", "https://www.elastos.org/testing3");
+
+		// Service id already exist, should failed.
+		assertThrows(DIDObjectAlreadyExistException.class, () -> {
+			db.addService("#vcr", "test", "https://www.elastos.org/test", props);
+		});
+
+		doc = db.seal(TestConfig.storePass);
+		doc = user1.sign(doc, TestConfig.storePass);
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		// Check the final count
+		assertEquals(5, doc.getServiceCount());
+
+		// Try to select new added 2 services
+		List<Service> svcs = doc.selectServices((DIDURL)null, "Service.Testing");
+		assertEquals(3, svcs.size());
+		assertEquals("Service.Testing", svcs.get(0).getType());
+		assertTrue(!svcs.get(0).getProperties().isEmpty());
+		assertEquals("Service.Testing", svcs.get(1).getType());
+		assertTrue(!svcs.get(1).getProperties().isEmpty());
+		assertEquals("Service.Testing", svcs.get(2).getType());
+		assertTrue(svcs.get(2).getProperties().isEmpty());
 	}
 
     @ParameterizedTest
