@@ -2,8 +2,8 @@
   "id" : "did:elastos:foobar#services",
   "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
   "issuer" : "did:elastos:foobar",
-  "issuanceDate" : "2021-03-04T09:09:45Z",
-  "expirationDate" : "2026-03-04T09:09:45Z",
+  "issuanceDate" : "2021-03-05T08:09:57Z",
+  "expirationDate" : "2026-03-05T08:09:57Z",
   "credentialSubject" : {
     "id" : "did:elastos:foobar",
     "Outsourceing" : "https://foobar.com/outsourcing",
@@ -11,8 +11,8 @@
   },
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-04T09:09:45Z",
+    "created" : "2021-03-05T08:09:57Z",
     "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signature" : "aaHcnGzx33C2KBZ8USnBn22e6nLRBkmD0VtqfGsSZDmBEoNdM9t90WAekmz8ofSfVsHui0No-N9xJoMven7rfA"
+    "signature" : "qNr028Qr8K8ezuK_753Qq093TqxXJp7kHeGi4mDdBTUCBU5HHtD9hPtI8ENZ1dqkuE9A1yt95Al-FGjr4ESwng"
   }
 }

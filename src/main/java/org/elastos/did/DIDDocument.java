@@ -885,8 +885,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	public void setEffectiveController(DID controller) {
-		if (!isCustomizedDid())
-			throw new NotCustomizedDIDException(getSubject().toString());
+		checkIsCustomized();
 
 		if (controller == null) {
 			effectiveController = controller;

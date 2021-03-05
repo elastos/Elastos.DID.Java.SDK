@@ -121,7 +121,7 @@ public class RootIdentityTest {
 	}
 
 	@Test
-	public void tesCreateDIDWithoutAlias() throws DIDException {
+	public void testCreateDIDWithoutAlias() throws DIDException {
     	RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
