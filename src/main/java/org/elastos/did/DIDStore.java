@@ -39,6 +39,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -49,6 +51,7 @@ import org.elastos.did.crypto.Aes256cbc;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.crypto.EcdsaSigner;
 import org.elastos.did.crypto.HDKey;
+import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStorageException;
 import org.elastos.did.exception.DIDStoreCryptoException;
 import org.elastos.did.exception.DIDStoreException;
@@ -88,6 +91,12 @@ public final class DIDStore {
 
 	private DIDStorage storage;
 	private Metadata metadata;
+
+	protected static final ConflictHandle defaultConflictHandle = (c, l) -> {
+		l.getMetadata().setPublished(c.getMetadata().getPublished());
+		l.getMetadata().setSignature(c.getMetadata().getSignature());
+		return l;
+	};
 
 	private static final Logger log = LoggerFactory.getLogger(DIDStore.class);
 
@@ -1329,6 +1338,85 @@ public final class DIDStore {
 
 		metadata.setFingerprint(calcFingerprint(newPassword));
 		cache.invalidateAll();
+	}
+
+	public void synchronize(ConflictHandle handle)
+			throws DIDResolveException, DIDStoreException {
+
+		if (handle == null)
+			handle = defaultConflictHandle;
+
+		List<RootIdentity> identities = storage.listRootIdentities();
+		for (RootIdentity identity : identities) {
+			identity.synchronize(handle);
+		}
+
+		List<DID> dids = storage.listDids();
+		for (DID did : dids) {
+			DIDDocument localDoc = storage.loadDid(did);
+			if (localDoc.isCustomizedDid()) {
+				DIDDocument resolvedDoc = did.resolve();
+				if (resolvedDoc == null)
+					continue;
+
+				DIDDocument finalDoc = resolvedDoc;
+
+				localDoc.getMetadata().detachStore();
+
+				if (localDoc.getSignature().equals(resolvedDoc.getSignature()) ||
+						(localDoc.getMetadata().getSignature() != null &&
+						localDoc.getProof().getSignature().equals(
+								localDoc.getMetadata().getSignature()))) {
+					finalDoc.getMetadata().merge(localDoc.getMetadata());
+				} else {
+					log.debug("{} on-chain copy conflict with local copy.",
+							did.toString());
+
+					// Local copy was modified
+					finalDoc = handle.merge(resolvedDoc, localDoc);
+					if (finalDoc == null || !finalDoc.getSubject().equals(did)) {
+						log.error("Conflict handle merge the DIDDocument error.");
+						throw new DIDStoreException("deal with local modification error.");
+					} else {
+						log.debug("Conflict handle return the final copy.");
+					}
+				}
+
+				storage.storeDid(finalDoc);
+			}
+
+			List<DIDURL> vcIds = storage.listCredentials(did);
+			for (DIDURL vcId : vcIds) {
+				VerifiableCredential localVc = storage.loadCredential(vcId);
+
+				VerifiableCredential resolvedVc = VerifiableCredential.resolve(vcId, localVc.getIssuer());
+				if (resolvedVc == null)
+					continue;
+
+				resolvedVc.getMetadata().merge(localVc.getMetadata());
+				storage.storeCredential(resolvedVc);
+			}
+		}
+	}
+
+	public void synchronize() throws DIDResolveException, DIDStoreException {
+		synchronize(null);
+	}
+
+	public CompletableFuture<Void> synchronizeAsync(ConflictHandle handle) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				synchronize(handle);
+			} catch (DIDResolveException | DIDStoreException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	public CompletableFuture<Void> synchronizeAsync() {
+		return synchronizeAsync(null);
 	}
 
 	@JsonPropertyOrder({ "type", "id", "document", "credential", "privatekey",
