@@ -33,12 +33,6 @@ public final class RootIdentity {
 
 	private static final Logger log = LoggerFactory.getLogger(RootIdentity.class);
 
-	private ConflictHandle defaultConflictHandle = (c, l) -> {
-		l.getMetadata().setPublished(c.getMetadata().getPublished());
-		l.getMetadata().setSignature(c.getMetadata().getSignature());
-		return l;
-	};
-
 	static class Metadata extends AbstractMetadata {
 		public static final String DEFAULT_DID = "defaultDid";
 
@@ -455,33 +449,36 @@ public final class RootIdentity {
 		checkArgument(index >= 0, "Invalid index");
 
 		if (handle == null)
-			handle = defaultConflictHandle;
+			handle = DIDStore.defaultConflictHandle;
 
 		DID did = getDid(index);
 		log.info("Synchronize {}/{}...", did.toString(), index);
 
-		DIDDocument chainCopy = did.resolve(true);
-		if (chainCopy == null) {
+		DIDDocument resolvedDoc = did.resolve(true);
+		if (resolvedDoc == null) {
 			log.info("Synchronize {}/{}...not exists", did.toString(), index);
 			return false;
 		}
 
 		log.debug("Synchronize {}/{}..exists, got the on-chain copy.", did.toString(), index);
-		DIDDocument finalCopy = chainCopy;
-		DIDDocument localCopy = getStore().loadDid(did);
-		if (localCopy != null) {
+		DIDDocument finalDoc = resolvedDoc;
+		DIDDocument localDoc = getStore().loadDid(did);
+		if (localDoc != null) {
 			// Update metadata off-store, then store back
-			localCopy.getMetadata().detachStore();
+			localDoc.getMetadata().detachStore();
 
-			if (localCopy.getMetadata().getSignature() == null ||
-					!localCopy.getProof().getSignature().equals(
-					localCopy.getMetadata().getSignature())) {
+			if (localDoc.getSignature().equals(resolvedDoc.getSignature()) ||
+					(localDoc.getMetadata().getSignature() != null &&
+					localDoc.getProof().getSignature().equals(
+							localDoc.getMetadata().getSignature()))) {
+				finalDoc.getMetadata().merge(localDoc.getMetadata());
+			} else {
 				log.debug("{} on-chain copy conflict with local copy.",
 						did.toString());
 
 				// Local copy was modified
-				finalCopy = handle.merge(chainCopy, localCopy);
-				if (finalCopy == null || !finalCopy.getSubject().equals(did)) {
+				finalDoc = handle.merge(resolvedDoc, localDoc);
+				if (finalDoc == null || !finalDoc.getSubject().equals(did)) {
 					log.error("Conflict handle merge the DIDDocument error.");
 					throw new DIDStoreException("deal with local modification error.");
 				} else {
@@ -490,11 +487,11 @@ public final class RootIdentity {
 			}
 		}
 
-		DIDMetadata metadata = finalCopy.getMetadata();
+		DIDMetadata metadata = finalDoc.getMetadata();
 		metadata.setRootIdentityId(getId());
 		metadata.setIndex(index);
 
-		getStore().storeDid(finalCopy);
+		getStore().storeDid(finalDoc);
 		return true;
 	}
 
