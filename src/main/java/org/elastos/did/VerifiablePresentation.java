@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -50,6 +51,7 @@ import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedPresentationException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -63,7 +65,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * This also helps prevent a verifier from reusing a verifiable presentation as
  * their own.
  */
-@JsonPropertyOrder({ VerifiablePresentation.TYPE,
+@JsonPropertyOrder({ VerifiablePresentation.ID,
+	VerifiablePresentation.TYPE,
+	VerifiablePresentation.HOLDER,
 	VerifiablePresentation.CREATED,
 	VerifiablePresentation.VERIFIABLE_CREDENTIAL,
 	VerifiablePresentation.PROOF })
@@ -73,7 +77,9 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 */
 	public final static String DEFAULT_PRESENTATION_TYPE = "VerifiablePresentation";
 
+	protected final static String ID = "id";
 	protected final static String TYPE = "type";
+	protected final static String HOLDER = "holder";
 	protected final static String VERIFIABLE_CREDENTIAL = "verifiableCredential";
 	protected final static String CREATED = "created";
 	protected final static String PROOF = "proof";
@@ -82,8 +88,16 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	protected final static String VERIFICATION_METHOD = "verificationMethod";
 	protected final static String SIGNATURE = "signature";
 
+	@JsonProperty(ID)
+	@JsonInclude(Include.NON_NULL)
+	private DIDURL id;
 	@JsonProperty(TYPE)
-	private String type;
+	@JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,
+			JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
+	private List<String> type;
+	@JsonProperty(HOLDER)
+	@JsonInclude(Include.NON_NULL)
+	private DID holder;
 	@JsonProperty(CREATED)
 	private Date created;
 	@JsonProperty(VERIFIABLE_CREDENTIAL)
@@ -197,10 +211,13 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	/**
 	 * Constructs the simplest Presentation.
 	 */
-	protected VerifiablePresentation() {
-		type = DEFAULT_PRESENTATION_TYPE;
-
+	protected VerifiablePresentation(DID holder) {
+		this.holder = holder;
 		credentials = new TreeMap<DIDURL, VerifiableCredential>();
+	}
+
+	protected VerifiablePresentation() {
+		this(null);
 	}
 
 	/**
@@ -209,7 +226,9 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @param vp the source VerifiablePresentation object.
 	 */
 	private VerifiablePresentation(VerifiablePresentation vp, boolean withProof) {
+		this.id = vp.id;
 		this.type = vp.type;
+		this.holder = vp.holder;
 		this.created = vp.created;
 		this.credentials = vp.credentials;
 		this._credentials = vp._credentials;
@@ -217,13 +236,34 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			this.proof = vp.proof;
 	}
 
+	public DIDURL getId() {
+		return id;
+	}
+
 	/**
 	 * Get the type of Presentation.
 	 *
 	 * @return the type string
 	 */
-	public String getType() {
-		return type;
+	public List<String> getType() {
+		return Collections.unmodifiableList(type);
+	}
+
+	/**
+	 * Get the holder of the Presentation.
+	 *
+	 * @return the holder's DID
+	 */
+	public DID getHolder() {
+		// NOTICE:
+		//
+		// DID 2 SDK should add the holder field as a mandatory field when
+		// create the presentation, at the same time should treat the holder
+		// field as an optional field when parse the presentation.
+		//
+		// This will ensure compatibility with the presentations that
+		// created by the old SDK.
+		return holder != null ? holder : proof.getVerificationMethod().getDid();
 	}
 
 	/**
@@ -262,6 +302,9 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	public VerifiableCredential getCredential(DIDURL id) {
 		checkArgument(id != null, "Invalid credential id");
 
+		if (id.getDid() == null)
+			id = new DIDURL(getHolder(), id);
+
 		return credentials.get(id);
 	}
 
@@ -272,7 +315,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return the Credential object
 	 */
 	public VerifiableCredential getCredential(String id) {
-		return getCredential(DIDURL.valueOf(getSigner(), id));
+		return getCredential(DIDURL.valueOf(getHolder(), id));
 	}
 
 	/**
@@ -285,15 +328,6 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Get signer of Presentation.
-	 *
-	 * @return the signer's DID
-	 */
-	public DID getSigner() {
-		return proof.getVerificationMethod().getDid();
-	}
-
-	/**
 	 * Sanitize routine before sealing or after deserialization.
 	 *
 	 * @param withProof check the proof object or not
@@ -301,7 +335,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 */
 	@Override
 	protected void sanitize() throws MalformedPresentationException {
-		if (type == null || type.length() == 0)
+		if (type == null || type.isEmpty())
 			throw new MalformedPresentationException("Missing presentation type");
 
 		if (created == null)
@@ -322,13 +356,14 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			}
 		}
 
-		this._credentials = new ArrayList<VerifiableCredential>(credentials.values());
-
 		if (proof == null)
 			throw new MalformedPresentationException("Missing presentation proof");
 
 		if (proof.getVerificationMethod().getDid() == null)
 			throw new MalformedPresentationException("Invalid verification method");
+
+		Collections.sort(type);
+		_credentials = new ArrayList<VerifiableCredential>(credentials.values());
 	}
 
 	/**
@@ -338,13 +373,12 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
 	public boolean isGenuine() throws DIDResolveException {
-		DID signer = getSigner();
-		DIDDocument signerDoc = signer.resolve();
-		if (signerDoc == null)
+		DIDDocument holderDoc = getHolder().resolve();
+		if (holderDoc == null)
 			return false;
 
-		// Check the integrity of signer' document.
-		if (!signerDoc.isGenuine())
+		// Check the integrity of holder' document.
+		if (!holderDoc.isGenuine())
 			return false;
 
 		// Unsupported public key type;
@@ -352,12 +386,12 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			return false;
 
 		// Credential should signed by authentication key.
-		if (!signerDoc.isAuthenticationKey(proof.getVerificationMethod()))
+		if (!holderDoc.isAuthenticationKey(proof.getVerificationMethod()))
 			return false;
 
-		// All credentials should owned by signer
+		// All credentials should owned by holder
 		for (VerifiableCredential vc : credentials.values()) {
-			if (!vc.getSubject().getId().equals(signer))
+			if (!vc.getSubject().getId().equals(getHolder()))
 				return false;
 
 			if (!vc.isGenuine())
@@ -367,7 +401,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		VerifiablePresentation vp = new VerifiablePresentation(this, false);
 		String json = vp.serialize(true);
 
-		return signerDoc.verify(proof.getVerificationMethod(),
+		return holderDoc.verify(proof.getVerificationMethod(),
 				proof.getSignature(), json.getBytes(),
 				proof.getRealm().getBytes(), proof.getNonce().getBytes());
 	}
@@ -397,13 +431,12 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
 	public boolean isValid() throws DIDResolveException {
-		DID signer = getSigner();
-		DIDDocument signerDoc = signer.resolve();
-		if (signerDoc == null)
+		DIDDocument holderDoc = getHolder().resolve();
+		if (holderDoc == null)
 			return false;
 
-		// Check the validity of signer' document.
-		if (!signerDoc.isValid())
+		// Check the validity of holder' document.
+		if (!holderDoc.isValid())
 			return false;
 
 		// Unsupported public key type;
@@ -411,12 +444,12 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			return false;
 
 		// Credential should signed by authentication key.
-		if (!signerDoc.isAuthenticationKey(proof.getVerificationMethod()))
+		if (!holderDoc.isAuthenticationKey(proof.getVerificationMethod()))
 			return false;
 
-		// All credentials should owned by signer
+		// All credentials should owned by holder
 		for (VerifiableCredential vc : credentials.values()) {
-			if (!vc.getSubject().getId().equals(signer))
+			if (!vc.getSubject().getId().equals(getHolder()))
 				return false;
 
 			if (!vc.isValid())
@@ -426,7 +459,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		VerifiablePresentation vp = new VerifiablePresentation(this, false);
 		String json = vp.serialize(true);
 
-		return signerDoc.verify(proof.getVerificationMethod(),
+		return holderDoc.verify(proof.getVerificationMethod(),
 				proof.getSignature(), json.getBytes(),
 				proof.getRealm().getBytes(), proof.getNonce().getBytes());
 	}
@@ -604,21 +637,21 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		checkArgument(did != null, "Invalid did");
 		checkArgument(store != null, "Invalid store");
 
-		DIDDocument signer = store.loadDid(did);
-		if (signer == null)
+		DIDDocument holder = store.loadDid(did);
+		if (holder == null)
 			throw new DIDNotFoundException(did.toString());
 
 		if (signKey == null) {
-			signKey = signer.getDefaultPublicKeyId();
+			signKey = holder.getDefaultPublicKeyId();
 		} else {
-			if (!signer.isAuthenticationKey(signKey))
+			if (!holder.isAuthenticationKey(signKey))
 				throw new InvalidKeyException(signKey.toString());
 		}
 
-		if (!signer.hasPrivateKey(signKey))
+		if (!holder.hasPrivateKey(signKey))
 			throw new InvalidKeyException("No private key: " + signKey);
 
-		return new Builder(signer, signKey);
+		return new Builder(holder, signKey);
 	}
 
 	public static Builder createFor(String did, String signKey, DIDStore store)
@@ -649,7 +682,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
      * Presentation Builder object to create presentation.
 	 */
 	public static class Builder {
-		private DIDDocument signer;
+		private DIDDocument holder;
 		private DIDURL signKey;
 		private String realm;
 		private String nonce;
@@ -658,19 +691,47 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		/**
 		 * Create a Builder object with issuer information.
 		 *
-		 * @param signer the Presentation's signer
+		 * @param holder the Presentation's holder
 		 * @param signKey the key to sign Presentation
 		 */
-		protected Builder(DIDDocument signer, DIDURL signKey) {
-			this.signer = signer;
+		protected Builder(DIDDocument holder, DIDURL signKey) {
+			this.holder = holder;
 			this.signKey = signKey;
-			this.presentation = new VerifiablePresentation();
+			this.presentation = new VerifiablePresentation(holder.getSubject());
 		}
 
 		private void checkNotSealed() throws AlreadySealedException{
 			if (presentation == null)
 				throw new AlreadySealedException();
 		}
+
+		public Builder id(DIDURL id) {
+			checkNotSealed();
+			checkArgument(id != null && (id.getDid() == null || id.getDid().equals(holder.getSubject())),
+					"Invalid id");
+
+			presentation.id = new DIDURL(holder.getSubject(), id);
+			return this;
+		}
+
+		public Builder id(String id) {
+			return id(DIDURL.valueOf(holder.getSubject(), id));
+		}
+
+		/**
+		 * Set Credential types.
+		 *
+		 * @param types the set of types
+		 * @return the Builder object
+		 */
+		public Builder type(String ... types) {
+			checkNotSealed();
+			checkArgument(types != null && types.length > 0, "Invalid types");
+
+			presentation.type = new ArrayList<String>(Arrays.asList(types));
+			return this;
+		}
+
 		/**
 		 * Add Credentials to Presentation.
 		 *
@@ -681,7 +742,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			checkNotSealed();
 
 			for (VerifiableCredential vc : credentials) {
-				if (!vc.getSubject().getId().equals(signer.getSubject()))
+				if (!vc.getSubject().getId().equals(holder.getSubject()))
 					throw new IllegalUsage(vc.getId().toString());
 
 				if (presentation.credentials.containsKey(vc.getId()))
@@ -740,13 +801,20 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			checkNotSealed();
 			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
+			if (presentation.type == null || presentation.type.isEmpty()) {
+				presentation.type = new ArrayList<String>();
+				presentation.type.add(DEFAULT_PRESENTATION_TYPE);
+			} else {
+				Collections.sort(presentation.type);
+			}
+
 			Calendar cal = Calendar.getInstance(Constants.UTC);
 			presentation.created = cal.getTime();
 
 			presentation._credentials = new ArrayList<VerifiableCredential>(presentation.credentials.values());
 
 			String json = presentation.serialize(true);
-			String sig = signer.sign(signKey, storepass, json.getBytes(),
+			String sig = holder.sign(signKey, storepass, json.getBytes(),
 					realm.getBytes(), nonce.getBytes());
 			Proof proof = new Proof(signKey, realm, nonce, sig);
 			presentation.proof = proof;

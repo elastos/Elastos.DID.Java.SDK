@@ -1,5 +1,6 @@
 {
-  "type" : "VerifiablePresentation",
+  "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#test-vp",
+  "type" : [ "FooBar", "TestPresentation" ],
   "holder" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
   "created" : "2021-03-05T08:09:56Z",
   "verifiableCredential" : [ {
@@ -78,6 +79,6 @@
     "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
     "realm" : "https://example.com/",
     "nonce" : "873172f58701a9ee686f0630204fee59",
-    "signature" : "_9WnTtccEMII8A8lz_ShXOjrUYbhRjI38nhYApOJ2RAjqNv0DkDzMu8bHnRmP6izxYhj_cgzFdlbKUpsY6ombQ"
+    "signature" : "T26Q-NdunEB-B01Mo7QvjoLIP5_M9NtlINB2akHPIZOwjCbzggA0YIoyLFQWLLi11yqT0XuyMIbMy5cLvN9qrA"
   }
 }

@@ -65,12 +65,12 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -108,6 +108,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	@JsonProperty(ID)
 	private DIDURL id;
 	@JsonProperty(TYPE)
+	@JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY})
 	private List<String> type;
 	@JsonProperty(ISSUER)
 	private DID issuer;
@@ -384,20 +385,6 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Type setter for deserialization.
-	 *
-	 * Should sort the types in alphabet order when setting the credential type.
-	 *
-	 * @param type the type names in String array
-	 */
-	@JsonSetter(TYPE)
-	private void setType(List<String> type) {
-		checkArgument(type != null && !type.isEmpty(), "Invalid credential type");
-		this.type = new ArrayList<String>(type);
-		Collections.sort(this.type);
-	}
-
-	/**
 	 * Get the credential issuer.
 	 *
 	 * @return the issuer's DID
@@ -497,6 +484,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		if (proof == null)
 			throw new MalformedCredentialException("Missing credential proof");
+
+		Collections.sort(type);
 
 		// Update id references
 		if (issuer == null)
@@ -1679,7 +1668,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			checkNotSealed();
 			checkArgument(types != null && types.length > 0, "Invalid types");
 
-			credential.setType(Arrays.asList(types));
+			credential.type = new ArrayList<String>(Arrays.asList(types));
+			Collections.sort(credential.type);
 			return this;
 		}
 

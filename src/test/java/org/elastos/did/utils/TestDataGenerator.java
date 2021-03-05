@@ -358,6 +358,24 @@ public class TestDataGenerator {
 		json = formatJson(vp.toString());
 		writeTo("user1.vp.empty.json", json);
 
+		pb = VerifiablePresentation.createFor(
+				doc.getSubject(), store);
+
+		vp = pb.id("#test-vp")
+				.type("TestPresentation", "FooBar")
+				.credentials(vcProfile, vcEmail)
+				.credentials(vcPassport)
+				.credentials(vcTwitter)
+				.realm("https://example.com/")
+				.nonce("873172f58701a9ee686f0630204fee59")
+				.seal(TestConfig.storePass);
+
+		json = vp.toString(true);
+		writeTo("user1.vp.optionalattrs.normalized.json", json);
+
+		json = formatJson( vp.toString());
+		writeTo("user1.vp.optionalattrs.json", json);
+
 		//System.out.println(vp.isValid() ? "OK" : "Error");
 		System.out.println("OK");
 	}
@@ -688,6 +706,24 @@ public class TestDataGenerator {
 
 		json = formatJson( vp.toString());
 		writeTo("foobar.vp.empty.json", json);
+
+		pb = VerifiablePresentation.createFor(
+				doc.getSubject(), signKey, store);
+
+		vp = pb.id("#test-vp")
+				.type("TestPresentation", "FooBar")
+				.credentials(vcProfile, vcEmail)
+				.credentials(vcServices)
+				.credentials(vcLicense)
+				.realm("https://example.com/")
+				.nonce("873172f58701a9ee686f0630204fee59")
+				.seal(TestConfig.storePass);
+
+		json = vp.toString(true);
+		writeTo("foobar.vp.optionalattrs.normalized.json", json);
+
+		json = formatJson( vp.toString());
+		writeTo("foobar.vp.optionalattrs.json", json);
 
 		System.out.println("OK");
 
