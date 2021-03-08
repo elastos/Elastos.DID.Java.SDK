@@ -734,6 +734,19 @@ public class TestDataGenerator {
 		json = tt.toString();
 		writeTo("foobar.tt.json", json);
 
+		DIDDocument newDoc = users[3].newCustomizedDid(did, true, TestConfig.storePass);
+
+		System.out.print(did + "...");
+
+		json = newDoc.toString(true);
+		writeTo("foobar.new-id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("foobar.new-id.json", json);
+
+		json = newDoc.toString(false);
+		writeTo("foobar.new-id.compact.json", json);
+
 		System.out.println("OK");
 	}
 
@@ -844,6 +857,20 @@ public class TestDataGenerator {
 
 		json = tt.toString();
 		writeTo("baz.tt.json", json);
+
+		DID[] newControllers = {users[0].getSubject()};
+		DIDDocument newDoc = users[3].newCustomizedDid(did, newControllers, 1, true, TestConfig.storePass);
+
+		System.out.print(did + "...");
+
+		json = newDoc.toString(true);
+		writeTo("baz.new-id.normalized.json", json);
+
+		json = formatJson(json);
+		writeTo("baz.new-id.json", json);
+
+		json = newDoc.toString(false);
+		writeTo("baz.new-id.compact.json", json);
 
 		System.out.println("OK");
 	}
