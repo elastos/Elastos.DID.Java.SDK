@@ -45,7 +45,7 @@ import org.elastos.did.exception.DIDObjectAlreadyExistException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.IllegalUsage;
+import org.elastos.did.exception.IllegalUsageException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedPresentationException;
@@ -743,7 +743,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
 			for (VerifiableCredential vc : credentials) {
 				if (!vc.getSubject().getId().equals(holder.getSubject()))
-					throw new IllegalUsage(vc.getId().toString());
+					throw new IllegalUsageException(vc.getId().toString());
 
 				if (presentation.credentials.containsKey(vc.getId()))
 					throw new DIDObjectAlreadyExistException(vc.getId().toString());

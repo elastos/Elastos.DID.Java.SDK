@@ -22,41 +22,54 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to use a credential
+ * that had been tampered with.
+ */
 public class CredentialNotGenuineException extends IllegalStateException {
 	private static final long serialVersionUID = 7919313395226661236L;
 
 	/**
-	 * Constructs the CredentialNotGenuineException.
+	 * Constructs a CredentialNotGenuineException with null as its error
+	 * detail message.
 	 */
 	public CredentialNotGenuineException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the CredentialNotGenuineException with the given message.
+	 * Constructs a CredentialNotGenuineException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public CredentialNotGenuineException(String message) {
-        super(message);
-    }
+	public CredentialNotGenuineException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the CredentialNotGenuineException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public CredentialNotGenuineException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a CredentialNotGenuineException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public CredentialNotGenuineException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the CredentialNotGenuineException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public CredentialNotGenuineException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a CredentialNotGenuineException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public CredentialNotGenuineException(Throwable cause) {
+		super(cause);
+	}
 }

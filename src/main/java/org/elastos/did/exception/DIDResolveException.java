@@ -23,43 +23,51 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the error occurs when resolving DID happen .
+ * Thrown to indicate that there is an error when resolving information
+ * from the ID chain.
  */
 public class DIDResolveException extends DIDBackendException {
 	private static final long serialVersionUID = 8679582737929676981L;
 
 	/**
-	 * Constructs the DIDResolveException.
+	 * Constructs a DIDResolveException with null as its error detail message.
 	 */
 	public DIDResolveException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the DIDResolveException with the given message.
+	 * Constructs a DIDResolveException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public DIDResolveException(String message) {
-        super(message);
-    }
+	public DIDResolveException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the DIDResolveException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public DIDResolveException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a DIDResolveException with the specified detail message
+	 * and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDResolveException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the DIDResolveException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public DIDResolveException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a DIDResolveException with the specified cause and
+	 * a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDResolveException(Throwable cause) {
+		super(cause);
+	}
 }

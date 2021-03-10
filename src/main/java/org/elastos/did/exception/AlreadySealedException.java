@@ -22,41 +22,53 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to seal the DID entity
+ * (e.g. DIDDocument, TransferTicket) that is already sealed.
+ */
 public class AlreadySealedException extends IllegalStateException {
 	private static final long serialVersionUID = -699642457101498362L;
 
 	/**
-	 * Constructs the AlreadySealedException.
+	 * Constructs an AlreadySealedException with null as its error
+	 * detail message.
 	 */
 	public AlreadySealedException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the AlreadySealedException with the given message.
+	 * Constructs an AlreadySealedException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public AlreadySealedException(String message) {
-        super(message);
-    }
+	public AlreadySealedException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the AlreadySealedException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public AlreadySealedException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs an AlreadySealedException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public AlreadySealedException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the AlreadySealedException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public AlreadySealedException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs an AlreadySealedException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public AlreadySealedException(Throwable cause) {
+		super(cause);
+	}
 }

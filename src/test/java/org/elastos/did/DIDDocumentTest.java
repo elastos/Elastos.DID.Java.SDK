@@ -49,7 +49,7 @@ import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDNotUpToDateException;
 import org.elastos.did.exception.DIDObjectAlreadyExistException;
 import org.elastos.did.exception.DIDObjectNotExistException;
-import org.elastos.did.exception.IllegalUsage;
+import org.elastos.did.exception.IllegalUsageException;
 import org.elastos.did.exception.NotPrimitiveDIDException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestConfig;
@@ -898,7 +898,7 @@ public class DIDDocumentTest {
 		});
 
 		// Try to add a key not owned by self, should fail.
-		assertThrows(IllegalUsage.class, () -> {
+		assertThrows(IllegalUsageException.class, () -> {
 			db.addAuthenticationKey("#recovery");
 		});
 
@@ -1243,7 +1243,7 @@ public class DIDDocumentTest {
 		});
 
 		// Try to add key owned by self, should fail.
-		assertThrows(IllegalUsage.class, () -> {
+		assertThrows(IllegalUsageException.class, () -> {
 			db.addAuthorizationKey("#key2");
 		});
 
@@ -1626,7 +1626,7 @@ public class DIDDocumentTest {
 		});
 
 		// Credential not belongs to current did, should fail.
-		assertThrows(IllegalUsage.class, () -> {
+		assertThrows(IllegalUsageException.class, () -> {
 			db.addCredential(cd.getCredential("user1", "passport"));
 		});
 

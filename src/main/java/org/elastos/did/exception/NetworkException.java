@@ -23,43 +23,50 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that network has error.
+ * Thrown to indicate that there is network error, such as a TCP error.
  */
 public class NetworkException extends DIDResolveException {
 	private static final long serialVersionUID = 5138182503100085191L;
 
 	/**
-	 * Constructs the NetworkException.
+	 * Constructs a NetworkException with null as its error detail message.
 	 */
 	public NetworkException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the NetworkException with the given message.
+	 * Constructs a NetworkException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public NetworkException(String message) {
-        super(message);
-    }
+	public NetworkException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the NetworkException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public NetworkException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a NetworkException with the specified detail message
+	 * and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NetworkException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the NetworkException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public NetworkException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a NetworkException with the specified cause and
+	 * a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NetworkException(Throwable cause) {
+		super(cause);
+	}
 }

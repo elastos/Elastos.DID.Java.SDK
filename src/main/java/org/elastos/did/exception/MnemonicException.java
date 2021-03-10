@@ -22,39 +22,49 @@
 
 package org.elastos.did.exception;
 
+/**
+ * * Thrown to indicate that there is an error when processing the mnemonic.
+ */
 public class MnemonicException extends DIDException {
 	private static final long serialVersionUID = -910235944635039126L;
 
 	/**
-	 * Constructs the MnemonicException.
+	 * Constructs a MnemonicException with null as its error detail message.
 	 */
 	public MnemonicException() {
 		super();
 	}
 
 	/**
-	 * Constructs the MnemonicException with the given message.
+	 * Constructs a MnemonicException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
 	public MnemonicException(String message) {
 		super(message);
 	}
 
 	/**
-	 * Constructs the MnemonicException with the given message and the reason.
+	 * Constructs a MnemonicException with the specified detail
+	 * message and cause.
 	 *
-	 * @param message the message string
-	 * @param cause   the reason
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
 	 */
 	public MnemonicException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
 	/**
-	 * Constructs the MnemonicException with the given reason.
+	 * Constructs a MnemonicException with the specified cause and
+	 * a detail message from that cause.
 	 *
-	 * @param cause the reason
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
 	 */
 	public MnemonicException(Throwable cause) {
 		super(cause);

@@ -22,41 +22,54 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to a DID document that
+ * expected a primitive DID but actually it's a customized DID
+ */
 public class NotPrimitiveDIDException extends IllegalStateException {
 	private static final long serialVersionUID = -2043595727792101843L;
 
 	/**
-	 * Constructs the NotPrimitiveDIDException.
+	 * Constructs a NotPrimitiveDIDException with null as its error
+	 * detail message.
 	 */
 	public NotPrimitiveDIDException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the NotPrimitiveDIDException with the given message.
+	 * Constructs a NotPrimitiveDIDException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public NotPrimitiveDIDException(String message) {
-        super(message);
-    }
+	public NotPrimitiveDIDException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the NotPrimitiveDIDException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public NotPrimitiveDIDException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a NotPrimitiveDIDException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NotPrimitiveDIDException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the NotPrimitiveDIDException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public NotPrimitiveDIDException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a NotPrimitiveDIDException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NotPrimitiveDIDException(Throwable cause) {
+		super(cause);
+	}
 }

@@ -22,41 +22,54 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to a DID document that
+ * expected a customized DID but actually it's a primitive DID
+ */
 public class NotCustomizedDIDException extends IllegalStateException {
 	private static final long serialVersionUID = 7135798211922961974L;
 
 	/**
-	 * Constructs the NotCustomizedDIDException.
+	 * Constructs a NotCustomizedDIDException with null as its error
+	 * detail message.
 	 */
 	public NotCustomizedDIDException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the NotCustomizedDIDException with the given message.
+	 * Constructs a NotCustomizedDIDException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public NotCustomizedDIDException(String message) {
-        super(message);
-    }
+	public NotCustomizedDIDException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the NotCustomizedDIDException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public NotCustomizedDIDException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a NotCustomizedDIDException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NotCustomizedDIDException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the NotCustomizedDIDException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public NotCustomizedDIDException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a NotCustomizedDIDException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NotCustomizedDIDException(Throwable cause) {
+		super(cause);
+	}
 }

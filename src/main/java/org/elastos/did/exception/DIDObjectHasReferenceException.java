@@ -23,32 +23,33 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the ID chain request is malformed.
+ * Unchecked exception thrown when an attempt is made to remove the DID object
+ * that still referenced by the others.
  */
-public class MalformedIDChainRequestException extends DIDSyntaxException {
-	private static final long serialVersionUID = -6312161054230656816L;
+public class DIDObjectHasReferenceException extends UnsupportedOperationException {
+	private static final long serialVersionUID = -4762287234931129061L;
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with null as its
-	 * error detail message.
+	 * Constructs a DIDObjectHasReferenceException with null as its error
+	 * detail message.
 	 */
-	public MalformedIDChainRequestException() {
+	public DIDObjectHasReferenceException() {
 		super();
 	}
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with the specified
+	 * Constructs a DIDObjectHasReferenceException with the specified
 	 * detail message.
 	 *
 	 * @param message The detail message
 	 */
-	public MalformedIDChainRequestException(String message) {
+	public DIDObjectHasReferenceException(String message) {
 		super(message);
 	}
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with the specified
-	 * detail message and cause.
+	 * Constructs a DIDObjectHasReferenceException with the specified detail
+	 * message and cause.
 	 *
 	 * Note that the detail message associated with cause is not automatically
 	 * incorporated into this exception's detail message.
@@ -57,18 +58,18 @@ public class MalformedIDChainRequestException extends DIDSyntaxException {
 	 * @param cause The cause. A null value is permitted, and indicates
 	 * 			that the cause is nonexistent or unknown
 	 */
-	public MalformedIDChainRequestException(String message, Throwable cause) {
+	public DIDObjectHasReferenceException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with the specified cause
+	 * Constructs a DIDObjectHasReferenceException with the specified cause
 	 * and a detail message from that cause.
 	 *
 	 * @param cause The cause. A null value is permitted, and indicates
 	 * 			that the cause is nonexistent or unknown
 	 */
-	public MalformedIDChainRequestException(Throwable cause) {
+	public DIDObjectHasReferenceException(Throwable cause) {
 		super(cause);
 	}
 }

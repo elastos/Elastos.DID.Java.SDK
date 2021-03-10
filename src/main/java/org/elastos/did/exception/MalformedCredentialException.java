@@ -29,37 +29,46 @@ public class MalformedCredentialException extends DIDSyntaxException {
 	private static final long serialVersionUID = -1775184934700973122L;
 
 	/**
-	 * Constructs the MalformedCredentialException.
+	 * Constructs a MalformedCredentialException with null as its error
+	 * detail message.
 	 */
 	public MalformedCredentialException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the MalformedCredentialException with the given message.
+	 * Constructs a MalformedCredentialException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public MalformedCredentialException(String message) {
-        super(message);
-    }
+	public MalformedCredentialException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the MalformedCredentialException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public MalformedCredentialException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a MalformedCredentialException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public MalformedCredentialException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the MalformedCredentialException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public MalformedCredentialException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a MalformedCredentialException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public MalformedCredentialException(Throwable cause) {
+		super(cause);
+	}
 }

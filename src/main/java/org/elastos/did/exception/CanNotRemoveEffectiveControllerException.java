@@ -23,31 +23,32 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the ID chain request is malformed.
+ * Unchecked exception thrown when an attempt is made to remove the current
+ * effective controller.
  */
-public class MalformedIDChainRequestException extends DIDSyntaxException {
-	private static final long serialVersionUID = -6312161054230656816L;
+public class CanNotRemoveEffectiveControllerException extends UnsupportedOperationException {
+	private static final long serialVersionUID = 6960339931843366361L;
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with null as its
+	 * Constructs a CanNotRemoveEffectiveControllerException with null as its
 	 * error detail message.
 	 */
-	public MalformedIDChainRequestException() {
+	public CanNotRemoveEffectiveControllerException() {
 		super();
 	}
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with the specified
+	 * Constructs a CanNotRemoveEffectiveControllerException with the specified
 	 * detail message.
 	 *
 	 * @param message The detail message
 	 */
-	public MalformedIDChainRequestException(String message) {
+	public CanNotRemoveEffectiveControllerException(String message) {
 		super(message);
 	}
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with the specified
+	 * Constructs a CanNotRemoveEffectiveControllerException with the specified
 	 * detail message and cause.
 	 *
 	 * Note that the detail message associated with cause is not automatically
@@ -57,18 +58,18 @@ public class MalformedIDChainRequestException extends DIDSyntaxException {
 	 * @param cause The cause. A null value is permitted, and indicates
 	 * 			that the cause is nonexistent or unknown
 	 */
-	public MalformedIDChainRequestException(String message, Throwable cause) {
+	public CanNotRemoveEffectiveControllerException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with the specified cause
-	 * and a detail message from that cause.
+	 * Constructs a CanNotRemoveEffectiveControllerException with the specified
+	 * cause and a detail message from that cause.
 	 *
 	 * @param cause The cause. A null value is permitted, and indicates
 	 * 			that the cause is nonexistent or unknown
 	 */
-	public MalformedIDChainRequestException(Throwable cause) {
+	public CanNotRemoveEffectiveControllerException(Throwable cause) {
 		super(cause);
 	}
 }

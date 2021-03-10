@@ -22,41 +22,54 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to a DID document
+ * that does not have an effective controller settled.
+ */
 public class NoEffectiveControllerException extends IllegalStateException {
 	private static final long serialVersionUID = -6124708390100400792L;
 
 	/**
-	 * Constructs the NoEffectiveControllerException.
+	 * Constructs a NoEffectiveControllerException with null as its error
+	 * detail message.
 	 */
 	public NoEffectiveControllerException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the NoEffectiveControllerException with the given message.
+	 * Constructs a NoEffectiveControllerException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public NoEffectiveControllerException(String message) {
-        super(message);
-    }
+	public NoEffectiveControllerException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the NoEffectiveControllerException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public NoEffectiveControllerException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a NoEffectiveControllerException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NoEffectiveControllerException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the NoEffectiveControllerException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public NoEffectiveControllerException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a NoEffectiveControllerException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NoEffectiveControllerException(Throwable cause) {
+		super(cause);
+	}
 }

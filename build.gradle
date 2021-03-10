@@ -73,12 +73,10 @@ javadoc {
     options.setLocale('en_US')
     options.showFromPublic()
 	options.links 'https://docs.oracle.com/en/java/javase/11/docs/api/'
-	options.links 'http://fasterxml.github.io/jackson-databind/javadoc/2.11/'
 	exclude 'org/bitcoinj/**'
 	exclude 'org/elastos/did/crypto'
 	exclude 'org/elastos/did/parser'
 	exclude 'org/elastos/did/util'
-    exclude 'org/elastos/did/adapter'
 }
 
 test {
