@@ -23,43 +23,52 @@
 package org.elastos.did.exception;
 
 /**
- * The transfer ticket object or JSON is malformed.
+ * Thrown to indicate that the transfer ticket is malformed.
  */
 public class MalformedTransferTicketException extends DIDSyntaxException {
 	private static final long serialVersionUID = 1681934901600980392L;
 
 	/**
-	 * Constructs the MalformedTransferTicketException.
+	 * Constructs a MalformedTransferTicketException with null as its error
+	 * detail message.
 	 */
 	public MalformedTransferTicketException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the MalformedTransferTicketException with the given message.
+	 * Constructs a MalformedTransferTicketException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public MalformedTransferTicketException(String message) {
-        super(message);
-    }
+	public MalformedTransferTicketException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the MalformedTransferTicketException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public MalformedTransferTicketException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a MalformedTransferTicketException with the specified
+	 * detail message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public MalformedTransferTicketException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the MalformedTransferTicketException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public MalformedTransferTicketException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a MalformedTransferTicketException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public MalformedTransferTicketException(Throwable cause) {
+		super(cause);
+	}
 }

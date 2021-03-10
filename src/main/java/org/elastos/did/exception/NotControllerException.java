@@ -23,43 +23,52 @@
 package org.elastos.did.exception;
 
 /**
- * Not a controller, can not perform operation.
+ * Unchecked exception thrown to indicate that the DID not a controller of
+ * the target DID document.
  */
 public class NotControllerException extends IllegalArgumentException {
 	private static final long serialVersionUID = 4789410432579474532L;
 
 	/**
-	 * Constructs the NotControllerException.
+	 * Constructs a NotControllerException with null as its error detail
+	 * message.
 	 */
 	public NotControllerException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the NotControllerException with the given message.
+	 * Constructs a NotControllerException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public NotControllerException(String message) {
-        super(message);
-    }
+	public NotControllerException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the NotControllerException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public NotControllerException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a NotControllerException with the specified detail message
+	 * and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NotControllerException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the NotControllerException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public NotControllerException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a NotControllerException with the specified cause and a
+	 * detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public NotControllerException(Throwable cause) {
+		super(cause);
+	}
 }

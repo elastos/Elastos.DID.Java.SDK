@@ -22,41 +22,54 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to use an expired
+ * credential.
+ */
 public class CredentialExpiredException extends IllegalStateException {
 	private static final long serialVersionUID = -5358238572068160552L;
 
 	/**
-	 * Constructs the CredentialExpiredException.
+	 * Constructs a CredentialExpiredException with null as its error
+	 * detail message.
 	 */
 	public CredentialExpiredException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the CredentialExpiredException with the given message.
+	 * Constructs a CredentialExpiredException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public CredentialExpiredException(String message) {
-        super(message);
-    }
+	public CredentialExpiredException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the CredentialExpiredException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public CredentialExpiredException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a CredentialExpiredException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public CredentialExpiredException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the CredentialExpiredException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public CredentialExpiredException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a CredentialExpiredException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public CredentialExpiredException(Throwable cause) {
+		super(cause);
+	}
 }

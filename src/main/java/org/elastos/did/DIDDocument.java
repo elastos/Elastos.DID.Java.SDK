@@ -48,7 +48,7 @@ import org.elastos.did.crypto.EcdsaSigner;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.AlreadySealedException;
 import org.elastos.did.exception.AlreadySignedException;
-import org.elastos.did.exception.CanNotRemoveEffectiveController;
+import org.elastos.did.exception.CanNotRemoveEffectiveControllerException;
 import org.elastos.did.exception.DIDAlreadyExistException;
 import org.elastos.did.exception.DIDBackendException;
 import org.elastos.did.exception.DIDDeactivatedException;
@@ -58,12 +58,12 @@ import org.elastos.did.exception.DIDNotFoundException;
 import org.elastos.did.exception.DIDNotGenuineException;
 import org.elastos.did.exception.DIDNotUpToDateException;
 import org.elastos.did.exception.DIDObjectAlreadyExistException;
-import org.elastos.did.exception.DIDObjectHasReference;
+import org.elastos.did.exception.DIDObjectHasReferenceException;
 import org.elastos.did.exception.DIDObjectNotExistException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.IllegalUsage;
+import org.elastos.did.exception.IllegalUsageException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedDocumentException;
@@ -3815,7 +3815,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			// checkArgument(document.controllers.contains(controller), "Controller not exists");
 
 			if (controller.equals(controllerDoc.getSubject()))
-				throw new CanNotRemoveEffectiveController(controller.toString());
+				throw new CanNotRemoveEffectiveControllerException(controller.toString());
 
 			if (document.controllers.remove(controller)) {
 				document.controllerDocs.remove(controller);
@@ -3964,11 +3964,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 	        // Can not remove default public key
 	        if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
-	            throw new DIDObjectHasReference(id.toString() + "is default key");
+	            throw new DIDObjectHasReferenceException(id.toString() + "is default key");
 
 	        if (!force) {
 	            if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
-	                throw new DIDObjectHasReference(id.toString());
+	                throw new DIDObjectHasReferenceException(id.toString());
 	        }
 
 	        if (document.publicKeys.remove(id) != null) {
@@ -4039,7 +4039,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 	        // Check the controller is current DID subject
 	        if (!key.getController().equals(getSubject()))
-	            throw new IllegalUsage(id.toString());
+	            throw new IllegalUsageException(id.toString());
 
 	        if (!key.isAuthenticationKey()) {
 	        	key.setAuthenticationKey(true);
@@ -4112,7 +4112,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 	        // Can not remove default public key
 	        if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
-	            throw new DIDObjectHasReference(
+	            throw new DIDObjectHasReferenceException(
 	                    "Cannot remove the default PublicKey from authentication.");
 
 	        if (key.isAuthenticationKey()) {
@@ -4158,7 +4158,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 	        // Can not authorize to self
 	        if (key.getController().equals(getSubject()))
-	            throw new IllegalUsage(id.toString());
+	            throw new IllegalUsageException(id.toString());
 
 	        if (!key.isAuthorizationKey()) {
 	        	key.setAuthorizationKey(true);
@@ -4198,7 +4198,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 			// Can not authorize to self
 			if (controller.equals(getSubject()))
-				throw new IllegalUsage("Key's controller is self.");
+				throw new IllegalUsageException("Key's controller is self.");
 
 			PublicKey key = new PublicKey(canonicalId(id), null, controller, pk);
 			key.setAuthorizationKey(true);
@@ -4379,7 +4379,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 	        // Check the credential belongs to current DID.
 	        if (!vc.getSubject().getId().equals(getSubject()))
-	            throw new IllegalUsage(vc.getSubject().getId().toString());
+	            throw new IllegalUsageException(vc.getSubject().getId().toString());
 
 	        if (document.credentials == null) {
 	            document.credentials = new TreeMap<DIDURL, VerifiableCredential>();

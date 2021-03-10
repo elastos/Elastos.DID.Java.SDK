@@ -22,39 +22,52 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to use a DID document
+ * that had been tampered with.
+ */
 public class DIDNotGenuineException extends IllegalStateException {
 	private static final long serialVersionUID = 6844706552213664890L;
 
 	/**
-	 * Constructs the DIDNotGenuineException.
+	 * Constructs a DIDNotGenuineException with null as its error
+	 * detail message.
 	 */
 	public DIDNotGenuineException() {
 		super();
 	}
 
 	/**
-	 * Constructs the DIDNotGenuineException with the given message.
+	 * Constructs a DIDNotGenuineException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
 	public DIDNotGenuineException(String message) {
 		super(message);
 	}
 
 	/**
-	 * Constructs the DIDNotGenuineException with the given message and the reason.
+	 * Constructs a DIDNotGenuineException with the specified detail
+	 * message and cause.
 	 *
-	 * @param message the message string
-	 * @param cause   the reason
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
 	 */
 	public DIDNotGenuineException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
 	/**
-	 * Constructs the DIDNotGenuineException with the given reason.
+	 * Constructs a DIDNotGenuineException with the specified cause
+	 * and a detail message from that cause.
 	 *
-	 * @param cause the reason
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
 	 */
 	public DIDNotGenuineException(Throwable cause) {
 		super(cause);

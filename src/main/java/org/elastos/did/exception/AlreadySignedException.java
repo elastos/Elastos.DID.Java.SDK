@@ -23,43 +23,53 @@
 package org.elastos.did.exception;
 
 /**
- * Object already signed by the specific DID.
+ * Unchecked exception thrown when an attempt is made to sign a DID entity
+ * (e.g. DIDDocument, TransferTicket) that is already signed by
+ * the specified DID.
  */
 public class AlreadySignedException extends IllegalStateException {
 	private static final long serialVersionUID = -7009590984618280753L;
 
 	/**
-	 * Constructs the AlreadySignedException.
+	 * Constructs an AlreadySignedException with null as its error
+	 * detail message.
 	 */
 	public AlreadySignedException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the AlreadySignedException with the given message.
+	 * Constructs an AlreadySignedException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public AlreadySignedException(String message) {
-        super(message);
-    }
+	public AlreadySignedException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the AlreadySignedException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public AlreadySignedException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs an AlreadySignedException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public AlreadySignedException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the AlreadySignedException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public AlreadySignedException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs an AlreadySignedException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public AlreadySignedException(Throwable cause) {
+		super(cause);
+	}
 }

@@ -23,44 +23,51 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the password is wrong.
+ * Thrown to indicate that the store password is wrong.
  */
 public class WrongPasswordException extends DIDStoreException {
 	private static final long serialVersionUID = 4562505118762225407L;
 
 	/**
-	 * Constructs the WrongPasswordException.
+	 * Constructs a WrongPasswordException with null as its error
+	 * detail message.
 	 */
 	public WrongPasswordException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the WrongPasswordException with the given message.
+	 * Constructs a WrongPasswordException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public WrongPasswordException(String message) {
-        super(message);
-    }
+	public WrongPasswordException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the WrongPasswordException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public WrongPasswordException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a WrongPasswordException with the specified detail message
+	 * and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public WrongPasswordException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the WrongPasswordException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public WrongPasswordException(Throwable cause) {
-        super(cause);
-    }
-
+	/**
+	 * Constructs a WrongPasswordException with the specified cause and
+	 * a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public WrongPasswordException(Throwable cause) {
+		super(cause);
+	}
 }

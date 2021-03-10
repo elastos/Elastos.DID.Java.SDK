@@ -22,41 +22,54 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to declare a credential
+ * that already declared on the ID chain.
+ */
 public class CredentialAlreadyExistException extends IllegalStateException {
 	private static final long serialVersionUID = -9206775914276417550L;
 
 	/**
-	 * Constructs the CredentialAlreadyExistException.
+	 * Constructs a CredentialAlreadyExistException with null as its error
+	 * detail message.
 	 */
 	public CredentialAlreadyExistException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the CredentialAlreadyExistException with the given message.
+	 * Constructs a CredentialAlreadyExistException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public CredentialAlreadyExistException(String message) {
-        super(message);
-    }
+	public CredentialAlreadyExistException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the CredentialAlreadyExistException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public CredentialAlreadyExistException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a CredentialAlreadyExistException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public CredentialAlreadyExistException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the CredentialAlreadyExistException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public CredentialAlreadyExistException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a CredentialAlreadyExistException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public CredentialAlreadyExistException(Throwable cause) {
+		super(cause);
+	}
 }

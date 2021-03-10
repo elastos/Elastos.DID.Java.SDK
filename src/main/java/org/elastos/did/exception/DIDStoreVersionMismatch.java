@@ -23,43 +23,52 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the version of DIDStore is not matched.
+ * Thrown to indicate that the DID store version are not matched with the
+ * current supported version(s).
  */
 public class DIDStoreVersionMismatch extends DIDStorageException {
 	private static final long serialVersionUID = -6055663490187295587L;
 
 	/**
-	 * Constructs the DIDStoreVersionMismatch.
+	 * Constructs a DIDStoreVersionMismatch with null as its error
+	 * detail message.
 	 */
 	public DIDStoreVersionMismatch() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the DIDStoreVersionMismatch with the given message.
+	 * Constructs a DIDStoreVersionMismatch with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public DIDStoreVersionMismatch(String message) {
-        super(message);
-    }
+	public DIDStoreVersionMismatch(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the DIDStoreVersionMismatch with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public DIDStoreVersionMismatch(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a DIDStoreVersionMismatch with the specified detail message
+	 * and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDStoreVersionMismatch(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the DIDStoreVersionMismatch with the given reason.
-     *
-     * @param cause the reason
-     */
-    public DIDStoreVersionMismatch(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a DIDStoreVersionMismatch with the specified cause and
+	 * a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDStoreVersionMismatch(Throwable cause) {
+		super(cause);
+	}
 }

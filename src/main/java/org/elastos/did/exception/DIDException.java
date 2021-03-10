@@ -23,43 +23,50 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the DID has error.
+ * DIDException is the superclass of all checked exceptions that can be thrown
+ * in the DID Java SDK.
  */
 public class DIDException extends Exception {
 	private static final long serialVersionUID = 559610221817300994L;
 
 	/**
-	 * Constructs the DIDException.
+	 * Constructs a DIDException with null as its error detail message.
 	 */
 	public DIDException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the DIDException with the given message.
+	 * Constructs a DIDException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public DIDException(String message) {
-        super(message);
-    }
+	public DIDException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the DIDException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public DIDException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a DIDException with the specified detail message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the DIDException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public DIDException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a DIDException with the specified cause and a detail message
+	 * from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDException(Throwable cause) {
+		super(cause);
+	}
 }

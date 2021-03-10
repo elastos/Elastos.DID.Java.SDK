@@ -23,32 +23,32 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the ID chain request is malformed.
+ * Unchecked exception thrown when an attempt is made to use a DID entity
+ * (credential, key...) in invalid mode.
  */
-public class MalformedIDChainRequestException extends DIDSyntaxException {
-	private static final long serialVersionUID = -6312161054230656816L;
+public class IllegalUsageException extends IllegalArgumentException {
+	private static final long serialVersionUID = -8745944921459980506L;
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with null as its
-	 * error detail message.
+	 * Constructs an IllegalUsageException with null as its error detail
+	 * message.
 	 */
-	public MalformedIDChainRequestException() {
+	public IllegalUsageException() {
 		super();
 	}
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with the specified
-	 * detail message.
+	 * Constructs an IllegalUsageException with the specified detail message.
 	 *
 	 * @param message The detail message
 	 */
-	public MalformedIDChainRequestException(String message) {
+	public IllegalUsageException(String message) {
 		super(message);
 	}
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with the specified
-	 * detail message and cause.
+	 * Constructs an IllegalUsageException with the specified detail message
+	 * and cause.
 	 *
 	 * Note that the detail message associated with cause is not automatically
 	 * incorporated into this exception's detail message.
@@ -57,18 +57,18 @@ public class MalformedIDChainRequestException extends DIDSyntaxException {
 	 * @param cause The cause. A null value is permitted, and indicates
 	 * 			that the cause is nonexistent or unknown
 	 */
-	public MalformedIDChainRequestException(String message, Throwable cause) {
+	public IllegalUsageException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
 	/**
-	 * Constructs a MalformedIDChainRequestException with the specified cause
-	 * and a detail message from that cause.
+	 * Constructs an IllegalUsageException with the specified cause and
+	 * a detail message from that cause.
 	 *
 	 * @param cause The cause. A null value is permitted, and indicates
 	 * 			that the cause is nonexistent or unknown
 	 */
-	public MalformedIDChainRequestException(Throwable cause) {
+	public IllegalUsageException(Throwable cause) {
 		super(cause);
 	}
 }

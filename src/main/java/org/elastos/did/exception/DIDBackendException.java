@@ -23,43 +23,51 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the DIDBackend has error.
+ * DIDBackendException is the superclass of all exceptions that related with
+ * the DID backend. Thrown when the DID backend fails on the DID operations.
  */
 public class DIDBackendException extends DIDException {
 	private static final long serialVersionUID = -5520759922075837222L;
 
 	/**
-	 * Constructs the DIDBackendException.
+	 * Constructs a DIDBackendException with null as its error detail message.
 	 */
 	public DIDBackendException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the DIDBackendException with the given message.
+	 * Constructs a DIDBackendException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public DIDBackendException(String message) {
-        super(message);
-    }
+	public DIDBackendException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the DIDBackendException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public DIDBackendException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a DIDBackendException with the specified detail message
+	 * and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDBackendException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the DIDBackendException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public DIDBackendException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a DIDBackendException with the specified cause and
+	 * a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDBackendException(Throwable cause) {
+		super(cause);
+	}
 }

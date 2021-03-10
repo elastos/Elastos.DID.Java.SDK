@@ -23,7 +23,8 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the DIDBackend has error.
+ * Unchecked exception thrown when an attempt is made to use a DID
+ * that had been deactivated.
  */
 public class DIDDeactivatedException extends IllegalStateException {
 	private static final long serialVersionUID = -3106736642975911944L;
@@ -32,34 +33,34 @@ public class DIDDeactivatedException extends IllegalStateException {
 	 * Constructs the DIDDeactivatedException.
 	 */
 	public DIDDeactivatedException() {
-        super();
-    }
+		super();
+	}
 
 	/**
 	 * Constructs the DIDDeactivatedException with the given message.
 	 *
 	 * @param message the message string
 	 */
-    public DIDDeactivatedException(String message) {
-        super(message);
-    }
+	public DIDDeactivatedException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the DIDDeactivatedException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public DIDDeactivatedException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs the DIDDeactivatedException with the given message and the reason.
+	 *
+	 * @param message the message string
+	 * @param cause the reason
+	 */
+	public DIDDeactivatedException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the DIDDeactivatedException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public DIDDeactivatedException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs the DIDDeactivatedException with the given reason.
+	 *
+	 * @param cause the reason
+	 */
+	public DIDDeactivatedException(Throwable cause) {
+		super(cause);
+	}
 }

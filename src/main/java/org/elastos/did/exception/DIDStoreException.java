@@ -23,43 +23,50 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the DIDStore has error.
+ * Thrown to indicate that there is an error accessing the DID store.
  */
 public class DIDStoreException extends DIDException {
 	private static final long serialVersionUID = 7633316874572320014L;
 
 	/**
-	 * Constructs the DIDStoreException.
+	 * Constructs a DIDStoreException with null as its error detail message.
 	 */
 	public DIDStoreException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the DIDStoreException with the given message.
+	 * Constructs a DIDStoreException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public DIDStoreException(String message) {
-        super(message);
-    }
+	public DIDStoreException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the DIDStoreException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public DIDStoreException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a DIDStoreException with the specified detail message
+	 * and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDStoreException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the DIDStoreException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public DIDStoreException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a DIDStoreException with the specified cause and
+	 * a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDStoreException(Throwable cause) {
+		super(cause);
+	}
 }

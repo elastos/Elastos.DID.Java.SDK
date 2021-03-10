@@ -23,43 +23,49 @@
 package org.elastos.did.exception;
 
 /**
- * Thrown to indicate that the key is invalid.
+ * Unchecked exception thrown to indicate that the public key in invalid.
  */
 public class InvalidKeyException extends IllegalArgumentException {
 	private static final long serialVersionUID = 830761196969735364L;
 
 	/**
-	 * Constructs the InvalidKeyException.
+	 * Constructs an InvalidKeyException with null as its error detail message.
 	 */
 	public InvalidKeyException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the InvalidKeyException with the given message.
+	 * Constructs an InvalidKeyException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public InvalidKeyException(String message) {
-        super(message);
-    }
+	public InvalidKeyException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the InvalidKeyException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public InvalidKeyException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs an InvalidKeyException with the specified detail message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public InvalidKeyException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the InvalidKeyException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public InvalidKeyException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs an InvalidKeyException with the specified cause and a detail message
+	 * from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public InvalidKeyException(Throwable cause) {
+		super(cause);
+	}
 }

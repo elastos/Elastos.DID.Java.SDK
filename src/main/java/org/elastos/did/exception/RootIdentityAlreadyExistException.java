@@ -22,41 +22,54 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to create a
+ * RootIdentity that already exists.
+ */
 public class RootIdentityAlreadyExistException extends IllegalStateException {
 	private static final long serialVersionUID = -7962741794379789111L;
 
 	/**
-	 * Constructs the RootIdentityAlreadyExistException.
+	 * Constructs a RootIdentityAlreadyExistException with null as its error
+	 * detail message.
 	 */
 	public RootIdentityAlreadyExistException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the RootIdentityAlreadyExistException with the given message.
+	 * Constructs a RootIdentityAlreadyExistException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public RootIdentityAlreadyExistException(String message) {
-        super(message);
-    }
+	public RootIdentityAlreadyExistException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the RootIdentityAlreadyExistException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public RootIdentityAlreadyExistException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a RootIdentityAlreadyExistException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public RootIdentityAlreadyExistException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the RootIdentityAlreadyExistException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public RootIdentityAlreadyExistException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a RootIdentityAlreadyExistException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public RootIdentityAlreadyExistException(Throwable cause) {
+		super(cause);
+	}
 }

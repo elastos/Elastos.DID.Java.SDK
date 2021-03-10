@@ -22,41 +22,54 @@
 
 package org.elastos.did.exception;
 
+/**
+ * Unchecked exception thrown when an attempt is made to publish a DID document
+ * that not up to date.
+ */
 public class DIDNotUpToDateException extends IllegalStateException {
 	private static final long serialVersionUID = 6615124266302301082L;
 
 	/**
-	 * Constructs the DIDNotUpToDateException.
+	 * Constructs a DIDNotUpToDateException with null as its error
+	 * detail message.
 	 */
 	public DIDNotUpToDateException() {
-        super();
-    }
+		super();
+	}
 
 	/**
-	 * Constructs the DIDNotUpToDateException with the given message.
+	 * Constructs a DIDNotUpToDateException with the specified
+	 * detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
-    public DIDNotUpToDateException(String message) {
-        super(message);
-    }
+	public DIDNotUpToDateException(String message) {
+		super(message);
+	}
 
-    /**
-     * Constructs the DIDNotUpToDateException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
-    public DIDNotUpToDateException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Constructs a DIDNotUpToDateException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDNotUpToDateException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs the DIDNotUpToDateException with the given reason.
-     *
-     * @param cause the reason
-     */
-    public DIDNotUpToDateException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * Constructs a DIDNotUpToDateException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
+	public DIDNotUpToDateException(Throwable cause) {
+		super(cause);
+	}
 }

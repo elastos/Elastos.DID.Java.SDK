@@ -22,7 +22,7 @@
 
 /**
  * <p>
- * Defines the API for DID error.
+ * Defines the exception classes for the DID SDK.
  * </p>
  *
  * @since 1.0
