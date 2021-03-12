@@ -2382,11 +2382,49 @@ public class DIDDocumentTest {
 	}
 
 	@Test
+	public void testDerive2() throws DIDException, IOException {
+		DIDDocument doc = testData.getCompatibleData(2).getDocument("user1");
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		for (int i = 0; i < 1000; i++) {
+			String strKey = doc.derive(i, TestConfig.storePass);
+			HDKey key = HDKey.deserializeBase58(strKey);
+
+			byte[] binKey = Base58.decode(strKey);
+			byte[] sk = Arrays.copyOfRange(binKey, 46, 78);
+
+			assertEquals(key.getPrivateKeyBytes().length, sk.length);
+			assertArrayEquals(key.getPrivateKeyBytes(), sk);
+		}
+	}
+
+	@Test
 	public void testDeriveFromIdentifier() throws DIDException, IOException {
 		String identifier = "org.elastos.did.test";
 
 		RootIdentity identity = testData.getRootIdentity();
 		DIDDocument doc = identity.newDid(TestConfig.storePass);
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		for (int i = -100; i < 100; i++) {
+			String strKey = doc.derive(identifier, i, TestConfig.storePass);
+			HDKey key = HDKey.deserializeBase58(strKey);
+
+			byte[] binKey = Base58.decode(strKey);
+			byte[] sk = Arrays.copyOfRange(binKey, 46, 78);
+
+			assertEquals(key.getPrivateKeyBytes().length, sk.length);
+			assertArrayEquals(key.getPrivateKeyBytes(), sk);
+		}
+	}
+
+	@Test
+	public void testDeriveFromIdentifier2() throws DIDException, IOException {
+		String identifier = "org.elastos.did.test";
+
+		DIDDocument doc = testData.getCompatibleData(2).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 

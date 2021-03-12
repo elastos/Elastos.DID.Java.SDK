@@ -23,42 +23,57 @@
 package org.elastos.did.jwt;
 
 /**
- * Thrown to indicate that jwt is not supported.
+ * Exception thrown when receiving a JWT in a particular format/configuration
+ * that does not match the format expected by the application.
+ *
+ * <p>
+ * For example, this exception would be thrown if parsing an unsigned
+ * plaintext JWT when the application requires a cryptographically signed
+ * Claims JWS instead.
+ * </p>
  */
 public class UnsupportedJwtException extends JwtException {
 	private static final long serialVersionUID = 1633081027095276716L;
 
 	/**
-	 * Constructs the UnsupportedJwtException.
+	 * Constructs an UnsupportedJwtException with null as its error
+	 * detail message.
 	 */
 	public UnsupportedJwtException() {
 		super();
 	}
 
 	/**
-	 * Constructs the UnsupportedJwtException with the given message.
+	 * Constructs an UnsupportedJwtException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
 	public UnsupportedJwtException(String message) {
 		super(message);
 	}
 
-    /**
-     * Constructs the UnsupportedJwtException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
+	/**
+	 * Constructs an UnsupportedJwtException with the specified detail message
+	 * and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
 	public UnsupportedJwtException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-    /**
-     * Constructs the UnsupportedJwtException with the given reason.
-     *
-     * @param cause the reason
-     */
+	/**
+	 * Constructs an UnsupportedJwtException with the specified cause and
+	 * a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
 	public UnsupportedJwtException(Throwable cause) {
 		super(cause);
 	}

@@ -76,22 +76,22 @@ public class Main {
 			description = "Resolve DID from the ID side chain.")
 	public static class ResolveDid implements Callable<Integer> {
 		@Option(names = {"-n", "--network"}, description = "Avaliable networks: mainnet testnet")
-	    private String network = "mainnet";
+		private String network = "mainnet";
 
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
-	    private boolean force = false;
+		private boolean force = false;
 
 		@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
-	    private boolean compact = false;
+		private boolean compact = false;
 
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	    private boolean verbose = false;
+		private boolean verbose = false;
 
 		@Option(names = {"-o", "--out"}, description = "Output file, default is STDOUT.")
-	    private String outputFile;
+		private String outputFile;
 
 		@Parameters(paramLabel = "DID", index = "0", description = "The target DID.")
-	    private String didstr;
+		private String didstr;
 
 		@Override
 		public Integer call() throws Exception {
@@ -129,16 +129,16 @@ public class Main {
 			description = "Verify the DID document.")
 	public static class VerifyDocument implements Callable<Integer> {
 		@Option(names = {"-n", "--network"}, description = "Avaliable networks: mainnet testnet")
-	    private String network = "mainnet";
+		private String network = "mainnet";
 
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
-	    private boolean force = false;
+		private boolean force = false;
 
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	    private boolean verbose = false;
+		private boolean verbose = false;
 
 		@Parameters(paramLabel = "DOCUMENT", index = "0", description = "The DID document filename.")
-	    private String documentFile;
+		private String documentFile;
 
 		@Override
 		public Integer call() throws Exception {
@@ -164,16 +164,16 @@ public class Main {
 			description = "Verify the verifiable credential.")
 	public static class VerifyCredential implements Callable<Integer> {
 		@Option(names = {"-n", "--network"}, description = "Avaliable networks: mainnet testnet")
-	    private String network = "mainnet";
+		private String network = "mainnet";
 
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
-	    private boolean force = false;
+		private boolean force = false;
 
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	    private boolean verbose = false;
+		private boolean verbose = false;
 
 		@Parameters(paramLabel = "VC", index = "0", description = "The credential filename.")
-	    private String credentialFile;
+		private String credentialFile;
 
 		@Override
 		public Integer call() throws Exception {
@@ -199,16 +199,16 @@ public class Main {
 			description = "Verify the verifiable presentation.")
 	public static class VerifyPresentation implements Callable<Integer> {
 		@Option(names = {"-n", "--network"}, description = "Avaliable networks: mainnet testnet")
-	    private String network = "mainnet";
+		private String network = "mainnet";
 
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
-	    private boolean force = false;
+		private boolean force = false;
 
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	    private boolean verbose = false;
+		private boolean verbose = false;
 
 		@Parameters(paramLabel = "VP", index = "0", description = "The presentation filename.")
-	    private String presentationFile;
+		private String presentationFile;
 
 		@Override
 		public Integer call() throws Exception {
@@ -235,19 +235,19 @@ public class Main {
 		private static final int BASE64_OPT = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 
 		@Option(names = {"-n", "--network"}, description = "Avaliable networks: mainnet testnet")
-	    private String network = "mainnet";
+		private String network = "mainnet";
 
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
-	    private boolean force = false;
+		private boolean force = false;
 
 		@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
-	    private boolean compact = false;
+		private boolean compact = false;
 
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	    private boolean verbose = false;
+		private boolean verbose = false;
 
 		@Parameters(paramLabel = "JWT", index = "0", description = "The JWT token filename.")
-	    private String jwtFile;
+		private String jwtFile;
 
 		@Override
 		public Integer call() throws Exception {
@@ -285,13 +285,13 @@ public class Main {
 			description = "Simulated ID Chain for testing.")
 	public static class SimChain implements Callable<Integer> {
 		@Option(names = {"-i", "--interface"}, description = "Server interface, default: localhost")
-	    private String host = "localhost";
+		private String host = "localhost";
 
 		@Option(names = {"-p", "--port"}, description = "Server port, default 9123.")
-	    private int port = 9123;
+		private int port = 9123;
 
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	    private boolean verbose = false;
+		private boolean verbose = false;
 
 		@Override
 		public Integer call() throws Exception {
@@ -315,12 +315,12 @@ public class Main {
 
 	@Command(name = "org.elastos.did.util.Main", description = "Elastos DID command line tool.",
 		subcommands = {
-		    ResolveDid.class,
-		    VerifyDocument.class,
-		    VerifyCredential.class,
-		    VerifyPresentation.class,
-		    VerifyJwt.class,
-		    SimChain.class
+			ResolveDid.class,
+			VerifyDocument.class,
+			VerifyCredential.class,
+			VerifyPresentation.class,
+			VerifyJwt.class,
+			SimChain.class
 		})
 	public static class DIDCommand {
 	}

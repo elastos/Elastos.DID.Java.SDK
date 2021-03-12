@@ -29,26 +29,33 @@ import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 
 /**
- * The API contains the public key and private key.
+ * A {@code KeyProvider} can be used by a JwtParser or JwtBulder to find a
+ * signing key that should be used to verify or sign a JWS.
+ *
+ * Normally the {@code KeyProvider} related with a DID, the implementation
+ * will load the key from DID document or DID store.
  */
 public interface KeyProvider {
 	/**
-	 * Get public key from KeyProvider
+	 * Returns the signing key that should be used to validate a digital
+	 * signature for the JWS.
 	 *
-	 * @param id the owner of key
-	 * @return the PublicKey object
-	 * @throws InvalidKeyException the PublicKey is invalid.
+	 * @param id the id(DIDURL format) of the key
+	 * @return the JCE PublicKey object
+	 * @throws InvalidKeyException the id is invalid, or the key is invalid
 	 */
 	public PublicKey getPublicKey(String id) throws InvalidKeyException;
 
 	/**
-	 * Get private key from KeyProvider
+	 * Returns the signing key that should be used to sign the digital
+	 * signature for the JWS.
 	 *
-	 * @param id the owner of key
+	 * @param id the id(DIDURL format) of the key
 	 * @param storepass the password for DIDStore
-	 * @return the Privatekey object
-	 * @throws InvalidKeyException the PrivateKey is invalid.
-	 * @throws DIDStoreException there is no store to load private key.
+	 * @return the JCE PrivateKey object
+	 * @throws InvalidKeyException the id is invalid, or the key is invalid
+	 * @throws DIDStoreException if error occurred when read the private key
+	 * 			from DID store.
 	 */
 	public PrivateKey getPrivateKey(String id, String storepass)
 			throws InvalidKeyException, DIDStoreException;

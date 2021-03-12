@@ -64,16 +64,16 @@ public class JwsHeader extends Header {
 	public static final String CRITICAL = "crit";
 
 	/**
-	 * Constructs the JwsHeader with the given value.
+	 * Constructs a JwsHeader instance from an internal implementation object.
 	 *
-	 * @param impl the io.jsonwebtoken.JwsHeader object
+	 * @param impl An io.jsonwebtoken.JwsHeader object
 	 */
 	protected JwsHeader(io.jsonwebtoken.JwsHeader<?> impl) {
 		super(impl);
 	}
 
 	/**
-	 * Get implement of JwsHeader.
+	 * Get the internal implementation object.
 	 *
 	 * @return the io.jsonwebtoken.JwsHeader object
 	 */
@@ -81,18 +81,63 @@ public class JwsHeader extends Header {
 		return (io.jsonwebtoken.JwsHeader<?>) getImpl();
 	}
 
+	/**
+	 * Sets the JWS <code>typ</code> (Type) header value.
+	 * A {@code null} value will remove the property from the map.
+	 *
+	 * @param typ the JWS {@code typ} header value or {@code null} to
+	 *            remove the property from the map.
+	 * @return the {@code JwsHeader} instance for method chaining.
+	 */
 	@Override
 	public JwsHeader setType(String typ) {
 		super.setType(typ);
 		return this;
 	}
 
+	/**
+	 * Sets the JWS <code>cty</code> (Content Type) header parameter value.
+	 * A {@code null} value will remove the property from the map.
+	 *
+	 * <p>
+	 * In the normal case where nested signing or encryption operations are not
+	 * employed (i.e. a compact serialization JWT), the use of this header
+	 * parameter is NOT RECOMMENDED. In the case that nested signing or
+	 * encryption is employed, this Header Parameter MUST be present; in this
+	 * case, the value MUST be {@code JWT}, to indicate that a Nested JWT is
+	 * carried in this JWT. While media type names are not case-sensitive, it is
+	 * RECOMMENDED that {@code JWT} always be spelled using uppercase characters
+	 * for compatibility with legacy implementations. See <a href=
+	 * "https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-25#appendix-A.2">
+	 * JWT Appendix A.2</a> for an example of a Nested JWT.
+	 * </p>
+	 *
+	 * @param cty the JWS {@code cty} header value or {@code null} to
+	 *            remove the property from the map.
+	 * @return the {@code Header} instance for method chaining.
+	 */
 	@Override
 	public JwsHeader setContentType(String cty) {
 		super.setContentType(cty);
 		return this;
 	}
 
+	/**
+	 * Sets the JWS <code>zip</code> (Compression Algorithm) header parameter
+	 * value. A {@code null} value will remove the property from the map.
+	 *
+	 * <p>
+	 * The compression algorithm is NOT part of the <a href=
+	 * "https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-25">JWT
+	 * specification</a> and must be used carefully since, is not expected that
+	 * other libraries (including previous versions of this one) be able to
+	 * deserialize a compressed JTW body correctly.
+	 * </p>
+	 *
+	 * @param zip the JWS compression algorithm {@code zip} value or
+	 *            {@code null} to remove the property from the map.
+	 * @return the {@code Header} instance for method chaining.
+	 */
 	@Override
 	public JwsHeader setCompressionAlgorithm(String zip) {
 		super.setCompressionAlgorithm(zip);
@@ -100,8 +145,7 @@ public class JwsHeader extends Header {
 	}
 
 	/**
-	 * Returns the JWS <a href=
-	 * "https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-31#section-4.1.1">
+	 * Returns the JWS <a href="https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-31#section-4.1.1">
 	 * <code>alg</code></a> (algorithm) header value or {@code null} if not
 	 * present.
 	 *
@@ -122,10 +166,9 @@ public class JwsHeader extends Header {
 	}
 
 	/**
-	 * Sets the JWT <a href=
-	 * "https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-31#section-4.1.1">
+	 * Sets the JWT <a href="https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-31#section-4.1.1">
 	 * <code>alg</code></a> (Algorithm) header value. A {@code null} value will
-	 * remove the property from the JSON map.
+	 * remove the property from the header.
 	 *
 	 * <p>
 	 * The algorithm header parameter identifies the cryptographic algorithm
@@ -145,8 +188,7 @@ public class JwsHeader extends Header {
 	}
 
 	/**
-	 * Returns the JWS <a href=
-	 * "https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-31#section-4.1.4">
+	 * Returns the JWS <a href="https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-31#section-4.1.4">
 	 * <code>kid</code></a> (Key ID) header value or {@code null} if not
 	 * present.
 	 *
@@ -169,8 +211,7 @@ public class JwsHeader extends Header {
 	}
 
 	/**
-	 * Sets the JWT <a href=
-	 * "https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-31#section-4.1.4">
+	 * Sets the JWT <a href="https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-31#section-4.1.4">
 	 * <code>kid</code></a> (Key ID) header value. A {@code null} value will
 	 * remove the property from the JSON map.
 	 *
