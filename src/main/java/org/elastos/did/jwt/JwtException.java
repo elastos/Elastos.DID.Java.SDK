@@ -23,42 +23,51 @@
 package org.elastos.did.jwt;
 
 /**
- * Thrown to indicate that the error occurs when resolving DID happen .
+ * JwtException is the superclass of all checked exceptions that can be thrown
+ * in the JWT library.
+ *
+ * Thrown to indicate that there is an error when processing the JWT.
  */
 public class JwtException extends Exception {
 	private static final long serialVersionUID = 1836831555187953998L;
 
 	/**
-	 * Constructs the JwtException.
+	 * Constructs a JwtException with null as its error detail message.
 	 */
 	public JwtException() {
 		super();
 	}
 
 	/**
-	 * Constructs the JwtException with the given message.
+	 * Constructs a JwtException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
 	public JwtException(String message) {
 		super(message);
 	}
 
-    /**
-     * Constructs the JwtException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
+	/**
+	 * Constructs a JwtException with the specified detail message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
 	public JwtException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-    /**
-     * Constructs the JwtException with the given reason.
-     *
-     * @param cause the reason
-     */
+	/**
+	 * Constructs a JwtException with the specified cause and a detail message
+	 * from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
 	public JwtException(Throwable cause) {
 		super(cause);
 	}

@@ -22,7 +22,8 @@
 
 /**
  * <p>
- * Defines the API for JWT(JSON Web Token) including DID's information to be transferred.
+ * A Java implementation of
+ * <a href="https://tools.ietf.org/html/rfc7519">JSON Web Token (JWT) - RFC 7519</a>.
  * </p>
  *
  * @since 1.0

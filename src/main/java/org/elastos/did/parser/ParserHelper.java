@@ -45,23 +45,23 @@ public class ParserHelper {
 		};
 
 		CharStream input = CharStreams.fromString(didurl);
-        DIDURLLexer lexer = new DIDURLLexer(input);
-        lexer.removeErrorListeners();
-        lexer.addErrorListener(errorListener);
+		DIDURLLexer lexer = new DIDURLLexer(input);
+		lexer.removeErrorListeners();
+		lexer.addErrorListener(errorListener);
 
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        DIDURLParser parser = new DIDURLParser(tokens);
-        parser.removeErrorListeners();
-        parser.addErrorListener(errorListener);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		DIDURLParser parser = new DIDURLParser(tokens);
+		parser.removeErrorListeners();
+		parser.addErrorListener(errorListener);
 
-    	ParseTree tree;
+		ParseTree tree;
 
-    	if (didOnly)
-    		tree = parser.did();
-    	else
-    		tree = parser.didurl();
+		if (didOnly)
+			tree = parser.did();
+		else
+			tree = parser.didurl();
 
-    	ParseTreeWalker walker = new ParseTreeWalker();
-    	walker.walk(listener, tree);
+		ParseTreeWalker walker = new ParseTreeWalker();
+		walker.walk(listener, tree);
 	}
 }

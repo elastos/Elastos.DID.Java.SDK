@@ -29,16 +29,16 @@ package org.elastos.did.jwt;
  */
 public class Jws<B> extends Jwt<B> {
 	/**
-	 * Constructs the Jws with the given value.
+	 * Constructs the a Jws instance from an internal implementation object.
 	 *
-	 * @param impl An expanded (not compact/serialized) Signed JSON Web Token
+	 * @param impl An io.jsonwebtoken.Jws object
 	 */
 	protected Jws(io.jsonwebtoken.Jws<?> impl) {
 		super(impl);
 	}
 
 	/**
-	 * Get implement for Jws.
+	 * Get the internal implementation object.
 	 *
 	 * @return the io.jsonwebtoken.Jws object
 	 */
@@ -46,13 +46,19 @@ public class Jws<B> extends Jwt<B> {
 		return (io.jsonwebtoken.Jws<?>) getImpl();
 	}
 
+	/**
+	 * Returns the JWS {@link JwsHeader} or {@code null} if not present.
+	 *
+	 * @return the JWS {@link JwsHeader} or {@code null} if not present.
+	 */
 	@Override
 	public JwsHeader getHeader() {
-		return new JwsHeader(getImplAsJws().getHeader());
+		return getImplAsJws().getHeader() != null ?
+				new JwsHeader(getImplAsJws().getHeader()) : null;
 	}
 
 	/**
-	 * Get signature string from Jws.
+	 * Get signature of the JWS.
 	 * @return the signature string
 	 */
 	public String getSignature() {

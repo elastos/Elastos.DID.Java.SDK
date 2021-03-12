@@ -23,42 +23,51 @@
 package org.elastos.did.jwt;
 
 /**
- * Thrown to indicate that sign or verify failed.
+ * Thrown to indicate that either calculating a signature or verifying
+ * an existing signature of a JWT failed.
  */
 public class JwsSignatureException extends JwtException {
 	private static final long serialVersionUID = -4937907083671862158L;
 
 	/**
-	 * Constructs the JwsSignatureException.
+	 * Constructs a JwsSignatureException with null as its error
+	 * detail message.
 	 */
 	public JwsSignatureException() {
 		super();
 	}
 
 	/**
-	 * Constructs the JwsSignatureException with the given message.
+	 * Constructs a JwsSignatureException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
 	public JwsSignatureException(String message) {
 		super(message);
 	}
 
-    /**
-     * Constructs the JwsSignatureException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
+	/**
+	 * Constructs a JwsSignatureException with the specified detail
+	 * message and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
 	public JwsSignatureException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-    /**
-     * Constructs the JwsSignatureException with the given reason.
-     *
-     * @param cause the reason
-     */
+	/**
+	 * Constructs a JwsSignatureException with the specified cause
+	 * and a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
 	public JwsSignatureException(Throwable cause) {
 		super(cause);
 	}

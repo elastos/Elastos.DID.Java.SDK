@@ -22,40 +22,51 @@
 
 package org.elastos.did.jwt;
 
+/**
+ * Unchecked exception thrown indicate that the signing key used to sign
+ * the JWT is invalid.
+ */
 public class InvalidSignKeyException extends RuntimeException {
 	private static final long serialVersionUID = 248013710632693139L;
 
 	/**
-	 * Constructs the InvalidSignKeyException.
+	 * Constructs an InvalidSignKeyException with null as its error
+	 * detail message.
 	 */
 	public InvalidSignKeyException() {
 		super();
 	}
 
 	/**
-	 * Constructs the InvalidSignKeyException with the given message.
+	 * Constructs an InvalidSignKeyException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
 	public InvalidSignKeyException(String message) {
 		super(message);
 	}
 
 	/**
-	 * Constructs the InvalidSignKeyException with the given message and the
-	 * reason.
+	 * Constructs an InvalidSignKeyException with the specified detail message
+	 * and cause.
 	 *
-	 * @param message the message string
-	 * @param cause   the reason
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
 	 */
 	public InvalidSignKeyException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
 	/**
-	 * Constructs the InvalidSignKeyException with the given reason.
+	 * Constructs an InvalidSignKeyException with the specified cause and
+	 * a detail message from that cause.
 	 *
-	 * @param cause the reason
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
 	 */
 	public InvalidSignKeyException(Throwable cause) {
 		super(cause);

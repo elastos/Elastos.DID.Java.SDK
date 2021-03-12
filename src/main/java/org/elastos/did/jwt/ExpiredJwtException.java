@@ -23,42 +23,50 @@
 package org.elastos.did.jwt;
 
 /**
- * Thrown to indicate that jwt is expired.
+ *  Thrown to indicate that a JWT was accepted after it expired and
+ *  must be rejected.
  */
 public class ExpiredJwtException extends JwtException {
 	private static final long serialVersionUID = 1614188754800377048L;
 
 	/**
-	 * Constructs the ExpiredJwtException.
+	 * Constructs an ExpiredJwtException with null as its error detail message.
 	 */
 	public ExpiredJwtException() {
 		super();
 	}
 
 	/**
-	 * Constructs the ExpiredJwtException with the given message.
+	 * Constructs an ExpiredJwtException with the specified detail message.
 	 *
-	 * @param message the message string
+	 * @param message The detail message
 	 */
 	public ExpiredJwtException(String message) {
 		super(message);
 	}
 
-    /**
-     * Constructs the ExpiredJwtException with the given message and the reason.
-     *
-     * @param message the message string
-     * @param cause the reason
-     */
+	/**
+	 * Constructs an ExpiredJwtException with the specified detail message
+	 * and cause.
+	 *
+	 * Note that the detail message associated with cause is not automatically
+	 * incorporated into this exception's detail message.
+	 *
+	 * @param message The detail message
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
 	public ExpiredJwtException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-    /**
-     * Constructs the ExpiredJwtException with the given reason.
-     *
-     * @param cause the reason
-     */
+	/**
+	 * Constructs an ExpiredJwtException with the specified cause and
+	 * a detail message from that cause.
+	 *
+	 * @param cause The cause. A null value is permitted, and indicates
+	 * 			that the cause is nonexistent or unknown
+	 */
 	public ExpiredJwtException(Throwable cause) {
 		super(cause);
 	}

@@ -30,6 +30,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class JwtParser {
 	private io.jsonwebtoken.JwtParser impl;
 
+	/**
+	 * Construct a JwtParser instance from an internal implementation object.
+	 *
+	 * @param impl an io.jsonwebtoken.JwtParser object
+	 */
 	protected JwtParser(io.jsonwebtoken.JwtParser impl) {
 		this.impl = impl;
 	}
@@ -151,7 +156,7 @@ public class JwtParser {
 	 * compact string argument reflects an unsigned Claims JWT. An unsigned
 	 * Claims JWT has a {@link Claims} body and it is not cryptographically
 	 * signed.
-     *
+	 *
 	 * <b>If the compact string presented does not reflect an unsigned Claims
 	 * JWT, an {@link UnsupportedJwtException} will be thrown.</b>
 	 *
@@ -174,7 +179,6 @@ public class JwtParser {
 	 * @see #parsePlaintextJws(String)
 	 * @see #parseClaimsJws(String)
 	 * @see #parse(String)
-	 * @since 0.2
 	 */
 	public Jwt<Claims> parseClaimsJwt(String claimsJwt)
 			throws ExpiredJwtException, UnsupportedJwtException,
@@ -222,7 +226,6 @@ public class JwtParser {
 	 * @see #parseClaimsJwt(String)
 	 * @see #parseClaimsJws(String)
 	 * @see #parse(String)
-	 * @since 0.2
 	 */
 	public Jws<String> parsePlaintextJws(String plaintextJws)
 			throws UnsupportedJwtException, MalformedJwtException,
@@ -270,7 +273,6 @@ public class JwtParser {
 	 * @see #parseClaimsJwt(String)
 	 * @see #parsePlaintextJws(String)
 	 * @see #parse(String)
-	 * @since 0.2
 	 */
 	public Jws<Claims> parseClaimsJws(String claimsJws)
 			throws ExpiredJwtException, UnsupportedJwtException,

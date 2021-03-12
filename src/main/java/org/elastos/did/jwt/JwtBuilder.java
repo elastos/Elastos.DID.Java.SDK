@@ -43,10 +43,11 @@ public class JwtBuilder {
 	private io.jsonwebtoken.JwtBuilder impl;
 
 	/**
-	 * Constructs the JwtBuilder with the given value.
+	 * Constructs the JwtBuilder with the given issuer DID and the key
+	 * provider interface.
 	 *
 	 * @param issuer the issuer's DID string
-	 * @param keyProvider the KeyProvider object
+	 * @param keyProvider the KeyProvider interface
 	 */
 	public JwtBuilder(String issuer, KeyProvider keyProvider) {
 		checkArgument(issuer != null && !issuer.isEmpty(), "Invalid issuer");

@@ -43,16 +43,16 @@ public class JwtParserBuilder {
 	private KeyProvider keyProvider;
 
 	/**
-	 * Constructs the empty JwtParserBuilder.
+	 * Constructs a default JwtParserBuilder instance.
 	 */
 	public JwtParserBuilder() {
 		this(null);
 	}
 
 	/**
-	 * Constructs the JwtParserBuilder with the specified KeyProvider.
+	 * Constructs a JwtParserBuilder instance with the specific KeyProvider.
 	 *
-	 * @param keyProvider the KeyProvider object
+	 * @param keyProvider the KeyProvider interface
 	 */
 	public JwtParserBuilder(KeyProvider keyProvider) {
 		this.keyProvider = keyProvider;
@@ -231,10 +231,10 @@ public class JwtParserBuilder {
 	 * Sets the signing key id used to verify any discovered JWS digital
 	 * signature. If the specified JWT string is not a JWS (no signature), this
 	 * key is not used.
-     *
+	 *
 	 * Note that this key <em>MUST</em> be a valid key for the signature
 	 * algorithm found in the JWT header (as the {@code alg} header parameter).
-     *
+	 *
 	 * This method overwrites any previously set key.
 	 *
 	 * @param key the algorithm-specific signature verification key id to use to

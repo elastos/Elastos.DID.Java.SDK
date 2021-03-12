@@ -25,15 +25,26 @@ package org.elastos.did.jwt;
 /**
  * An expanded (not compact/serialized) JSON Web Token.
  *
- * @param <B> the type of the JWT body contents, either a String or a Claims instance.
+ * @param <B> the type of the JWT body contents, either a String or
+ * a Claims instance.
  */
 public class Jwt<B> {
 	private io.jsonwebtoken.Jwt<?, ?> impl;
 
+	/**
+	 * Construct a Jwt instance from an internal implementation object.
+	 *
+	 * @param impl An io.jsonwebtoken.Jwt object
+	 */
 	protected Jwt(io.jsonwebtoken.Jwt<?, ?> impl) {
 		this.impl = impl;
 	}
 
+	/**
+	 * Get the internal implementation object.
+	 *
+	 * @return the io.jsonwebtoken.Jwt object
+	 */
 	protected io.jsonwebtoken.Jwt<?, ?> getImpl() {
 		return impl;
 	}
@@ -44,7 +55,7 @@ public class Jwt<B> {
 	 * @return the JWT {@link Header} or {@code null} if not present.
 	 */
 	public Header getHeader() {
-		return new Header(impl.getHeader());
+		return impl.getHeader() != null ? new Header(impl.getHeader()) : null;
 	}
 
 	/**
