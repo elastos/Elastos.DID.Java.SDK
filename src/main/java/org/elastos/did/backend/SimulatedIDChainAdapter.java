@@ -26,19 +26,35 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.exception.DIDTransactionException;
 
+/**
+ * The DIDAdapter implementation for the Simulated ID chain.
+ */
 public class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 	private URL idtxEndpoint;
 
-	protected SimulatedIDChainAdapter(URL resolver, URL idtx) {
-		super(resolver.toString());
-		idtxEndpoint = idtx;
+	/**
+	 * Create a SimulatedIDChainAdapter instance at the endpoint.
+	 *
+	 * @param endpoint the HTTP server endpoint of the simulated ID chain
+	 * @throws MalformedURLException if the endpoint is malformed
+	 */
+	public SimulatedIDChainAdapter(URL endpoint) throws MalformedURLException {
+		super(new URL(endpoint, "resolve"));
+		idtxEndpoint = new URL(endpoint, "idtx");
 	}
 
+	/**
+	 * Create and publish the ID transaction.
+	 *
+	 * @param payload the ID request as transaction payload
+	 * @param memo the extra memo for this transaction
+	 */
 	@Override
 	public void createIdTransaction(String payload, String memo)
 			throws DIDTransactionException {

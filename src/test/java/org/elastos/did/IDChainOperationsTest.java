@@ -215,7 +215,7 @@ public class IDChainOperationsTest {
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
 		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(2, rr.getTransactionCount());
+		assertEquals(2, rr.size());
 		List<DIDTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(2, txs.size());
@@ -275,7 +275,7 @@ public class IDChainOperationsTest {
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
 		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.getTransactionCount());
+		assertEquals(3, rr.size());
 		List<DIDTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());
@@ -344,7 +344,7 @@ public class IDChainOperationsTest {
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
 		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(2, rr.getTransactionCount());
+		assertEquals(2, rr.size());
 		List<DIDTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(2, txs.size());
@@ -409,7 +409,7 @@ public class IDChainOperationsTest {
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
 		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.getTransactionCount());
+		assertEquals(3, rr.size());
 		List<DIDTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());
@@ -534,7 +534,7 @@ public class IDChainOperationsTest {
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
 		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(2, rr.getTransactionCount());
+		assertEquals(2, rr.size());
 		List<DIDTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(2, txs.size());
@@ -610,7 +610,7 @@ public class IDChainOperationsTest {
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
 		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.getTransactionCount());
+		assertEquals(3, rr.size());
 		List<DIDTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());
@@ -805,7 +805,7 @@ public class IDChainOperationsTest {
 		assertNotNull(rr);
 		assertEquals(did, rr.getDid());
 		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.getTransactionCount());
+		assertEquals(3, rr.size());
 		List<DIDTransaction> txs = rr.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());

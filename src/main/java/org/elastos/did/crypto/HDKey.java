@@ -60,10 +60,10 @@ public class HDKey {
 	public static final int EXTENDED_PUBLICKEY_BYTES = EXTENDED_KEY_BYTES;
 
 
-    private final static byte PADDING_IDENTITY	= 0x67;
-    private final static byte PADDING_STANDARD	= (byte)0xAD;
+	private final static byte PADDING_IDENTITY	= 0x67;
+	private final static byte PADDING_STANDARD	= (byte)0xAD;
 
-    private DeterministicKey key;
+	private DeterministicKey key;
 
 	// Derive path: m/44'/0'/0'/0/index
 	public static final String DERIVE_PATH_PREFIX = "44H/0H/0H/0/";
@@ -111,9 +111,9 @@ public class HDKey {
 		return Base58.decode(serializePublicKeyBase58());
 	}
 
-    public String serializePublicKeyBase58() {
-    	return key.serializePubB58(MainNetParams.get());
-    }
+	public String serializePublicKeyBase58() {
+		return key.serializePubB58(MainNetParams.get());
+	}
 
 	public static HDKey deserialize(byte[] keyData) {
 		/*
@@ -185,39 +185,39 @@ public class HDKey {
 		return derive(index, false);
 	}
 
-    public KeyPair getJCEKeyPair() {
-    	ECParameterSpec paramSpec = new ECNamedCurveSpec(
-        		"secp256r1", CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(),
-        		CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
+	public KeyPair getJCEKeyPair() {
+		ECParameterSpec paramSpec = new ECNamedCurveSpec(
+				"secp256r1", CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(),
+				CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
 
-        KeyFactory keyFactory = null;
+		KeyFactory keyFactory = null;
 		try {
 			keyFactory = KeyFactory.getInstance("EC");
 		} catch (NoSuchAlgorithmException ignore) {
 			// never happen
 		}
 
-    	PublicKey pub = null;
-    	PrivateKey priv = null;
+		PublicKey pub = null;
+		PrivateKey priv = null;
 
-    	try {
-    		ECPublicKeyParameters pubParams = new ECPublicKeyParameters(
-    				CURVE_PARAMS.getCurve().decodePoint(getPublicKeyBytes()), CURVE);
-    		ECPublicKeySpec pubSpec = new ECPublicKeySpec(new java.security.spec.ECPoint(
-    				pubParams.getQ().getXCoord().toBigInteger(),
-    				pubParams.getQ().getYCoord().toBigInteger()), paramSpec);
-    		pub = keyFactory.generatePublic(pubSpec);
+		try {
+			ECPublicKeyParameters pubParams = new ECPublicKeyParameters(
+					CURVE_PARAMS.getCurve().decodePoint(getPublicKeyBytes()), CURVE);
+			ECPublicKeySpec pubSpec = new ECPublicKeySpec(new java.security.spec.ECPoint(
+					pubParams.getQ().getXCoord().toBigInteger(),
+					pubParams.getQ().getYCoord().toBigInteger()), paramSpec);
+			pub = keyFactory.generatePublic(pubSpec);
 
-	    	if (key.hasPrivKey()) {
-	    		BigInteger keyInt = new BigInteger(1, getPrivateKeyBytes());
-	    		ECPrivateKeySpec privSpec = new ECPrivateKeySpec(keyInt, paramSpec);
-	    		priv = keyFactory.generatePrivate(privSpec);
-	    	}
+			if (key.hasPrivKey()) {
+				BigInteger keyInt = new BigInteger(1, getPrivateKeyBytes());
+				ECPrivateKeySpec privSpec = new ECPrivateKeySpec(keyInt, paramSpec);
+				priv = keyFactory.generatePrivate(privSpec);
+			}
 		} catch (InvalidKeySpecException e) {
 			throw new UnknownInternalException(e);
 		}
-    	return new KeyPair(pub, priv);
-    }
+		return new KeyPair(pub, priv);
+	}
 
 	private static byte[] getRedeemScript(byte[] pk) {
 		byte[] script = new byte[35];

@@ -23,6 +23,7 @@
 package org.elastos.did.backend;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,20 +36,28 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/**
+ * Biography of a verifiable credential, include the credential
+ * status and all credential transactions.
+ */
 @JsonPropertyOrder({ CredentialBiography.ID,
 	CredentialBiography.STATUS,
 	CredentialBiography.TRANSACTION })
-public class CredentialBiography extends ResolveResult<CredentialBiography> {
+public class CredentialBiography extends ResolveResult<CredentialBiography>
+		implements Iterable<CredentialTransaction> {
 	protected final static String ID = "id";
 	protected final static String STATUS = "status";
 	protected final static String TRANSACTION = "transaction";
 
+	/**
+	 * Defines the status of a credential.
+	 */
 	public static enum Status {
 		/**
 		 * The credential is valid.
 		 */
 		VALID(0),
-		/**
+		/*
 		 * The credential is expired.
 		 */
 		// EXPIRED,
@@ -67,11 +76,22 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 			this.value = value;
 		}
 
+		/**
+		 * Returns the value of this enumeration constant.
+		 *
+		 * @return the int value
+		 */
 		@JsonValue
 		public int getValue() {
 			return value;
 		}
 
+		/**
+		 * Returns the Status enumeration constant of the specified value.
+		 *
+		 * @param value the int value
+		 * @return the enumeration constant
+		 */
 		@JsonCreator
 		public static Status valueOf(int value) {
 			switch (value) {
@@ -89,6 +109,10 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 			}
 		}
 
+		/**
+		 * Returns the name of this enumeration constant in low case,
+		 * as contained in the declaration.
+		 */
 		@Override
 		public String toString() {
 			return name().toLowerCase();
@@ -103,10 +127,10 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 	private List<CredentialTransaction> txs;
 
 	/**
-	 * Constructs the Resolve Result with the given value.
+	 * Constructs the CredentialBiography instance with the given value.
 	 *
-	 * @param did the specified DID
-	 * @param status the DID's status
+	 * @param id the target credential id
+	 * @param status the credential status
 	 */
 	@JsonCreator
 	protected CredentialBiography(@JsonProperty(value = ID, required = true)DIDURL id,
@@ -115,43 +139,76 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 		this.status = status;
 	}
 
+	/**
+	 * Constructs the CredentialBiography instance with the given value.
+	 * The default credential status is VALID.
+	 *
+	 * @param id the target credential id
+	 */
 	protected CredentialBiography(DIDURL id) {
-		this.id = id;
+		this(id, Status.VALID);
 	}
 
+	/**
+	 * Get the credential id.
+	 *
+	 * @return the credential id
+	 */
 	public DIDURL getId() {
 		return id;
 	}
 
+	/**
+	 * Set the status of the credential.
+	 *
+	 * @param status the credential status
+	 */
 	protected void setStatus(Status status) {
 		this.status = status;
 	}
 
+	/**
+	 * Get the status of the credential.
+	 *
+	 * @return the credential status
+	 */
 	public Status getStatus() {
 		return status;
 	}
 
-	public int getTransactionCount() {
+	/**
+	 * Returns the number of transactions in this biography.
+	 *
+	 * @return the number of transactions
+	 */
+	public int size() {
 		return txs != null ? txs.size() : 0;
 	}
 
 	/**
-	 * Get the index transaction content.
+	 * Returns the transaction at the specified position in this biography.
 	 *
-	 * @param index the index
-	 * @return the index CredentialTransaction content
+	 * @param index the index of the transaction to return
+	 * @return the transaction at the specified position in this biography
 	 */
 	public CredentialTransaction getTransaction(int index) {
 		return txs != null ? txs.get(index) : null;
 	}
 
+	/**
+	 * Returns all transactions in this biography.
+	 *
+	 * @return the read-only list object of all transactions
+	 */
 	public List<CredentialTransaction> getAllTransactions() {
 		return Collections.unmodifiableList(txs != null ? txs : Collections.emptyList());
 	}
 
 	/**
-	 * Add transaction infomation into IDChain Transaction.
-	 * @param tx the DIDTransaction object
+	 * Appends the specified credential transaction to the end of this
+	 * biography object.
+	 *
+	 * @param tx the CredentialTransaction object to be add
 	 */
 	protected synchronized void addTransaction(CredentialTransaction tx) {
 		if (txs == null)
@@ -160,6 +217,12 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 		txs.add(tx);
 	}
 
+	/**
+	 * Post sanitize routine after deserialization.
+	 *
+	 * @throws MalformedResolveResultException if the CredentialBiography
+	 * 		   object is invalid
+	 */
 	@Override
 	protected void sanitize() throws MalformedResolveResultException {
 		if (id == null)
@@ -179,5 +242,19 @@ public class CredentialBiography extends ResolveResult<CredentialBiography> {
 			if (txs != null)
 				throw new MalformedResolveResultException("Should not include transaction");
 		}
+	}
+
+	/**
+	 * Returns an iterator over the transactions in this biography in proper
+	 * sequence. The returned iterator is read-only because of the backing
+	 * CredentialBiography object is a read-only object.
+	 *
+	 * @return an read-only iterator over the transactions in this biography
+	 * 		   in proper sequence
+	 */
+	@Override
+	public Iterator<CredentialTransaction> iterator() {
+		return txs != null ? Collections.unmodifiableList(txs).iterator() :
+				Collections.emptyIterator();
 	}
 }

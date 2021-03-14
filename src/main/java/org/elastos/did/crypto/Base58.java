@@ -25,26 +25,26 @@ package org.elastos.did.crypto;
 import org.bitcoinj.core.AddressFormatException;
 
 public class Base58 {
-    /**
-     * Encodes the given bytes as a base58 string (no checksum is appended).
-     *
-     * @param input the bytes to encode
-     * @return the base58-encoded string
-     */
-    public static String encode(byte[] input) {
-    	return org.bitcoinj.core.Base58.encode(input);
-    }
+	/**
+	 * Encodes the given bytes as a base58 string (no checksum is appended).
+	 *
+	 * @param input the bytes to encode
+	 * @return the base58-encoded string
+	 */
+	public static String encode(byte[] input) {
+		return org.bitcoinj.core.Base58.encode(input);
+	}
 
-    /**
-     * Decodes the given base58 string into the original data bytes.
-     *
-     * @param input the base58-encoded string to decode
-     * @return the decoded data bytes
-     * @throws AddressFormatException if the given string is not a valid base58 string
-     */
-    public static byte[] decode(String input) throws IllegalArgumentException {
-    	return org.bitcoinj.core.Base58.decode(input);
-    }
+	/**
+	 * Decodes the given base58 string into the original data bytes.
+	 *
+	 * @param input the base58-encoded string to decode
+	 * @return the decoded data bytes
+	 * @throws AddressFormatException if the given string is not a valid base58 string
+	 */
+	public static byte[] decode(String input) throws IllegalArgumentException {
+		return org.bitcoinj.core.Base58.decode(input);
+	}
 
 }
 

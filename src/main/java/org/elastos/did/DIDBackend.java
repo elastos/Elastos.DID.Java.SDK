@@ -349,7 +349,7 @@ public class DIDBackend {
 			break;
 
 		case DEACTIVATED:
-			if (bio.getTransactionCount() != 2)
+			if (bio.size() != 2)
 				throw new DIDResolveException("Invalid DID biography, wrong transaction count.");
 
 			tx = bio.getTransaction(0);
@@ -452,11 +452,11 @@ public class DIDBackend {
 			if (tx.getRequest().getOperation() != IDChainRequest.Operation.REVOKE)
 				throw new DIDResolveException("Invalid credential biography, wrong status.");
 
-			if (bio.getTransactionCount() < 1 || bio.getTransactionCount() > 2)
+			if (bio.size() < 1 || bio.size() > 2)
 				throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
 
 
-			if (bio.getTransactionCount() == 1) {
+			if (bio.size() == 1) {
 				if (!tx.getRequest().isValid())
 					throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
 

@@ -30,12 +30,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * DID(document) resolve request object.
+ */
 public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, DIDResolveRequest.Parameters> {
 	protected static final String PARAMETER_DID = "did";
 	protected static final String PARAMETER_ALL = "all";
 
 	public static final String METHOD_NAME = "resolvedid";
 
+	/**
+	 * The parameters for DID resolve request.
+	 */
 	protected static class Parameters {
 		@JsonProperty(PARAMETER_DID)
 		private DID did;
@@ -76,27 +82,60 @@ public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, DIDReso
 
 	}
 
+	/**
+	 * Create a DID resolve request with the given request id.
+	 *
+	 * @param requestId a request id string
+	 */
 	@JsonCreator
 	public DIDResolveRequest(@JsonProperty(value = ID)String requestId) {
 		super(requestId, METHOD_NAME);
 	}
 
+	/**
+	 * Set parameters for the resolve request.
+	 *
+	 * @param did the target did
+	 * @param all resolve all did transactions
+	 */
 	public void setParameters(DID did, boolean all) {
 		setParameters(new Parameters(did, all));
 	}
 
+	/**
+	 * Set parameters for the resolve request.
+	 *
+	 * @param did the target did
+	 * @param all resolve all did transactions
+	 */
 	public void setParameters(String did, boolean all) {
 		setParameters(DID.valueOf(did), all);
 	}
 
+	/**
+	 * Get the target DID.
+	 *
+	 * @return the target DID
+	 */
 	public DID getDid() {
 		return getParameters().did;
 	}
 
+	/**
+	 * Returns if this request resolve all transactions for the target DID.
+	 *
+	 * @return ture if resolve all, otherwise false
+	 */
 	public boolean isResolveAll() {
 		return getParameters().all;
 	}
 
+	/**
+	 * Constructs a string representation of this request. The string using
+	 * DIDURL format.
+	 *
+	 * @return a string representation of this object.
+	 */
 	@Override
 	public String toString() {
 		DIDURL.Builder builder = new DIDURL.Builder(getParameters().did);

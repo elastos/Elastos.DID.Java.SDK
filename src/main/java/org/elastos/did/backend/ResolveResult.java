@@ -25,11 +25,18 @@ package org.elastos.did.backend;
 import org.elastos.did.DIDEntity;
 import org.elastos.did.exception.MalformedResolveResultException;
 
+/**
+ * The abstract super class for all resolve result objects, for example DID
+ * or credential resolve result, or credential list result.
+ *
+ * @param <T> the type of the class modeled by this ResolveResult object
+ */
 public abstract class ResolveResult<T> extends DIDEntity<T> {
 	/**
 	 * Post sanitize routine after deserialization.
 	 *
-	 * @throws MalformedResolveResultException if the DID object is invalid
+	 * @throws MalformedResolveResultException if the ResolveResult
+	 * 		   object is invalid
 	 */
 	@Override
 	protected void sanitize() throws MalformedResolveResultException {

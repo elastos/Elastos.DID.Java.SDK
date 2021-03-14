@@ -32,6 +32,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/**
+ * Abstract base class for all ID transactions. This class defines a skeletal
+ * data model of ID chain transactions.
+ *
+ * @param <T> the type of the class modeled by this IDTransaction object
+ * @param <R> the type of the request that include in the IDTransaction
+ */
 @JsonPropertyOrder({ IDTransaction.TXID,
 	IDTransaction.TIMESTAMP,
 	IDTransaction.OPERATION })
@@ -47,15 +54,18 @@ public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
 	@JsonProperty(OPERATION)
 	private R request;
 
+	/**
+	 * Default constructor.
+	 */
 	@JsonCreator
 	protected IDTransaction() {}
 
 	/**
-	 * Constructs the DIDTransaction with the given value.
+	 * Create a IDTransaction with the given values.
 	 *
-	 * @param txid the transaction id string
-	 * @param timestamp the time stamp
-	 * @param request the IDChainRequest content
+	 * @param txid the transaction id
+	 * @param timestamp the time stamp of the ID transaction
+	 * @param request the IDChainRequest object
 	 */
 	protected IDTransaction(String txid, Date timestamp, R request) {
 		this.txId = txid;
@@ -63,23 +73,44 @@ public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
 		this.request = request;
 	}
 
+	/**
+	 * Get the transaction id.
+	 *
+	 * <p>
+	 * The transaction id is a unique identifier of the ID transaction.
+	 * Normally it a hex encoded string.
+	 * </p>
+	 *
+	 * @return the transaction id
+	 */
 	public String getTransactionId() {
 		return txId;
 	}
 
+	/**
+	 * Get the time stamp of the transaction in UTC time.
+	 *
+	 * @return the time stamp
+	 */
 	public Date getTimestamp() {
 		return timestamp;
 	}
 
 	/**
-	 * Get request object of transaction.
+	 * Get ID chain request that included in this transaction.
 	 *
-	 * @return the IDRequest object
+	 * @return the IDChainRequest object
 	 */
 	public R getRequest() {
 		return request;
 	}
 
+	/**
+	 * Check the validity of the object and normalize the object after
+	 * deserialized the IDTransaction object from JSON.
+	 *
+	 * @throws MalformedIDChainTransactionException if the object is invalid
+	 */
 	@Override
 	protected void sanitize() throws MalformedIDChainTransactionException {
 		if (txId == null || txId.isEmpty())

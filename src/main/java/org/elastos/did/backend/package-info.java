@@ -21,12 +21,8 @@
  */
 
 /**
- * <p>
- * Defines the API for the backend to resolve DID information(DIDDocument) from chain.
- * </p>
- *
- * @since 1.0
- * @version 1.0
- **/
+ * The request and response types that defined in the Elastos DID method
+ * specification, and the types that represent the ID chain data model.
+ */
 
 package org.elastos.did.backend;

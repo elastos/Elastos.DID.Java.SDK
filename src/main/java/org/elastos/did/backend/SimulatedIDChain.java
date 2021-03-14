@@ -57,6 +57,66 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+/**
+ * Simulated ID chain for developing and testing DID SDK and applications.
+ *
+ * <p>
+ * All behaviors are implement according the <a href="https://github.com/elastos/Elastos.DID.Method/">
+ * Elastos DID method specification</a>.
+ * </p>
+ *
+ * <h3>Create ID transaction</h3>
+ * <p>
+ * <b>Endpoint</b>: /idtx<br>
+ * <b>Method</b>: POST<br>
+ * <b>Content-Type</b>: application/json<br>
+ * <b>Request Body</b>: Any ID Chain request payload, include DID and VerifiableCredential operations.<br>
+ * <b>Response Body</b>: None<br>
+ * <b>Success Status</b>: 202<br>
+ * </p>
+ *
+ * <h3>Resolve</h3>
+ * <p>
+ * <b>Endpoint</b>: /resolve<br>
+ * <b>Method</b>: POST<br>
+ * <b>Content-Type</b>: application/json<br>
+ * <b>Request Body</b>: Any DID or VC resolve/list request.<br>
+ * <b>Response Body</b>: Resolved result.<br>
+ * <b>Success Status</b>: 200<br>
+ * </p>
+ *
+ * <h3>Reset test data</h3>
+ * <p>
+ * <b>Endpoint</b>: /reset<br>
+ * <b>Method</b>: POST<br>
+ * <b>Request Body</b>: None<br>
+ * <b>Response Body</b>: None<br>
+ * <b>Success Status</b>: 200<br>
+ * </p>
+ *
+ * <h3>Shutdown the simulated ID chain</h3>
+ * <p>
+ * <b>Endpoint</b>: /shutdown<br>
+ * <b>Method</b>: POST<br>
+ * <b>Request Body</b>: None<br>
+ * <b>Response Body</b>: None<br>
+ * <b>Success Status</b>: 202<br>
+ * </p>
+ *
+ * <h3>Command line to start the simulated ID chain<h3>
+ * <p>
+ * <pre>
+ * $ java -jar did.jar simchain --help
+ * Usage: org.elastos.did.util.Main simchain [-ehV] [-i=<host>] [-p=<port>]
+ * Simulated ID Chain for testing.
+ *   -i, --interface=<host>   Server interface, default: localhost
+ *   -p, --port=<port>        Server port, default 9123.
+ *   -e, --verbase            Verbose error output, default false.
+ *   -h, --help               Show this help message and exit.
+ *   -V, --version            Print version information and exit.
+ * </pre>
+ * </p>
+ */
 public class SimulatedIDChain {
 	// For mini HTTP server
 	protected static final String DEFAULT_HOST = "localhost";
@@ -74,6 +134,12 @@ public class SimulatedIDChain {
 
 	private static final Logger log = LoggerFactory.getLogger(SimulatedIDChain.class);
 
+	/**
+	 * Create a SimulatedIDChain instance at host:port.
+	 *
+	 * @param host the HTTP server host
+	 * @param port the HTTP server port
+	 */
 	public SimulatedIDChain(String host, int port) {
 		checkArgument(host != null && !host.isEmpty(), "Invalid host");
 		checkArgument(port > 0, "Invalid port");
@@ -85,14 +151,31 @@ public class SimulatedIDChain {
 		vctxs = new ConcurrentLinkedDeque<CredentialTransaction>();
 	}
 
+	/**
+	 * Create a SimulatedIDChain instance at <b>localhost</b>:port.
+	 *
+	 * @param port the HTTP server port
+	 */
 	public SimulatedIDChain(int port) {
 		this(DEFAULT_HOST, port);
 	}
 
+	/**
+	 * Create a SimulatedIDChain instance at the default endpoint
+	 * <b>localhost:9123</b>.
+	 */
 	public SimulatedIDChain() {
 		this(DEFAULT_PORT);
 	}
 
+	/**
+	 * Reset the simulated ID chain to the initial clean state.
+	 *
+	 * <p>
+	 * After reset, all data include the existing DID and credential
+	 * transactions will be removed.
+	 * </p>
+	 */
 	public void reset() {
 		idtxs.clear();
 		vctxs.clear();
@@ -102,9 +185,9 @@ public class SimulatedIDChain {
 
 	private static String generateTxid() {
 		byte[] bin = new byte[16];
-	    random.nextBytes(bin);
-	    return Hex.toHexString(bin);
-    }
+		random.nextBytes(bin);
+		return Hex.toHexString(bin);
+	}
 
 	private DIDTransaction getLastDidTransaction(DID did) {
 		for (DIDTransaction tx : idtxs) {
@@ -420,15 +503,27 @@ public class SimulatedIDChain {
 			Thread t = new Thread(group, r,
 					"SimulatedIDChain-thread-" + threadNumber.getAndIncrement());
 
-            if (t.isDaemon())
-                t.setDaemon(false);
-            if (t.getPriority() != Thread.NORM_PRIORITY)
-                t.setPriority(Thread.NORM_PRIORITY);
+			if (t.isDaemon())
+				t.setDaemon(false);
+			if (t.getPriority() != Thread.NORM_PRIORITY)
+				t.setPriority(Thread.NORM_PRIORITY);
 
-            return t;
+			return t;
 		}
 	}
 
+	/**
+	 * Start the simulated ID chain begin to serve the HTTP requests.
+	 *
+	 * <p>
+	 * NOTICE: The start() method is a non-block call. the method will return
+	 * immediately, the HTTP server will run in background threads. if you want
+	 * to block current thread until the HTTP server shutdown graceful,
+	 * use run() instead of start().
+	 * </p>
+	 *
+	 * @throws IOException if there is a error when start the HTTP server
+	 */
 	public synchronized void start() throws IOException {
 		HttpServer server = HttpServer.create(new InetSocketAddress(host, port), 0);
 		ThreadPoolExecutor executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(10);
@@ -448,12 +543,21 @@ public class SimulatedIDChain {
 		log.info("Simulated IDChain started on {}:{}", host, port);
 	}
 
+	/**
+	 * Start the simulated ID chain begin to serve the HTTP requests, this
+	 * method will block current thread until the HTTP server shutdown graceful.
+	 *
+	 * @throws IOException if there is a error when start the HTTP server
+	 * @see start()
+	 */
 	public synchronized void run() throws IOException, InterruptedException {
 		start();
-
 		this.wait();
 	}
 
+	/**
+	 * Shutdown the simulated ID chain, stop to serve any request.
+	 */
 	public synchronized void stop() {
 		if (server == null)
 			return;
@@ -468,12 +572,15 @@ public class SimulatedIDChain {
 		log.info("Simulated IDChain stopped");
 	}
 
+	/**
+	 * Get the DIDAdapter instance that backed by this simulated ID chain.
+	 *
+	 * @return the DIDAdapter instance
+	 */
 	public DIDAdapter getAdapter() {
 		try {
 			return new SimulatedIDChainAdapter(
-				new URL("http", host, port, "/resolve"),
-				new URL("http", host, port, "/idtx")
-			);
+				new URL("http", host, port, "/"));
 		} catch (MalformedURLException ignore) {
 			log.error("INTERNAL - error create DIDAdapter", ignore);
 			return null;

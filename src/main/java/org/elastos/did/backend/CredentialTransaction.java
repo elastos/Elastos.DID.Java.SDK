@@ -28,21 +28,34 @@ import org.elastos.did.DIDURL;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+/**
+ * The credential transaction object for VerifiableCredential's declare and
+ * revoke operations.
+ */
 public class CredentialTransaction extends IDTransaction<CredentialTransaction, CredentialRequest> {
+	/**
+	 * Default constructor.
+	 */
 	@JsonCreator
 	protected CredentialTransaction() {}
 
 	/**
-	 * Constructs the DIDTransaction with the given value.
+	 * Create a CredentialTransaction object with the given value.
 	 *
-	 * @param txid the transaction id string
+	 * @param txid the transaction id
 	 * @param timestamp the time stamp
-	 * @param request the IDChainRequest content
+	 * @param request the CredentialRequest object
 	 */
 	protected CredentialTransaction(String txid, Date timestamp, CredentialRequest request) {
 		super(txid, timestamp, request);
 	}
 
+	/**
+	 * Get the target id of the credential operation contained in
+	 * this DID transaction.
+	 *
+	 * @return the target credential's id
+	 */
 	public DIDURL getId() {
 		return getRequest().getCredentialId();
 	}

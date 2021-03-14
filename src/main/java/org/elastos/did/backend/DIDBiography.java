@@ -23,6 +23,7 @@
 package org.elastos.did.backend;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -38,32 +39,37 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * The class records the resolved content.
+ * Biography of a DID, include the DID document status and and all
+ * DID transactions.
  */
 @JsonPropertyOrder({ DIDBiography.DID,
 	DIDBiography.STATUS,
 	DIDBiography.TRANSACTION })
 @JsonInclude(Include.NON_NULL)
-public class DIDBiography extends ResolveResult<DIDBiography> {
+public class DIDBiography extends ResolveResult<DIDBiography>
+		implements Iterable<DIDTransaction> {
 	protected final static String DID = "did";
 	protected final static String STATUS = "status";
 	protected final static String TRANSACTION = "transaction";
 
+	/**
+	 * Defines the status of a DID.
+	 */
 	public static enum Status {
 		/**
-		 * The credential is valid.
+		 * The DID is valid.
 		 */
 		VALID(0),
-		/**
-		 * The credential is expired.
+		/*
+		 * The DID is expired.
 		 */
 		// EXPIRED,
 		/**
-		 * The credential is deactivated.
+		 * The DID is deactivated.
 		 */
 		DEACTIVATED(2),
 		/**
-		 * The credential is not published.
+		 * The DID is not published.
 		 */
 		NOT_FOUND(3);
 
@@ -73,11 +79,22 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 			this.value = value;
 		}
 
+		/**
+		 * Returns the value of this enumeration constant.
+		 *
+		 * @return the int value
+		 */
 		@JsonValue
 		public int getValue() {
 			return value;
 		}
 
+		/**
+		 * Returns the Status enumeration constant of the specified value.
+		 *
+		 * @param value the int value
+		 * @return the enumeration constant
+		 */
 		@JsonCreator
 		public static Status valueOf(int value) {
 			switch (value) {
@@ -95,6 +112,10 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 			}
 		}
 
+		/**
+		 * Returns the name of this enumeration constant in low case,
+		 * as contained in the declaration.
+		 */
 		@Override
 		public String toString() {
 			return name().toLowerCase();
@@ -109,10 +130,10 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 	private List<DIDTransaction> txs;
 
 	/**
-	 * Constructs the Resolve Result with the given value.
+	 * Constructs a DIDBiography object with the given value.
 	 *
-	 * @param did the specified DID
-	 * @param status the DID's status
+	 * @param did the target DID
+	 * @param status the status of the target DID
 	 */
 	@JsonCreator
 	protected DIDBiography(@JsonProperty(value = DID, required = true)DID did,
@@ -121,43 +142,76 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 		this.status = status;
 	}
 
+	/**
+	 * Constructs a DIDBiography object with the given value.
+	 * The default DID status is VALID.
+	 *
+	 * @param did the target DID
+	 */
 	protected DIDBiography(DID did) {
-		this.did = did;
+		this(did, Status.VALID);
 	}
 
+	/**
+	 * Get the target did.
+	 *
+	 * @return the target did
+	 */
 	public DID getDid() {
 		return did;
 	}
 
+	/**
+	 * Set the status of the DID.
+	 *
+	 * @param status the DID status
+	 */
 	protected void setStatus(Status status) {
 		this.status = status;
 	}
 
+	/**
+	 * Get the status of the DID.
+	 *
+	 * @return the DID status
+	 */
 	public Status getStatus() {
 		return status;
 	}
 
-	public int getTransactionCount() {
+	/**
+	 * Returns the number of transactions in this biography.
+	 *
+	 * @return the number of transactions
+	 */
+	public int size() {
 		return txs != null ? txs.size() : 0;
 	}
 
 	/**
-	 * Get the index transaction content.
+	 * Returns the transaction at the specified position in this biography.
 	 *
-	 * @param index the index
-	 * @return the index DIDTransaction content
+	 * @param index the index of the transaction to return
+	 * @return the transaction at the specified position in this biography
 	 */
 	public DIDTransaction getTransaction(int index) {
 		return txs != null ? txs.get(index) : null;
 	}
 
+	/**
+	 * Returns all transactions in this biography.
+	 *
+	 * @return the read-only list object of all transactions
+	 */
 	public List<DIDTransaction> getAllTransactions() {
 		return Collections.unmodifiableList(txs != null ? txs : Collections.emptyList());
 	}
 
 	/**
-	 * Add transaction infomation into IDChain Transaction.
-	 * @param tx the DIDTransaction object
+	 * Appends the specified credential transaction to the end of this
+	 * biography object.
+	 *
+	 * @param tx the DIDTransaction object to be add
 	 */
 	protected synchronized void addTransaction(DIDTransaction tx) {
 		if (txs == null)
@@ -166,6 +220,12 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 		txs.add(tx);
 	}
 
+	/**
+	 * Post sanitize routine after deserialization.
+	 *
+	 * @throws MalformedResolveResultException if the DIDBiography
+	 * 		   object is invalid
+	 */
 	@Override
 	protected void sanitize() throws MalformedResolveResultException {
 		if (did == null)
@@ -185,5 +245,19 @@ public class DIDBiography extends ResolveResult<DIDBiography> {
 			if (txs != null)
 				throw new MalformedResolveResultException("Should not include transaction");
 		}
+	}
+
+	/**
+	 * Returns an iterator over the transactions in this biography in proper
+	 * sequence. The returned iterator is read-only because of the backing
+	 * DIDBiography object is a read-only object.
+	 *
+	 * @return an read-only iterator over the transactions in this biography
+	 * 		   in proper sequence
+	 */
+	@Override
+	public Iterator<DIDTransaction> iterator() {
+		return txs != null ? Collections.unmodifiableList(txs).iterator() :
+				Collections.emptyIterator();
 	}
 }
