@@ -24,16 +24,36 @@ package org.elastos.did.backend;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+/**
+ * The credential resolve response object.
+ */
 public class CredentialResolveResponse extends ResolveResponse<CredentialResolveResponse, CredentialBiography> {
+	/**
+	 * Default constructor.
+	 */
 	@JsonCreator
 	protected CredentialResolveResponse() {
 		super();
 	}
 
+	/**
+	 * Create a success CredentialResolveResponse object with the specific
+	 * result object.
+	 *
+	 * @param responseId the response id, normally same with the related request id
+	 * @param result a CredentialBiography object
+	 */
 	protected CredentialResolveResponse(String responseId, CredentialBiography result) {
 		super(responseId, result);
 	}
 
+	/**
+	 * Create an error CredentialResolveResponse object.
+	 *
+	 * @param responseId the response id, normally same with the related request id
+	 * @param code an error code
+	 * @param message an error message, could be null
+	 */
 	protected CredentialResolveResponse(String responseId, int code, String message) {
 		super(responseId, code, message);
 	}

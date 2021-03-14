@@ -30,10 +30,23 @@ public class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDB
 		super();
 	}
 
+	/**
+	 * Create a success DIDResolveResponse object with the specific result object.
+	 *
+	 * @param responseId the response id, normally same with the related request id
+	 * @param result a DIDBiography object
+	 */
 	protected DIDResolveResponse(String responseId, DIDBiography result) {
 		super(responseId, result);
 	}
 
+	/**
+	 * Create an error DIDResolveResponse object.
+	 *
+	 * @param responseId the response id, normally same with the related request id
+	 * @param code an error code
+	 * @param message an error message, could be null
+	 */
 	protected DIDResolveResponse(String responseId, int code, String message) {
 		super(responseId, code, message);
 	}

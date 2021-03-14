@@ -31,19 +31,22 @@ import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
+import org.elastos.did.exception.MalformedIDChainTransactionException;
 import org.elastos.did.exception.UnknownInternalException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
- * The credential request class.
+ * The credential related chain request class for credential publishing.
  */
-
 public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	private DIDURL id;
 	private VerifiableCredential vc;
 	private DIDDocument signer;
 
+	/**
+	 * Default constructor.
+	 */
 	@JsonCreator
 	protected CredentialRequest() {}
 
@@ -51,6 +54,11 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		super(operation);
 	}
 
+	/**
+	 * Copy constructor.
+	 *
+	 * @param request another credential request object
+	 */
 	protected CredentialRequest(CredentialRequest request) {
 		super(request);
 		this.id = request.id;
@@ -59,14 +67,14 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	}
 
 	/**
-	 * Constructs the 'declare' credential Request.
+	 * Constructs a credential 'declare' request.
 	 *
-	 * @param vc the VerifiableCredential object needs to be declare
+	 * @param vc the VerifiableCredential object that needs to be declare
 	 * @param signer the credential owner's DIDDocument object
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
+	 * @param signKey the key id to sign request
+	 * @param storepass the password for private key access from the DID store
+	 * @return a CredentialRequest object
+	 * @throws DIDStoreException if an error occurred when access the private key
 	 */
 	public static CredentialRequest declare(VerifiableCredential vc,
 			DIDDocument signer, DIDURL signKey, String storepass)
@@ -84,23 +92,23 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	}
 
 	/**
-	 * Constructs the 'revoke' credential Request.
+	 * Constructs a credential 'revoke' request.
 	 *
-	 * @param vc the VerifiableCredential object needs to be revoke
-	 * @param doc the credential owner's or issuer's DIDDocument object
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
+	 * @param vc the VerifiableCredential object that needs to be revoke
+	 * @param signer the credential owner's DIDDocument object
+	 * @param signKey the key id to sign request
+	 * @param storepass the password for private key access from the DID store
+	 * @return a CredentialRequest object
+	 * @throws DIDStoreException if an error occurred when access the private key
 	 */
 	public static CredentialRequest revoke(VerifiableCredential vc,
-			DIDDocument doc, DIDURL signKey, String storepass)
+			DIDDocument signer, DIDURL signKey, String storepass)
 			throws DIDStoreException {
 		CredentialRequest request = new CredentialRequest(Operation.REVOKE);
 		request.setPayload(vc);
-		request.setSigner(doc);
+		request.setSigner(signer);
 		try {
-			request.seal(doc, signKey, storepass);
+			request.seal(signer, signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
 			throw new UnknownInternalException(ignore);
 		}
@@ -109,22 +117,22 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	}
 
 	/**
-	 * Constructs the 'revoke' credential Request.
+	 * Constructs a credential 'revoke' request.
 	 *
-	 * @param id the id of the VerifiableCredential needs to be revoke
-	 * @param doc the credential owner's or issuer's DIDDocument object
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
+	 * @param id the id of the credential that needs to be revoke
+	 * @param signer the credential owner's DIDDocument object
+	 * @param signKey the key id to sign request
+	 * @param storepass the password for private key access from the DID store
+	 * @return a CredentialRequest object
+	 * @throws DIDStoreException if an error occurred when access the private key
 	 */
-	public static CredentialRequest revoke(DIDURL id, DIDDocument doc,
+	public static CredentialRequest revoke(DIDURL id, DIDDocument signer,
 			DIDURL signKey, String storepass) throws DIDStoreException {
 		CredentialRequest request = new CredentialRequest(Operation.REVOKE);
 		request.setPayload(id);
-		request.setSigner(doc);
+		request.setSigner(signer);
 		try {
-			request.seal(doc, signKey, storepass);
+			request.seal(signer, signKey, storepass);
 		} catch (MalformedIDChainRequestException ignore) {
 			throw new UnknownInternalException(ignore);
 		}
@@ -136,10 +144,20 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		this.signer = initiator;
 	}
 
+	/**
+	 * Get target credential id of this request.
+	 *
+	 * @return the credential id
+	 */
 	public DIDURL getCredentialId() {
 		return id;
 	}
 
+	/**
+	 * Get the target VerifiableCredential object of this request.
+	 *
+	 * @return the VerifiableCredential object
+	 */
 	public VerifiableCredential getCredential() {
 		return vc;
 	}
@@ -165,6 +183,12 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		setPayload(id.toString());
 	}
 
+	/**
+	 * Check the validity of the object and normalize the object after
+	 * deserialized the CredentialRequest object from JSON.
+	 *
+	 * @throws MalformedIDChainTransactionException if the object is invalid
+	 */
 	@Override
 	protected void sanitize() throws MalformedIDChainRequestException {
 		Header header = getHeader();
@@ -212,7 +236,7 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		proof.qualifyVerificationMethod(id.getDid());
 	}
 
-	public void seal(DIDDocument doc, DIDURL signKey, String storepass)
+	private void seal(DIDDocument doc, DIDURL signKey, String storepass)
 			throws MalformedIDChainRequestException, DIDStoreException {
 		if (!doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key.");
@@ -224,6 +248,13 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		setProof(new Proof(signKey, signature));
 	}
 
+	/**
+	 * Get the DIDDocument of the request signer.
+	 *
+	 * @return the signer's DIDDocument object
+	 * @throws DIDResolveException if error occurred when resolving
+	 * 		   DID document
+	 */
 	@Override
 	protected DIDDocument getSignerDocument() throws DIDResolveException {
 		if (signer != null)

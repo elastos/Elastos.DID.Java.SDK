@@ -30,12 +30,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Credential resolve request object.
+ */
 public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRequest, CredentialResolveRequest.Parameters> {
 	protected static final String PARAMETER_ID = "id";
 	protected static final String PARAMETER_ISSUER = "issuer";
 
 	public static final String METHOD_NAME = "resolvecredential";
 
+	/**
+	 * The parameters object for credential resolve request.
+	 */
 	protected static class Parameters {
 		@JsonProperty(PARAMETER_ID)
 		private DIDURL id;
@@ -80,35 +86,78 @@ public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 		}
 	}
 
+	/**
+	 * Create a credential resolve request with the given request id.
+	 *
+	 * @param requestId a request id string
+	 */
 	@JsonCreator
 	public CredentialResolveRequest(@JsonProperty(value = ID)String requestId) {
 		super(requestId, METHOD_NAME);
 	}
 
+	/**
+	 * Set parameters for the resolve request.
+	 *
+	 * @param id the target credential id
+	 * @param issuer optional, the DID who issue the credential
+	 */
 	public void setParameters(DIDURL id, DID issuer) {
 		setParameters(new Parameters(id, issuer));
 	}
 
+	/**
+	 * Set parameters for the resolve request.
+	 *
+	 * @param id the target credential id
+	 */
 	public void setParameters(DIDURL id) {
 		setParameters(id, null);
 	}
 
+	/**
+	 * Set parameters for the resolve request.
+	 *
+	 * @param id the target credential id
+	 * @param issuer optional, the DID who issue the credential
+	 */
 	public void setParameters(String id, String issuer) {
 		setParameters(DIDURL.valueOf(id), DID.valueOf(issuer));
 	}
 
+	/**
+	 * Set parameters for the resolve request.
+	 *
+	 * @param id the target credential id
+	 */
 	public void setParameters(String id) {
 		setParameters(id, null);
 	}
 
+	/**
+	 * Get the target credential id of this request.
+	 *
+	 * @return a credential id
+	 */
 	public DIDURL getId() {
 		return getParameters().id;
 	}
 
+	/**
+	 * Get the issuer's DID who issue this credential.
+	 *
+	 * @return the issuer's DID, null if not set
+	 */
 	public DID getIssuer() {
 		return getParameters().issuer;
 	}
 
+	/**
+	 * Constructs a string representation of this request. The string using
+	 * DIDURL format.
+	 *
+	 * @return a string representation of this object.
+	 */
 	@Override
 	public String toString() {
 		DIDURL.Builder builder = new DIDURL.Builder(getParameters().id);

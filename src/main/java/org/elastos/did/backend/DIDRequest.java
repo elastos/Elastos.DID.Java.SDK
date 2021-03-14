@@ -32,17 +32,21 @@ import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
+import org.elastos.did.exception.MalformedIDChainTransactionException;
 import org.elastos.did.exception.UnknownInternalException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
- * The DID request class.
+ * The DID related chain request class for DID publishing.
  */
 public class DIDRequest extends IDChainRequest<DIDRequest> {
 	private DID did;
 	private DIDDocument doc;
 
+	/**
+	 * Default constructor.
+	 */
 	@JsonCreator
 	protected DIDRequest() {}
 
@@ -58,6 +62,11 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 		super(operation, ticket);
 	}
 
+	/**
+	 * Copy constructor.
+	 *
+	 * @param request another DID request object
+	 */
 	protected DIDRequest(DIDRequest request) {
 		super(request);
 		this.did = request.did;
@@ -65,13 +74,13 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	}
 
 	/**
-	 * Constructs the 'create' DID Request.
+	 * Constructs a DID 'create' Request.
 	 *
-	 * @param doc the DID Document be packed into Request
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
+	 * @param doc the DID Document be publishing
+	 * @param signKey the key id to sign the request
+	 * @param storepass the password for private key access from the DID store
+	 * @return a DIDRequest object
+	 * @throws DIDStoreException if an error occurred when access the private key
 	 */
 	public static DIDRequest create(DIDDocument doc, DIDURL signKey,
 			String storepass) throws DIDStoreException {
@@ -87,14 +96,14 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	}
 
 	/**
-	 * Constructs the 'update' DID Request.
+	 * Constructs a DID 'update' request.
 	 *
-	 * @param doc the DID Document be packed into Request
+	 * @param doc the DID Document be publishing
 	 * @param previousTxid the previous transaction id string
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
+	 * @param signKey the key id to sign the request
+	 * @param storepass the password for private key access from the DID store
+	 * @return a DIDRequest object
+	 * @throws DIDStoreException if an error occurred when access the private key
 	 */
 	public static DIDRequest update(DIDDocument doc, String previousTxid,
 			DIDURL signKey, String storepass) throws DIDStoreException {
@@ -110,14 +119,14 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	}
 
 	/**
-	 * Constructs the 'transfer' DID Request.
+	 * Constructs a DID 'transfer' request.
 	 *
-	 * @param doc target DID document
+	 * @param doc the DID Document be publishing
 	 * @param ticket the transfer ticket object
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
+	 * @param signKey the key id to sign the request
+	 * @param storepass the password for private key access from the DID store
+	 * @return a DIDRequest object
+	 * @throws DIDStoreException if an error occurred when access the private key
 	 */
 	public static DIDRequest transfer(DIDDocument doc, TransferTicket ticket,
 			DIDURL signKey, String storepass) throws DIDStoreException {
@@ -132,15 +141,14 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 		return request;
 	}
 
-
 	/**
-	 * Constructs the 'deactivate' DID Request.
+	 * Constructs a DID 'deactivate' request.
 	 *
-	 * @param doc the DID Document be packed into Request
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
+	 * @param doc the DID Document be publishing
+	 * @param signKey the key id to sign the request
+	 * @param storepass the password for private key access from the DID store
+	 * @return a DIDRequest object
+	 * @throws DIDStoreException if an error occurred when access the private key
 	 */
 	public static DIDRequest deactivate(DIDDocument doc, DIDURL signKey,
 			String storepass) throws DIDStoreException {
@@ -156,15 +164,15 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	}
 
 	/**
-	 * Constructs the 'deactivate' DID Request.
+	 * Constructs a DID 'deactivate' request.
 	 *
 	 * @param target the DID to be deactivated
-	 * @param targetSignKey the target DID's key to sign
+	 * @param targetSignKey the authorization key id of target DID
 	 * @param doc the authorizer's document
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach
+	 * @param signKey the real key is to sign request
+	 * @param storepass the password for private key access from the DID store
+	 * @return a DIDRequest object
+	 * @throws DIDStoreException if an error occurred when access the private key
 	 */
 	public static DIDRequest deactivate(DIDDocument target, DIDURL targetSignKey,
 			DIDDocument doc, DIDURL signKey, String storepass) throws DIDStoreException {
@@ -182,7 +190,7 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	/**
 	 * Get previous transaction id string.
 	 *
-	 * @return the transaction id string
+	 * @return the transaction id string or null if not set
 	 */
 	public String getPreviousTxid() {
 		return getHeader().getPreviousTxid();
@@ -191,14 +199,14 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	/**
 	 * Get transfer ticket object.
 	 *
-	 * @return the TransferTicket object
+	 * @return the TransferTicket object or null if not set
 	 */
 	public TransferTicket getTransferTicket() {
 		return getHeader().getTransferTicket();
 	}
 
 	/**
-	 * Get target DID of DID Request.
+	 * Get target DID of this request.
 	 *
 	 * @return the DID object
 	 */
@@ -207,7 +215,7 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 	}
 
 	/**
-	 * Get DID Document of DID Request.
+	 * Get the target DID Document of this request.
 	 *
 	 * @return the DIDDocument object
 	 */
@@ -229,6 +237,12 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 		}
 	}
 
+	/**
+	 * Check the validity of the object and normalize the object after
+	 * deserialized the DIDRequest object from JSON.
+	 *
+	 * @throws MalformedIDChainTransactionException if the object is invalid
+	 */
 	@Override
 	protected void sanitize() throws MalformedIDChainRequestException {
 		Header header = getHeader();
@@ -316,6 +330,13 @@ public class DIDRequest extends IDChainRequest<DIDRequest> {
 		setProof(new Proof(targetSignKey, signature));
 	}
 
+	/**
+	 * Get the DIDDocument of the request signer.
+	 *
+	 * @return the signer's DIDDocument object
+	 * @throws DIDResolveException if error occurred when resolving
+	 * 		   DID document
+	 */
 	@Override
 	protected DIDDocument getSignerDocument() throws DIDResolveException {
 		if (doc == null)

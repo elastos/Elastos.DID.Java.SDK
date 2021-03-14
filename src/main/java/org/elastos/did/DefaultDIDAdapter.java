@@ -71,6 +71,11 @@ public class DefaultDIDAdapter implements DIDAdapter {
 		}
 	}
 
+	public DefaultDIDAdapter(URL resolver) {
+		checkArgument(resolver != null, "Invalid resolver URL");
+		this.resolver = resolver;
+	}
+
 	protected InputStream performRequest(URL url, String body) throws IOException {
 		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 		connection.setRequestMethod("POST");

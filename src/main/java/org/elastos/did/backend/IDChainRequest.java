@@ -34,6 +34,7 @@ import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
+import org.elastos.did.exception.MalformedResolveResultException;
 import org.elastos.did.exception.MalformedTransferTicketException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -46,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * The class records the information of IDChain Request.
+ * The abstract super class for all ID chain transaction requests.
  */
 @JsonPropertyOrder({ IDChainRequest.HEADER,
 	IDChainRequest.PAYLOAD,
@@ -83,7 +84,7 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 	private Proof proof;
 
 	/**
-     * The IDChain Request Operation
+	 * The IDChain Request Operations.
 	 */
 	public static enum Operation {
 		/**
@@ -117,22 +118,41 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 			this.specification = specification;
 		}
 
+		/**
+		 * Get the specification string for this operation.
+		 *
+		 * @return the specification string
+		 */
 		public String getSpecification() {
 			return specification;
 		}
 
+		/**
+		 * Returns the name of this enumeration constant in low case,
+		 * as contained in the declaration.
+		 */
 		@Override
 		@JsonValue
 		public String toString() {
 			return name().toLowerCase();
 		}
 
+		/**
+		 * Returns the Status enumeration constant of the specified name.
+		 * (This is a helper method for JSON deserialization)
+		 *
+		 * @param value the operation name
+		 * @return the enumeration constant
+		 */
 		@JsonCreator
 		public static Operation fromString(String name) {
 			return valueOf(name.toUpperCase());
 		}
 	}
 
+	/**
+	 * Header class for the ID transaction request.
+	 */
 	@JsonPropertyOrder({ SPECIFICATION, OPERATION, PREVIOUS_TXID, TICKET })
 	@JsonInclude(Include.NON_NULL)
 	protected static class Header {
@@ -174,18 +194,46 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 			this.operation = operation;
 		}
 
+		/**
+		 * Get the specification of this request.
+		 *
+		 * @return the specification string
+		 */
 		public String getSpecification() {
 			return specification;
 		}
 
+		/**
+		 * Get the operation.
+		 *
+		 * @return the operation of the request
+		 */
 		public Operation getOperation() {
 			return operation;
 		}
 
+		/**
+		 * Get the previous transaction id header.
+		 *
+		 * <p>
+		 * This header item is optional. only required by the DID update request.
+		 * </p>
+		 *
+		 * @return the previous transaction id or null if not exists
+		 */
 		public String getPreviousTxid() {
 			return previousTxid;
 		}
 
+		/**
+		 * Get the transfer ticket header.
+		 *
+		 * <p>
+		 * This header item is optional. only required by the DID transfer request.
+		 * </p>
+		 *
+		 * @return the transfer ticket in string format or null if not exists
+		 */
 		public String getTicket() {
 			return ticket;
 		}
@@ -206,11 +254,19 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 			this.ticket = ticket;
 		}
 
+		/**
+		 * Get the transfer ticket object from this header.
+		 *
+		 * @return the transfer ticket object or null if not exists
+		 */
 		public TransferTicket getTransferTicket()  {
 			return transferTicket;
 		}
 	}
 
+	/**
+	 * The proof object of ID chain transaction request.
+	 */
 	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, SIGNATURE })
 	public static class Proof {
 		@JsonProperty(TYPE)
@@ -233,59 +289,111 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 			this(null, verificationMethod, signature);
 		}
 
+		/**
+		 * Get the proof type string. the type is derived from the type of the
+		 * public key that signed this proof.
+		 *
+		 * @return get proof type
+		 */
 		public String getType() {
 			return type;
 		}
 
+		/**
+		 * Get the public key id that signed this proof.
+		 *
+		 * @return the public key id
+		 */
 		public DIDURL getVerificationMethod() {
 			return verificationMethod;
 		}
 
+		/**
+		 * Update the verification method to a canonical DIDURL.
+		 *
+		 * @param ref the DID context
+		 */
 		protected void qualifyVerificationMethod(DID ref) {
 			// TODO: need improve the impl
 			if (verificationMethod.getDid() == null)
 				verificationMethod = new DIDURL(ref, verificationMethod);
 		}
 
+		/**
+		 * Get the signature string of this proof.
+		 *
+		 * @return the signature string
+		 */
 		public String getSignature() {
 			return signature;
 		}
 	}
 
+	/**
+	 * Default constructor.
+	 */
 	protected IDChainRequest() {}
 
+	/**
+	 * Create a ID chain request with given operation.
+	 *
+	 * @param operation the operation
+	 */
 	protected IDChainRequest(Operation operation) {
 		this.header = new Header(operation);
 	}
 
+	/**
+	 * Create a DID update request with given previous transaction id.
+	 *
+	 * @param operation should be UPDATE operation
+	 * @param previousTxid the previous transaction id of target DID
+	 */
 	protected IDChainRequest(Operation operation, String previousTxid) {
 		this.header = new Header(operation, previousTxid);
 	}
 
+	/**
+	 * Create a DID transfer request with given ticket.
+	 *
+	 * @param operation should be TRANSFER operation
+	 * @param ticket the transfer ticket object
+	 */
 	protected IDChainRequest(Operation operation, TransferTicket ticket) {
 		this.header = new Header(operation, ticket);
 	}
 
+	/**
+	 * Copy constructor.
+	 *
+	 * @param request another ID chain request object
+	 */
 	protected IDChainRequest(IDChainRequest<?> request) {
 		this.header = request.header;
 		this.payload = request.payload;
 		this.proof = request.proof;
 	}
 
+	/**
+	 * Get the request header object.
+	 *
+	 * @return the header object
+	 */
 	protected Header getHeader() {
 		return header;
 	}
 
 	/**
-	 * Get operation string.
-	 * @return the operation string
+	 * Get the operation of this request.
+	 *
+	 * @return the operation enum
 	 */
 	public Operation getOperation() {
 		return header.getOperation();
 	}
 
 	/**
-	 * Get payload of IDChain Request.
+	 * Get the payload of this ID chain request.
 	 *
 	 * @return the payload string
 	 */
@@ -293,12 +401,17 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 		return payload;
 	}
 
+	/**
+	 * Set the payload for this ID chain request.
+	 *
+	 * @param payload the string format payload
+	 */
 	protected void setPayload(String payload) {
 		this.payload = payload;
 	}
 
 	/**
-	 * Get the proof object of the IDChainRequest.
+	 * Get the proof object of this ID chain request.
 	 *
 	 * @return the proof object
 	 */
@@ -306,10 +419,20 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 		return proof;
 	}
 
+	/**
+	 * Set the proof object for the ID chain request.
+	 *
+	 * @param proof the proof object
+	 */
 	protected void setProof(Proof proof) {
 		this.proof = proof;
 	}
 
+	/**
+	 * Get the signing inputs for generating the proof signature.
+	 *
+	 * @return the array object of input byte arrays
+	 */
 	protected byte[][] getSigningInputs() {
 		String prevtxid = getOperation() == Operation.UPDATE ? header.getPreviousTxid() : "";
 		String ticket = getOperation() == Operation.TRANSFER ? header.getTicket() : "";
@@ -325,19 +448,31 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 		return inputs;
 	}
 
+	/**
+	 * Abstract method to get the DIDDocument of the request signer.
+	 *
+	 * @return the signer's DIDDocument object
+	 * @throws DIDResolveException if error occurred when resolving
+	 * 		   DID document
+	 */
 	protected abstract DIDDocument getSignerDocument() throws DIDResolveException;
 
+	/**
+	 * Post sanitize routine after deserialization.
+	 *
+	 * @throws MalformedResolveResultException if the IDChainRequest
+	 * 		   object is invalid
+	 */
 	@Override
 	protected void sanitize() throws MalformedIDChainRequestException {
 	}
 
 	/**
-	 * Judge whether the IDChain Request is valid or not.
+	 * Return whether this ID chain request is valid or not.
 	 *
-	 * @return the returned value is true if IDChain Request is valid;
-	 *         the returned value is false if IDChain Request is not valid.
-	 * @throws DIDTransactionException there is no invalid key.
-	 * @throws
+	 * @return true if valid, otherwise false
+	 * @throws DIDResolveException if if error occurred when resolving
+	 * 		   DID document
 	 */
 	public boolean isValid() throws DIDResolveException {
 		DIDURL signKey = proof.getVerificationMethod();
@@ -357,9 +492,20 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 				return false;
 		}
 
-		return doc.verify(proof.getVerificationMethod(), proof.getSignature(), getSigningInputs());
+		return doc.verify(proof.getVerificationMethod(), proof.getSignature(),
+				getSigningInputs());
 	}
 
+	/**
+	 * Parse a ID chain request object from JsonNode object.
+	 *
+	 * @param <T> the class type of the ID chain request
+	 * @param content a JsonNode object that contains a ID chain request
+	 * @param clazz the class of the ID chain request
+	 * @return the parsed ID chain request object
+	 *
+	 * @throws DIDSyntaxException if error when parse the resolve request
+	 */
 	protected static<T extends DIDEntity<?>> T parse(JsonNode content, Class<T> clazz)
 			throws DIDSyntaxException {
 		return DIDEntity.parse(content, clazz);

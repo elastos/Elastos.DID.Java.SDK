@@ -29,23 +29,32 @@ import org.elastos.did.DID;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
- * The class records the information of the specified DID's transaction.
+ * The DID transaction object for DID create, update, transfer, deactivate
+ * operations.
  */
 public class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
+	/**
+	 * Default constructor.
+	 */
 	@JsonCreator
 	protected DIDTransaction() {}
 
 	/**
-	 * Constructs the DIDTransaction with the given value.
+	 * Create a DIDTransaction object with the given value.
 	 *
-	 * @param txid the transaction id string
+	 * @param txid the transaction id
 	 * @param timestamp the time stamp
-	 * @param request the IDChainRequest content
+	 * @param request the DIDRequest object
 	 */
 	protected DIDTransaction(String txid, Date timestamp, DIDRequest request) {
 		super(txid, timestamp, request);
 	}
 
+	/**
+	 * Get the target DID of the DID operation contained in this DID transaction.
+	 *
+	 * @return the target DID object
+	 */
 	public DID getDid() {
 		return getRequest().getDid();
 	}

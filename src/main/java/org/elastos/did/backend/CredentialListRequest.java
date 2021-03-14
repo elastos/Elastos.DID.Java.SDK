@@ -30,6 +30,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Credential list request object.
+ */
 public class CredentialListRequest extends ResolveRequest<CredentialListRequest, CredentialListRequest.Parameters> {
 	protected static final String PARAMETER_DID = "did";
 	protected static final String PARAMETER_SKIP = "skip";
@@ -37,6 +40,9 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 
 	public static final String METHOD_NAME = "listcredential";
 
+	/**
+	 * The parameters object for credential list request.
+	 */
 	protected static class Parameters {
 		@JsonProperty(PARAMETER_DID)
 		private DID did;
@@ -89,47 +95,117 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 		}
 	}
 
+	/**
+	 * Create a credential list request with the given request id.
+	 *
+	 * @param requestId a request id string
+	 */
 	@JsonCreator
 	public CredentialListRequest(@JsonProperty(value = ID)String requestId) {
 		super(requestId, METHOD_NAME);
 	}
 
+	/**
+	 * Set parameters for the list request.
+	 *
+	 * @param did the target DID
+	 * @param skip set to skip N credentials ahead in this request
+	 * 		  (useful for pagination).
+	 * @param limit set the limit of credentials returned in the request
+	 * 		  (useful for pagination).
+	 */
 	public void setParameters(DID did, int skip, int limit) {
 		setParameters(new Parameters(did, skip, limit));
 	}
 
+	/**
+	 * Set parameters for the list request. No skip in this request.
+	 *
+	 * @param did the target DID
+	 * @param limit set the limit of credentials returned in the request
+	 * 		  (useful for pagination).
+	 */
 	public void setParameters(DID did, int limit) {
 		setParameters(new Parameters(did, limit));
 	}
 
+	/**
+	 * Set parameters for the list request. No skip and use the resolver's
+	 * default limits in this request,
+	 *
+	 * @param did the target DID
+	 */
 	public void setParameters(DID did) {
 		setParameters(new Parameters(did));
 	}
 
+	/**
+	 * Set parameters for the list request.
+	 *
+	 * @param did the target DID
+	 * @param skip set to skip N credentials ahead in this request
+	 * 		  (useful for pagination).
+	 * @param limit set the limit of credentials returned in the request
+	 * 		  (useful for pagination).
+	 */
 	public void setParameters(String did, int skip, int limit) {
 		setParameters(DID.valueOf(did), skip, limit);
 	}
 
+	/**
+	 * Set parameters for the list request. No skip in this request.
+	 *
+	 * @param did the target DID
+	 * @param limit set the limit of credentials returned in the request
+	 * 		  (useful for pagination).
+	 */
 	public void setParameters(String did, int limit) {
 		setParameters(DID.valueOf(did), limit);
 	}
 
+	/**
+	 * Set parameters for the list request. No skip and use the resolver's
+	 * default limits in this request,
+	 *
+	 * @param did the target DID
+	 */
 	public void setParameters(String did) {
 		setParameters(DID.valueOf(did));
 	}
 
+	/**
+	 * Get the target DID of this request.
+	 *
+	 * @return the target DID
+	 */
 	public DID getDid() {
 		return getParameters().did;
 	}
 
+	/**
+	 * Get the skip number of this request.
+	 *
+	 * @return the skip number, 0 if not set
+	 */
 	public int getSkip() {
 		return getParameters().skip;
 	}
 
+	/**
+	 * Get the limit number of this request.
+	 *
+	 * @return the limit number, 0 if not set
+	 */
 	public int getLimit() {
 		return getParameters().limit;
 	}
 
+	/**
+	 * Constructs a string representation of this request. The string using
+	 * DIDURL format.
+	 *
+	 * @return a string representation of this object.
+	 */
 	@Override
 	public String toString() {
 		DIDURL.Builder builder = new DIDURL.Builder(getParameters().did);
@@ -139,5 +215,4 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 
 		return builder.build().toString();
 	}
-
 }

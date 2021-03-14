@@ -29,6 +29,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * The abstract super class for all resolve requests. Include:
+ * - DIDResolveRequest
+ * - CredentialResolveRequest
+ * - CredentialListRequest
+ *
+ * @param <T> the type of the class modeled by this ResolveRequest object
+ * @param <P> the class of the request parameters
+ */
 @JsonPropertyOrder({ ResolveRequest.ID,
 	ResolveRequest.METHOD,
 	ResolveRequest.PARAMETERS })
@@ -44,32 +53,70 @@ public abstract class ResolveRequest<T, P> extends DIDEntity<T> {
 	@JsonProperty(PARAMETERS)
 	private P params;
 
+	/**
+	 * Construct a ResolveRequest object with the given value.
+	 *
+	 * @param requestId the unique request id
+	 * @param method the resolve method name
+	 */
 	protected ResolveRequest(String requestId, String method) {
 		this.requestId = requestId;
 		this.method = method;
 	}
 
+	/**
+	 * Get the unique request id.
+	 *
+	 * @return the request id
+	 */
 	public String getRequestId() {
 		return requestId;
 	}
 
+	/**
+	 * Get the resolve method name.
+	 *
+	 * @return the resolve method name
+	 */
 	public String getMethod() {
 		return method;
 	}
 
+	/**
+	 * Set the request parameters object.
+	 *
+	 * @param params the request parameters
+	 */
 	protected void setParameters(P params) {
 		this.params = params;
 	}
 
+	/**
+	 * Get the request parameters object.
+	 *
+	 * @return the request parameters
+	 */
 	protected P getParameters() {
 		return params;
 	}
 
+	/**
+	 * Returns a hash code for this resolve request object.
+	 *
+	 * @return a hash code for this request
+	 */
 	@Override
 	public int hashCode() {
 		return method.hashCode() + params.hashCode();
 	}
 
+	/**
+	 * Indicates whether the other resolve request object is "equal to" this
+	 * one.
+	 *
+	 * The equals method implements an equivalence relation on non-null
+	 * object references: method name and the parameters are both equals.
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof ResolveRequest<?, ?>))
@@ -83,6 +130,16 @@ public abstract class ResolveRequest<T, P> extends DIDEntity<T> {
 		return params.equals(rr.params);
 	}
 
+	/**
+	 * Parse a resolve request from JsonNode object.
+	 *
+	 * @param <T> the class type of the resolve request
+	 * @param content a JsonNode object that contains a resolve request
+	 * @param clazz the class of the resolve request
+	 * @return the parsed resolve request object
+	 *
+	 * @throws DIDSyntaxException if error when parse the resolve request
+	 */
 	protected static<T extends DIDEntity<?>> T parse(JsonNode content, Class<T> clazz)
 			throws DIDSyntaxException {
 		return DIDEntity.parse(content, clazz);
