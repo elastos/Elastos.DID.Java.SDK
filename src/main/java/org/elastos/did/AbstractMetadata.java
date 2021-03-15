@@ -33,22 +33,24 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 
 /**
- * The class defines the base interface of Meta data.
- *
+ * The abstract super class for all metadata objects.
  */
 public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 		implements Cloneable {
 	private final static String ALIAS = "alias";
 
+	/**
+	 * The naming prefix for user defined metadata properties.
+	 */
 	protected final static String USER_EXTRA_PREFIX = "UX-";
 
-	public TreeMap<String, String> props;
+	private TreeMap<String, String> props;
 	private DIDStore store;
 
 	/**
-	 * Constructs the AbstractMetadata and attach with the store.
+	 * Constructs an AbstractMetadata and attach with a DID store.
 	 *
-	 * @param store the DIDStore
+	 * @param store a DIDStore object
 	 */
 	protected AbstractMetadata(DIDStore store) {
 		this.store = store;
@@ -56,182 +58,331 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 	}
 
 	/**
-	 * Constructs the AbstractMetadata.
-	 * The default constructor for JSON deserialize creator.
+	 * Constructs an AbstractMetadata.
 	 */
 	protected AbstractMetadata() {
 		this(null);
 	}
 
 	/**
-	 * Set store for Abstract Metadata.
-	 * @param store the DIDStore
+	 * Attach this metadata object with a DID store.
+	 *
+	 * @param store a DID store object
 	 */
 	protected void attachStore(DIDStore store) {
 		checkArgument(store != null, "Invalid store");
 		this.store = store;
 	}
 
+	/**
+	 * Detach this metadata object from the DID store.
+	 */
 	protected void detachStore() {
 		this.store = null;
 	}
 
 	/**
-	 * Get store from Abstract Metadata.
+	 * Get DID store if the metadata is attached with a store.
 	 *
-	 * @return the DIDStore object
+	 * @return the DIDStore object or null if not attached with a store
 	 */
 	protected DIDStore getStore() {
 		return store;
 	}
 
 	/**
-	 * Judge whether the Abstract Metadata attach the store or not.
+	 * Indicate whether the metadata object is attach the store.
 	 *
-	 * @return the returned value is true if there is store attached meta data;
-	 *         the returned value is false if there is no store attached meta data.
+	 * @return true if attached with a store, otherwise false
 	 */
 	protected boolean attachedStore() {
 		return store != null;
 	}
 
+	/**
+	 * Get all metadata properties as a map object.
+	 *
+	 * @return a map that contains all properties
+	 */
 	@JsonAnyGetter
 	protected Map<String, String> getProperties() {
 		return props;
 	}
 
+	/**
+	 * Set the specified property name with with the specified value in
+	 * this metadata. If the metadata previously contained this property,
+	 * the old value is replaced.
+	 *
+	 * @param name the property name to be set
+	 * @param value value to be associated with the property name
+	 */
 	@JsonAnySetter
 	protected void put(String name, String value) {
 		props.put(name, value);
 		save();
 	}
 
+	/**
+	 * Returns the value of the specified property name,
+	 * or {@code null} if this metadata not contains the property name.
+	 *
+	 * @param name the property name to be get
+	 * @return the value of the specified property name, or
+	 *         {@code null} if this metadata not contains the property name
+	 */
 	protected String get(String name) {
 		return props.get(name);
 	}
 
+	/**
+	 * Type safe put method. Set the specified property name with with
+	 * the specified value in this metadata. If the metadata previously
+	 * contained this property, the old value is replaced.
+	 *
+	 * @param name the property name to be set
+	 * @param value value to be associated with the property name
+	 */
 	protected void put(String name, boolean value) {
 		put(name, String.valueOf(value));
 	}
 
+	/**
+	 * Type safe getter for boolean properties. Returns the boolean value
+	 * of the specified property name, or false if this metadata not contains
+	 * the property name.
+	 *
+	 * @param name the property name to be get
+	 * @return the boolean value of the specified property name, or
+	 *         false if this metadata not contains the property name
+	 */
 	protected boolean getBoolean(String name) {
 		return Boolean.valueOf(get(name));
 	}
 
+	/**
+	 * Type safe put method. Set the specified property name with with
+	 * the specified value in this metadata. If the metadata previously
+	 * contained this property, the old value is replaced.
+	 *
+	 * @param name the property name to be set
+	 * @param value value to be associated with the property name
+	 */
 	protected void put(String name, int value) {
 		put(name, String.valueOf(value));
 	}
 
+	/**
+	 * Type safe getter for integer properties. Returns the integer value
+	 * of the specified property name, or 0 if this metadata not contains
+	 * the property name.
+	 *
+	 * @param name the property name to be get
+	 * @return the integer value of the specified property name, or
+	 *         0 if this metadata not contains the property name
+	 */
 	protected int getInteger(String name) {
 		return Integer.valueOf(get(name));
 	}
 
+	/**
+	 * Type safe put method. Set the specified property name with with
+	 * the specified value in this metadata. If the metadata previously
+	 * contained this property, the old value is replaced.
+	 *
+	 * @param name the property name to be set
+	 * @param value value to be associated with the property name
+	 */
 	protected void put(String name, Date value) {
 		put(name, dateFormat.format(value));
 	}
 
+	/**
+	 * Type safe getter for datetime properties. Returns the datatime value
+	 * of the specified property name, or {@code null}  if this metadata not
+	 * contains the property name.
+	 *
+	 * @param name the property name to be get
+	 * @return the Date value of the specified property name, or
+	 *         null if this metadata not contains the property name
+	 */
 	protected Date getDate(String name) throws ParseException {
 		return dateFormat.parse(get(name));
 	}
 
+	/**
+	 * Removes the specified property name from this metadata object if present.
+	 *
+	 * @param name the property name to be remove
+	 * @return the previous value associated with {@code name}, or
+	 *         {@code null} if there was no mapping for {@code name}.
+	 */
 	protected String remove(String name) {
 		String value = props.remove(name);
 		save();
 		return value;
 	}
 
+	/**
+	 * Returns {@code true} if this metadata contains no properties.
+	 *
+	 * @return {@code true} if this metadata contains no properties
+	 */
 	public boolean isEmpty() {
 		return props.isEmpty();
 	}
 
 	/**
-	 * Set alias.
+	 * Set the alias property.
 	 *
-	 * @param alias alias string
+	 * @param alias a new alias
 	 */
 	public void setAlias(String alias) {
 		put(ALIAS, alias);
 	}
 
 	/**
-	 * Get alias.
+	 * Get the alias property.
 	 *
-	 * @return alias string
+	 * @return alias current alias or null if not set before
 	 */
 	public String getAlias() {
 		return get(ALIAS);
 	}
 
 	/**
-	 * Set Extra element.
+	 * Set a user defined property name with with the specified value in
+	 * this metadata. If the metadata previously contained this property,
+	 * the old value is replaced.
 	 *
-	 * @param key the key string
-	 * @param value the value string
+	 * @param name the user defined property name to be set
+	 * @param value value to be associated with the property name
 	 */
-	public void setExtra(String key, String value) {
-		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+	public void setExtra(String name, String value) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid key");
 
-		put(USER_EXTRA_PREFIX + key, value);
+		put(USER_EXTRA_PREFIX + name, value);
 	}
 
 	/**
-	 * Get Extra element.
+	 * Returns the value of the user defined property name,
+	 * or {@code null} if this metadata not contains the property name.
 	 *
-	 * @param key the key string
-	 * @return the value string
+	 * @param name the user defined property name to be get
+	 * @return the value of the specified property name, or
+	 *         {@code null} if this metadata not contains the property name
 	 */
-	public String getExtra(String key) {
-		checkArgument(key != null && !key.isEmpty(), "Invalid key");
+	public String getExtra(String name) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
 
-		return get(USER_EXTRA_PREFIX + key);
-	}
-
-	public void setExtra(String key, Boolean value) {
-		checkArgument(key != null && !key.isEmpty(), "Invalid key");
-
-		put(USER_EXTRA_PREFIX + key, value);
-	}
-
-	public boolean getExtraBoolean(String key) {
-		checkArgument(key != null && !key.isEmpty(), "Invalid key");
-
-		return getBoolean(USER_EXTRA_PREFIX + key);
-	}
-
-	public void setExtra(String key, Integer value) {
-		checkArgument(key != null && !key.isEmpty(), "Invalid key");
-
-		put(USER_EXTRA_PREFIX + key, value);
-	}
-
-	public int getExtraInteger(String key) {
-		checkArgument(key != null && !key.isEmpty(), "Invalid key");
-
-		return getInteger(USER_EXTRA_PREFIX + key);
-	}
-
-	public void setExtra(String key, Date value) {
-		checkArgument(key != null && !key.isEmpty(), "Invalid key");
-
-		put(USER_EXTRA_PREFIX + key, value);
-	}
-
-	public Date getExtraDate(String key) throws ParseException {
-		checkArgument(key != null && !key.isEmpty(), "Invalid key");
-
-		return getDate(USER_EXTRA_PREFIX + key);
-	}
-
-	public String removeExtra(String key) {
-		checkArgument(key != null && !key.isEmpty(), "Invalid key");
-
-		return remove(USER_EXTRA_PREFIX + key);
+		return get(USER_EXTRA_PREFIX + name);
 	}
 
 	/**
-	 * Merge two metadata.
+	 * Type safe setter for user defined properties. Set the specified property
+	 * name with the specified value in this metadata. If the metadata
+	 * previously contained this property, the old value is replaced.
 	 *
-	 * @param metadata the metadata to be merged.
+	 * @param name the property name to be set
+	 * @param value value to be associated with the property name
+	 */
+	public void setExtra(String name, Boolean value) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
+
+		put(USER_EXTRA_PREFIX + name, value);
+	}
+
+	/**
+	 * Type safe getter for boolean user defined properties. Returns the
+	 * boolean value of the specified property name, or false if this metadata
+	 * not contains the property name.
+	 *
+	 * @param name the property name to be get
+	 * @return the boolean value of the specified property name, or
+	 *         false if this metadata not contains the property name
+	 */
+	public boolean getExtraBoolean(String name) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
+
+		return getBoolean(USER_EXTRA_PREFIX + name);
+	}
+
+	/**
+	 * Type safe setter for user defined properties. Set the specified property
+	 * name with the specified value in this metadata. If the metadata
+	 * previously contained this property, the old value is replaced.
+	 *
+	 * @param name the property name to be set
+	 * @param value value to be associated with the property name
+	 */
+	public void setExtra(String name, Integer value) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
+
+		put(USER_EXTRA_PREFIX + name, value);
+	}
+
+	/**
+	 * Type safe getter for integer user defined properties. Returns the
+	 * integer value of the specified property name, or false if this metadata
+	 * not contains the property name.
+	 *
+	 * @param name the property name to be get
+	 * @return the integer value of the specified property name, or
+	 *         0 if this metadata not contains the property name
+	 */
+	public int getExtraInteger(String name) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
+
+		return getInteger(USER_EXTRA_PREFIX + name);
+	}
+
+	/**
+	 * Type safe setter for user defined properties. Set the specified property
+	 * name with the specified value in this metadata. If the metadata
+	 * previously contained this property, the old value is replaced.
+	 *
+	 * @param name the property name to be set
+	 * @param value value to be associated with the property name
+	 */
+	public void setExtra(String name, Date value) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
+
+		put(USER_EXTRA_PREFIX + name, value);
+	}
+
+	/**
+	 * Type safe getter for date time user defined properties. Returns the
+	 * date time value of the specified property name, or false if this metadata
+	 * not contains the property name.
+	 *
+	 * @param name the property name to be get
+	 * @return the Date value of the specified property name, or
+	 *         {@code null} if this metadata not contains the property name
+	 */
+	public Date getExtraDate(String name) throws ParseException {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
+
+		return getDate(USER_EXTRA_PREFIX + name);
+	}
+
+	/**
+	 * Removes the specified user defined property name from this metadata
+	 * object if present.
+	 *
+	 * @param name the user defined property name to be remove
+	 * @return the previous value associated with {@code name}, or
+	 *         {@code null} if there was no mapping for {@code name}.
+	 */
+	public String removeExtra(String name) {
+		checkArgument(name != null && !name.isEmpty(), "Invalid name");
+
+		return remove(USER_EXTRA_PREFIX + name);
+	}
+
+	/**
+	 * Merge another metadata object into this metadata object.
+	 *
+	 * @param metadata the metadata to be merge
 	 */
 	protected void merge(AbstractMetadata metadata) {
 		if (metadata == this || metadata == null)
@@ -248,21 +399,28 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 		});
 	}
 
-    /**
-     * Returns a shallow copy of this instance: the keys and values themselves
-     * are not cloned.
-     *
-     * @return a shallow copy of this object
-     */
+	/**
+	 * Returns a shallow copy of this instance: the property names and values
+	 * themselves are not cloned.
+	 *
+	 * @return a shallow copy of this object
+	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	protected Object clone() throws CloneNotSupportedException {
 		AbstractMetadata result = (AbstractMetadata)super.clone();
-        result.store = store;
-        result.props = (TreeMap<String, String>) props.clone();
+		result.store = store;
+		result.props = (TreeMap<String, String>) props.clone();
 
-        return result;
-    }
+		return result;
+	}
 
+	/**
+	 * Abstract method to save the modified metadata to the attached store if
+	 * this metadata attached with a store.
+	 *
+	 * If the child metadata class provide the save implementation, the metadata
+	 * object will auto save after any modifications.
+	 */
 	protected abstract void save();
 }

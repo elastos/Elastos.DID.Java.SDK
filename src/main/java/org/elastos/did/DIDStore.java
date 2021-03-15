@@ -93,7 +93,7 @@ public final class DIDStore {
 	private Metadata metadata;
 
 	protected static final ConflictHandle defaultConflictHandle = (c, l) -> {
-		l.getMetadata().setPublished(c.getMetadata().getPublished());
+		l.getMetadata().setPublishTime(c.getMetadata().getPublishTime());
 		l.getMetadata().setSignature(c.getMetadata().getSignature());
 		return l;
 	};

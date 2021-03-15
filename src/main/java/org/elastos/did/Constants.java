@@ -25,36 +25,36 @@ package org.elastos.did;
 import java.util.TimeZone;
 
 /**
- * The class to provide the main constant.
+ * Global constants for Elastos DID SDK.
  */
 public final class Constants {
-    /**
-     * The deprecated default PublicKey type
-     */
+	/**
+	 * The new default PublicKey type.
+	 */
 	public final static String _DEFAULT_PUBLICKEY_TYPE = "secp256r1";
 
-    /**
-     * The default PublicKey type
-     */
+	/**
+	 * The default PublicKey type.
+	 */
 	public final static String DEFAULT_PUBLICKEY_TYPE = "ECDSAsecp256r1";
 
 	/**
-	 * The date format
+	 * The date format that defined in the DID specification.
 	 */
 	public final static String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
 	/**
-	 * The iso8601 date format
+	 * The iso8601 date format.
 	 */
 	public final static String DATE_FORMAT_ISO_8601 = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
 	/**
-	 * The max valid year
+	 * The max valid years.
 	 */
 	public final static int MAX_VALID_YEARS = 5;
 
 	/**
-	 * The UTC timezone
+	 * The UTC time zone.
 	 */
 	public final static TimeZone UTC = TimeZone.getTimeZone("UTC");
 }

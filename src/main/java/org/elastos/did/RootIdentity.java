@@ -435,7 +435,7 @@ public final class RootIdentity {
 	 * Export mnemonic from DIDStore
 	 *
 	 * @param storepass the password for DIDStore
- 	 * @return the mnemonic string
+	 * @return the mnemonic string
 	 * @throws DIDStoreException there is no mnemonic in DID Store.
 	 */
 	public String exportMnemonic(String storepass) throws DIDStoreException {
@@ -563,14 +563,14 @@ public final class RootIdentity {
 		synchronize(null);
 	}
 
-    /**
-     * Synchronize DIDStore with asynchronous mode.
-     *
+	/**
+	 * Synchronize DIDStore with asynchronous mode.
+	 *
 	 * @param handle the handle to ConflictHandle
 	 * @param storepass the password for DIDStore
 	 * @return the new CompletableStage, the result is the DIDDocument interface for
 	 *         resolved DIDDocument if success; null otherwise.
-     */
+	 */
 	public CompletableFuture<Void> synchronizeAsync(ConflictHandle handle) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
@@ -583,13 +583,13 @@ public final class RootIdentity {
 		return future;
 	}
 
-    /**
-     * Synchronize DIDStore with asynchronous mode.
-     * ConflictHandle uses default method.
-     *
+	/**
+	 * Synchronize DIDStore with asynchronous mode.
+	 * ConflictHandle uses default method.
+	 *
 	 * @param storepass the password for DIDStore
 	 * @return the new CompletableStage, no result.
-     */
+	 */
 	public CompletableFuture<Void> synchronizeAsync() {
 		return synchronizeAsync(null);
 	}

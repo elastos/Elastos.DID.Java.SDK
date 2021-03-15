@@ -28,15 +28,12 @@ import java.text.ParseException;
 import java.util.Date;
 
 import org.elastos.did.exception.DIDStoreException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.elastos.did.exception.UnknownInternalException;
 
 /**
- * The interface for Credential's meta data(include alias name, last modified time for Credential
- * and user's extra element).
- */
-/**
- * The class defines the implement of Credential Meta data.
+ * The object contains the information about the VerifiableCredential object.
+ * the information may include the credential transaction information and user
+ * defined information.
  */
 public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	private final static String TXID = "txid";
@@ -45,71 +42,82 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 
 	private DIDURL id;
 
-	private static final Logger log = LoggerFactory.getLogger(CredentialMetadata.class);
-
 	/**
-	 *  The default constructor for JSON deserialize creator.
+	 *  Default constructor.
 	 */
 	protected CredentialMetadata() {
 		this(null);
 	}
 
 	/**
-	 * Construct the empty CredentialMetadataImpl.
+	 * Constructs a CredentialMetadata with given id.
+	 *
+	 * @param id a credential id
 	 */
 	protected CredentialMetadata(DIDURL id) {
 		this(id, null);
 	}
 
 	/**
-	 * Construct the CredentialMetadataImpl with the given store.
+	 * Constructs a CredentialMetadata with given id and attach with
+	 * a DID store.
 	 *
-	 * @param store the specified DIDStore
+	 * @param id a credential id
+	 * @param store a DIDStore object
 	 */
 	protected CredentialMetadata(DIDURL id, DIDStore store) {
 		super(store);
 		this.id = id;
 	}
 
+	/**
+	 * Set the credential id of this metadata object.
+	 *
+	 * @param id a credential id
+	 */
 	protected void setId(DIDURL id) {
 		this.id = id;
 	}
 
 	/**
-	 * Set transaction id for CredentialMetadata.
+	 * Set the last transaction id of the credential that associated with
+	 * this metadata object.
 	 *
-	 * @param txid the transaction id string
+	 * @param txid a transaction id
 	 */
 	protected void setTransactionId(String txid) {
 		put(TXID, txid);
 	}
 
 	/**
-	 * Get the last transaction id.
+	 * Get the last transaction id of the credential that kept in this metadata
+	 * object.
 	 *
-	 * @return the transaction string
+	 * @return the transaction id
 	 */
 	public String getTransactionId() {
 		return get(TXID);
 	}
 
 	/**
-	 * Set published time for CredentialMetadata.
+	 * Set the publish time of the credential that associated with this
+	 * metadata object.
 	 *
-	 * @param timestamp the time published
+	 * @param timestamp the publish time
 	 */
-	protected void setPublished(Date timestamp) {
+	protected void setPublishTime(Date timestamp) {
 		checkArgument(timestamp != null, "Invalid timestamp");
 
 		put(PUBLISHED, timestamp);
 	}
 
 	/**
-	 * Get the time of the latest declare transaction.
+	 * Get the publish time of the credential that kept in this metadata
+	 * object.
 	 *
 	 * @return the published time
 	 */
-	public Date getPublished() {
+	public Date getPublishTime() {
 		try {
 			return getDate(PUBLISHED);
 		} catch (ParseException e) {
@@ -118,7 +126,8 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	}
 
 	/**
-	 * Set revoked status into CredentialMetadata.
+	 * Set the revocation status of the credential that associated with this
+	 * metadata object.
 	 *
 	 * @param revoked the revocation status
 	 */
@@ -127,40 +136,42 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	}
 
 	/**
-	 * the DID revoked status.
+	 * Get the revocation status of the credential that kept in this metadata
+	 * object.
 	 *
-	 * @return the returned value is true if the did is revoked.
-	 *         the returned value is false if the did is not revoked.
+	 * @return true if credential is revoked, otherwise false
 	 */
 	public boolean isRevoked( ) {
 		return getBoolean(REVOKED);
 	}
 
-    /**
-     * Returns a shallow copy of this instance: the keys and values themselves
-     * are not cloned.
-     *
-     * @return a shallow copy of this object
-     */
+	/**
+	 * Returns a shallow copy of this instance: the property names and values
+	 * themselves are not cloned.
+	 *
+	 * @return a shallow copy of this object
+	 */
 	@Override
 	public CredentialMetadata clone() {
 		try {
 			return (CredentialMetadata)super.clone();
-		} catch (CloneNotSupportedException ignore) {
-			ignore.printStackTrace();
-			return null;
+		} catch (CloneNotSupportedException e) {
+			throw new UnknownInternalException(e);
 		}
-    }
+	}
 
+	/**
+	 * Save this metadata object to the attached store if this metadata
+	 * attached with a store.
+	 */
 	@Override
 	protected void save() {
 		if (attachedStore()) {
 			try {
 				getStore().storeCredentialMetadata(id, this);
-			} catch (DIDStoreException ignore) {
-				log.error("INTERNAL - error store metadata for credential {}", id);
+			} catch (DIDStoreException e) {
+				throw new UnknownInternalException(e);
 			}
 		}
 	}
 }
-

@@ -390,7 +390,7 @@ public class DIDBackend {
 		DIDMetadata metadata = new DIDMetadata(doc.getSubject());
 		metadata.setTransactionId(tx.getTransactionId());
 		metadata.setSignature(doc.getProof().getSignature());
-		metadata.setPublished(tx.getTimestamp());
+		metadata.setPublishTime(tx.getTimestamp());
 		if (bio.getStatus() == DIDBiography.Status.DEACTIVATED)
 			metadata.setDeactivated(true);
 		doc.setMetadata(metadata);
@@ -493,7 +493,7 @@ public class DIDBackend {
 		VerifiableCredential vc = tx.getRequest().getCredential();
 		CredentialMetadata metadata = new CredentialMetadata(vc.getId());
 		metadata.setTransactionId(tx.getTransactionId());
-		metadata.setPublished(tx.getTimestamp());
+		metadata.setPublishTime(tx.getTimestamp());
 		if (bio.getStatus() == CredentialBiography.Status.REVOKED)
 			metadata.setRevoked(true);
 		vc.setMetadata(metadata);

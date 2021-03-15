@@ -317,7 +317,7 @@ public class VerifiableCredentialTest {
 
 		CredentialMetadata metadata = resolved.getMetadata();
 		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
+		assertNotNull(metadata.getPublishTime());
 		assertNotNull(metadata.getTransactionId());
 		assertFalse(resolved.isRevoked());
 
@@ -362,7 +362,7 @@ public class VerifiableCredentialTest {
 
 			CredentialMetadata metadata = resolved.getMetadata();
 			assertNotNull(metadata);
-			assertNotNull(metadata.getPublished());
+			assertNotNull(metadata.getPublishTime());
 			assertNotNull(metadata.getTransactionId());
 			assertFalse(resolved.isRevoked());
 
@@ -411,7 +411,7 @@ public class VerifiableCredentialTest {
 
 		CredentialMetadata metadata = resolved.getMetadata();
 		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
+		assertNotNull(metadata.getPublishTime());
 		assertNotNull(metadata.getTransactionId());
 		assertFalse(resolved.isRevoked());
 
@@ -426,7 +426,7 @@ public class VerifiableCredentialTest {
 
 		metadata = resolved.getMetadata();
 		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
+		assertNotNull(metadata.getPublishTime());
 		assertNotNull(metadata.getTransactionId());
 		assertTrue(resolved.isRevoked());
 
@@ -470,7 +470,7 @@ public class VerifiableCredentialTest {
 
 		CredentialMetadata metadata = resolved.getMetadata();
 		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
+		assertNotNull(metadata.getPublishTime());
 		assertNotNull(metadata.getTransactionId());
 		assertFalse(resolved.isRevoked());
 
@@ -490,7 +490,7 @@ public class VerifiableCredentialTest {
 
 		metadata = resolved.getMetadata();
 		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
+		assertNotNull(metadata.getPublishTime());
 		assertNotNull(metadata.getTransactionId());
 		assertTrue(resolved.isRevoked());
 
@@ -701,7 +701,7 @@ public class VerifiableCredentialTest {
 
 		CredentialMetadata metadata = resolved.getMetadata();
 		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
+		assertNotNull(metadata.getPublishTime());
 		assertNotNull(metadata.getTransactionId());
 		assertFalse(resolved.isRevoked());
 
@@ -716,7 +716,7 @@ public class VerifiableCredentialTest {
 
 		metadata = resolved.getMetadata();
 		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
+		assertNotNull(metadata.getPublishTime());
 		assertNotNull(metadata.getTransactionId());
 		assertTrue(resolved.isRevoked());
 
@@ -763,7 +763,7 @@ public class VerifiableCredentialTest {
 
 			CredentialMetadata metadata = resolved.getMetadata();
 			assertNotNull(metadata);
-			assertNotNull(metadata.getPublished());
+			assertNotNull(metadata.getPublishTime());
 			assertNotNull(metadata.getTransactionId());
 			assertFalse(resolved.isRevoked());
 
