@@ -893,7 +893,7 @@ public class IDChainOperationsTest {
 			assertEquals(l.getProof().getSignature(), c.getProof().getSignature());
 			assertEquals(l.getLastModified(), c.getLastModified());
 
-			l.getMetadata().setPublished(c.getMetadata().getPublished());
+			l.getMetadata().setPublishTime(c.getMetadata().getPublishTime());
 			l.getMetadata().setSignature(c.getMetadata().getSignature());
 			return l;
 		});
@@ -922,7 +922,7 @@ public class IDChainOperationsTest {
 			assertEquals(l.getProof().getSignature(), c.getProof().getSignature());
 			assertEquals(l.getLastModified(), c.getLastModified());
 
-			l.getMetadata().setPublished(c.getMetadata().getPublished());
+			l.getMetadata().setPublishTime(c.getMetadata().getPublishTime());
 			l.getMetadata().setSignature(c.getMetadata().getSignature());
 			return l;
 		};

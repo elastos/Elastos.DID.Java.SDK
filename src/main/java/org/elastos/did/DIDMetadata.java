@@ -26,11 +26,12 @@ import java.text.ParseException;
 import java.util.Date;
 
 import org.elastos.did.exception.DIDStoreException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.elastos.did.exception.UnknownInternalException;
 
 /**
- * The class defines the implement of DID Metadata.
+ * The object contains the information about the DID object.
+ * the information may include the DID transaction information and user
+ * defined information.
  */
 public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	private final static String ROOT_IDENTITY = "rootIdentity";
@@ -43,72 +44,103 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 
 	private DID did;
 
-	private static final Logger log = LoggerFactory.getLogger(DIDMetadata.class);
-
 	/**
-	 *  The default constructor for JSON deserialize creator.
+	 *  Default constructor.
 	 */
 	protected DIDMetadata() {
 		this(null);
 	}
 
 	/**
-	 * Constructs the empty DIDMetadataImpl.
+	 * Constructs a CredentialMetadata with given did.
+	 *
+	 * @param did a DID object
 	 */
 	protected DIDMetadata(DID did) {
 		this(did, null);
 	}
 
 	/**
-	 * Constructs the empty DIDMetadataImpl with the given store.
+	 * Constructs a DIDMetadata with given did and attach with a DID store.
 	 *
-	 * @param store the specified DIDStore
+	 * @param did a DID object
+	 * @param store a DIDStore object
 	 */
 	protected DIDMetadata(DID did, DIDStore store) {
 		super(store);
 		this.did = did;
 	}
 
+	/**
+	 * Set the DID of this metadata object.
+	 *
+	 * @param id a credential id
+	 */
 	protected void setDid(DID did) {
 		this.did = did;
 	}
 
+	/**
+	 * Set the root identity id that the DID derived from, if the DID
+	 * is derived from a root identity.
+	 *
+	 * @param id a root identity id
+	 */
 	protected void setRootIdentityId(String id) {
 		put(ROOT_IDENTITY, id);
 	}
 
+	/**
+	 * Get the root identity id that the DID derived from.
+	 * Null if the DID is not derived from a root identity.
+	 *
+	 * @return the root identity id
+	 */
 	protected String getRootIdentityId() {
 		return get(ROOT_IDENTITY);
 	}
 
+	/**
+	 * Set the derived index if the DID is derived from a root identity.
+	 *
+	 * @param id a derive index
+	 */
 	protected void setIndex(int index) {
 		put(INDEX, index);
 	}
 
+	/**
+	 * Get the derived index only if the DID is derived from a root identity.
+	 *
+	 * @param id a derive index
+	 */
 	protected int getIndex() {
 		return getInteger(INDEX);
 	}
 
 	/**
-	 * Set transaction id into DIDMetadata.
+	 * Set the last transaction id of the DID that associated with
+	 * this metadata object.
 	 *
-	 * @param txid the transaction id string
+	 * @param txid a transaction id
 	 */
 	protected void setTransactionId(String txid) {
 		put(TXID, txid);
 	}
 
 	/**
-	 * Get the last transaction id.
+	 * Get the last transaction id of the DID that kept in this metadata
+	 * object.
 	 *
-	 * @return the transaction string
+	 * @return the transaction id
 	 */
 	public String getTransactionId() {
 		return get(TXID);
 	}
 
 	/**
-	 * Set previous signature into DIDMetadata.
+	 * Set the previous signature of the DID document that associated with this
+	 * metadata object.
 	 *
 	 * @param signature the signature string
 	 */
@@ -117,7 +149,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	}
 
 	/**
-	 * Get the document signature from the previous transaction.
+	 * Get the previous document signature from the previous transaction.
 	 *
 	 * @return the signature string
 	 */
@@ -126,7 +158,8 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	}
 
 	/**
-	 * Set signature into DIDMetadata.
+	 * Set the latest signature of the DID document that associated with this
+	 * metadata object.
 	 *
 	 * @param signature the signature string
 	 */
@@ -135,7 +168,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	}
 
 	/**
-	 * Get the document signature from the lastest transaction.
+	 * Get the signature of the DID document that kept in this metadata object.
 	 *
 	 * @return the signature string
 	 */
@@ -144,20 +177,22 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	}
 
 	/**
-	 * Set published time into DIDMetadata.
+	 * Set the publish time of the DID that associated with this
+	 * metadata object.
 	 *
-	 * @param timestamp the time published
+	 * @param timestamp the publish time
 	 */
-	protected void setPublished(Date timestamp) {
+	protected void setPublishTime(Date timestamp) {
 		put(PUBLISHED, timestamp);
 	}
 
 	/**
-	 * Get the time of the lastest published transaction.
+	 * Get the publish time of the DID that kept in this metadata
+	 * object.
 	 *
 	 * @return the published time
 	 */
-	public Date getPublished() {
+	public Date getPublishTime() {
 		try {
 			return getDate(PUBLISHED);
 		} catch (ParseException e) {
@@ -166,47 +201,51 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	}
 
 	/**
-	 * Set deactivate status into DIDMetadata.
+	 * Set the deactivated status of the DID that associated with this
+	 * metadata object.
 	 *
-	 * @param deactivated the deactivate status
+	 * @param deactivated the deactivated status
 	 */
 	protected void setDeactivated(boolean deactivated) {
 		put(DEACTIVATED, deactivated);
 	}
 
 	/**
-	 * the DID deactivated status.
+	 * Get the deactivated status of the DID that kept in this metadata
+	 * object.
 	 *
-	 * @return the returned value is true if the did is deactivated.
-	 *         the returned value is false if the did is activated.
+	 * @return true if DID is deactivated, otherwise false
 	 */
 	public boolean isDeactivated( ) {
 		return getBoolean(DEACTIVATED);
 	}
 
-    /**
-     * Returns a shallow copy of this instance: the keys and values themselves
-     * are not cloned.
-     *
-     * @return a shallow copy of this object
-     */
+	/**
+	 * Returns a shallow copy of this instance: the property names and values
+	 * themselves are not cloned.
+	 *
+	 * @return a shallow copy of this object
+	 */
 	@Override
 	public DIDMetadata clone() {
 		try {
 			return (DIDMetadata)super.clone();
-		} catch (CloneNotSupportedException ignore) {
-			ignore.printStackTrace();
-			return null;
+		} catch (CloneNotSupportedException e) {
+			throw new UnknownInternalException(e);
 		}
-    }
+	}
 
+	/**
+	 * Save this metadata object to the attached store if this metadata
+	 * attached with a store.
+	 */
 	@Override
 	protected void save() {
 		if (attachedStore()) {
 			try {
 				getStore().storeDidMetadata(did, this);
-			} catch (DIDStoreException ignore) {
-				log.error("INTERNAL - error store metadata for DID {}", did);
+			} catch (DIDStoreException e) {
+				throw new UnknownInternalException(e);
 			}
 		}
 	}

@@ -21,16 +21,17 @@
  */
 
 /**
+ * Elastos DID SDK
+ *
  * <p>
- * Defines the API for the main DID's framework.
- * </p>
- * <p>
- * DID has several main modules：DID, DIDDocument(DID detail information), DIDStore,
- * Verifiable Credential and Verifiable Presentation.
+ * Elastos DID is a W3C compatible DID method.
+ * See <a href="https://github.com/elastos/Elastos.DID.Method">Elastos DID method specification</a>.
  * </p>
  *
- * @since 1.0
- * @version 1.0
+ * <p>
+ * Elastos DID supports DID, verifiable credential that defined in W3C
+ * specifications. Also built-in JWT support that working with DID seamlessly.
+ * </p>
  **/
 
 package org.elastos.did;
