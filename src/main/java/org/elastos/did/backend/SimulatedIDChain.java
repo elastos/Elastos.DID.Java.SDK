@@ -31,7 +31,9 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
@@ -179,8 +181,32 @@ public class SimulatedIDChain {
 	public void reset() {
 		idtxs.clear();
 		vctxs.clear();
+		log.info("All transactions reseted.");
+	}
 
-		log.info("All data reseted.");
+	/**
+	 * Reset all ID transactions on the simulated ID chain.
+	 *
+	 * <p>
+	 * After reset, all ID transactions will be removed. This may cause the
+	 * existing credential transactions can not be verified.
+	 * </p>
+	 */
+	public void resetIdtxs() {
+		idtxs.clear();
+		log.info("All id transactions reseted.");
+	}
+
+	/**
+	 * Reset all credential transactions on the simulated ID chain.
+	 *
+	 * <p>
+	 * After reset, all credential transactions will be removed.
+	 * </p>
+	 */
+	public void resetVctxs() {
+		vctxs.clear();
+		log.info("All credential transactions reseted.");
 	}
 
 	private static String generateTxid() {
@@ -702,6 +728,23 @@ public class SimulatedIDChain {
 		}
 	}
 
+	private Map<String, String> queryToMap(String query) {
+	    Map<String, String> result = new HashMap<String, String>();
+
+	    if (query == null || query.isEmpty())
+	    	return result;
+
+	    for (String param : query.split("&")) {
+	        String[] entry = param.split("=");
+	        if (entry.length > 1) {
+	            result.put(entry[0], entry[1]);
+	        }else{
+	            result.put(entry[0], "");
+	        }
+	    }
+	    return result;
+	}
+
 	private class ResetHandler implements HttpHandler {
 		@Override
 		public void handle(HttpExchange exchange) throws IOException {
@@ -712,7 +755,15 @@ public class SimulatedIDChain {
 				return;
 			}
 
-			reset();
+			String query = exchange.getRequestURI().getQuery();
+			Map<String, String> map = queryToMap(query);
+
+			if (map.containsKey("idtxsonly"))
+				resetIdtxs();
+			else if (map.containsKey("vctxsonly"))
+				resetVctxs();
+			else
+				reset();
 
 			exchange.sendResponseHeaders(200, 0);
 			exchange.getResponseBody().close();
