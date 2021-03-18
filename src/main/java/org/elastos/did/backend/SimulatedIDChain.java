@@ -27,6 +27,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -48,6 +49,7 @@ import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDURL;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDTransactionException;
+import org.elastos.did.exception.UnknownInternalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -134,6 +136,8 @@ public class SimulatedIDChain {
 	private ConcurrentLinkedDeque<DIDTransaction> idtxs;
 	private ConcurrentLinkedDeque<CredentialTransaction> vctxs;
 
+	private Statistics stat;
+
 	private static final Logger log = LoggerFactory.getLogger(SimulatedIDChain.class);
 
 	/**
@@ -151,6 +155,8 @@ public class SimulatedIDChain {
 
 		idtxs = new ConcurrentLinkedDeque<DIDTransaction>();
 		vctxs = new ConcurrentLinkedDeque<CredentialTransaction>();
+
+		stat = new Statistics();
 	}
 
 	/**
@@ -243,78 +249,146 @@ public class SimulatedIDChain {
 			log.trace("    document: {}", request.getDocument().toString(true));
 
 		try {
-			if (!request.isValid())
+			if (!request.isValid()) {
+				stat.invalidDidRequest();
 				throw new DIDTransactionException("Invalid DID transaction request.");
+			}
 		} catch (DIDResolveException e) {
+			stat.invalidDidRequest();
 			log.error("INTERNAL - resolve failed when verify the did transaction", e);
 			throw new DIDTransactionException("Resove DID error");
 		}
 
 		if (request.getOperation() != IDChainRequest.Operation.DEACTIVATE) {
-			if (!request.getDocument().isValid())
+			if (!request.getDocument().isValid()) {
+				stat.invalidDidRequestWithInvalidDocument();
 				throw new DIDTransactionException("Invalid DID Document.");
+			}
 		}
 
 		DIDTransaction tx = getLastDidTransaction(request.getDid());
 		if (tx != null) {
-			if (tx.getRequest().getOperation() == IDChainRequest.Operation.DEACTIVATE)
+			if (tx.getRequest().getOperation() == IDChainRequest.Operation.DEACTIVATE) {
+				stat.invalidDidRequestOnDeactivatedDid();
 				throw new DIDTransactionException("DID " + request.getDid() + " already deactivated");
+			}
 		}
 
 		switch (request.getOperation()) {
 		case CREATE:
-			if (tx != null)
+			stat.createDid();
+
+			if (tx != null) {
+				stat.createDidAlreadyExists();
 				throw new DIDTransactionException("DID already exists.");
+			}
+
+			if (request.getDocument().isCustomizedDid()) {
+				stat.createCustomizedDid();
+
+				if (request.getDocument().getControllerCount() == 1)
+					stat.createCustomizedDidWithSingleController();
+				else
+					stat.createCustomizedDidWithMultiController();
+
+				if (request.getDocument().getMultiSignature() != null)
+					stat.createCustomizedDidWithMultisig();
+				else
+					stat.createCustomizedDidWithSinglesig();
+			}
 
 			break;
 
 		case UPDATE:
-			if (tx == null)
-				throw new DIDTransactionException("DID not exists.");
+			stat.updateDid();
 
-			if (!request.getPreviousTxid().equals(tx.getTransactionId()))
+			if (tx == null) {
+				stat.updateDidNotExists();
+				throw new DIDTransactionException("DID not exists.");
+			}
+
+			if (request.getDocument().isCustomizedDid()) {
+				stat.updateCustomizedDid();
+
+				if (request.getDocument().getControllerCount() == 1)
+					stat.updateCustomizedDidWithSingleController();
+				else
+					stat.updateCustomizedDidWithMultiController();
+
+				if (request.getDocument().getMultiSignature() != null)
+					stat.updateCustomizedDidWithMultisig();
+				else
+					stat.updateCustomizedDidWithSinglesig();
+			}
+
+			if (!request.getPreviousTxid().equals(tx.getTransactionId())) {
+				stat.updateDidWithWrongTxid();
 				throw new DIDTransactionException("Previous transaction id missmatch.");
+			}
 
 			if (tx.getRequest().getDocument().isCustomizedDid()) {
 				List<DID> orgControllers = tx.getRequest().getDocument().getControllers();
 				List<DID> curControllers = request.getDocument().getControllers();
 
-				if (!curControllers.equals(orgControllers))
+				if (!curControllers.equals(orgControllers)) {
+					stat.updateCustomizedDidWithControllersChanged();
 					throw new DIDTransactionException("Document controllers changed.");
+				}
 			}
 
 			break;
 
 		case TRANSFER:
-			if (tx == null)
+			stat.transferDid();
+
+			if (tx == null) {
+				stat.transferDidNotExists();
 				throw new DIDTransactionException("DID not exists.");
+			}
 
 			try {
-				if (!request.getTransferTicket().isValid())
+				if (!request.getTransferTicket().isValid()) {
+					stat.transferDidWithInvalidTicket();
 					throw new DIDTransactionException("Invalid transfer ticket.");
+				}
 			} catch (DIDResolveException e) {
 				throw new DIDTransactionException(e);
 			}
 
-			if (!request.getTransferTicket().getSubject().equals(request.getDid()))
+			if (!request.getTransferTicket().getSubject().equals(request.getDid())) {
+				stat.transferDidWithInvalidTicketId();
 				throw new DIDTransactionException("Ticket subject mismatched with target DID.");
+			}
 
-			if (!request.getDocument().hasController(request.getTransferTicket().getTo()))
+			if (!request.getDocument().hasController(request.getTransferTicket().getTo())) {
+				stat.transferDidWithInvalidTicketTo();
 				throw new DIDTransactionException("Ticket owner not a controller of target DID.");
+			}
 
 			boolean hasSignature = false;
 			for (DIDDocument.Proof proof : request.getDocument().getProofs()) {
 				if (proof.getCreator().getDid().equals(request.getTransferTicket().getTo()))
 					hasSignature = true;
 			}
-			if (!hasSignature)
+			if (!hasSignature) {
+				stat.transferDidWithInvalidController();
 				throw new DIDTransactionException("New document not include the ticket owner's signature.");
+			}
 
 			break;
 
 		case DEACTIVATE:
-			if (tx == null)
+			stat.deactivateDid();
+
+			if (tx == null) {
+				stat.deactivateDidNotExists();
 				throw new DIDTransactionException("DID not exist.");
+			}
+
+			if (tx.getRequest().getDocument().isAuthorizationKey(request.getProof().getVerificationMethod()))
+				stat.deactivateDidByAuthroization();
+			else
+				stat.deactivateDidByOwner();
 
 			break;
 
@@ -331,11 +405,18 @@ public class SimulatedIDChain {
 	private DIDResolveResponse resolveDid(DIDResolveRequest request) {
 		log.debug("Resolveing DID {} ...", request.getDid());
 
+		stat.resolveDid();
+		if (request.isResolveAll())
+			stat.resolveDidWithAll();
+		else
+			stat.resolveDidNonAll();
+
 		DIDBiography bio = new DIDBiography(request.getDid());
 		DIDTransaction last = getLastDidTransaction(request.getDid());
 		if (last != null) {
 			int limit;
 			if (last.getRequest().getOperation() == IDChainRequest.Operation.DEACTIVATE) {
+				stat.resolveDeactivatedDid();
 				bio.setStatus(DIDBiography.Status.DEACTIVATED);
 				limit = request.isResolveAll() ? -1 : 2;
 			} else {
@@ -355,6 +436,7 @@ public class SimulatedIDChain {
 				}
 			}
 		} else {
+			stat.resolveNonExistsDid();
 			bio.setStatus(DIDBiography.Status.NOT_FOUND);
 		}
 
@@ -409,9 +491,12 @@ public class SimulatedIDChain {
 			log.trace("    credential: {}", request.getCredential().toString(true));
 
 		try {
-			if (!request.isValid())
+			if (!request.isValid()) {
+				stat.invalidCredentialRequest();
 				throw new DIDTransactionException("Invalid ID transaction request.");
+			}
 		} catch (DIDResolveException e) {
+			stat.invalidCredentialRequest();
 			log.error("INTERNAL - resolve failed when verify the id transaction", e);
 			throw new DIDTransactionException("Resove DID error");
 		}
@@ -421,25 +506,40 @@ public class SimulatedIDChain {
 
 		switch (request.getOperation()) {
 		case DECLARE:
-			if (declareTx != null) // Declared already
+			stat.declareCredential();
+
+			if (declareTx != null) { // Declared already
+				stat.declareCredentialAlreadyDeclared();
 				throw new DIDTransactionException("Credential already exists.");
+			}
 
 			revokeTx = getCredentialRevokeTransaction(
 					request.getCredentialId(), request.getCredential().getIssuer());
-			if (revokeTx != null) // Revoked already
+			if (revokeTx != null) { // Revoked already
+				stat.declareCredentialAlreadyRevoked();
 				throw new DIDTransactionException("Credential already revoked by "
 						+ revokeTx.getRequest().getProof().getVerificationMethod().getDid());
+			}
 
 			break;
 
 		case REVOKE:
+			stat.revokeCredential();
+
 			DID issuer = declareTx != null ? declareTx.getRequest().getCredential().getIssuer()
 					: request.getProof().getVerificationMethod().getDid();
 
+			if (declareTx != null)
+				stat.revokeCredentialNotDeclared();
+			else
+				stat.revokeCredentialAlreadyDeclared();
+
 			revokeTx = getCredentialRevokeTransaction(request.getCredentialId(), issuer);
-			if (revokeTx != null)
+			if (revokeTx != null) {
+				stat.revokeCredentialAlreadyRevoked();
 				throw new DIDTransactionException("Credential already revoked by "
 						+ revokeTx.getRequest().getProof().getVerificationMethod().getDid());
+			}
 
 			break;
 
@@ -456,6 +556,12 @@ public class SimulatedIDChain {
 	private CredentialResolveResponse resolveCredential(CredentialResolveRequest request) {
 		log.debug("Resolveing credential {} ...", request.getId());
 
+		stat.resolveCredential();
+		if (request.getIssuer() != null)
+			stat.resolveCredentialWithIssuer();
+		else
+			stat.resolveCredentialWithoutIssuer();
+
 		CredentialTransaction declareTx = getCredentialDeclareTransaction(request.getId());
 
 		DID issuer = declareTx != null ? declareTx.getRequest().getCredential().getIssuer()
@@ -465,6 +571,7 @@ public class SimulatedIDChain {
 
 		CredentialBiography bio = new CredentialBiography(request.getId());
 		if (revokeTx != null) {
+			stat.resolveRevokedCredential();
 			bio.setStatus(CredentialBiography.Status.REVOKED);
 			bio.addTransaction(revokeTx);
 			if (declareTx != null)
@@ -474,6 +581,7 @@ public class SimulatedIDChain {
 				bio.setStatus(CredentialBiography.Status.VALID);
 				bio.addTransaction(declareTx);
 			} else {
+				stat.resolveNonExistsCredential();
 				bio.setStatus(CredentialBiography.Status.NOT_FOUND);
 			}
 		}
@@ -493,6 +601,19 @@ public class SimulatedIDChain {
 			limit = CredentialList.DEFAULT_SIZE;
 		else if (limit >= CredentialList.MAX_SIZE)
 			limit = CredentialList.MAX_SIZE;
+
+		stat.listCredentials();
+		if (skip == 0)
+			stat.listCredentialsWithoutSkip();
+		else
+			stat.listCredentialsWithSkip();
+
+		if (limit == CredentialList.DEFAULT_SIZE)
+			stat.listCredentialsWithDefaultLimit();
+		else if(limit == CredentialList.MAX_SIZE)
+			stat.listCredentialsWithMaxLimit();
+		else
+			stat.listCredentialsWithUserLimit();
 
 		log.debug("Listing credentials {} {}/{}...", request.getDid(), skip, limit);
 
@@ -561,6 +682,7 @@ public class SimulatedIDChain {
 		server.createContext("/reset", new ResetHandler());
 		server.createContext("/shutdown", new ShutdownHandler());
 
+		stat.reset();
 		server.start();
 
 		this.server = server;
@@ -596,6 +718,8 @@ public class SimulatedIDChain {
 		this.notifyAll();
 
 		log.info("Simulated IDChain stopped");
+
+		System.out.println(stat.toString());
 	}
 
 	/**
@@ -784,6 +908,379 @@ public class SimulatedIDChain {
 			exchange.getResponseBody().close();
 
 			stop();
+		}
+	}
+
+	private static class Statistics {
+		// General
+		private AtomicInteger invalidDidRequest = new AtomicInteger();
+		private AtomicInteger invalidDidRequestWithInvalidDocument = new AtomicInteger();
+		private AtomicInteger invalidDidRequestOnDeactivatedDid = new AtomicInteger();
+		private AtomicInteger invalidCredentialRequest = new AtomicInteger();
+
+		// DID transactions
+		private AtomicInteger createDid = new AtomicInteger();
+		private AtomicInteger createDidAlreadyExists = new AtomicInteger();
+		private AtomicInteger createCustomizedDid = new AtomicInteger();
+		private AtomicInteger createCustomizedDidWithSingleController = new AtomicInteger();
+		private AtomicInteger createCustomizedDidWithMultiController = new AtomicInteger();
+		private AtomicInteger createCustomizedDidWithMultisig = new AtomicInteger();
+		private AtomicInteger createCustomizedDidWithSinglesig = new AtomicInteger();
+
+		private AtomicInteger updateDid = new AtomicInteger();
+		private AtomicInteger updateDidNotExists = new AtomicInteger();
+		private AtomicInteger updateDidWithWrongTxid = new AtomicInteger();
+		private AtomicInteger updateCustomizedDid = new AtomicInteger();
+		private AtomicInteger updateCustomizedDidWithSingleController = new AtomicInteger();
+		private AtomicInteger updateCustomizedDidWithMultiController = new AtomicInteger();
+		private AtomicInteger updateCustomizedDidWithMultisig = new AtomicInteger();
+		private AtomicInteger updateCustomizedDidWithSinglesig = new AtomicInteger();
+		private AtomicInteger updateCustomizedDidWithControllersChanged = new AtomicInteger();
+
+		private AtomicInteger transferDid = new AtomicInteger();
+		private AtomicInteger transferDidNotExists = new AtomicInteger();
+		private AtomicInteger transferDidWithInvalidTicket = new AtomicInteger();
+		private AtomicInteger transferDidWithInvalidTicketId = new AtomicInteger();
+		private AtomicInteger transferDidWithInvalidTicketTo = new AtomicInteger();
+		private AtomicInteger transferDidWithInvalidController = new AtomicInteger();
+
+		private AtomicInteger deactivateDid = new AtomicInteger();
+		private AtomicInteger deactivateDidNotExists = new AtomicInteger();
+		private AtomicInteger deactivateDidByOwner = new AtomicInteger();
+		private AtomicInteger deactivateDidByAuthroization = new AtomicInteger();
+
+		// Resolve DID
+		private AtomicInteger resolveDid = new AtomicInteger();
+		private AtomicInteger resolveDidWithAll = new AtomicInteger();
+		private AtomicInteger resolveDidNonAll = new AtomicInteger();
+		private AtomicInteger resolveNonExistsDid = new AtomicInteger();
+		private AtomicInteger resolveDeactivatedDid = new AtomicInteger();
+
+		// Credential transactions
+		private AtomicInteger declareCredential = new AtomicInteger();
+		private AtomicInteger declareCredentialAlreadyDeclared = new AtomicInteger();
+		private AtomicInteger declareCredentialAlreadyRevoked = new AtomicInteger();
+		private AtomicInteger revokeCredential = new AtomicInteger();
+		private AtomicInteger revokeCredentialAlreadyDeclared = new AtomicInteger();
+		private AtomicInteger revokeCredentialAlreadyRevoked = new AtomicInteger();
+		private AtomicInteger revokeCredentialNotDeclared = new AtomicInteger();
+
+		// Resolve credential
+		private AtomicInteger resolveCredential = new AtomicInteger();
+		private AtomicInteger resolveCredentialWithIssuer = new AtomicInteger();
+		private AtomicInteger resolveCredentialWithoutIssuer = new AtomicInteger();
+		private AtomicInteger resolveNonExistsCredential = new AtomicInteger();
+		private AtomicInteger resolveRevokedCredential = new AtomicInteger();
+
+		// List credential
+		private AtomicInteger listCredentials = new AtomicInteger();
+		private AtomicInteger listCredentialsWithoutSkip = new AtomicInteger();
+		private AtomicInteger listCredentialsWithSkip = new AtomicInteger();
+		private AtomicInteger listCredentialsWithDefaultLimit = new AtomicInteger();
+		private AtomicInteger listCredentialsWithMaxLimit = new AtomicInteger();
+		private AtomicInteger listCredentialsWithUserLimit = new AtomicInteger();
+
+		public void reset() {
+			for (Field field : getClass().getDeclaredFields()) {
+			   // field.setAccessible(true);
+				if (!field.getType().equals(AtomicInteger.class))
+					continue;
+
+				try {
+					AtomicInteger v = (AtomicInteger)field.get(this);
+					v.set(0);
+				} catch (Exception e) {
+					throw new UnknownInternalException(e);
+				}
+			}
+		}
+
+		public int invalidDidRequest() {
+			return invalidDidRequest.incrementAndGet();
+		}
+
+		public int invalidDidRequestWithInvalidDocument() {
+			return invalidDidRequestWithInvalidDocument.incrementAndGet();
+		}
+
+		public int invalidDidRequestOnDeactivatedDid() {
+			return invalidDidRequestOnDeactivatedDid.incrementAndGet();
+		}
+
+		public int invalidCredentialRequest() {
+			return invalidCredentialRequest.incrementAndGet();
+		}
+
+		public int createDid() {
+			return createDid.incrementAndGet();
+		}
+
+		public int createDidAlreadyExists() {
+			return createDidAlreadyExists.incrementAndGet();
+		}
+
+		public int createCustomizedDid() {
+			return createCustomizedDid.incrementAndGet();
+		}
+
+		public int createCustomizedDidWithSingleController() {
+			return createCustomizedDidWithSingleController.incrementAndGet();
+		}
+
+		public int createCustomizedDidWithMultiController() {
+			return createCustomizedDidWithMultiController.incrementAndGet();
+		}
+
+		public int createCustomizedDidWithMultisig() {
+			return createCustomizedDidWithMultisig.incrementAndGet();
+		}
+
+		public int createCustomizedDidWithSinglesig() {
+			return createCustomizedDidWithSinglesig.incrementAndGet();
+		}
+
+		public int updateDid() {
+			return updateDid.incrementAndGet();
+		}
+
+		public int updateDidNotExists() {
+			return updateDidNotExists.incrementAndGet();
+		}
+
+		public int updateDidWithWrongTxid() {
+			return updateDidWithWrongTxid.incrementAndGet();
+		}
+
+		public int updateCustomizedDid() {
+			return updateCustomizedDid.incrementAndGet();
+		}
+
+		public int updateCustomizedDidWithSingleController() {
+			return updateCustomizedDidWithSingleController.incrementAndGet();
+		}
+
+		public int updateCustomizedDidWithMultiController() {
+			return updateCustomizedDidWithMultiController.incrementAndGet();
+		}
+
+		public int updateCustomizedDidWithMultisig() {
+			return updateCustomizedDidWithMultisig.incrementAndGet();
+		}
+
+		public int updateCustomizedDidWithSinglesig() {
+			return updateCustomizedDidWithSinglesig.incrementAndGet();
+		}
+
+		public int updateCustomizedDidWithControllersChanged() {
+			return updateCustomizedDidWithControllersChanged.incrementAndGet();
+		}
+
+		public int transferDid() {
+			return transferDid.incrementAndGet();
+		}
+
+		public int transferDidNotExists() {
+			return transferDidNotExists.incrementAndGet();
+		}
+
+		public int transferDidWithInvalidTicket() {
+			return transferDidWithInvalidTicket.incrementAndGet();
+		}
+
+		public int transferDidWithInvalidTicketId() {
+			return transferDidWithInvalidTicketId.incrementAndGet();
+		}
+
+		public int transferDidWithInvalidTicketTo() {
+			return transferDidWithInvalidTicketTo.incrementAndGet();
+		}
+
+		public int transferDidWithInvalidController() {
+			return transferDidWithInvalidController.incrementAndGet();
+		}
+
+		public int deactivateDid() {
+			return deactivateDid.incrementAndGet();
+		}
+
+		public int deactivateDidNotExists() {
+			return deactivateDidNotExists.incrementAndGet();
+		}
+
+		public int deactivateDidByOwner() {
+			return deactivateDidByOwner.incrementAndGet();
+		}
+
+		public int deactivateDidByAuthroization() {
+			return deactivateDidByAuthroization.incrementAndGet();
+		}
+
+		public int resolveDid() {
+			return resolveDid.incrementAndGet();
+		}
+
+		public int resolveDidWithAll() {
+			return resolveDidWithAll.incrementAndGet();
+		}
+
+		public int resolveDidNonAll() {
+			return resolveDidNonAll.incrementAndGet();
+		}
+
+		public int resolveNonExistsDid() {
+			return resolveNonExistsDid.incrementAndGet();
+		}
+
+		public int resolveDeactivatedDid() {
+			return resolveDeactivatedDid.incrementAndGet();
+		}
+
+
+		public int declareCredential() {
+			return declareCredential.incrementAndGet();
+		}
+
+		public int declareCredentialAlreadyRevoked() {
+			return declareCredentialAlreadyRevoked.incrementAndGet();
+		}
+
+		public int declareCredentialAlreadyDeclared() {
+			return declareCredentialAlreadyDeclared.incrementAndGet();
+		}
+
+		public int revokeCredential() {
+			return revokeCredential.incrementAndGet();
+		}
+
+		public int revokeCredentialAlreadyRevoked() {
+			return revokeCredentialAlreadyRevoked.incrementAndGet();
+
+		}
+
+		public int revokeCredentialAlreadyDeclared() {
+			return revokeCredentialAlreadyDeclared.incrementAndGet();
+		}
+
+		public int revokeCredentialNotDeclared() {
+			return revokeCredentialNotDeclared.incrementAndGet();
+		}
+
+		public int resolveCredential() {
+			return resolveCredential.incrementAndGet();
+		}
+
+		public int resolveCredentialWithIssuer() {
+			return resolveCredentialWithIssuer.incrementAndGet();
+		}
+
+		public int resolveCredentialWithoutIssuer() {
+			return resolveCredentialWithoutIssuer.incrementAndGet();
+		}
+
+		public int resolveNonExistsCredential() {
+			return resolveNonExistsCredential.incrementAndGet();
+		}
+
+		public int resolveRevokedCredential() {
+			return resolveRevokedCredential.incrementAndGet();
+		}
+
+		public int listCredentials() {
+			return listCredentials.incrementAndGet();
+		}
+
+		public int listCredentialsWithoutSkip() {
+			return listCredentialsWithoutSkip.incrementAndGet();
+		}
+
+		public int listCredentialsWithSkip() {
+			return listCredentialsWithSkip.incrementAndGet();
+		}
+
+		public int listCredentialsWithDefaultLimit() {
+			return listCredentialsWithDefaultLimit.incrementAndGet();
+		}
+
+		public int listCredentialsWithMaxLimit() {
+			return listCredentialsWithMaxLimit.incrementAndGet();
+		}
+
+		public int listCredentialsWithUserLimit() {
+			return listCredentialsWithUserLimit.incrementAndGet();
+		}
+
+		@Override
+		public String toString() {
+			StringBuffer buff = new StringBuffer(1024);
+
+			buff.append("========================================================\n")
+				.append("Statistics of the simulated ID chain\n")
+				.append("+ General: \n")
+				.append("  * Invalid DID request: ").append(invalidDidRequest.intValue()).append("\n")
+				.append("  * Invalid DID request(invalid doc): ").append(invalidDidRequestWithInvalidDocument.intValue()).append("\n")
+				.append("  * Invalid DID request(deactivated): ").append(invalidDidRequestOnDeactivatedDid.intValue()).append("\n")
+				.append("  * Invalid Credential request: ").append(invalidCredentialRequest.intValue()).append("\n")
+
+				.append("+ Create DID: ").append(createDid.intValue()).append("\n")
+				.append("  * Create DID(already exists): ").append(createDidAlreadyExists.intValue()).append("\n")
+				.append("  - Create customized DID: ").append(createCustomizedDid.intValue()).append("\n")
+				.append("  - Create customized DID(SingleCtrl): ").append(createCustomizedDidWithSingleController.intValue()).append("\n")
+				.append("  - Create customized DID(MultiCtrl): ").append(createCustomizedDidWithMultiController.intValue()).append("\n")
+				.append("  - Create customized DID(SingleSig: ").append(createCustomizedDidWithSinglesig.intValue()).append("\n")
+				.append("  - Create customized DID(MultiSig): ").append(createCustomizedDidWithMultisig.intValue()).append("\n")
+
+				.append("+ Update DID: ").append(updateDid.intValue()).append("\n")
+				.append("  * Update DID(not exists): ").append(updateDidNotExists.intValue()).append("\n")
+				.append("  * Update DID(wrong txid): ").append(updateDidWithWrongTxid.intValue()).append("\n")
+				.append("  - Update customized DID: ").append(updateCustomizedDid.intValue()).append("\n")
+				.append("  - Update customized DID(SingleCtrl): ").append(updateCustomizedDidWithSingleController.intValue()).append("\n")
+				.append("  - Update customized DID(MultiCtrl): ").append(updateCustomizedDidWithMultiController.intValue()).append("\n")
+				.append("  - Update customized DID(SingleSig: ").append(updateCustomizedDidWithSinglesig.intValue()).append("\n")
+				.append("  - Update customized DID(MultiSig): ").append(updateCustomizedDidWithMultisig.intValue()).append("\n")
+				.append("  * Update customized DID(controllers changed): ").append(updateCustomizedDidWithControllersChanged.intValue()).append("\n")
+
+				.append("+ Transfer DID: ").append(transferDid.intValue()).append("\n")
+				.append("  * Transfer DID(not exists): ").append(transferDidNotExists.intValue()).append("\n")
+				.append("  * Transfer DID(invalid ticket): ").append(transferDidWithInvalidTicket.intValue()).append("\n")
+				.append("  * Transfer DID(invalid ticket id: ").append(transferDidWithInvalidTicketId.intValue()).append("\n")
+				.append("  * Transfer DID(invalid ticket to): ").append(transferDidWithInvalidTicketTo.intValue()).append("\n")
+				.append("  * Transfer DID(invalid controller): ").append(transferDidWithInvalidController.intValue()).append("\n")
+
+				.append("+ Deactivate DID: ").append(deactivateDid.intValue()).append("\n")
+				.append("  * Deactivate DID(not exists): ").append(deactivateDidNotExists.intValue()).append("\n")
+				.append("  - Deactivate DID(owner): ").append(deactivateDidByOwner.intValue()).append("\n")
+				.append("  - Deactivate DID(authorization):").append(deactivateDidByAuthroization.intValue()).append("\n")
+
+				.append("+ Resolve DID: ").append(resolveDid.intValue()).append("\n")
+				.append("  - Resolve DID(all=true): ").append(resolveDidWithAll.intValue()).append("\n")
+				.append("  - Resolve DID(all=false): ").append(resolveDidNonAll.intValue()).append("\n")
+				.append("  - Resolve non-exists DID: ").append(resolveNonExistsDid.intValue()).append("\n")
+				.append("  - Resolve deactivated DID: ").append(resolveDeactivatedDid.intValue()).append("\n")
+
+				.append("+ Declare credential: ").append(declareCredential.intValue()).append("\n")
+				.append("  * Declare credential(declared): ").append(declareCredentialAlreadyDeclared.intValue()).append("\n")
+				.append("  * Declare credential(revoked): ").append(declareCredentialAlreadyRevoked.intValue()).append("\n")
+
+				.append("+ Revoke credential: ").append(revokeCredential.intValue()).append("\n")
+				.append("  - Revoke credential(declared): ").append(revokeCredentialAlreadyDeclared.intValue()).append("\n")
+				.append("  - Revoke credential(revoked): ").append(revokeCredentialAlreadyRevoked.intValue()).append("\n")
+				.append("  - Revoke credential(not declared): ").append(revokeCredentialNotDeclared.intValue()).append("\n")
+
+				.append("+ Resolve credential: ").append(resolveCredential.intValue()).append("\n")
+				.append("  - Resolve credential(withIssuer): ").append(resolveCredentialWithIssuer.intValue()).append("\n")
+				.append("  - Resolve credential(withoutIssuer): ").append(resolveCredentialWithoutIssuer.intValue()).append("\n")
+				.append("  - Resolve non-exists credential: ").append(resolveNonExistsCredential.intValue()).append("\n")
+				.append("  - Resolve revoked credential: ").append(resolveRevokedCredential.intValue()).append("\n")
+
+				.append("+ List credentials: ").append(listCredentials.intValue()).append("\n")
+				.append("  - List credential(withoutSkip): ").append(listCredentialsWithoutSkip.intValue()).append("\n")
+				.append("  - list credential(withSkip): ").append(listCredentialsWithSkip.intValue()).append("\n")
+				.append("  - list credential(withDefaultLimit): ").append(listCredentialsWithDefaultLimit.intValue()).append("\n")
+				.append("  - list credential(withMaxLimit): ").append(listCredentialsWithMaxLimit.intValue()).append("\n")
+				.append("  - list credential(withUserLimit): ").append(listCredentialsWithUserLimit.intValue()).append("\n")
+				.append("========================================================\n");
+
+			return buff.toString();
 		}
 	}
 }
