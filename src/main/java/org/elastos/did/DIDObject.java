@@ -23,20 +23,21 @@
 package org.elastos.did;
 
 /**
- * The class is the base object for PublicKey and Credential.
+ * The base interface for all DID objects that could be managed by the DID
+ * document.
  */
 public interface DIDObject {
 	/**
-	 * Get the entry id.
+	 * Get the object id.
 	 *
-	 * @return the identifier object
+	 * @return a object id
 	 */
 	public DIDURL getId();
 
 	/**
-	 * Get the entry type.
+	 * Get the object type.
 	 *
-	 * @return the type string or array
+	 * @return a type string or a string array
 	 */
 	public Object getType();
 }

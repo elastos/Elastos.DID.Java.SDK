@@ -92,6 +92,7 @@ import com.sun.net.httpserver.HttpServer;
  * <h3>Reset test data</h3>
  * <p>
  * <b>Endpoint</b>: /reset<br>
+ * <b>Parameters</b>(optional): idtxsonly, vctxsonly<br>
  * <b>Method</b>: POST<br>
  * <b>Request Body</b>: None<br>
  * <b>Response Body</b>: None<br>

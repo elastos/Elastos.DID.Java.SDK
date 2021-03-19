@@ -34,11 +34,17 @@ import java.util.List;
 import java.util.StringJoiner;
 
 import org.bitcoinj.crypto.MnemonicCode;
-import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.MnemonicException;
 
 /**
- * The class represents the mnemonic content.
+ * Mnemonic object compliant with
+ * <a href="https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki">the BIP 39
+ * specification</a>. Support all languages that listed in bip-0039.
+ *
+ * <p>
+ * Mnemonic object can generate a random mnemonic words list, or convert the
+ * works list to seed that use to generate the root extended private key.
+ * </p>
  */
 public class Mnemonic {
 	/**
@@ -102,7 +108,7 @@ public class Mnemonic {
 	}
 
 	/**
-	 * Get empty Mnemonic's instance.
+	 * Create a Mnemonic object with default language.
 	 *
 	 * @return the Mnemonic object
 	 */
@@ -111,11 +117,11 @@ public class Mnemonic {
 	}
 
 	/**
-	 * Get the Mnemonic's instance with the given language.
+	 * Create a Mnemonic object with specified language.
 	 *
 	 * @param language the language string
 	 * @return the Mnemonic object
-	 * @throws DIDException generate Mnemonic into table failed.
+	 * @throws MnemonicException if an error occurred when create the Mnemonic object
 	 */
 	public static synchronized Mnemonic getInstance(String language)
 			throws MnemonicException {
@@ -141,10 +147,10 @@ public class Mnemonic {
 	}
 
 	/**
-	 * Generate mnemonic.
+	 * Generate a random mnemonic.
 	 *
 	 * @return the mnemonic string
-	 * @throws DIDException generate Mnemonic into table failed.
+	 * @throws MnemonicException if an error occurred when generating the words list
 	 */
 	public String generate() throws MnemonicException {
 		try {
@@ -153,41 +159,47 @@ public class Mnemonic {
 			List<String> words = mc.toMnemonic(entropy);
 
 			StringJoiner joiner = new StringJoiner(" ");
-	        for (String word: words)
-	            joiner.add(word);
+			for (String word: words)
+				joiner.add(word);
 
-	        return joiner.toString();
+			return joiner.toString();
 		} catch (org.bitcoinj.crypto.MnemonicException e) {
 			throw new MnemonicException(e);
 		}
 	}
 
 	/**
-	 * Check that mnemonic string is valid or not.
+	 * Check the mnemonic string is valid or not.
 	 *
 	 * @param mnemonic the mnemonic string
-	 * @return the returned value is true if mnemonic is valid;
-	 *         the returned value is false if mnemonic is not valid.
+	 * @return true if valid, otherwise false
 	 */
 	public boolean isValid(String mnemonic) {
 		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
 
-    	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
 		List<String> words = Arrays.asList(mnemonic.split(" "));
 
-    	try {
-	    	mc.check(words);
-		    return true;
+		try {
+			mc.check(words);
+			return true;
 		} catch (org.bitcoinj.crypto.MnemonicException e) {
 			return false;
 		}
 	}
 
 
+	/**
+	 * Get the language name from a mnemonic string.
+	 *
+	 * @param mnemonic a mnemonic string.
+	 * @return a language name
+	 * @throws MnemonicException if an error occurred
+	 */
 	public static String getLanguage(String mnemonic) throws MnemonicException {
 		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
 
-    	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
 		List<String> words = Arrays.asList(mnemonic.split(" "));
 
 		String[] langs = { ENGLISH, SPANISH, FRENCH, CZECH, ITALIAN,
@@ -195,10 +207,10 @@ public class Mnemonic {
 
 		for (String lang : langs) {
 			Mnemonic m = getInstance(lang);
-	    	try {
+			try {
 				m.mc.check(words);
 				return lang;
-	    	} catch (org.bitcoinj.crypto.MnemonicException e) {
+			} catch (org.bitcoinj.crypto.MnemonicException e) {
 				continue;
 			}
 		}
@@ -206,6 +218,13 @@ public class Mnemonic {
 		return null;
 	}
 
+	/**
+	 * Check a mnemonic string is valid or not.
+	 *
+	 * @param mnemonic a mnemonic string
+	 * @return true if valid, otherwise false
+	 * @throws MnemonicException if an error occurred
+	 */
 	public static boolean checkIsValid(String mnemonic) throws MnemonicException {
 		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
 
@@ -214,11 +233,11 @@ public class Mnemonic {
 	}
 
 	/**
-	 * Get seed from mnemonic and password.
+	 * Convert the mnemonic and an optional passphrase to seed.
 	 *
-	 * @param mnemonic the mnemonic string
-	 * @param passphrase the password combine with mnemonic
-	 * @return the original seed
+	 * @param mnemonic a mnemonic string
+	 * @param passphrase a passphrase, could be null or empty
+	 * @return a seed that use to generate the root extended private key
 	 */
 	public static byte[] toSeed(String mnemonic, String passphrase) {
 		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
@@ -227,10 +246,10 @@ public class Mnemonic {
 			passphrase = "";
 
 		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
-    	passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
+		passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
 
 		List<String> words = Arrays.asList(mnemonic.split(" "));
 
-    	return MnemonicCode.toSeed(words, passphrase);
+		return MnemonicCode.toSeed(words, passphrase);
 	}
 }
