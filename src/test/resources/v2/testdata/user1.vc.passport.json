@@ -2,8 +2,8 @@
   "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#passport",
   "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
   "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-  "issuanceDate" : "2021-03-08T03:47:54Z",
-  "expirationDate" : "2026-03-08T03:47:54Z",
+  "issuanceDate" : "2021-03-19T08:41:55Z",
+  "expirationDate" : "2026-03-19T08:41:55Z",
   "credentialSubject" : {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
     "nation" : "Singapore",
@@ -11,8 +11,8 @@
   },
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-08T03:47:54Z",
+    "created" : "2021-03-19T08:41:55Z",
     "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signature" : "wkEBS-vyPU15lfv-cO-dbXfLIQ8aWeZ8JhxKZyaytuGx9AungYczC3gU0i75b6Rq0qoqPs9p7ckMO0HLlLCs9Q"
+    "signature" : "cVVPXZANlUEpmTna7kcRbmIMan7vYv2bEApZXT1O4YcZN5YtsuChRuw0XTqmv4LsjtiODdcITHbNlbQvbUIV_g"
   }
 }

@@ -2,11 +2,11 @@
   "id" : "did:elastos:baz",
   "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d" ],
   "multisig" : "1:2",
-  "expires" : "2026-03-08T03:47:57Z",
+  "expires" : "2026-03-19T08:44:34Z",
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-08T03:47:57Z",
+    "created" : "2021-03-19T08:44:34Z",
     "creator" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d#primary",
-    "signatureValue" : "SZz3XByPcJBvHN3lLHFRZIIhpDQzj46lcAtyJ_s4y1Thi3o0nGbsJV6Sc4OpAM4v8B8_hQl0I7Rf9sw4SMaAgw"
+    "signatureValue" : "Z9Xkf8u1m7t0mkpAXzqIihJ7yOb7iEtqT-NeZx9CyO2cPs7lTZ6Z0VgHLfvfEhDNNeHlOESoN5uNT2dhI1Rsjw"
   }
 }

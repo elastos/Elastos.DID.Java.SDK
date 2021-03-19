@@ -2,21 +2,21 @@
   "id" : "did:elastos:bar",
   "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g", "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS" ],
   "multisig" : "3:3",
-  "expires" : "2026-03-08T03:47:56Z",
+  "expires" : "2026-03-19T08:41:57Z",
   "proof" : [ {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-08T03:47:56Z",
+    "created" : "2021-03-19T08:41:57Z",
     "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "yOQOvVDsCJSCnT5aTWrLZRKICAtKv6uehxknM6L9AhlqSKg65mIpMq1YEI9CmaJ5oPV2a1MaScJU0SyAG7--PA"
+    "signatureValue" : "Vj_dlyCiq1l9QRawIFT5bq5k-AUklo3JXcSqscwEPhVApQOLdUyI1S2S7UeOS_SyCv4MOFa2aBDHaRFqJhPTQg"
   }, {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-08T03:47:56Z",
+    "created" : "2021-03-19T08:41:57Z",
     "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "signatureValue" : "2uM_N8KF1-MlpQqnMu_ej_VKat7YtDStrJXdmez0wpF1ELiBfPweF-br9PIbnCsN_gYAOLvHHzc_4XARBHMsAQ"
+    "signatureValue" : "oo5HWra6i4L-qq44ubvYVrnA_tl7OvWa6MacHfIYFAnOas58dEAfCZl7HJgcU56Sh3AOvGT9FF0bta_tU4mIzA"
   }, {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-08T03:47:56Z",
+    "created" : "2021-03-19T08:41:57Z",
     "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
-    "signatureValue" : "GFAH8OXJMpmZtn2CRg2Ziez0hx-_PgArlGxB0gQOE1zfBWguu9LYgk9zzniHyvL4YaW193Tv9gxXMiWDwpOvCA"
+    "signatureValue" : "ShJwxKBoC35RQU0VYQN7QnWzlhVePAPJ2C_5IkuYCPSAmLpVoz3ZZnderFpTkqCe0EffDtP4NOUCOYs76seiiw"
   } ]
 }

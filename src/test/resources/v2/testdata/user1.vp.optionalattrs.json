@@ -2,29 +2,29 @@
   "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#test-vp",
   "type" : [ "FooBar", "TestPresentation" ],
   "holder" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-  "created" : "2021-03-08T03:47:55Z",
+  "created" : "2021-03-19T08:41:55Z",
   "verifiableCredential" : [ {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#email",
     "type" : [ "BasicProfileCredential", "EmailCredential", "InternetAccountCredential" ],
     "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-    "issuanceDate" : "2021-03-08T03:47:54Z",
-    "expirationDate" : "2026-03-08T03:47:54Z",
+    "issuanceDate" : "2021-03-19T08:41:55Z",
+    "expirationDate" : "2026-03-19T08:41:55Z",
     "credentialSubject" : {
       "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
       "email" : "john@example.com"
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-03-08T03:47:54Z",
+      "created" : "2021-03-19T08:41:55Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "pgiE9tPMBOJFYmNaK01a6RtoriqtYqxs8d84Um1fsbf6gmMVF75RGB01bHm6pK0f3--GvRP2CvxbojCEtPAcPw"
+      "signature" : "9cqDHbdoK7DOEH87f1vE34BsAmPxFkFAuQ7aPt5W5pjViE6jY51S2kPr7Yf59O8RZj9JqFjVU7_pr9uqXfXpVw"
     }
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#passport",
     "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
     "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "issuanceDate" : "2021-03-08T03:47:54Z",
-    "expirationDate" : "2026-03-08T03:47:54Z",
+    "issuanceDate" : "2021-03-19T08:41:55Z",
+    "expirationDate" : "2026-03-19T08:41:55Z",
     "credentialSubject" : {
       "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
       "nation" : "Singapore",
@@ -32,16 +32,16 @@
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-03-08T03:47:54Z",
+      "created" : "2021-03-19T08:41:55Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "wkEBS-vyPU15lfv-cO-dbXfLIQ8aWeZ8JhxKZyaytuGx9AungYczC3gU0i75b6Rq0qoqPs9p7ckMO0HLlLCs9Q"
+      "signature" : "cVVPXZANlUEpmTna7kcRbmIMan7vYv2bEApZXT1O4YcZN5YtsuChRuw0XTqmv4LsjtiODdcITHbNlbQvbUIV_g"
     }
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#profile",
     "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
     "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "issuanceDate" : "2021-03-08T03:47:54Z",
-    "expirationDate" : "2026-03-08T03:47:54Z",
+    "issuanceDate" : "2021-03-19T08:41:55Z",
+    "expirationDate" : "2026-03-19T08:41:55Z",
     "credentialSubject" : {
       "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
       "email" : "john@example.com",
@@ -53,25 +53,25 @@
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-03-08T03:47:54Z",
+      "created" : "2021-03-19T08:41:55Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "rkwcSETd44CWjofezi20LLjOCvbu5rs-My2W2HbQHoQa4kbb3yiotIxjNcwZk04MsSSWFNxH8-n4TcgIRgLbyA"
+      "signature" : "exv5EWlZLr7FL27k95Ynq-b8ac0PjNZZ_cC5t2dm0O9eMPyWqcPMQgMxbX-tbKtTXsukwTHbtHYMOgDHZM-mrA"
     }
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#twitter",
     "type" : [ "InternetAccountCredential", "TwitterCredential" ],
     "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-    "issuanceDate" : "2021-03-08T03:47:54Z",
-    "expirationDate" : "2026-03-08T03:47:54Z",
+    "issuanceDate" : "2021-03-19T08:41:55Z",
+    "expirationDate" : "2026-03-19T08:41:55Z",
     "credentialSubject" : {
       "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
       "twitter" : "@john"
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-03-08T03:47:54Z",
+      "created" : "2021-03-19T08:41:55Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "fiQvBGHSUtdm81mRCXvwfHdg2LUXKswatvc2hxPYKxEJ1xokgF0cnnED8Hqgj3qfA2WecuzXlZ4ULEHzN4CqYw"
+      "signature" : "zz-Os0L2d6fnoMNmi5lHO_cgqvQ6KuTVMna7idyuekXsLP5WxqaVqtrsOUHK4i5mCKAy3q9p7sfLt90rMeCTow"
     }
   } ],
   "proof" : {
@@ -79,6 +79,6 @@
     "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
     "realm" : "https://example.com/",
     "nonce" : "873172f58701a9ee686f0630204fee59",
-    "signature" : "hS-gaREZR12XNbjQVaKW7tG_pT7xmOMx1VsQFxdhSav-HSN7mIDnYndQIw8xJxitz6HWW1kPgve8W70_MnVxMg"
+    "signature" : "YEdSIUtnQgqE7sewiqZgSQv2v0AkAipSDfErhySQ1w3BFzhHrtA3EuTt14vQ1wfODh98i3tsKC4VV5DLwSxw4A"
   }
 }
