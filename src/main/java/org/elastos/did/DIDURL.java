@@ -132,6 +132,8 @@ public class DIDURL implements Comparable<DIDURL> {
 
 	public DIDURL(DID did) {
 		this.did = did;
+		this.parameters = Collections.emptyMap();
+		this.query = Collections.emptyMap();
 	}
 
 	// Deep-copy constructor
