@@ -585,8 +585,7 @@ public class SimulatedIDChain {
 
 		DID issuer = declareTx != null ? declareTx.getRequest().getCredential().getIssuer()
 				: request.getIssuer();
-		CredentialTransaction revokeTx = issuer != null ? getCredentialRevokeTransaction(
-				request.getId(), issuer) : null;
+		CredentialTransaction revokeTx = getCredentialRevokeTransaction(request.getId(), issuer);
 
 		CredentialBiography bio = new CredentialBiography(request.getId());
 		if (revokeTx != null) {
