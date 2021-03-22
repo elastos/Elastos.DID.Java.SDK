@@ -32,6 +32,8 @@ import org.elastos.did.DIDURL;
 import org.elastos.did.exception.MalformedResolveResultException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -51,6 +53,7 @@ public class CredentialList extends ResolveResult<CredentialList>
 	@JsonProperty(DID)
 	private DID did;
 	@JsonProperty(CREDENTIALS)
+	@JsonInclude(Include.NON_EMPTY)
 	private List<DIDURL> credentialIds;
 
 	/**
