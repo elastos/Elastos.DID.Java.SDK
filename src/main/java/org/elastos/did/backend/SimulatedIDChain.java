@@ -47,6 +47,7 @@ import org.elastos.did.DID;
 import org.elastos.did.DIDAdapter;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDURL;
+import org.elastos.did.VerifiableCredential;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.UnknownInternalException;
@@ -526,20 +527,37 @@ public class SimulatedIDChain {
 
 		case REVOKE:
 			stat.revokeCredential();
+			DID signer = request.getProof().getVerificationMethod().getDid();
+			DID issuer = null;
+			VerifiableCredential vc = null;
 
-			DID issuer = declareTx != null ? declareTx.getRequest().getCredential().getIssuer()
-					: request.getProof().getVerificationMethod().getDid();
-
-			if (declareTx != null)
+			if (declareTx != null) {
 				stat.revokeCredentialNotDeclared();
-			else
+				vc = declareTx.getRequest().getCredential();
+				issuer = vc.getIssuer();
+			} else {
 				stat.revokeCredentialAlreadyDeclared();
+				issuer = signer;
+			}
 
 			revokeTx = getCredentialRevokeTransaction(request.getCredentialId(), issuer);
 			if (revokeTx != null) {
 				stat.revokeCredentialAlreadyRevoked();
 				throw new DIDTransactionException("Credential already revoked by "
 						+ revokeTx.getRequest().getProof().getVerificationMethod().getDid());
+			}
+
+			if (vc != null) {
+				DIDDocument ownerDoc = getLastDidDocument(vc.getSubject().getId());
+				DIDDocument issuerDoc = getLastDidDocument(vc.getIssuer());
+
+				if (!ownerDoc.getSubject().equals(signer) &&
+						!ownerDoc.hasController(signer) &&
+						!issuerDoc.getSubject().equals(signer) &&
+						!issuerDoc.hasController(signer)) {
+					stat.invalidCredentialRequest();
+					throw new DIDTransactionException("Invalid ID transaction request.");
+				}
 			}
 
 			break;
@@ -792,7 +810,9 @@ public class SimulatedIDChain {
 				os.close();
 			} catch (Exception e) {
 				log.error("Error handling the resolve request", e);
-				throw new IOException("HTTP Handle error", e);
+				exchange.sendResponseHeaders(400, 0);
+				exchange.getResponseBody().close();
+				return;
 			}
 		}
 	}
@@ -848,7 +868,9 @@ public class SimulatedIDChain {
 				exchange.getResponseBody().close();
 			} catch (Exception e) {
 				log.error("Error handling the ID chain request", e);
-				throw new IOException("HTTP Handle error", e);
+				exchange.sendResponseHeaders(400, 0);
+				exchange.getResponseBody().close();
+				return;
 			}
 		}
 	}

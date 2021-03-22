@@ -35,8 +35,10 @@ import java.util.Random;
 
 import org.elastos.did.backend.CredentialBiography;
 import org.elastos.did.backend.IDChainRequest;
+import org.elastos.did.exception.CredentialAlreadyExistException;
 import org.elastos.did.exception.CredentialRevokedException;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestConfig;
 import org.elastos.did.utils.TestData;
@@ -439,6 +441,73 @@ public class VerifiableCredentialTest {
 
     @ParameterizedTest
     @CsvSource({
+    	"1,user1,twitter",
+    	"1,user1,passport",
+    	"1,user1,json",
+    	"2,user1,twitter",
+    	"2,user1,passport",
+    	"2,user1,json",
+    	"2,foobar,license",
+    	"2,foobar,services",
+    	"2,foo,email"})
+    public void testIllegalRevoke(int version, String did, String vc)
+			throws DIDException, IOException {
+	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	   	cd.loadAll();
+
+		VerifiableCredential credential = cd.getCredential(did, vc);
+		assertFalse(credential.wasDeclared());
+
+		// Sign key for customized DID
+		DIDDocument doc = credential.getSubject().getId().resolve();
+		DIDURL signKey = null;
+		if (doc.getControllerCount() > 1) {
+			Random rnd = new Random();
+			int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
+			signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+		}
+
+		credential.declare(signKey, TestConfig.storePass);
+
+		DIDURL id = credential.getId();
+		VerifiableCredential resolved = VerifiableCredential.resolve(id);
+		assertNotNull(resolved);
+
+		assertEquals(credential.toString(), resolved.toString());
+
+		CredentialMetadata metadata = resolved.getMetadata();
+		assertNotNull(metadata);
+		assertNotNull(metadata.getPublishTime());
+		assertNotNull(metadata.getTransactionId());
+		assertFalse(resolved.isRevoked());
+
+		assertTrue(credential.wasDeclared());
+
+		assertThrows(DIDTransactionException.class, () -> {
+		   	TestData.InstantData sd = testData.getInstantData();
+		   	DIDDocument d = sd.getUser1Document();
+			VerifiableCredential.revoke(credential.getId(), d, TestConfig.storePass);
+		});
+
+		resolved = VerifiableCredential.resolve(id);
+		assertNotNull(resolved);
+
+		assertEquals(credential.toString(), resolved.toString());
+
+		metadata = resolved.getMetadata();
+		assertNotNull(metadata);
+		assertNotNull(metadata.getPublishTime());
+		assertNotNull(metadata.getTransactionId());
+		assertFalse(resolved.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id, credential.getIssuer());
+		assertNotNull(bio);
+		assertEquals(1, bio.getAllTransactions().size());
+		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(0).getRequest().getOperation());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
     	"2,foobar,license",
     	"2,foobar,services",
     	"2,foo,email"})
@@ -499,6 +568,52 @@ public class VerifiableCredentialTest {
 		assertEquals(2, bio.getAllTransactions().size());
 		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(1).getRequest().getOperation());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+    	"1,user1,twitter",
+    	"1,user1,passport",
+    	"1,user1,json",
+    	"2,user1,twitter",
+    	"2,user1,passport",
+    	"2,user1,json",
+    	"2,foobar,license",
+    	"2,foobar,services",
+    	"2,foo,email"})
+    public void testDeclareAfterDeclare(int version, String did, String vc)
+			throws DIDException, IOException {
+	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	   	cd.loadAll();
+
+		VerifiableCredential credential = cd.getCredential(did, vc);
+		assertFalse(credential.wasDeclared());
+		assertFalse(credential.isRevoked());
+
+		// Sign key for customized DID
+		DIDDocument doc = credential.getSubject().getId().resolve();
+		DIDURL signKey = null;
+		if (doc.getControllerCount() > 1) {
+			Random rnd = new Random();
+			int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
+			signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+		}
+
+		credential.declare(signKey, TestConfig.storePass);
+		VerifiableCredential resolved = VerifiableCredential.resolve(credential.getId());
+		assertNotNull(resolved);
+		assertTrue(credential.wasDeclared());
+		assertFalse(credential.isRevoked());
+
+		final DIDURL key = signKey;
+		assertThrows(CredentialAlreadyExistException.class, () -> {
+			credential.declare(key, TestConfig.storePass);
+	    });
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
+		assertNotNull(bio);
+		assertEquals(1, bio.getAllTransactions().size());
+		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(0).getRequest().getOperation());
     }
 
     @ParameterizedTest
