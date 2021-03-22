@@ -127,6 +127,7 @@ public class DIDBiography extends ResolveResult<DIDBiography>
 	@JsonProperty(STATUS)
 	private Status status;
 	@JsonProperty(TRANSACTION)
+	@JsonInclude(Include.NON_EMPTY)
 	private List<DIDTransaction> txs;
 
 	/**

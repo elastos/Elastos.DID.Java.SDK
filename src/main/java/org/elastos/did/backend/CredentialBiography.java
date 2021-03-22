@@ -32,6 +32,8 @@ import org.elastos.did.exception.MalformedIDChainTransactionException;
 import org.elastos.did.exception.MalformedResolveResultException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -124,6 +126,7 @@ public class CredentialBiography extends ResolveResult<CredentialBiography>
 	@JsonProperty(STATUS)
 	private Status status;
 	@JsonProperty(TRANSACTION)
+	@JsonInclude(Include.NON_EMPTY)
 	private List<CredentialTransaction> txs;
 
 	/**

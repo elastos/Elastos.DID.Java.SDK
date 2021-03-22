@@ -297,7 +297,7 @@ public class Main {
 		public Integer call() throws Exception {
 			try {
 				SimulatedIDChain simChain = new SimulatedIDChain(host, port);
-				DIDBackend.initialize(simChain.getAdapter());
+				DIDBackend.initialize(simChain.getAdapter(), 0, 0, 0);
 				Runtime.getRuntime().addShutdownHook(new Thread(()-> {
 					simChain.stop();
 				}));
