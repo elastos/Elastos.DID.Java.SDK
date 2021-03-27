@@ -27,16 +27,22 @@ import java.io.InputStream;
 import org.elastos.did.exception.DIDResolveException;
 
 /**
- * The interface to provide DID Adapter method to publish DID Document.
+ * An interface for publishing and resolving the DID Entities.
+ *
+ * <p>
+ * This interface is an abstraction for the ID chain, the developers should
+ * implement this interface then use the implemented instance to initialize
+ * the DIDBackend.
+ * </p>
  */
 public interface DIDAdapter extends DIDTransactionAdapter {
 	/**
-	 * Perform the DID related resolve.
+	 * Perform the resolve request.
 	 *
-	 * @param requestId the request identifier by user defined
-	 * @param request the resolve request
+	 * @param requestId an application defined request identifier
+	 * @param request a string representation of resolve request
 	 * @return the resolve result
-	 * @throws DIDResolveException resolve did failed.
+	 * @throws DIDResolveException if error occurred when resolving
 	 */
 	public InputStream resolve(String request)
 			throws DIDResolveException;

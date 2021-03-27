@@ -51,12 +51,17 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 /**
  * DID is a globally unique identifier that does not require
  * a centralized registration authority.
+ *
+ * <p>
+ * The generic DID scheme is a URI scheme conformant with
+ * <a href="https://tools.ietf.org/html/rfc3986">RFC3986</a>
+ * </p>
  */
 @JsonSerialize(using = DID.Serializer.class)
 @JsonDeserialize(using = DID.Deserializer.class)
 public class DID implements Comparable<DID> {
 	/**
-	 * The default DID method filed
+	 * The default method name for Elastos DID method.
 	 */
 	public final static String METHOD = "elastos";
 
@@ -66,24 +71,28 @@ public class DID implements Comparable<DID> {
 	private DIDMetadata metadata;
 
 	/**
-	 * Get DID object.
+	 * Create a DID identifier with given method name and method specific id.
 	 *
-	 * @param method the method string. eg: "elastos:did:"
-	 * @param methodSpecificId the method specific id string. eg: "i*******"
+	 * @param method a method name. e.g. "elastos"
+	 * @param methodSpecificId the method specific id string
 	 */
 	protected DID(String method, String methodSpecificId) {
 		checkArgument(method != null && !method.isEmpty(), "Invalid method");
-		checkArgument(methodSpecificId != null && !methodSpecificId.isEmpty(), "Invalid methodSpecificId");
+		checkArgument(methodSpecificId != null && !methodSpecificId.isEmpty(),
+				"Invalid methodSpecificId");
 
 		this.method = method;
 		this.methodSpecificId = methodSpecificId;
 	}
 
 	/**
-	 * Get DID object.
+	 * Create a DID object from the given string. The method will parse the
+	 * DID method and the method specific id from the string.
 	 *
-	 * @param did the did string. eg: "elastos:did:i*******"
-	 * @throws MalformedDIDException if the given did string has wrong format.
+	 * @param did an identifier string.
+	 * 			  e.g. "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN"
+	 * @throws MalformedDIDException if the given identifier not compliant
+	 * 				with the DID method specification
 	 */
 	public DID(String did) throws MalformedDIDException {
 		checkArgument(did != null && !did.isEmpty(), "Invalid DID string");
@@ -95,21 +104,32 @@ public class DID implements Comparable<DID> {
 		}
 	}
 
+	/**
+	 * Create a DID object from the given string. The method will parse the
+	 * DID method and the method specific id from the string if the string is
+	 * not empty. Otherwise will return null.
+	 *
+	 * @param did an identifier string.
+	 * 			  e.g. "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN"
+	 * @return the DID object if the did is not empty, otherwise null
+	 * @throws MalformedDIDException if the given identifier not compliant
+	 * 				with the DID method specification
+	 */
 	public static DID valueOf(String did) throws MalformedDIDException {
 		return (did == null || did.isEmpty()) ? null : new DID(did);
 	}
 
 	/**
-	 * Get the did method string.
+	 * Get the did method name.
 	 *
-	 * @return the did method string
+	 * @return the did method name
 	 */
 	public String getMethod() {
 		return method;
 	}
 
 	/**
-	 * Get the did method specific id string.
+	 * Get the method specific id string.
 	 *
 	 * @return the did method specific id string
 	 */
@@ -118,19 +138,19 @@ public class DID implements Comparable<DID> {
 	}
 
 	/**
-	 * Set the metadata implement object for DID.
+	 * Set the metadata that related with this DID.
 	 *
-	 * @param metadata the metadata implement object
+	 * @param metadata a metadata object
 	 */
 	protected void setMetadata(DIDMetadata metadata) {
 		this.metadata = metadata;
 	}
 
 	/**
-	 * Get DIDMetadata object from DID.
+	 * Get the metadata object that associated with this DID.
 	 *
-	 * @return the DIDMetadata object
-	 * @throws DIDResolveException
+	 * @return the metadata object
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public synchronized DIDMetadata getMetadata() {
 		if (metadata == null) {
@@ -146,7 +166,7 @@ public class DID implements Comparable<DID> {
 	}
 
 	/**
-	 * Get the DID is deactivated or not.
+	 * Check the DID is deactivated or not.
 	 *
 	 * @return the DID deactivated status
 	 * @throws DIDResolveException
@@ -156,12 +176,15 @@ public class DID implements Comparable<DID> {
 	}
 
 	/**
-	 * Resolve DID content(DIDDocument).
+	 * Resolve the DID document.
 	 *
-	 * @param force force = true, DID content must be from chain.
-	 *              force = false, DID content could be from chain or local cache.
+	 * @param force if true then ignore the local cache and resolve the DID
+	 * 				from the ID chain directly; otherwise will try to load
+	 * 				the document from the local cache, if the local cache
+	 * 				not contains this DID, then resolve it from the ID chain
+	 *
 	 * @return the DIDDocument object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public DIDDocument resolve(boolean force)
 			throws DIDResolveException {
@@ -173,10 +196,14 @@ public class DID implements Comparable<DID> {
 	}
 
 	/**
-	 * Resolve DID content(DIDDocument) without force method.
+	 * Resolve the DID document.
+	 *
+	 * By default, this method will try to load the document from the local
+	 * cache, if the local cache not contains this DID, then try to resolve
+	 * it from the ID chain
 	 *
 	 * @return the DIDDocument object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public DIDDocument resolve()
 			throws DIDResolveException {
@@ -184,12 +211,14 @@ public class DID implements Comparable<DID> {
 	}
 
 	/**
-	 * Resolve DID Document in asynchronous model.
+	 * Resolve DID Document in asynchronous mode.
 	 *
-	 * @param force force = true, DID content must be from chain.
-	 *              force = false, DID content could be from chain or local cache.
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
+	 * @param force if true then ignore the local cache and resolve the DID
+	 * 				from the ID chain directly; otherwise will try to load
+	 * 				the document from the local cache, if the local cache
+	 * 				not contains this DID, then resolve it from the ID chain
+	 * @return a new CompletableStage, the result is the resolved DIDDocument
+	 * 			object if success; null otherwise
 	 */
 	public CompletableFuture<DIDDocument> resolveAsync(boolean force) {
 		CompletableFuture<DIDDocument> future = CompletableFuture.supplyAsync(() -> {
@@ -204,10 +233,14 @@ public class DID implements Comparable<DID> {
 	}
 
 	/**
-	 * Resolve DID Document without force method in asynchronous model.
+	 * Resolve DID Document in asynchronous mode.
 	 *
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
+	 * By default, this method will try to load the document from the local
+	 * cache, if the local cache not contains this DID, then try to resolve
+	 * it from the ID chain
+	 *
+	 * @return a new CompletableStage, the result is the resolved DIDDocument
+	 * 			object if success; null otherwise
 	 */
 	public CompletableFuture<DIDDocument> resolveAsync() {
 		return resolveAsync(false);
@@ -217,17 +250,17 @@ public class DID implements Comparable<DID> {
 	 * Resolve all DID transactions.
 	 *
 	 * @return the DIDBiography object
-	 * @throws DIDResolveException throw this exception if resolving all did transactions failed.
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public DIDBiography resolveBiography() throws DIDResolveException {
 		return DIDBackend.getInstance().resolveDidBiography(this);
 	}
 
 	/**
-	 * Resolve all DID transactions in asynchronous model.
+	 * Resolve all DID transactions in asynchronous mode.
 	 *
-	 * @return the new CompletableStage, the result is the DIDHistory interface for
-	 *             resolved transactions if success; null otherwise.
+	 * @return a new CompletableStage, the result is the resolved DIDBiography
+	 * 			object if success; null otherwise
 	 */
 	public CompletableFuture<DIDBiography> resolveBiographyAsync() {
 		CompletableFuture<DIDBiography> future = CompletableFuture.supplyAsync(() -> {
@@ -241,6 +274,11 @@ public class DID implements Comparable<DID> {
 		return future;
 	}
 
+	/**
+	 * Return the string representation of this DID object.
+	 *
+	 * @return a string representation of this DID object
+	 */
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder(64);
@@ -252,11 +290,25 @@ public class DID implements Comparable<DID> {
 		return builder.toString();
 	}
 
+	/**
+	 * Returns a hash code for this DID object.
+	 *
+	 * @return a hash code value for this object
+	 */
 	@Override
 	public int hashCode() {
 		return METHOD.hashCode() + methodSpecificId.hashCode();
 	}
 
+	/**
+	 * Compares this DID to the specified object. The result is true if and
+	 * only if the argument is not null and is a DID object that represents
+	 * the same identifier.
+	 *
+	 * @param obj the object to compare this DID against
+	 * @return true if the given object represents a DID equivalent to this
+	 * 			object, false otherwise
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this)
@@ -276,6 +328,13 @@ public class DID implements Comparable<DID> {
 		return false;
 	}
 
+	/**
+	 * Compares this DID with the specified DID.
+	 *
+	 * @param did DID to which this DID is to be compared
+	 * @return -1, 0 or 1 as this DID is less than, equal to,
+	 * 		   or greater than did
+	 */
 	@Override
 	public int compareTo(DID did) {
 		checkNotNull(did, "did is null");
@@ -288,12 +347,12 @@ public class DID implements Comparable<DID> {
 		private static final long serialVersionUID = -5048323762128760963L;
 
 		public Serializer() {
-	        this(null);
-	    }
+			this(null);
+		}
 
-	    public Serializer(Class<DID> t) {
-	        super(t);
-	    }
+		public Serializer(Class<DID> t) {
+			super(t);
+		}
 
 		@Override
 		public void serialize(DID did, JsonGenerator gen,
@@ -306,23 +365,23 @@ public class DID implements Comparable<DID> {
 		private static final long serialVersionUID = -306953602840919050L;
 
 		public Deserializer() {
-	        this(null);
-	    }
+			this(null);
+		}
 
-	    public Deserializer(Class<?> vc) {
-	        super(vc);
-	    }
+		public Deserializer(Class<?> vc) {
+			super(vc);
+		}
 
 		@Override
 		public DID deserialize(JsonParser p, DeserializationContext ctxt)
 				throws IOException, JsonProcessingException {
-	    	JsonToken token = p.getCurrentToken();
-	    	if (!token.equals(JsonToken.VALUE_STRING))
-	    		throw ctxt.weirdStringException(p.getText(), DID.class, "Invalid DIDURL");
+			JsonToken token = p.getCurrentToken();
+			if (!token.equals(JsonToken.VALUE_STRING))
+				throw ctxt.weirdStringException(p.getText(), DID.class, "Invalid DIDURL");
 
-	    	String did = p.getText().trim();
+			String did = p.getText().trim();
 
-	    	try {
+			try {
 				return new DID(did);
 			} catch (MalformedDIDException e) {
 				throw ctxt.weirdStringException(did, DID.class, "Invalid DID");

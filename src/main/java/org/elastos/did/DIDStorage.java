@@ -28,260 +28,323 @@ import org.elastos.did.exception.DIDStorageException;
 import org.elastos.did.exception.DIDStoreException;
 
 /**
- * The interface for DIDStorage to support different file system.
+ * The abstract storage interface for the DID store.
  */
 public interface DIDStorage {
 	/**
-	 * The inferface to change password.
+	 * Data re-encrypt interface used to change the password of the DIDStore.
+	 *
+	 * <p>
+	 * The password of DIDStore is managed by the DIDStore, all stored data
+	 * is transparent to the DIDStorage. Normally this interface is implemented
+	 * by the DIDStore and provide to the DIDStore when change the password.
+	 * All encrypted data will re-encrypt transparently through this interface.
+	 * </p>
 	 */
 	public interface ReEncryptor {
 		/**
-		 * Reencrypt in the changing password.
+		 * Re-encrypt the encrypted data.
 		 *
-		 * @param data the data need to reencrypted
-		 * @return the reencrypted data
-		 * @throws DIDStoreException DIDStore error.
+		 * @param data the data need to be re-encrypt
+		 * @return the re-encrypted data
+		 * @throws DIDStoreException if an error occurred when re-encrypting data
 		 */
 		public String reEncrypt(String data) throws DIDStoreException;
 	};
 
+	/**
+	 * Get the implement related storage location.
+	 *
+	 * @return a string representation of the location
+	 */
 	public String getLocation();
 
+	/**
+	 * Save the DIDStore's metadata object to the storage.
+	 *
+	 * @param metadata the metadata of DIDStore object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
+	 */
 	public void storeMetadata(DIDStore.Metadata metadata) throws DIDStorageException;
 
+	/**
+	 * Read the DIDStore's metadata object from the storage.
+	 *
+	 * @return the metadata of DIDStore object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
+	 */
 	public DIDStore.Metadata loadMetadata() throws DIDStorageException;
 
+	/**
+	 * Save the RootIdentity's metadata object to the storage.
+	 *
+	 * @param id the id of the RootIdentity
+	 * @param metadata the metadata of RootIdentity object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
+	 */
 	public void storeRootIdentityMetadata(String id, RootIdentity.Metadata metadata)
 			throws DIDStorageException;
 
 	/**
-	 * Load DID Metadata.
+	 * Read the RootIdentity's metadata object from the storage.
 	 *
-	 * @param did the owner of Metadata.
-	 * @return the meta data
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param id the id of the RootIdentity
+	 * @return the metadata of RootIdentity object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public RootIdentity.Metadata loadRootIdentityMetadata(String id)
 			throws DIDStorageException;
 
 	/**
-	 * Store private identity.
+	 * Save the raw root identity to the storage.
 	 *
-	 * @param key the private identity
-	 * @throws DIDStorageException store private identity failed.
+	 * @param id the id of the RootIdentity
+	 * @param mnemonic mnemonic words that the identity was generate from or null
+	 * @param privateKey the encrypted private key of the RootIdentity
+	 * @param publicKey the pre-derived public key of the RootIdentity
+	 * @param index the index hint for DID deriving
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public void storeRootIdentity(String id, String mnemonic, String privateKey,
 			String publicKey, int index) throws DIDStorageException;
 
 	/**
-	 * Load private identity.
+	 * Read the RootIdentity object from the storage.
 	 *
-	 * @return the private identity from file
-	 * @throws DIDStorageException load private identity failed.
+	 * @param id the id of the RootIdentity
+	 * @return the RootIdentity object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public RootIdentity loadRootIdentity(String id) throws DIDStorageException;
 
+	/**
+	 * Update the derive index of the RootIdentity.
+	 *
+	 * @param id the id of the RootIdentity
+	 * @param index the new index hint
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
+	 */
 	public void updateRootIdentityIndex(String id, int index)
 			throws DIDStorageException;
 
+	/**
+	 * Read the encrypted private key of the RootIdentity.
+	 *
+	 * @param id the id of the RootIdentity
+	 * @return the encrypted private key
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
+	 */
 	public String loadRootIdentityPrivateKey(String id) throws DIDStorageException;
 
 	/**
-	 * Load mnemonic.
+	 * Read the mnemonic that generate the RootIdentity.
 	 *
-	 * @return the mnemonic string
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param id the id of the RootIdentity
+	 * @return the mnemonic string or null if not exists
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public String loadRootIdentityMnemonic(String id) throws DIDStorageException;
 
+	/**
+	 * Delete the specific RootIdentity object from the storage.
+	 *
+	 * @param id the id of the RootIdentity to be delete
+	 * @return true if the RootIdentity exists and deleted successful, false otherwise
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
+	 */
 	public boolean deleteRootIdentity(String id) throws DIDStorageException;
 
+	/**
+	 * List the all RootIdentities that stored in this storage.
+	 *
+	 * @return an array of RootIdentity objects
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
+	 */
 	public List<RootIdentity> listRootIdentities() throws DIDStorageException;
 
+	/**
+	 * Check whether this storage contains RootIdentity objects.
+	 *
+	 * @return true if contains RootIdentity object, false otherwise
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
+	 */
 	public boolean containsRootIdenities() throws DIDStorageException;
 
 	/**
-	 * Store DID Metadata.
+	 * Save the DID metadata object to this storage.
 	 *
-	 * @param did the owner of Metadata
-	 * @param metadata the meta data
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param did the owner of the metadata object
+	 * @param metadata a DIDMetadata object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public void storeDidMetadata(DID did, DIDMetadata metadata) throws DIDStorageException;
 
 	/**
-	 * Load DID Metadata.
+	 * Read the DID metadata object from this storage.
 	 *
-	 * @param did the owner of Metadata.
-	 * @return the meta data
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param did the target DID object
+	 * @return the DIDMetadata object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public DIDMetadata loadDidMetadata(DID did) throws DIDStorageException;
 
 	/**
-	 * Store DID Document.
+	 * Save the DID document to this storage.
 	 *
-	 * @param doc the DIDDocument object.
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param doc a DIDDocument object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public void storeDid(DIDDocument doc) throws DIDStorageException;
 
 	/**
-	 * Load DID content(DIDDocument).
+	 * Read the DID document from this storage.
 	 *
-	 * @param did the specified DID
-	 * @return the DID Document object
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param did the target DID object
+	 * @return the DIDDocument object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public DIDDocument loadDid(DID did) throws DIDStorageException;
 
 	/**
-     * Delete the specified DID.
-     *
-     * @param did the specified DID
-     * @return the returned value is true if deleting is successful;
-     *         the returned value is false if deleting is failed.
-     * @throws DIDStorageException DIDStorage error.
+	 * Delete the specified DID document object from this storage.
+	 *
+	 * @param did the target DID to be delete
+	 * @return true if the DID exists and deleted successful, false otherwise
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public boolean deleteDid(DID did) throws DIDStorageException;
 
 	/**
-	 * List all DIDs according to the specified condition.
+	 * List all DIDs that stored in this storage.
 	 *
-	 * @return the DID array.
-	 * @throws DIDStorageException DIDStorage error.
+	 * @return an array of DID objects
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public List<DID> listDids() throws DIDStorageException;
 
 	/**
-     * Store meta data for the specified Credential.
-     *
-     * @param did the owner of the specified Credential
-     * @param id the identifier of Credential
-     * @param metadata the meta data for Credential
-     * @throws DIDStorageException DIDStorage error.
+	 * Save the credential's metadata to this storage.
+	 *
+	 * @param id the id of the credential
+	 * @param metadata the credential's metadata object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public void storeCredentialMetadata(DIDURL id, CredentialMetadata metadata)
 			throws DIDStorageException;
 
 	/**
-	 * Load the meta data about the specified Credential.
+	 * Read the credential's metadata object from this storage.
 	 *
-	 * @param did the owner of Credential
-     * @param id the identifier of Credential
-	 * @return the meta data for Credential
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param id the id of the target credential
+	 * @return the credential's metadata object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public CredentialMetadata loadCredentialMetadata(DIDURL id)
 			throws DIDStorageException;
 
 	/**
-	 * Store the specified Credential.
+	 * Save the credential object to this storage.
 	 *
-	 * @param credential the Credential object
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param credential a VerifiableCredential object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public void storeCredential(VerifiableCredential credential)
 			throws DIDStorageException;
 
 	/**
-	 * Load the specified Credential.
+	 * Read the specified credential object from this storage.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the Credential object
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param id the id of the target credential
+	 * @return the VerifiableCredential object
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public VerifiableCredential loadCredential(DIDURL id)
 			throws DIDStorageException;
 
 	/**
-	 * Judge whether does DIDStore contain any credential owned the specific DID.
+	 * Check whether this storage contains the credentials that owned by the
+	 * given DID.
 	 *
-	 * @param did the owner of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID.
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param did the target DID object
+	 * @return true if contains credential object owned by the given DID,
+	 * 		   false otherwise
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public boolean containsCredentials(DID did) throws DIDStorageException;
 
 	/**
-	 * Delete the specified Credential
+	 * Delete the specified credential from this storage.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID;
-	 *         the returned value is false if there is credentials owned the specific DID.
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param id the id of the target credential to be delete
+	 * @return true if the credential exists and deleted successful, false otherwise
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public boolean deleteCredential(DIDURL id)
 			throws DIDStorageException;
 
 	/**
-	 * List the Credentials owned the specified DID.
+	 * List all credentials that owned the given DID.
 	 *
-	 * @param did the owner of Credential
-	 * @return the Credential array owned the specified DID.
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param did a DID object
+	 * @return an array of DIDURL denoting the credentials
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public List<DIDURL> listCredentials(DID did) throws DIDStorageException;
 
 	/**
-	 * Store private key. Encrypt and encode private key with base64url method.
+	 * Save the encrypted private key to this storage.
 	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @param privateKey the original private key(32 bytes)
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param id the key id
+	 * @param privateKey the encrypted private key
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public void storePrivateKey(DIDURL id, String privateKey)
 			throws DIDStorageException;
 
 	/**
-	 * Load private key.
+	 * Read the encrypted private key from this storage
 	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
+	 * @param id the key id
 	 * @return the encrypted private key
-	 * @throws DIDStorageException DIDStorage error.
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public String loadPrivateKey(DIDURL id) throws DIDStorageException;
 
 	/**
-	 * Judge whether there is private key owned the specified DID in DIDStore.
+	 * Check whether this storage contains the private key that owned by the
+	 * given DID.
 	 *
-	 * @param did the specified DID
-	 * @return the returned value is true if there is private keys owned the specified DID;
-	 *         the returned value is false if there is no private keys owned the specified DID.
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param did the target DID object
+	 * @return true if contains private key that owned by the given DID,
+	 * 		   false otherwise
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public boolean containsPrivateKeys(DID did) throws DIDStorageException;
 
 	/**
-	 * Delete the private key owned to the specified key.
+	 * Delete the specific private key from this storage.
 	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @return the returned value is true if deleting private keys successfully;
-	 *         the returned value is false if deleting private keys failed.
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param id the id of the key to be delete
+	 * @return true if the key exists and deleted successful, false otherwise
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public boolean deletePrivateKey(DIDURL id) throws DIDStorageException;
 
 	/**
-	 * List the private keys owned the specified DID.
+	 * List the all private keys that owned by the given DID.
 	 *
-	 * @param did the owner of private key
-	 * @return the private key array owned the specified DID.
-	 * @throws DIDStorageException DIDStorage error.
+	 * @param did a DID object
+	 * @return an array of DIDURL denoting the private keys
+	 * @throws DIDStorageException if an error occurred when accessing the DID storage
 	 */
 	public List<DIDURL> listPrivateKeys(DID did) throws DIDStorageException;
 
-    /**
-     * Change password for DIDStore.
-     *
-     * @param reEncryptor the ReEncryptor handle
-     * @throws DIDStorageException DIDStorage error.
-     */
+	/**
+	 * Change the password of the DIDStore.
+	 *
+	 * @param reEncryptor the data re-encrypt handler
+	 * @throws DIDStorageException if an error occurred when re-encrypting data
+	 */
 	public void changePassword(ReEncryptor reEncryptor)
 			throws DIDStorageException;
 }

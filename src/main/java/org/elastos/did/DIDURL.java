@@ -49,11 +49,10 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
- * DID URL defines by the did-url rule, refers to a URL that begins with a DID
- * followed by one or more additional components.
- * <p>
- * A DID URL always identifies the resource to be located.
- * DIDURL includes DID and Url fragment by user defined.
+ * Class DIDURL represents a Uniform Resource Locator, a pointer to
+ * a specific DID resource. It can be used to retrieve things like
+ * representations of DID subjects, verification methods, services,
+ * specific parts of a DID document, or other resources.
  */
 @JsonSerialize(using = DIDURL.Serializer.class)
 @JsonDeserialize(using = DIDURL.Deserializer.class)
@@ -69,10 +68,11 @@ public class DIDURL implements Comparable<DIDURL> {
 	private AbstractMetadata metadata;
 
 	/**
-	 * Constructs the DIDURl with the given value.
+	 * Constructs a DIDURL object with the given DID base and a url string.
 	 *
-	 * @param base the owner of DIDURL
-	 * @param url the DIDURl string
+	 * @param base a DID base of the DIDURL object, if the url is a relative DIDURL
+	 * @param url a string representation of DIDURL
+	 * @throws MalformedDIDURLException if the url in wrong syntax
 	 */
 	public DIDURL(DID baseRef, String url) throws MalformedDIDURLException {
 		checkArgument(url != null && !url.isEmpty(), "Invalid url");
@@ -110,15 +110,21 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
-	 * Constructs the DIDURl with the given value.
+	 * Constructs a DIDURL object.
 	 *
-	 * @param url the DIDURl string
-	 * @throws MalformedDIDURLException DIDURL is malformed.
+	 * @param url a string representation of DIDURL
+	 * @throws MalformedDIDURLException if the url in wrong syntax
 	 */
 	public DIDURL(String url) throws MalformedDIDURLException {
 		this(null, url);
 	}
 
+	/**
+	 * Constructs a DIDURL object with the given DID base and a DIDURL object.
+	 *
+	 * @param base a DID base of the DIDURL object, if the url is a relative DIDURL
+	 * @param url a DIDURL object
+	 */
 	public DIDURL(DID baseRef, DIDURL url) {
 		checkArgument(url != null, "Invalid url");
 
@@ -130,13 +136,22 @@ public class DIDURL implements Comparable<DIDURL> {
 		this.metadata = url.metadata;
 	}
 
-	public DIDURL(DID did) {
+	/**
+	 * Constructs a DIDURL object from DID object.
+	 *
+	 * @param did a DID base of the DIDURL object
+	 */
+	protected DIDURL(DID did) {
 		this.did = did;
 		this.parameters = Collections.emptyMap();
 		this.query = Collections.emptyMap();
 	}
 
-	// Deep-copy constructor
+	/**
+	 * Deep-copy constructor.
+	 *
+	 * @param url a source DIDURL object
+	 */
 	private DIDURL(DIDURL url) {
 		this.did = url.did;
 		this.parameters = url.parameters.isEmpty() ? Collections.emptyMap() :
@@ -147,20 +162,51 @@ public class DIDURL implements Comparable<DIDURL> {
 		this.fragment = url.fragment;
 	}
 
+	/**
+	 * Create a DIDURL object from the given string. The method will parse the
+	 * DIDURL object from the string if the string is not empty. Otherwise
+	 * will return null. If the parsed DIDURL object is relative, then use
+	 * baseRef as it's base DID.
+	 *
+	 * @param baseRef a DID base of the DIDURL object, if the url is a relative DIDURL
+	 * @param url a string representation of DIDURL
+	 * @return a DIDURL object if url isn't null or empty; otherwise null
+	 * @throws MalformedDIDURLException if the url in wrong syntax
+	 */
 	public static DIDURL valueOf(DID baseRef, String url) throws MalformedDIDURLException {
 		return (url == null || url.isEmpty()) ? null : new DIDURL(baseRef, url);
 	}
 
+	/**
+	 * Create a DIDURL object from the given string. The method will parse the
+	 * DIDURL object from the string if the string is not empty. Otherwise
+	 * will return null. If the parsed DIDURL object is relative, then use
+	 * baseRef as it's base DID.
+	 *
+	 * @param baseRef a DID base of the DIDURL object, if the url is a relative DIDURL
+	 * @param url a string representation of DIDURL
+	 * @return a DIDURL object if url isn't null or empty; otherwise null
+	 * @throws MalformedDIDURLException if the url in wrong syntax
+	 */
 	public static DIDURL valueOf(String baseRef, String url) throws MalformedDIDURLException {
 		return (url == null || url.isEmpty()) ? null : new DIDURL(DID.valueOf(baseRef), url);
 	}
 
+	/**
+	 * Create a DIDURL object from the given string. The method will parse the
+	 * DIDURL object from the string if the string is not empty. Otherwise
+	 * will return null.
+	 *
+	 * @param url a string representation of DIDURL
+	 * @return a DIDURL object if url isn't null or empty; otherwise null
+	 * @throws MalformedDIDURLException if the url in wrong syntax
+	 */
 	public static DIDURL valueOf(String url) throws MalformedDIDURLException {
 		return (url == null || url.isEmpty()) ? null : new DIDURL(url);
 	}
 
 	/**
-	 * Get owner of DIDURL.
+	 * Get the base DID of the DIDURL object.
 	 *
 	 * @return the DID object
 	 */
@@ -169,9 +215,9 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
-	 * Set DID to DIDURL.
+	 * Set the base DID of the DIDURL object.
 	 *
-	 * @param did the DID Object
+	 * @param did the DID Object, could be null
 	 */
 	protected void setDid(DID did) {
 		this.did = did;
@@ -196,9 +242,10 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
-	 * Get all parameters.
+	 * Get the decoded DID parameters component from this DIDURL.
 	 *
-	 * @return the parameters string
+	 * @return the decoded parameters string or null if the parameters
+	 * 		   component is undefined
 	 */
 	public String getParametersString() {
 		if (parameters.isEmpty())
@@ -207,15 +254,21 @@ public class DIDURL implements Comparable<DIDURL> {
 		return mapToString(parameters, ";");
 	}
 
+	/**
+	 * Get DID parameters component as a map.
+	 *
+	 * @return a key/value map that contains all parameters or null
+	 * 		   if the parameters component is undefined
+	 */
 	public Map<String, String> getParameters() {
 		return Collections.unmodifiableMap(parameters);
 	}
 
 	/**
-	 * Get the parameter according to the given name.
+	 * Get the value of the given DID parameter.
 	 *
-	 * @param name the name string
- 	 * @return the parameter string
+	 * @param name the parameter name
+	 * @return the value of parameter or null if the given parameter is undefined
 	 */
 	public String getParameter(String name) {
 		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
@@ -223,11 +276,10 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
-	 * Judge whether there is 'name' parameter in DIDStorage.
+	 * Check whether the given parameter exists in the DID parameters component.
 	 *
-	 * @param name the key of parameter
-	 * @return the returned value is true if there is 'name' parameter;
-	 *         the returned value is true if there is no 'name' parameter.
+	 * @param name the name of parameter
+	 * @return true if the has a parameter with given name or false otherwise
 	 */
 	public boolean hasParameter(String name) {
 		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
@@ -235,18 +287,20 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
-	 * Get the path of DIDURL.
+	 * Get the decoded path component of this DIDURL.
 	 *
-	 * @return the path string
+	 * @return the decoded path component of this DIDURL, or null if
+	 * 		   the path is undefined
 	 */
 	public String getPath() {
 		return path;
 	}
 
 	/**
-	 * Get query of DIDURL.
+	 * Get the decoded query component of this DIDURL.
 	 *
-	 * @return the query string
+	 * @return the decoded query component of this DIDURL,
+	 * 		   or null if the query is undefined
 	 */
 	public String getQueryString() {
 		if (query.isEmpty())
@@ -255,15 +309,21 @@ public class DIDURL implements Comparable<DIDURL> {
 		return mapToString(query, "&");
 	}
 
+	/**
+	 * Get the query component of this DIDURL as a map.
+	 *
+	 * @return the decoded query component of this DIDURL,
+	 * 		   or null if the query is undefined
+	 */
 	public Map<String, String> getQuery() {
 		return Collections.unmodifiableMap(query);
 	}
 
 	/**
-	 * Get 'name' query parameter.
+	 * Get the value of the given query parameter.
 	 *
-	 * @param name the name string
-	 * @return the value string
+	 * @param name the parameter name
+	 * @return the value of parameter or null if the given parameter is undefined
 	 */
 	public String getQueryParameter(String name) {
 		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
@@ -271,11 +331,10 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
-	 * Judge whether there is 'name' parameter
+	 * Check whether the given parameter exists in the query component.
 	 *
-	 * @param name the name string
-	 * @return the returned value is true if there is 'name' parameter;
-	 *         the returned value is true if there is no 'name' parameter.
+	 * @param name the name of parameter
+	 * @return true if the has a parameter with given name or false otherwise
 	 */
 	public boolean hasQueryParameter(String name) {
 		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
@@ -283,7 +342,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
-	 * Get fragment string of DIDURL.
+	 * Get the decoded fragment component of this DIDURL.
 	 *
 	 * @return the fragment string
 	 */
@@ -292,24 +351,31 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
-	 * Set meta data for Credential.
+	 * Set the metadata that related with this DIDURL object.
 	 *
-	 * @param metadata the meta data
+	 * @param metadata a metadata object
 	 */
 	protected void setMetadata(AbstractMetadata metadata) {
 		this.metadata = metadata;
 	}
 
 	/**
-	 * Get meta data from Credential.
+	 * Get the metadata object that associated with this DIDURL object.
 	 *
-	 * @return the meta data
+	 * @return the metadata object
 	 */
 	public AbstractMetadata getMetadata() {
 		return metadata;
 	}
 
-	public String toString(DID base) {
+	/**
+	 * Return the string representation of this DIDURL object. If the base DID
+	 * isn't null, the result will be a relative representation.
+	 *
+	 * @param base a base DID reference object for relative DIDURL
+	 * @return a relative string representation of this DIDURL object
+	 */
+	protected String toString(DID base) {
 		StringBuilder builder = new StringBuilder(512);
 		if (did != null && (base == null || !did.equals(base)))
 			builder.append(did);
@@ -329,11 +395,25 @@ public class DIDURL implements Comparable<DIDURL> {
 		return builder.toString();
 	}
 
+	/**
+	 * Return the string representation of this DIDURL object.
+	 *
+	 * @return a string representation of this DIDURL object
+	 */
 	@Override
 	public String toString() {
 		return toString(null);
 	}
 
+	/**
+	 * Compares this DIDURL to the specified object. The result is true if and
+	 * only if the argument is not null and is a DIDURL object that represents
+	 * the same resource.
+	 *
+	 * @param obj the object to compare this DID against
+	 * @return true if the given object represents a DIDURL equivalent to this
+	 * 			resource, false otherwise
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this)
@@ -352,6 +432,13 @@ public class DIDURL implements Comparable<DIDURL> {
 		return false;
 	}
 
+	/**
+	 * Compares this DIDURL with the specified DIDURL.
+	 *
+	 * @param id DIDURL to which this DIDURL is to be compared
+	 * @return -1, 0 or 1 as this DIDURL is less than, equal to,
+	 * 		   or greater than id
+	 */
 	@Override
 	public int compareTo(DIDURL id) {
 		checkNotNull(id, "id is null");
@@ -371,6 +458,11 @@ public class DIDURL implements Comparable<DIDURL> {
 		return hash;
 	}
 
+	/**
+	 * Returns a hash code for this DIDURL object.
+	 *
+	 * @return a hash code value for this object
+	 */
 	@Override
 	public int hashCode() {
 		int hash = did.hashCode();
@@ -386,12 +478,12 @@ public class DIDURL implements Comparable<DIDURL> {
 		private static final long serialVersionUID = -5560151545310632117L;
 
 		public Serializer() {
-	        this(null);
-	    }
+			this(null);
+		}
 
-	    public Serializer(Class<DIDURL> t) {
-	        super(t);
-	    }
+		public Serializer(Class<DIDURL> t) {
+			super(t);
+		}
 
 		@Override
 		public void serialize(DIDURL id, JsonGenerator gen,
@@ -411,12 +503,12 @@ public class DIDURL implements Comparable<DIDURL> {
 		private static final long serialVersionUID = -5560151545310632117L;
 
 		public NormalizedSerializer() {
-	        this(null);
-	    }
+			this(null);
+		}
 
-	    public NormalizedSerializer(Class<DIDURL> t) {
-	        super(t);
-	    }
+		public NormalizedSerializer(Class<DIDURL> t) {
+			super(t);
+		}
 
 		@Override
 		public void serialize(DIDURL id, JsonGenerator gen,
@@ -425,27 +517,27 @@ public class DIDURL implements Comparable<DIDURL> {
 		}
 	}
 
-    static class Deserializer extends StdDeserializer<DIDURL> {
+	static class Deserializer extends StdDeserializer<DIDURL> {
 		private static final long serialVersionUID = -3649714336670800081L;
 
 		public Deserializer() {
-	        this(null);
-	    }
+			this(null);
+		}
 
-	    public Deserializer(Class<Proof> t) {
-	        super(t);
-	    }
+		public Deserializer(Class<Proof> t) {
+			super(t);
+		}
 
-	    @Override
+		@Override
 		public DIDURL deserialize(JsonParser p, DeserializationContext ctxt)
 				throws IOException, JsonProcessingException {
-	    	JsonToken token = p.getCurrentToken();
-	    	if (!token.equals(JsonToken.VALUE_STRING))
-	    		throw ctxt.weirdStringException(p.getText(), DIDURL.class, "Invalid DIDURL");
+			JsonToken token = p.getCurrentToken();
+			if (!token.equals(JsonToken.VALUE_STRING))
+				throw ctxt.weirdStringException(p.getText(), DIDURL.class, "Invalid DIDURL");
 
-	    	String url = p.getText().trim();
-	    	return new DIDURL(null, url);
-	    }
+			String url = p.getText().trim();
+			return new DIDURL(null, url);
+		}
 	}
 
 	class Listener extends DIDURLBaseListener {
@@ -538,10 +630,20 @@ public class DIDURL implements Comparable<DIDURL> {
 	public static class Builder {
 		private DIDURL url;
 
+		/**
+		 * Create DIDURL builder object with given url as default pattern.
+		 *
+		 * @param url a string representation of DIDURL
+		 */
 		public Builder(String url) {
 			this(new DIDURL(url));
 		}
 
+		/**
+		 * Create DIDURL builder object with given url as default pattern.
+		 *
+		 * @param url a DIDURL object
+		 */
 		public Builder(DIDURL url) {
 			this.url = new DIDURL(url.getDid());
 			this.url.parameters = new LinkedHashMap<String, String>(url.parameters);
@@ -550,26 +652,43 @@ public class DIDURL implements Comparable<DIDURL> {
 			this.url.fragment = url.fragment;
 		}
 
+		/**
+		 * Create DIDURL builder object with given did as base DID.
+		 *
+		 * @param did a DID object as the base DID
+		 */
 		public Builder(DID did) {
 			this(new DIDURL(did));
 		}
 
+		/**
+		 * Set the base DID object of the DIDURL that to be build.
+		 *
+		 * @param did a DID object, could be null
+		 * @return the builder instance for method chaining
+		 */
 		public Builder setDid(DID did) {
-			checkArgument(did != null, "Invalid did");
-
 			url.setDid(did);
 			return this;
 		}
 
+		/**
+		 * Set the base DID object of the DIDURL that to be build.
+		 *
+		 * @param did a string representation of DID, could be null
+		 * @return the builder instance for method chaining
+		 */
 		public Builder setDid(String did) {
 			return setDid(DID.valueOf(did));
 		}
 
-		public Builder clearDid() {
-			url.setDid(null);
-			return this;
-		}
-
+		/**
+		 * Sets a DID parameter with given value.
+		 *
+		 * @param name a DID parameter name
+		 * @param value the parameter value
+		 * @return the builder instance for method chaining
+		 */
 		public Builder setParameter(String name, String value) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
@@ -577,6 +696,13 @@ public class DIDURL implements Comparable<DIDURL> {
 			return this;
 		}
 
+		/**
+		 * Sets DID parameters with given map object. All the previous
+		 * parameters and values will be clear.
+		 *
+		 * @param params a string/string map object for DID parameters
+		 * @return the builder instance for method chaining
+		 */
 		public Builder setParameters(Map<String, String> params) {
 			url.parameters.clear();
 
@@ -586,6 +712,12 @@ public class DIDURL implements Comparable<DIDURL> {
 			return this;
 		}
 
+		/**
+		 * Remove the specific parameter from the DID parameters.
+		 *
+		 * @param name the parameter name to be remove
+		 * @return the builder instance for method chaining
+		 */
 		public Builder removeParameter(String name) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
@@ -594,21 +726,34 @@ public class DIDURL implements Comparable<DIDURL> {
 			return this;
 		}
 
+		/**
+		 * Remove all the existing parameters from the DID parameters component.
+		 *
+		 * @return the builder instance for method chaining
+		 */
 		public Builder clearParameters() {
 			url.parameters.clear();
 			return this;
 		}
 
+		/**
+		 * Set the path component of the DIDURL object.
+		 *
+		 * @param path a path string
+		 * @return the builder instance for method chaining
+		 */
 		public Builder setPath(String path) {
 			url.path = path == null || path.isEmpty() ? null : path;
 			return this;
 		}
 
-		public Builder clearPath() {
-			url.path = null;
-			return this;
-		}
-
+		/**
+		 * Sets a query parameter with given value.
+		 *
+		 * @param name a query parameter name
+		 * @param value the parameter value
+		 * @return the builder instance for method chaining
+		 */
 		public Builder setQueryParameter(String name, String value) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
@@ -616,6 +761,13 @@ public class DIDURL implements Comparable<DIDURL> {
 			return this;
 		}
 
+		/**
+		 * Sets query parameters with given map object. All the previous
+		 * parameters and values will be clear.
+		 *
+		 * @param params a string/string map object for query parameters
+		 * @return the builder instance for method chaining
+		 */
 		public Builder setQueryParameters(Map<String, String> params) {
 			url.query.clear();
 
@@ -625,6 +777,12 @@ public class DIDURL implements Comparable<DIDURL> {
 			return this;
 		}
 
+		/**
+		 * Remove the specific parameter from the query parameters.
+		 *
+		 * @param name the parameter name to be remove
+		 * @return the builder instance for method chaining
+		 */
 		public Builder removeQueryParameter(String name) {
 			checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
 
@@ -632,21 +790,38 @@ public class DIDURL implements Comparable<DIDURL> {
 			return this;
 		}
 
+		/**
+		 * Remove all the existing parameters from the query parameters component.
+		 *
+		 * @return the builder instance for method chaining
+		 */
 		public Builder clearQueryParameters() {
 			url.query.clear();
 			return this;
 		}
 
+		/**
+		 * Set the fragment component.
+		 *
+		 * @param fragment a fragment string
+		 * @return the builder instance for method chaining
+		 */
 		public Builder setFragment(String fragment) {
 			url.fragment = fragment == null || fragment.isEmpty() ? null : fragment;
 			return this;
 		}
 
-		public Builder clearFragment() {
-			url.fragment = null;
-			return this;
-		}
-
+		/**
+		 * Get the DIDURL instance that created by this builder object.
+		 *
+		 * <p>
+		 * After build a DIDURL object from this Builder object,
+		 * the builder still available with the same status that before call
+		 * the build method.
+		 * </p>
+		 *
+		 * @return a DIDURL object
+		 */
 		public DIDURL build() {
 			return new DIDURL(url);
 		}
