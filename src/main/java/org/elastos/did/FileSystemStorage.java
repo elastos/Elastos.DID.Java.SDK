@@ -218,13 +218,13 @@ class FileSystemStorage implements DIDStorage {
 	}
 
 	private static void copyFile(File src, File dest) throws IOException {
-	    FileInputStream in = null;
-	    FileOutputStream out = null;
-	    try {
-	        in = new FileInputStream(src);
-	        out = new FileOutputStream(dest);
-	        out.getChannel().transferFrom(in.getChannel(), 0,
-	        		in.getChannel().size());
+		FileInputStream in = null;
+		FileOutputStream out = null;
+		try {
+			in = new FileInputStream(src);
+			out = new FileOutputStream(dest);
+			out.getChannel().transferFrom(in.getChannel(), 0,
+					in.getChannel().size());
 		} finally {
 			if (in != null)
 				in.close();
@@ -842,7 +842,7 @@ class FileSystemStorage implements DIDStorage {
 				String text = readText(src);
 				writeText(dest, reEncryptor.reEncrypt(text));
 			} else {
-			    copyFile(src, dest);
+				copyFile(src, dest);
 			}
 		}
 	}

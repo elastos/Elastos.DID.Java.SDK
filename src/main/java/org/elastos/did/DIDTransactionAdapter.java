@@ -24,14 +24,23 @@ package org.elastos.did;
 
 import org.elastos.did.exception.DIDTransactionException;
 
+/**
+ * An interface for publishing the DID Entities.
+ *
+ * <p>
+ * This adapter should support both DID and credential publishing.
+ * When the DID SDK needs publish DID or credential transactions, the SDK
+ * will call this interface to publish the transaction.
+ * </p>
+ */
 public interface DIDTransactionAdapter {
 	/**
-	 * User need to implement 'createIdTransaction' function.
-	 * An application-defined function that create id transaction to chain.
+	 * Create and publish a ID chain transaction with the given
+	 * ID request as payload and the memo.
 	 *
-	 * @param payload the payload string to put into id transaction
-	 * @param memo the memorandum string
-	 * @throws DIDTransactionException throw this exception if publishing id transaction failed.
+	 * @param payload a string representation of the ID request
+	 * @param memo a memorandum string
+	 * @throws DIDTransactionException if an error occurred when publishing the transaction
 	 */
 	public void createIdTransaction(String payload, String memo)
 		throws DIDTransactionException;
