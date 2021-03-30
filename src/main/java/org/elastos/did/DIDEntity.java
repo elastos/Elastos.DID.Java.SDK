@@ -60,17 +60,34 @@ import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
 /**
- * Base class for all DID objects.
+ * The abstract super class for all DID entities.
+ *
+ * <p>
+ * This class provides a skeletal implementation for JSON and object mapping,
+ * include DIDEntity serialize to JSON and JSON deserialize to DIDEntity
+ * objects.
+ * </p>
+ *
+ * @param <T> the type of the class modeled by this DIDEntity object
  */
 public abstract class DIDEntity<T> {
 	private final static boolean NORMALIZED_DEFAULT = true;
 
+	/**
+	 * The default data format.
+	 */
 	protected final static SimpleDateFormat dateFormat =
 			new SimpleDateFormat(Constants.DATE_FORMAT);
 
+	/**
+	 * The ISO8601 compatible data format.
+	 */
 	protected final static SimpleDateFormat isoDateFormat =
 			new SimpleDateFormat(Constants.DATE_FORMAT_ISO_8601);
 
+	/**
+	 * DID serialization context key name.
+	 */
 	protected final static String CONTEXT_KEY = "org.elastos.did.context";
 
 	static {
@@ -78,72 +95,128 @@ public abstract class DIDEntity<T> {
 		isoDateFormat.setTimeZone(Constants.UTC);
 	}
 
+	/**
+	 * The DID serialization context class.
+	 */
 	protected static class SerializeContext {
 		private boolean normalized;
 		private DID did;
 
-		protected SerializeContext() {
+		private SerializeContext() {
 			this(false, null);
 		}
 
-		protected SerializeContext(boolean normalized, DID did) {
+		private SerializeContext(boolean normalized, DID did) {
 			this.normalized = normalized;
 			this.did = did;
 		}
 
+		/**
+		 * Check whether the current serializer working in normalized mode.
+		 *
+		 * @return true if the serializer working in normalized mode, false otherwise
+		 */
 		public boolean isNormalized() {
 			return normalized;
 		}
 
+		/**
+		 * Set the current serializer work in normalized mode or not.
+		 *
+		 * @param normalized true for normalized mode, false otherwise
+		 * @return the SerializeContext instance for method chaining
+		 */
 		public SerializeContext setNormalized(boolean normalized) {
 			this.normalized = normalized;
 			return this;
 		}
 
+		/**
+		 * Get the DID object who own the current serialize object.
+		 *
+		 * @return a DID object
+		 */
 		public DID getDid() {
 			return did;
 		}
 
-		public void setDid(DID did) {
+		/**
+		 * Set the DID object who own the current serialize object.
+		 *
+		 * @param did the owner of the current serialize object
+		 * @return the SerializeContext instance for method chaining
+		 */
+		public SerializeContext setDid(DID did) {
 			this.did = did;
+			return this;
 		}
 	}
 
+	/**
+	 * DIDPropertyFilter implementation that only uses property name to
+	 * determine whether to serialize property as is, or to filter it out.
+	 *
+	 * <p>
+	 * It will include all properties by default. The subclasses could
+	 * override the include method to filter the properties.
+	 * </p>
+	 */
 	protected static class DIDPropertyFilter implements PropertyFilter {
+		/**
+		 * Method called to determine whether property will be included
+		 * (if 'true' returned) or filtered out (if 'false' returned).
+		 *
+		 * @param writer object called to do actual serialization of the field, if not filtered out
+		 * @param pojo object that contains property value to serialize
+		 * @param context the serialization context object
+		 * @return true for include this property, false filtered out
+		 */
 		protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
 				return true;
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void serializeAsField(Object pojo, JsonGenerator gen, SerializerProvider provider,
 				PropertyWriter writer) throws Exception {
 			SerializeContext context = (SerializeContext)provider.getConfig()
 					.getAttributes().getAttribute(DIDEntity.CONTEXT_KEY);
 
-	        if (include(writer, pojo, context)) {
-	            writer.serializeAsField(pojo, gen, provider);
-	        } else if (!gen.canOmitFields()) { // since 2.3
-	            writer.serializeAsOmittedField(pojo, gen, provider);
-	        }
+			if (include(writer, pojo, context)) {
+				writer.serializeAsField(pojo, gen, provider);
+			} else if (!gen.canOmitFields()) { // since 2.3
+				writer.serializeAsOmittedField(pojo, gen, provider);
+			}
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void serializeAsElement(Object elementValue, JsonGenerator gen, SerializerProvider provider,
 				PropertyWriter writer) throws Exception {
 			 writer.serializeAsElement(elementValue, gen, provider);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		@Deprecated
 		public void depositSchemaProperty(PropertyWriter writer, ObjectNode propertiesNode,
 				SerializerProvider provider) throws JsonMappingException {
-            writer.depositSchemaProperty(propertiesNode, provider);
+			writer.depositSchemaProperty(propertiesNode, provider);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void depositSchemaProperty(PropertyWriter writer, JsonObjectFormatVisitor objectVisitor,
 				SerializerProvider provider) throws JsonMappingException {
-            writer.depositSchemaProperty(objectVisitor, provider);
+			writer.depositSchemaProperty(objectVisitor, provider);
 		}
 	}
 
@@ -151,22 +224,22 @@ public abstract class DIDEntity<T> {
 		private static final long serialVersionUID = -4252894239212420927L;
 
 		public DateDeserializer() {
-	        this(null);
-	    }
+			this(null);
+		}
 
-	    public DateDeserializer(Class<?> t) {
-	        super(t);
-	    }
+		public DateDeserializer(Class<?> t) {
+			super(t);
+		}
 
 		@Override
 		public Date deserialize(JsonParser p, DeserializationContext ctxt)
 				throws IOException, JsonProcessingException {
-	    	JsonToken token = p.getCurrentToken();
-	    	if (!token.equals(JsonToken.VALUE_STRING))
-	    		throw ctxt.weirdStringException(p.getText(),
-	    				Date.class, "Invalid datetime string");
+			JsonToken token = p.getCurrentToken();
+			if (!token.equals(JsonToken.VALUE_STRING))
+				throw ctxt.weirdStringException(p.getText(),
+						Date.class, "Invalid datetime string");
 
-	    	String dateStr = p.getValueAsString();
+			String dateStr = p.getValueAsString();
 			try {
 				return dateFormat.parse(dateStr);
 			} catch (ParseException ignore) {
@@ -177,7 +250,7 @@ public abstract class DIDEntity<T> {
 				return isoDateFormat.parse(dateStr);
 			} catch (ParseException e) {
 				throw ctxt.weirdStringException(p.getText(),
-	    				Date.class, "Invalid datetime string");
+						Date.class, "Invalid datetime string");
 			}
 		}
 	}
@@ -202,7 +275,7 @@ public abstract class DIDEntity<T> {
 	/**
 	 * Get the ObjectMapper for serialization or deserialization.
 	 *
-	 * @return the ObjectMapper instance.
+	 * @return a ObjectMapper instance
 	 */
 	protected static ObjectMapper getObjectMapper() {
 		JsonFactory jsonFactory = new JsonFactory();
@@ -229,10 +302,10 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Get the ObjectMapper for serialization.
+	 * Get the ObjectMapper for serialization with normalized option.
 	 *
-	 * @param normalized if normalized output, ignored when the sign is true
-	 * @return the ObjectMapper instance
+	 * @param normalized true for normalized output, false otherwise
+	 * @return a ObjectMapper instance
 	 */
 	private ObjectMapper getObjectMapper(boolean normalized) {
 		ObjectMapper mapper = getObjectMapper();
@@ -251,14 +324,13 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Generic method to parse a DID object from a JSON node
-	 * representation into given DIDObject type.
+	 * Convert data that given JSON tree contains into specific DID entity object.
 	 *
-	 * @param <T> the generic DID object type
-	 * @param content the JSON node for building the object
-	 * @param clazz the class object for DID object
-	 * @return the parsed DID object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @param <T> the DID entity type
+	 * @param content the JSON node contains the data
+	 * @param clazz the class object for the target DID entity
+	 * @return the parsed DID entity
+	 * @throws DIDSyntaxException if a error occurs when parsing the object
 	 */
 	protected static<T extends DIDEntity<?>> T parse(JsonNode content, Class<T> clazz)
 			throws DIDSyntaxException {
@@ -274,14 +346,14 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Generic method to parse a DID object from a string JSON
-	 * representation into given DIDObject type.
+	 * Parse a DID entity from a string JSON representation into given
+	 * DIDEntity type.
 	 *
-	 * @param <T> the generic DID object type
-	 * @param content the string JSON content for building the object
-	 * @param clazz the class object for DID object
-	 * @return the parsed DID object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @param <T> the DID entity type
+	 * @param content the string representation of the DID entity
+	 * @param clazz the class object for the target DID entity
+	 * @return the parsed DID entity
+	 * @throws DIDSyntaxException if a error occurs when parsing the object
 	 */
 	public static<T extends DIDEntity<?>> T parse(String content, Class<T> clazz)
 			throws DIDSyntaxException {
@@ -300,14 +372,13 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Generic method to parse a DID object from a Reader object
-	 * into given DIDObject type.
+	 * Parse a DID entity from a reader object into given DIDEntity type.
 	 *
-	 * @param <T> the generic DID object type
-	 * @param src Reader object used to read JSON content for building the object
-	 * @param clazz the class object for DID object
-	 * @return the parsed DID object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @param <T> the DID entity type
+	 * @param src the reader object to deserialize the object
+	 * @param clazz the class object for the target DID entity
+	 * @return the parsed DID entity
+	 * @throws DIDSyntaxException if a error occurs when parsing the object
 	 * @throws IOException if an IO error occurs
 	 */
 	public static<T extends DIDEntity<?>> T parse(Reader src, Class<T> clazz)
@@ -327,14 +398,13 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Generic method to parse a DID object from a InputStream object
-	 * into given DIDObject type.
+	 * Parse a DID entity from an input stream into given DIDEntity type.
 	 *
-	 * @param <T> the generic DID object type
-	 * @param src InputStream object used to read JSON content for building the object
-	 * @param clazz the class object for DID object
-	 * @return the parsed DID object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @param <T> the DID entity type
+	 * @param src the input stream to deserialize the object
+	 * @param clazz the class object for the target DID entity
+	 * @return the parsed DID entity
+	 * @throws DIDSyntaxException if a error occurs when parsing the object
 	 * @throws IOException if an IO error occurs
 	 */
 	public static<T extends DIDEntity<?>> T parse(InputStream src, Class<T> clazz)
@@ -354,14 +424,13 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Generic method to parse a DID object from a File object
-	 * into given DIDObject type.
+	 * Parse a DID entity from a file into given DIDEntity type.
 	 *
-	 * @param <T> the generic DID object type
-	 * @param src File object used to read JSON content for building the object
-	 * @param clazz the class object for DID object
-	 * @return the parsed DID object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @param <T> the DID entity type
+	 * @param src the file to deserialize the object
+	 * @param clazz the class object for the target DID entity
+	 * @return the parsed DID entity
+	 * @throws DIDSyntaxException if a error occurs when parsing the object
 	 * @throws IOException if an IO error occurs
 	 */
 	public static<T extends DIDEntity<?>> T parse(File src, Class<T> clazz)
@@ -381,11 +450,10 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to a JSON string.
+	 * Serialize this DID entity to a JSON string.
 	 *
-	 * @param normalized whether normalized output
+	 * @param normalized true for normalized output, false otherwise
 	 * @return the serialized JSON string
-	 * @throws DIDSyntaxException if a serialization error occurs
 	 */
 	public String serialize(boolean normalized) {
 		try {
@@ -396,21 +464,19 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to a JSON string.
+	 * Serialize this DID entity to a JSON string in default normalized mode.
 	 *
 	 * @return the serialized JSON string
-	 * @throws DIDSyntaxException if a serialization error occurs
 	 */
 	public String serialize() {
 		return serialize(NORMALIZED_DEFAULT);
 	}
 
 	/**
-	 * Serialize DID object to a Writer.
+	 * Serialize this DID entity to a Writer.
 	 *
 	 * @param out the output writer object
-	 * @param normalized whether normalized output
-	 * @throws DIDSyntaxException  if a serialization error occurs
+	 * @param normalized true for normalized output, false otherwise
 	 * @throws IOException if an IO error occurs
 	 */
 	public void serialize(Writer out, boolean normalized) throws IOException {
@@ -424,10 +490,9 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to a Writer.
+	 * Serialize DID object to a Writer in default normalized mode.
 	 *
 	 * @param out the output writer object
-	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public void serialize(Writer out) throws IOException {
@@ -435,11 +500,10 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to an OutputStream.
+	 * Serialize DID object to an output stream.
 	 *
 	 * @param out the output stream object
-	 * @param normalized whether normalized output
-	 * @throws DIDSyntaxException  if a serialization error occurs
+	 * @param normalized true for normalized output, false otherwise
 	 * @throws IOException if an IO error occurs
 	 */
 	public void serialize(OutputStream out, boolean normalized) throws IOException {
@@ -453,10 +517,9 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to an OutputStream.
+	 * Serialize DID object to an output stream in default normalized mode.
 	 *
 	 * @param out the output stream object
-	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public void serialize(OutputStream out) throws IOException {
@@ -467,8 +530,7 @@ public abstract class DIDEntity<T> {
 	 * Serialize DID object to a file.
 	 *
 	 * @param out the output file object
-	 * @param normalized whether normalized output
-	 * @throws DIDSyntaxException  if a serialization error occurs
+	 * @param normalized true for normalized output, false otherwise
 	 * @throws IOException if an IO error occurs
 	 */
 	public void serialize(File out, boolean normalized) throws IOException {
@@ -482,10 +544,9 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to a file.
+	 * Serialize DID object to a file in default normalized mode.
 	 *
 	 * @param out the output file object
-	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public void serialize(File out) throws IOException {
@@ -495,7 +556,7 @@ public abstract class DIDEntity<T> {
 	/**
 	 * Get the JSON string representation of the object.
 	 *
-	 * @param normalized whether normalized output
+	 * @param normalized true for normalized output, false otherwise
 	 * @return a JSON string representation of the object
 	 */
 	public String toString(boolean normalized) {
@@ -503,7 +564,7 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Get the JSON string representation of the object.
+	 * Get the JSON string representation of the object in default normalized mode.
 	 *
 	 * @return a JSON string representation of the object
 	 */
@@ -513,11 +574,10 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to a JSON string.
+	 * Serialize this DID entity to a JSON string.
 	 *
-	 * @param normalized whether normalized output
+	 * @param normalized true for normalized output, false otherwise
 	 * @return the serialized JSON string
-	 * @throws DIDSyntaxException if a serialization error occurs
 	 * @deprecated use {@link #serialize(boolean)} instead
 	 */
 	@Deprecated
@@ -526,10 +586,9 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to a JSON string.
+	 * Serialize this DID entity to a JSON string in default normalized mode.
 	 *
 	 * @return the serialized JSON string
-	 * @throws DIDSyntaxException if a serialization error occurs
 	 * @deprecated use {@link #serialize()} instead
 	 */
 	@Deprecated
@@ -538,11 +597,10 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to a Writer.
+	 * Serialize this DID entity to a Writer.
 	 *
 	 * @param out the output writer object
-	 * @param normalized whether normalized output
-	 * @throws DIDSyntaxException  if a serialization error occurs
+	 * @param normalized true for normalized output, false otherwise
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #serialize(Writer, boolean)} instead
 	 */
@@ -552,10 +610,9 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to a Writer.
+	 * Serialize DID object to a Writer in default normalized mode.
 	 *
 	 * @param out the output writer object
-	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #serialize(Writer)} instead
 	 */
@@ -565,11 +622,10 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to an OutputStream.
+	 * Serialize DID object to an output stream.
 	 *
 	 * @param out the output stream object
-	 * @param normalized whether normalized output
-	 * @throws DIDSyntaxException  if a serialization error occurs
+	 * @param normalized true for normalized output, false otherwise
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #serialize(OutputStream, boolean)} instead
 	 */
@@ -579,10 +635,9 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to an OutputStream.
+	 * Serialize DID object to an output stream in default normalized mode.
 	 *
 	 * @param out the output stream object
-	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #serialize(OutputStream)} instead
 	 */
@@ -595,8 +650,7 @@ public abstract class DIDEntity<T> {
 	 * Serialize DID object to a file.
 	 *
 	 * @param out the output file object
-	 * @param normalized whether normalized output
-	 * @throws DIDSyntaxException  if a serialization error occurs
+	 * @param normalized true for normalized output, false otherwise
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #serialize(File, boolean)} instead
 	 */
@@ -606,10 +660,9 @@ public abstract class DIDEntity<T> {
 	}
 
 	/**
-	 * Serialize DID object to a file.
+	 * Serialize DID object to a file in default normalized mode.
 	 *
 	 * @param out the output file object
-	 * @throws DIDSyntaxException  if a serialization error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #serialize(File)} instead
 	 */

@@ -48,6 +48,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * The abstract super class for all ID chain transaction requests.
+ *
+ * @param <T> the type of the class modeled by this IDChainRequest object
  */
 @JsonPropertyOrder({ IDChainRequest.HEADER,
 	IDChainRequest.PAYLOAD,
