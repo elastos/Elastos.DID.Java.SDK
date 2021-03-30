@@ -37,6 +37,15 @@ import org.elastos.did.exception.NetworkException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The default DIDAdapter implementation for the Elastos ID chain.
+ *
+ * <p>
+ * This adapter only provided resolve capability, it means you can not publish
+ * ID transactions with this adapter. The sub class can implement the
+ * createIdTransaction method to support publish capability.
+ * </p>
+ */
 public class DefaultDIDAdapter implements DIDAdapter {
 	private static final String MAINNET_RESOLVER = "http://api.elastos.io:20606";
 	private static final String TESTNET_RESOLVER = "http://api.elastos.io:21606";
@@ -46,10 +55,9 @@ public class DefaultDIDAdapter implements DIDAdapter {
 	private static final Logger log = LoggerFactory.getLogger(DefaultDIDAdapter.class);
 
 	/**
-	 * Set default resolver according to specified url.
+	 * Create a DefaultDIDAdapter instance with given resolver endpoint.
 	 *
 	 * @param resolver the resolver url string
-	 * @throws IllegalArgumentException throw this exception if setting resolver url failed.
 	 */
 	public DefaultDIDAdapter(String resolver) {
 		checkArgument(resolver != null && !resolver.isEmpty(), "Invalid resolver URL");
@@ -71,11 +79,24 @@ public class DefaultDIDAdapter implements DIDAdapter {
 		}
 	}
 
+	/**
+	 * Create a DefaultDIDAdapter instance with given resolver endpoint.
+	 *
+	 * @param resolver the resolver URL object
+	 */
 	public DefaultDIDAdapter(URL resolver) {
 		checkArgument(resolver != null, "Invalid resolver URL");
 		this.resolver = resolver;
 	}
 
+	/**
+	 * Perform a HTTP POST request with given request body to the url.
+	 *
+	 * @param url the target HTTP endpoint
+	 * @param body the request body
+	 * @return an input stream object of the response body
+	 * @throws IOException if an error occurred when processing the request
+	 */
 	protected InputStream performRequest(URL url, String body) throws IOException {
 		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 		connection.setRequestMethod("POST");
@@ -100,6 +121,9 @@ public class DefaultDIDAdapter implements DIDAdapter {
 		return connection.getInputStream();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InputStream resolve(String request) throws DIDResolveException {
 		checkArgument(request != null && !request.isEmpty(), "Invalid request");
@@ -111,6 +135,9 @@ public class DefaultDIDAdapter implements DIDAdapter {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void createIdTransaction(String payload, String memo)
 			throws DIDTransactionException {

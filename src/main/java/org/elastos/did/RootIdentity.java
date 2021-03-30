@@ -22,6 +22,16 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.MD5Digest;
 import org.spongycastle.util.encoders.Hex;
 
+/**
+ * The RootIdentity is a top-level object that represents a real user who
+ * owns a series of DIDs
+ *
+ * <p>
+ * The users could use RootIdentity object to derive a series of DIDs,
+ * all these DIDs are managed by this root identity object.
+ * At the same time, these DIDs are independent to the 3rd party verifiers.
+ * </p>
+ */
 public final class RootIdentity {
 	private String mnemonic;
 	private HDKey rootPrivateKey;
@@ -38,44 +48,62 @@ public final class RootIdentity {
 
 		private String id;
 
+		/**
+		 * Construct a Metadata object with given values.
+		 *
+		 * @param id the id of the RootIdentity object
+		 * @param store the target DIDStore
+		 */
 		protected Metadata(String id, DIDStore store) {
 			super(store);
 			this.id = id;
 		}
-
+		/**
+		 * Construct a Metadata object with given values.
+		 *
+		 * @param id the id of the RootIdentity object
+		 */
 		protected Metadata(String id) {
 			this(id, null);
 		}
 
 		/**
-		 *  The default constructor for JSON deserialize creator.
+		 * The default constructor for JSON deserializer.
 		 */
 		protected Metadata() {
 			this(null);
 		}
 
+		/**
+		 * Set the RootIdentity's id that this metadata related to.
+		 * @param id
+		 */
 		protected void setId(String id) {
 			this.id = id;
 		}
 
 		/**
-		 * Set transaction id for CredentialMetadata.
+		 * Set the default DID of this RootIdentity.
 		 *
-		 * @param txid the transaction id string
+		 * @param did a DID object that derived by this RootIdentity object
 		 */
 		protected void setDefaultDid(DID did) {
 			put(DEFAULT_DID, did.toString());
 		}
 
 		/**
-		 * Get the last transaction id.
+		 * Get the default DID of this RootIdentity.
 		 *
-		 * @return the transaction string
+		 * @return a DID that represent as the default DID
 		 */
 		public DID getDefaultDid() {
 			return DID.valueOf(get(DEFAULT_DID));
 		}
 
+		/**
+		 * Save the modified metadata to the attached store if this metadata
+		 * attached with a store.
+		 */
 		@Override
 		protected void save() {
 			if (attachedStore()) {
@@ -111,14 +139,17 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Initialize private identity by mnemonic.
+	 * Create a RootIdentity from mnemonic and an optional passphrase.
 	 *
 	 * @param mnemonic the mnemonic string
-	 * @param passphrase the password for mnemonic to generate seed
+	 * @param passphrase the extra passphrase to generate seed with the mnemonic
+	 * @param overwrite true will overwrite the identity if the identity exists
+	 * 					in the store, false will raise exception if the identity
+	 * 					exists in the store
+	 * @param store the DIDStore where to save this identity
 	 * @param storepass the password for DIDStore
-	 * @param force force = true, must create new private identity;
-	 *              force = false, must not create new private identity if there is private identity.
-	 * @throws DIDStoreException there is private identity if user need unforce mode.
+	 * @return the RootIdentity object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public static RootIdentity create(String mnemonic, String passphrase,
 			boolean overwrite, DIDStore store, String storepass) throws DIDStoreException {
@@ -148,12 +179,14 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Initialize new private identity by mnemonic with unforce mode.
+	 * Create a RootIdentity from mnemonic and an optional passphrase.
 	 *
 	 * @param mnemonic the mnemonic string
-	 * @param passphrase the password for mnemonic to generate seed
+	 * @param passphrase the extra passphrase to generate seed with the mnemonic
+	 * @param store the DIDStore where to save this identity
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException there is private identity if user need unforce mode.
+	 * @return the RootIdentity object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public static RootIdentity create(String mnemonic, String passphrase,
 			DIDStore store, String storepass) throws DIDStoreException {
@@ -161,13 +194,16 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Initialize private identity by extended private key.
+	 * Create a RootIdentity from a root extended private key.
 	 *
-	 * @param extentedPrivateKey the extented private key string
+	 * @param extentedPrivateKey the root extended private key
+	 * @param overwrite true will overwrite the identity if the identity exists
+	 * 					in the store, false will raise exception if the identity
+	 * 					exists in the store
+	 * @param store the DIDStore where to save this identity
 	 * @param storepass the password for DIDStore
-	 * @param force force = true, must create new private identity;
-	 *              force = false, must not create new private identity if there is private identity.
-	 * @throws DIDStoreException there is private identity if user need unforce mode.
+	 * @return the RootIdentity object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public static RootIdentity create(String extentedPrivateKey, boolean overwrite,
 			DIDStore store, String storepass) throws DIDStoreException {
@@ -190,17 +226,26 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Initialize private identity by extended private key with unforce mode.
+	 * Create a RootIdentity from a root extended private key.
 	 *
-	 * @param extentedPrivateKey the extented private key string
+	 * @param extentedPrivateKey the root extended private key
+	 * @param store the DIDStore where to save this identity
 	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException there is private identity if user need unforce mode.
+	 * @return the RootIdentity object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public static RootIdentity create(String extentedPrivateKey,
 			DIDStore store, String storepass) throws DIDStoreException {
 		return create(extentedPrivateKey, false, store, storepass);
 	}
 
+	/**
+	 * Create a public key only RootIdentity instance.
+	 *
+	 * @param preDerivedPublicKey the pre-derived extended public key
+	 * @param index current available derive index
+	 * @return the RootIdentity object
+	 */
 	protected static RootIdentity create(String preDerivedPublicKey, int index) {
 		HDKey key = preDerivedPublicKey == null ? null : HDKey.deserializeBase58(preDerivedPublicKey);
 
@@ -214,14 +259,30 @@ public final class RootIdentity {
 		rootPrivateKey = null;
 	}
 
+	/**
+	 * Get the attached DIDStore instance.
+	 *
+	 * @return a DIDStore object
+	 */
 	protected DIDStore getStore() {
 		return metadata.getStore();
 	}
 
+	/**
+	 * Get the metadata object of this RootIdentity.
+	 *
+	 * @param metadata the metadata object
+	 */
 	protected void setMetadata(Metadata metadata) {
 		this.metadata = metadata;
 	}
 
+	/**
+	 * Calculate the id of RootIdentity object from the pre-derived public key.
+	 *
+	 * @param key the pre-derived public key in bytes array
+	 * @return the id of RootIdentity object
+	 */
 	protected static String getId(byte[] key) {
 		checkArgument(key != null && key.length > 0, "Invalid key bytes");
 
@@ -233,6 +294,11 @@ public final class RootIdentity {
 		return Hex.toHexString(digest);
 	}
 
+	/**
+	 * Get the id of this RootIdentity object.
+	 *
+	 * @return the id of this RootIdentity object
+	 */
 	public synchronized String getId() {
 		if (id == null)
 			id = getId(preDerivedPublicKey.serializePublicKey());
@@ -240,57 +306,122 @@ public final class RootIdentity {
 		return id;
 	}
 
+	/**
+	 * Get the alias of this RootIdentity object.
+	 *
+	 * @return the alias of this RootIdentity object, or null if not set before
+	 */
 	public String getAlias() {
 		return metadata.getAlias();
 	}
 
+	/**
+	 * Set the alias for this RootIdentity object.
+	 *
+	 * @param alias the new alias
+	 */
 	public void setAlias(String alias) {
 		metadata.setAlias(alias);
 	}
 
+	/**
+	 * Set this RootIdentity as the global default identity in current DIDStore.
+	 *
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public void setAsDefault() throws DIDStoreException {
 		getStore().setDefaultRootIdentity(this);
 	}
 
+	/**
+	 * Get the default DID of this RootIdentity object.
+	 *
+	 * @return a DID object or null if not set the default DID before
+	 */
 	public DID getDefaultDid() {
 		return metadata.getDefaultDid();
 	}
 
+	/**
+	 * Set the default DID for this RootIdentity object.
+	 *
+	 * <p>
+	 * The default DID object should derived from this RootIdentity.
+	 * </p>
+	 *
+	 * @param did a DID object
+	 */
 	public void setDefaultDid(DID did) {
 		metadata.setDefaultDid(did);
 	}
 
+	/**
+	 * Set the default DID for this RootIdentity object.
+	 *
+	 * <p>
+	 * The default DID object should derived from this RootIdentity.
+	 * </p>
+	 *
+	 * @param did a DID string
+	 */
 	public void setDefaultDid(String did) {
 		metadata.setDefaultDid(DID.valueOf(did));
 	}
 
+	/**
+	 * Set the default DID for this RootIdentity object.
+	 *
+	 * @param index the index of default DID derived from
+	 */
 	public void setDefaultDid(int index) {
 		checkArgument(index >=0, "Invalid index");
 
 		metadata.setDefaultDid(getDid(index));
 	}
 
-	protected String getMnemonic() {
+	String getMnemonic() {
 		return mnemonic;
 	}
 
-	protected HDKey getRootPrivateKey() {
+	HDKey getRootPrivateKey() {
 		return rootPrivateKey;
 	}
 
+	/**
+	 * Get the pre-derived public key of this RootIdentity.
+	 *
+	 * @return a HDKey object represent the public key
+	 */
 	protected HDKey getPreDerivedPublicKey() {
 		return preDerivedPublicKey;
 	}
 
+	/**
+	 * Get the next available derive index of this RootIdentity.
+	 *
+	 * @return the next available derive index
+	 */
 	protected int getIndex() {
 		return index.get();
 	}
 
+	/**
+	 * Set the next available derive index for this RootIdentity.
+	 *
+	 * @param idx the next available derive index
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void setIndex(int idx) throws DIDStoreException {
 		index.set(idx);
 		getStore().storeRootIdentity(this);
 	}
 
+	/**
+	 * Increase the next available derive index for this RootIdentity.
+	 *
+	 * @return the next available derive index
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected int incrementIndex() throws DIDStoreException {
 		int idx = index.incrementAndGet();
 		getStore().storeRootIdentity(this);
@@ -298,10 +429,10 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Get DID with specified index.
+	 * Get DID that derived from the specific index.
 	 *
-	 * @param index the index
-	 * @return the DID object
+	 * @param index the derive index
+	 * @return a DID object
 	 */
 	public DID getDid(int index) {
 		checkArgument(index >= 0, "Invalid index");
@@ -311,7 +442,7 @@ public final class RootIdentity {
 		return did;
 	}
 
-	protected static byte[] lazyCreateDidPrivateKey(DIDURL id, DIDStore store, String storepass)
+	static byte[] lazyCreateDidPrivateKey(DIDURL id, DIDStore store, String storepass)
 			throws DIDStoreException {
 		DIDDocument doc = store.loadDid(id.getDid());
 		if (doc == null) {
@@ -344,13 +475,13 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Create a new DID with specified index and get this DID's Document content.
+	 * Create a new DID that derive from the specified index.
 	 *
-	 * @param index the index to create new did.
-	 * @param alias the alias string
+	 * @param index the derive index
+	 * @param overwrite true for overwriting the existing one, fail otherwise
 	 * @param storepass the password for DIDStore
-	 * @return the DIDDocument content related to the new DID
-	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 * @return the new created DIDDocument object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public DIDDocument newDid(int index, boolean overwrite, String storepass)
 			throws DIDResolveException, DIDStoreException {
@@ -396,17 +527,26 @@ public final class RootIdentity {
 		}
 	}
 
+	/**
+	 * Create a new DID that derive from the specified index.
+	 *
+	 * @param index the derive index
+	 * @param storepass the password for DIDStore
+	 * @return the new created DIDDocument object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public DIDDocument newDid(int index, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		return newDid(index, false, storepass);
 	}
 
 	/**
-	 * Create a new DID without alias and get this DID's Document content.
+	 * Create a new DID from next available index.
 	 *
+	 * @param overwrite true for overwriting the existing one, fail otherwise
 	 * @param storepass the password for DIDStore
-	 * @return the DIDDocument content related to the new DID
-	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 * @return the new created DIDDocument object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public synchronized DIDDocument newDid(boolean overwrite, String storepass)
 			throws DIDResolveException, DIDStoreException {
@@ -416,27 +556,33 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Create a new DID without alias and get this DID's Document content.
+	 * Create a new DID from next available index.
 	 *
 	 * @param storepass the password for DIDStore
-	 * @return the DIDDocument content related to the new DID
-	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 * @return the new created DIDDocument object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public DIDDocument newDid(String storepass)
 			throws DIDResolveException, DIDStoreException {
 		return newDid(false, storepass);
 	}
 
+	/**
+	 * Check whether this RootIdentity created from mnemonic.
+	 *
+	 * @return true if this RootIdentity created from mnemonic, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public boolean hasMnemonic() throws DIDStoreException {
 		return getStore().containsRootIdentityMnemonic(getId());
 	}
 
 	/**
-	 * Export mnemonic from DIDStore
+	 * Export mnemonic that generated this RootIdentity object.
 	 *
 	 * @param storepass the password for DIDStore
 	 * @return the mnemonic string
-	 * @throws DIDStoreException there is no mnemonic in DID Store.
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public String exportMnemonic(String storepass) throws DIDStoreException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -444,6 +590,23 @@ public final class RootIdentity {
 		return getStore().exportRootIdentityMnemonic(getId(), storepass);
 	}
 
+	/**
+	 * Synchronize the specific DID from ID chain.
+	 *
+	 * <p>
+	 * If the ConflictHandle is not set by the developers, this method will
+	 * use the default ConflictHandle implementation: if conflict between
+	 * the chain copy and the local copy, it will keep the local copy, but
+	 * update the local metadata with the chain copy.
+	 * </p>
+	 *
+	 * @param index the DID derive index
+	 * @param handle an application defined handle to process the conflict
+	 * 				 between the chain copy and the local copy
+	 * @return true if synchronized success, false if not synchronized
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public boolean synchronize(int index, ConflictHandle handle)
 			throws DIDResolveException, DIDStoreException {
 		checkArgument(index >= 0, "Invalid index");
@@ -495,15 +658,39 @@ public final class RootIdentity {
 		return true;
 	}
 
+	/**
+	 * Synchronize the specific DID from ID chain.
+	 *
+	 * @param index the DID derive index
+	 * @return true if synchronized success, false if not synchronized
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public boolean synchronize(int index)
 			throws DIDResolveException, DIDStoreException {
 		return synchronize(index, null);
 	}
 
-	public CompletableFuture<Void> synchronizeAsync(int index, ConflictHandle handle) {
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+	/**
+	 * Synchronize the specific DID from ID chain in asynchronous mode.
+	 *
+	 * <p>
+	 * If the ConflictHandle is not set by the developers, this method will
+	 * use the default ConflictHandle implementation: if conflict between
+	 * the chain copy and the local copy, it will keep the local copy, but
+	 * update the local metadata with the chain copy.
+	 * </p>
+	 *
+	 * @param index the DID derive index
+	 * @param handle an application defined handle to process the conflict
+	 * 				 between the chain copy and the local copy
+	 * @return a new CompletableStage, the result is the boolean value that
+	 * 			indicate the synchronize result
+	 */
+	public CompletableFuture<Boolean> synchronizeAsync(int index, ConflictHandle handle) {
+		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
 			try {
-				synchronize(index, handle);
+				return synchronize(index, handle);
 			} catch (DIDResolveException | DIDStoreException e) {
 				throw new CompletionException(e);
 			}
@@ -512,16 +699,31 @@ public final class RootIdentity {
 		return future;
 	}
 
-	public CompletableFuture<Void> synchronizeAsync(int index) {
+	/**
+	 * Synchronize the specific DID from ID chain in asynchronous mode.
+	 *
+	 * @param index the DID derive index
+	 * @return a new CompletableStage, the result is the boolean value that
+	 * 			indicate the synchronize result
+	 */
+	public CompletableFuture<Boolean> synchronizeAsync(int index) {
 		return synchronizeAsync(index, null);
 	}
 
 	/**
-	 * Synchronize DIDStore.
+	 * Synchronize all DIDs that derived from this RootIdentity object.
 	 *
-	 * @param handle the handle to ConflictHandle
-	 * @throws DIDResolveException synchronize did faile with resolve error.
-	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 * <p>
+	 * If the ConflictHandle is not set by the developers, this method will
+	 * use the default ConflictHandle implementation: if conflict between
+	 * the chain copy and the local copy, it will keep the local copy, but
+	 * update the local metadata with the chain copy.
+	 * </p>
+	 *
+	 * @param handle an application defined handle to process the conflict
+	 * 				 between the chain copy and the local copy
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public void synchronize(ConflictHandle handle)
 			throws DIDResolveException, DIDStoreException {
@@ -551,12 +753,10 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Synchronize DIDStore.
-	 * ConflictHandle uses default method.
+	 * Synchronize all DIDs that derived from this RootIdentity object.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @throws DIDResolveException synchronize did faile with resolve error.
-	 * @throws DIDStoreException there is no private identity in DIDStore.
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public void synchronize()
 			throws DIDResolveException, DIDStoreException {
@@ -564,12 +764,19 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Synchronize DIDStore with asynchronous mode.
+	 * Synchronize all DIDs that derived from this RootIdentity object in
+	 * asynchronous mode.
 	 *
-	 * @param handle the handle to ConflictHandle
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *         resolved DIDDocument if success; null otherwise.
+	 * <p>
+	 * If the ConflictHandle is not set by the developers, this method will
+	 * use the default ConflictHandle implementation: if conflict between
+	 * the chain copy and the local copy, it will keep the local copy, but
+	 * update the local metadata with the chain copy.
+	 * </p>
+	 *
+	 * @param handle an application defined handle to process the conflict
+	 * 				 between the chain copy and the local copy
+	 * @return a new CompletableStage
 	 */
 	public CompletableFuture<Void> synchronizeAsync(ConflictHandle handle) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -584,11 +791,10 @@ public final class RootIdentity {
 	}
 
 	/**
-	 * Synchronize DIDStore with asynchronous mode.
-	 * ConflictHandle uses default method.
+	 * Synchronize all DIDs that derived from this RootIdentity object in
+	 * asynchronous mode.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @return a new CompletableStage
 	 */
 	public CompletableFuture<Void> synchronizeAsync() {
 		return synchronizeAsync(null);

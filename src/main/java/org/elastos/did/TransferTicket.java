@@ -40,7 +40,6 @@ import org.elastos.did.exception.AlreadySignedException;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.MalformedDocumentException;
 import org.elastos.did.exception.MalformedTransferTicketException;
 import org.elastos.did.exception.NoEffectiveControllerException;
 import org.elastos.did.exception.NotControllerException;
@@ -116,7 +115,8 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 		 *
 		 * @param type the verification method type
 		 * @param method the verification method, normally it's a public key
-		 * @param signature the signature encoded in base64 URL safe format
+		 * @param created the create timestamp
+		 * @param signature the signature encoded in base64(URL safe)format
 		 */
 		@JsonCreator
 		protected Proof(@JsonProperty(value = TYPE) String type,
@@ -129,6 +129,12 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 			this.signature = signature;
 		}
 
+		/**
+		 * Constructs the Proof object with the given values.
+		 *
+		 * @param method the verification method, normally it's a public key
+		 * @param signature the signature encoded in base64(URL safe)format
+		 */
 		protected Proof(DIDURL method, String signature) {
 			this(Constants.DEFAULT_PUBLICKEY_TYPE, method,
 					Calendar.getInstance(Constants.UTC).getTime(), signature);
@@ -137,39 +143,42 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 		/**
 		 * Get the verification method type.
 		 *
-		 * @return the type string
+		 * @return the verification method type string
 		 */
-	    public String getType() {
-	    	return type;
-	    }
+		public String getType() {
+			return type;
+		}
 
-	    /**
-	     * Get the verification method, normally it's a public key id.
-	     *
-	     * @return the sign key
-	     */
-	    public DIDURL getVerificationMethod() {
-	    	return verificationMethod;
-	    }
+		/**
+		 * Get the verification method, normally it's a public key id.
+		 *
+		 * @return the verification method id
+		 */
+		public DIDURL getVerificationMethod() {
+			return verificationMethod;
+		}
 
-	    /**
-	     * Get the created timestamp.
-	     *
-	     * @return the created date
-	     */
-	    public Date getCreated() {
-	    	return created;
-	    }
+		/**
+		 * Get the created timestamp.
+		 *
+		 * @return the created date
+		 */
+		public Date getCreated() {
+			return created;
+		}
 
-	    /**
-	     * Get the signature.
-	     *
-	     * @return the signature encoded in URL safe base64 string
-	     */
-	    public String getSignature() {
-	    	return signature;
-	    }
+		/**
+		 * Get the signature.
+		 *
+		 * @return the signature encoded in base64(URL safe) string
+		 */
+		public String getSignature() {
+			return signature;
+		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public int compareTo(Proof proof) {
 			int rc = (int)(this.created.getTime() - proof.created.getTime());
@@ -180,11 +189,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Transfer ticket constructor.
+	 * Create a TransferTicket for the target DID.
 	 *
-	 * @param did the subject did
-	 * @param to (one of ) the new owner's DID
-	 * @throws DIDResolveException if failed resolve the subject DID
+	 * @param did the target did document object
+	 * @param to (one of) the new owner's DID
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 */
 	protected TransferTicket(DIDDocument target, DID to) throws DIDResolveException {
 		checkArgument(target != null, "Invalid target DID document");
@@ -202,6 +211,14 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 		this.txid = target.getMetadata().getTransactionId();
 	}
 
+	/**
+	 * Create a TransferTicket instance with the given fields.
+	 *
+	 * @param did the target DID object
+	 * @param to (one of) the new owner's DID
+	 * @param txid the latest transaction id of the target DID
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 */
 	@JsonCreator
 	protected TransferTicket(@JsonProperty(value = ID, required = true) DID did,
 			@JsonProperty(value = TO, required = true) DID to,
@@ -211,6 +228,12 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 		this.txid = txid;
 	}
 
+	/**
+	 * Copy constructor.
+	 *
+	 * @param ticket the source object
+	 * @param withProof if copy with the proof objects
+	 */
 	private TransferTicket(TransferTicket ticket, boolean withProof) {
 		this.id = ticket.id;
 		this.to = ticket.to;
@@ -223,7 +246,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Get the subject DID.
+	 * Get the target DID of this ticket.
 	 *
 	 * @return subject DID object
 	 */
@@ -250,7 +273,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Get first Proof object.
+	 * Get the first Proof object.
 	 *
 	 * @return the Proof object
 	 */
@@ -261,7 +284,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	/**
 	 * Get all Proof objects.
 	 *
-	 * @return list of the Proof objects
+	 * @return a list of the Proof objects
 	 */
 	public List<Proof> getProofs() {
 		return Collections.unmodifiableList(_proofs);
@@ -273,8 +296,9 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 
 		return doc;
 	}
+
 	/**
-	 * Check whether the ticket is tampered or not.
+	 * Check whether the ticket is genuine or not.
 	 *
 	 * @return true is the ticket is genuine else false
 	 */
@@ -325,7 +349,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Check whether the ticket is genuine and still valid to use.
+	 * Check whether the ticket is genuine and valid to use.
 	 *
 	 * @return true is the ticket is valid else false
 	 */
@@ -348,8 +372,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 
 	/**
 	 * Check whether the ticket is qualified.
-	 * Qualified check will only check the number of signatures meet the
-	 * requirement.
+	 *
+	 * <p>
+	 * Qualified check will only check the number of signatures whether matched
+	 * with the multisig property of the target DIDDocument.
+	 *</p>
 	 *
 	 * @return true is the ticket is qualified else false
 	 */
@@ -364,8 +391,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	/**
 	 * Sanitize routine before sealing or after deserialization.
 	 *
-	 * @param withProof check the proof object or not
-	 * @throws MalformedDocumentException if the document object is invalid
+	 * @throws MalformedTransferTicketException if the ticket object is invalid
 	 */
 	@Override
 	protected void sanitize() throws MalformedTransferTicketException {
@@ -395,6 +421,13 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 		Collections.sort(this._proofs);
 	}
 
+	/**
+	 * Seal this TransferTicket object with given controller.
+	 *
+	 * @param controller the DID controller who seal the ticket object
+	 * @param storepass the password of DIDStore
+	 * @throws DIDStoreException if an error occurred when access the DIDStore
+	 */
 	protected void seal(DIDDocument controller, String storepass)
 			throws DIDStoreException {
 		try {
@@ -437,11 +470,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Parse a TransferTicket object from from a string JSON representation.
+	 * Parse the TransferTicket object from a string JSON representation.
 	 *
-	 * @param content the string JSON content for building the object.
+	 * @param content the string representation of the ticket object
 	 * @return the TransferTicket object.
-	 * @throws DIDSyntaxException if a parse error occurs.
+	 * @throws MalformedTransferTicketException if a parse error occurs
 	 */
 	public static TransferTicket parse(String content) throws MalformedTransferTicketException {
 		try {
@@ -455,11 +488,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Parse a TransferTicket object from from a Reader object.
+	 * Parse the TransferTicket object from from a Reader object.
 	 *
-	 * @param src Reader object used to read JSON content for building the object
+	 * @param src the reader object to deserialize the ticket object
 	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedTransferTicketException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static TransferTicket parse(Reader src)
@@ -475,11 +508,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Parse a TransferTicket object from from a InputStream object.
+	 * Parse the TransferTicket object from from an InputStream object.
 	 *
-	 * @param src InputStream object used to read JSON content for building the object
+	 * @param src the InputStream object to deserialize the ticket object
 	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedTransferTicketException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static TransferTicket parse(InputStream src)
@@ -495,11 +528,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Parse a TransferTicket object from from a File object.
+	 * Parse the TransferTicket object from from a File object.
 	 *
-	 * @param src File object used to read JSON content for building the object
+	 * @param src the File object to deserialize the ticket object
 	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedTransferTicketException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static TransferTicket parse(File src)
@@ -515,11 +548,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Parse a TransferTicket object from from a string JSON representation.
+	 * Parse the TransferTicket object from a string JSON representation.
 	 *
-	 * @param content the string JSON content for building the object
-	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @param content the string representation of the ticket object
+	 * @return the TransferTicket object.
+	 * @throws MalformedTransferTicketException if a parse error occurs
 	 * @deprecated use {@link #parse(String)} instead
 	 */
 	@Deprecated
@@ -528,11 +561,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Parse a TransferTicket object from from a Reader object.
+	 * Parse the TransferTicket object from from a Reader object.
 	 *
-	 * @param src Reader object used to read JSON content for building the object
+	 * @param src the reader object to deserialize the ticket object
 	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedTransferTicketException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(Reader)} instead
 	 */
@@ -543,11 +576,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Parse a TransferTicket object from from a InputStream object.
+	 * Parse the TransferTicket object from from an InputStream object.
 	 *
-	 * @param src InputStream object used to read JSON content for building the object
+	 * @param src the InputStream object to deserialize the ticket object
 	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedTransferTicketException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(InputStream)} instead
 	 */
@@ -558,11 +591,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	}
 
 	/**
-	 * Parse a TransferTicket object from from a File object.
+	 * Parse the TransferTicket object from from a File object.
 	 *
-	 * @param src File object used to read JSON content for building the object
+	 * @param src the File object to deserialize the ticket object
 	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedTransferTicketException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(File)} instead
 	 */
