@@ -404,7 +404,8 @@ public class DIDBackend {
 			}
 
 			DIDDocument doc = ti.getRequest().getDocument();
-			DIDMetadataImpl metadata = new DIDMetadataImpl();
+			DIDStore store = doc.getMetadataImpl().getStore();
+			DIDMetadataImpl metadata = new DIDMetadataImpl(store);
 			metadata.setTransactionId(ti.getTransactionId());
 			metadata.setSignature(doc.getProof().getSignature());
 			metadata.setPublished(ti.getTimestamp());
