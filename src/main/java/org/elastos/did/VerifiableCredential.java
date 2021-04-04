@@ -78,10 +78,16 @@ import com.fasterxml.jackson.databind.ser.PropertyFilter;
 import com.fasterxml.jackson.databind.ser.PropertyWriter;
 
 /**
- * VerifiableCredential is a set of one or more claims made by the same entity.
+ * A verifiable credential can represent the information that a physical
+ * credential represents. The addition of technologies, such as digital
+ * signatures, makes verifiable credentials more tamper-evident and more
+ * trustworthy than their physical counterparts.
  *
- * Credential might also include an identifier and metadata to
- * describe properties of the credential.
+ * <p>
+ * This class following W3C's
+ * <a href="https://www.w3.org/TR/vc-data-model/">Verifiable Credentials Data Model 1.0</a>
+ * specification.
+ * </p>
  */
 @JsonPropertyOrder({ VerifiableCredential.ID,
 	VerifiableCredential.TYPE,
@@ -126,12 +132,13 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	private CredentialMetadata metadata;
 
 	/**
-     * The object keeps the credential subject contents.
-     *
-     * This id field is mandatory, should be the contoller's DID.
-     * All the other fields could be defined by the application.
-     * In order to support the JSON serialization, all values should be
-     * JSON serializable.
+	 * The credential Subject object contains one or more properties that are
+	 * each related to a credential owner.
+	 *
+	 * This id field is mandatory, should be the contoller's DID.
+	 * All the other fields could be defined by the application.
+	 * In order to support the JSON serialization, all values should be
+	 * JSON serializable.
 	 */
 	@JsonPropertyOrder({ ID })
 	static public class Subject {
@@ -139,9 +146,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		private TreeMap<String, Object> properties;
 
 		/**
-		 * Constructs the CredentialSubject object with given controller.
+		 * Constructs the credential Subject object with given controller.
 		 *
-		 * @param id the controller of Credential Subject
+		 * @param id the controller of this subject
 		 */
 		@JsonCreator
 		protected Subject(@JsonProperty(value = ID) DID id) {
@@ -152,7 +159,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		/**
 		 * Get the controller.
 		 *
-		 * @return the controller's DID
+		 * @return the controller's DID object
 		 */
 		@JsonGetter(ID)
 		public DID getId() {
@@ -160,11 +167,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		/**
-		 * Set the controller.
+		 * Set the controller of the Subject object.
 		 *
 		 * @param did the controller's DID
 		 */
-		protected void setId(DID did) {
+		void setId(DID did) {
 			this.id = did;
 		}
 
@@ -239,9 +246,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * The proof information for verifiable credential.
-	 *
-	 * The default proof type is ECDSAsecp256r1.
+	 * The proof information for verifiable credential. The default proof
+	 * type is ECDSAsecp256r1.
 	 */
 	@JsonPropertyOrder({ TYPE, CREATED, VERIFICATION_METHOD, SIGNATURE })
 	@JsonFilter("credentialProofFilter")
@@ -257,10 +263,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		private String signature;
 
 		/**
-		 * Constructs the Proof object with the given values.
+		 * Constructs a Proof object with the given values.
 		 *
 		 * @param type the verification method type
 		 * @param method the verification method, normally it's a public key
+		 * @param created the create date time stamp
 		 * @param signature the signature encoded in base64 URL safe format
 		 */
 		@JsonCreator
@@ -274,6 +281,12 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			this.signature = signature;
 		}
 
+		/**
+		 * Constructs a Proof object with the given values.
+		 *
+		 * @param method the verification method, normally it's a public key
+		 * @param signature the signature encoded in base64 URL safe format
+		 */
 		protected Proof(DIDURL method, String signature) {
 			this(Constants.DEFAULT_PUBLICKEY_TYPE, method,
 					Calendar.getInstance(Constants.UTC).getTime(), signature);
@@ -282,40 +295,40 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		/**
 		 * Get the verification method type.
 		 *
-		 * @return the type string
+		 * @return the verification method type string
 		 */
-	    public String getType() {
-	    	return type;
-	    }
+		public String getType() {
+			return type;
+		}
 
-	    /**
-	     * Get the verification method, normally it's a public key id.
-	     *
-	     * @return the sign key
-	     */
-	    public DIDURL getVerificationMethod() {
-	    	return verificationMethod;
-	    }
+		/**
+		 * Get the verification method, normally it's a public key id.
+		 *
+		 * @return a verification method id
+		 */
+		public DIDURL getVerificationMethod() {
+			return verificationMethod;
+		}
 
-	    /**
-	     * Get the created timestamp.
-	     *
-	     * @return the created date
-	     */
-	    public Date getCreated() {
-	    	return created;
-	    }
+		/**
+		 * Get the created time stamp.
+		 *
+		 * @return the created time stamp
+		 */
+		public Date getCreated() {
+			return created;
+		}
 
-	    /**
-	     * Get the signature.
-	     *
-	     * @return the signature encoded in URL safe base64 string
-	     */
-	    public String getSignature() {
-	    	return signature;
-	    }
+		/**
+		 * Get the signature.
+		 *
+		 * @return the signature encoded in URL safe base64 string
+		 */
+		public String getSignature() {
+			return signature;
+		}
 
-		protected static PropertyFilter getFilter() {
+		static PropertyFilter getFilter() {
 			return new DIDPropertyFilter() {
 				@Override
 				protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
@@ -343,7 +356,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Constructs a credential object, copy the contents from the given object.
+	 * Copy constructor.
 	 *
 	 * @param vc the source credential object
 	 */
@@ -364,9 +377,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Get the credential id.
+	 * Get the id of this credential object
 	 *
-	 * @return the identifier
+	 * @return the id of this credential
 	 */
 
 	@Override
@@ -385,7 +398,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Get the credential issuer.
+	 * Get the issuer of this credential.
 	 *
 	 * @return the issuer's DID
 	 */
@@ -412,7 +425,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Get the expires time.
+	 * Get the expire time.
 	 *
 	 * @return the expires time
 	 */
@@ -435,14 +448,14 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	/**
 	 * Get last modified time.
 	 *
-	 * @return the last modified time, maybe null for old version vc
+	 * @return the last modified time, maybe null for old version credential object
 	 */
 	public Date getLastModified() {
 		return proof.getCreated();
 	}
 
 	/**
-	 * Get Credential subject content.
+	 * Get Credential subject object.
 	 *
 	 * @return the Credential Subject object
 	 */
@@ -508,7 +521,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return getSubject().getId();
 	}
 
-	protected static PropertyFilter getFilter() {
+	static PropertyFilter getFilter() {
 		return new DIDPropertyFilter() {
 			@Override
 			protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
@@ -528,9 +541,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Set meta data for Credential.
+	 * Set meta data for this credential object.
 	 *
-	 * @param metadata the meta data object
+	 * @param metadata the metadata object
 	 */
 	protected void setMetadata(CredentialMetadata metadata) {
 		this.metadata = metadata;
@@ -538,7 +551,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Get meta data object from Credential.
+	 * Get the metadata object of this credential object.
 	 *
 	 * @return the Credential Meta data object
 	 */
@@ -564,7 +577,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Check if the Credential is self proclaimed or not.
+	 * Check if this credential is a self proclaimed or not.
 	 *
 	 * @return whether the credential is self proclaimed
 	 */
@@ -573,10 +586,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Check if the Credential is expired or not.
+	 * Check if this credential object is expired or not.
 	 *
-	 * @return whether the Credential object is expired
-	 * @throws DIDResolveException if error occurs when resolve the DID documents
+	 * @return whether the credential object is expired
+	 * @throws DIDResolveException if error occurs when resolving the DIDs
 	 */
 	public boolean isExpired() throws DIDResolveException {
 		if (expirationDate != null) {
@@ -603,7 +616,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Check if the Credential is expired or not in asynchronous mode.
+	 * Check if this credential object is expired or not in asynchronous mode.
 	 *
 	 * @return the new CompletableStage if success; null otherwise.
 	 *         The boolean result is expired or not
@@ -621,10 +634,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Check whether the Credential is genuine or not.
+	 * Check whether this credential object is genuine or not.
 	 *
-	 * @return whether the Credential object is genuine
-	 * @throws DIDResolveException if error occurs when resolve the DID documents
+	 * @return whether the credential object is genuine
+	 * @throws DIDResolveException if error occurs when resolve the DIDs
 	 */
 	public boolean isGenuine() throws DIDResolveException {
 		if (!getId().getDid().equals(getSubject().getId()))
@@ -661,7 +674,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Check whether the Credential is genuine or not in asynchronous mode.
+	 * Check whether this credential object is genuine or not in asynchronous mode.
 	 *
 	 * @return the new CompletableStage if success; null otherwise.
 	 *         The boolean result is genuine or not
@@ -678,6 +691,12 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Check whether this credential object is revoked or not.
+	 *
+	 * @return whether the credential object is revoked
+	 * @throws DIDResolveException if error occurs when resolve the DIDs
+	 */
 	public boolean isRevoked() throws DIDResolveException {
 		if (getMetadata().isRevoked())
 			return true;
@@ -692,6 +711,12 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return revoked;
 	}
 
+	/**
+	 * Check whether this credential object is revoked or not in asynchronous mode.
+	 *
+	 * @return the new CompletableStage if success; null otherwise.
+	 *         The boolean result is revoked or not
+	 */
 	public CompletableFuture<Boolean> isRevokedAsync() {
 		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -705,10 +730,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Check whether the Credential is valid or not.
+	 * Check whether this credential object is valid or not.
 	 *
-	 * @return whether the Credential object is valid
-	 * @throws DIDResolveException if error occurs when resolve the DID documents
+	 * @return whether the credential object is valid
+	 * @throws DIDResolveException if error occurs when resolve the DIDs
 	 */
 	public boolean isValid() throws DIDResolveException {
 		if (expirationDate != null) {
@@ -754,7 +779,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Check whether the Credential is valid in asynchronous mode.
+	 * Check whether this credential object is valid in asynchronous mode.
 	 *
 	 * @return the new CompletableStage if success; null otherwise.
 	 * 	       The boolean result is valid or not
@@ -771,6 +796,12 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Check whether this credential object was declared or not.
+	 *
+	 * @return whether the credential object was declared
+	 * @throws DIDResolveException if error occurs when resolve the DIDs
+	 */
 	public boolean wasDeclared() throws DIDResolveException {
 		CredentialBiography bio = DIDBackend.getInstance().resolveCredentialBiography(
 				getId(), getIssuer());
@@ -786,6 +817,39 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return false;
 	}
 
+	/**
+	 * Check whether this credential object was declared in asynchronous mode.
+	 *
+	 * @return the new CompletableStage if success; null otherwise.
+	 * 	       The boolean result was declared or not
+	 */
+	public CompletableFuture<Boolean> wasDeclaredAsync() {
+		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return wasDeclared();
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param signKey the contoller's key id to sign the declare transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void declare(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -834,31 +898,113 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		DIDBackend.getInstance().declareCredential(this, owner, signKey, storepass, adapter);
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param signKey the contoller's key id to sign the declare transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void declare(DIDURL signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
 		declare(signKey, storepass, null);
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param signKey the contoller's key id to sign the declare transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void declare(String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
 		declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, adapter);
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param signKey the contoller's key id to sign the declare transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void declare(String signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
 		declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, null);
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void declare(String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
 		declare((DIDURL)null, storepass, adapter);
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void declare(String storepass)
 			throws DIDStoreException, DIDBackendException {
 		declare((DIDURL)null, storepass, null);
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public
+	 * in asynchronous mode.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param signKey the contoller's key id to sign the declare transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> declareAsync(DIDURL signKey, String storepass,
 			DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -872,10 +1018,38 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public
+	 * in asynchronous mode.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param signKey the contoller's key id to sign the declare transaction
+	 * @param storepass the password of the DID store
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> declareAsync(DIDURL signKey, String storepass) {
 		return declareAsync(signKey, storepass, null);
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public
+	 * in asynchronous mode.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param signKey the contoller's key id to sign the declare transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> declareAsync(String signKey, String storepass,
 			DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -889,19 +1063,74 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public
+	 * in asynchronous mode.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param signKey the contoller's key id to sign the declare transaction
+	 * @param storepass the password of the DID store
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> declareAsync(String signKey, String storepass) {
 		return declareAsync(signKey, storepass, null);
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public
+	 * in asynchronous mode.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> declareAsync(String storepass,
 			DIDTransactionAdapter adapter) {
 		return declareAsync((DIDURL)null, storepass, adapter);
 	}
 
+	/**
+	 * Publish this credential object to the ID chain, declare it to the public
+	 * in asynchronous mode.
+	 *
+	 * <p>
+	 * Only the owner of the credential object who can declare credential to
+	 * public.
+	 * </p>
+	 *
+	 * @param storepass the password of the DID store
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> declareAsync(String storepass) {
 		return declareAsync((DIDURL)null, storepass, null);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void revoke(DIDDocument signer, DIDURL signKey, String storepass,
 			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -962,103 +1191,457 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		DIDBackend.getInstance().revokeCredential(this, signer, signKey, storepass, adapter);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void revoke(DIDDocument signer, DIDURL signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
 		revoke(signer, signKey, storepass, null);
 	}
 
-	public void revoke(DIDDocument signer, String storepass, DIDTransactionAdapter adapter)
-			throws DIDStoreException, DIDBackendException {
-		revoke(signer, (DIDURL)null, storepass, adapter);
-	}
-
-	public void revoke(DIDDocument signer, String storepass)
-			throws DIDStoreException, DIDBackendException {
-		revoke(signer, (DIDURL)null, storepass, null);
-	}
-
-	public void revoke(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-			throws DIDStoreException, DIDBackendException {
-		revoke(null, signKey, storepass, adapter);
-	}
-
-	public void revoke(DIDURL signKey, String storepass)
-			throws DIDStoreException, DIDBackendException {
-		revoke(null, signKey, storepass, null);
-	}
-
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void revoke(DIDDocument signer, String signKey, String storepass,
 			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
 		revoke(signer, DIDURL.valueOf(getSubject().getId(), signKey), storepass, adapter);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void revoke(DIDDocument signer, String signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
 		revoke(signer, signKey, storepass, null);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public void revoke(DIDDocument signer, String storepass, DIDTransactionAdapter adapter)
+			throws DIDStoreException, DIDBackendException {
+		revoke(signer, (DIDURL)null, storepass, adapter);
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public void revoke(DIDDocument signer, String storepass)
+			throws DIDStoreException, DIDBackendException {
+		revoke(signer, (DIDURL)null, storepass, null);
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public void revoke(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
+			throws DIDStoreException, DIDBackendException {
+		revoke(null, signKey, storepass, adapter);
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public void revoke(DIDURL signKey, String storepass)
+			throws DIDStoreException, DIDBackendException {
+		revoke(null, signKey, storepass, null);
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void revoke(String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
 		revoke(null, signKey, storepass, adapter);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void revoke(String signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
 		revoke(null, signKey, storepass, null);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void revoke(String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
 		revoke(null, (DIDURL)null, storepass, adapter);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public void revoke(String storepass) throws DIDStoreException, DIDBackendException {
 		revoke(null, (DIDURL)null, storepass, null);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @return a new CompletableStage
+	 */
+	public CompletableFuture<Void> revokeAsync(DIDDocument signer,
+			DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				revoke(signer, signKey, storepass, adapter);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @return a new CompletableStage
+	 */
+	public CompletableFuture<Void> revokeAsync(DIDDocument signer,
+			DIDURL signKey, String storepass) {
+		return revokeAsync(signer, signKey, storepass, null);
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @return a new CompletableStage
+	 */
+	public CompletableFuture<Void> revokeAsync(DIDDocument signer,
+			String signKey, String storepass, DIDTransactionAdapter adapter) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				revoke(signer, signKey, storepass, adapter);
+			} catch (DIDException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @return a new CompletableStage
+	 */
+	public CompletableFuture<Void> revokeAsync(DIDDocument signer,
+			String signKey, String storepass) {
+		return revokeAsync(signer, signKey, storepass, null);
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @return a new CompletableStage
+	 */
+	public CompletableFuture<Void> revokeAsync(DIDDocument signer,
+			String storepass, DIDTransactionAdapter adapter) {
+		return revokeAsync(signer, (DIDURL)null, storepass, null);
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @return a new CompletableStage
+	 */
+	public CompletableFuture<Void> revokeAsync(DIDDocument signer,
+			String storepass) {
+		return revokeAsync(signer, (DIDURL)null, storepass, null);
+	}
+
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> revokeAsync(DIDURL signKey, String storepass,
 			DIDTransactionAdapter adapter) {
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-			try {
-				revoke(signKey, storepass, adapter);
-			} catch (DIDException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
+		return revokeAsync(null, signKey, storepass, null);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> revokeAsync(DIDURL signKey, String storepass) {
-		return revokeAsync(signKey, storepass, null);
+		return revokeAsync(null, signKey, storepass, null);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> revokeAsync(String signKey, String storepass,
 			DIDTransactionAdapter adapter) {
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-			try {
-				revoke(signKey, storepass, adapter);
-			} catch (DIDException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
+		return revokeAsync(null, signKey, storepass, null);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> revokeAsync(String signKey, String storepass) {
-		return revokeAsync(signKey, storepass, null);
+		return revokeAsync(null, signKey, storepass, null);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> revokeAsync(String storepass,
 			DIDTransactionAdapter adapter) {
-		return revokeAsync((DIDURL)null, storepass, adapter);
+		return revokeAsync(null, (DIDURL)null, storepass, adapter);
 	}
 
+	/**
+	 * Revoke this credential object and announce the revocation to the ID
+	 * chain in asynchronous mode.
+	 *
+	 * <p>
+	 * The credential owner and issuer both can revoke the credential.
+	 * </p>
+	 *
+	 * @param storepass the password of the DID store
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> revokeAsync(String storepass) {
-		return revokeAsync((DIDURL)null, storepass, null);
+		return revokeAsync(null, (DIDURL)null, storepass, null);
 	}
 
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public static void revoke(DIDURL id, DIDDocument signer, DIDURL signKey,
 			String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -1096,49 +1679,134 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		DIDBackend.getInstance().revokeCredential(id, signer, signKey, storepass, adapter);
 	}
 
-	public static void revoke(DIDURL id, DIDDocument issuer, DIDURL signKey, String storepass)
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static void revoke(DIDURL id, DIDDocument signer, DIDURL signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
-		revoke(id, issuer, signKey, storepass, null);
+		revoke(id, signer, signKey, storepass, null);
 	}
 
-	public static void revoke(String id, DIDDocument issuer, String signKey,
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static void revoke(String id, DIDDocument signer, String signKey,
 			String storepass, DIDTransactionAdapter adapter)
 					throws DIDStoreException, DIDBackendException {
-		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey),
+		revoke(DIDURL.valueOf(id), signer, DIDURL.valueOf(signer.getSubject(), signKey),
 				storepass, adapter);
 	}
 
-	public static void revoke(String id, DIDDocument issuer, String signKey, String storepass)
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static void revoke(String id, DIDDocument signer, String signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
-		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey),
+		revoke(DIDURL.valueOf(id), signer, DIDURL.valueOf(signer.getSubject(), signKey),
 				storepass, null);
 	}
 
-	public static void revoke(DIDURL id, DIDDocument issuer, String storepass,
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static void revoke(DIDURL id, DIDDocument signer, String storepass,
 			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
-		revoke(id, issuer, null, storepass, adapter);
+		revoke(id, signer, null, storepass, adapter);
 	}
 
-	public static void revoke(DIDURL id, DIDDocument issuer, String storepass)
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static void revoke(DIDURL id, DIDDocument signer, String storepass)
 			throws DIDStoreException, DIDBackendException {
-		revoke(id, issuer, null, storepass, null);
+		revoke(id, signer, null, storepass, null);
 	}
 
-	public static void revoke(String id, DIDDocument issuer, String storepass,
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static void revoke(String id, DIDDocument signer, String storepass,
 			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
-		revoke(DIDURL.valueOf(id), issuer, null, storepass, adapter);
+		revoke(DIDURL.valueOf(id), signer, null, storepass, adapter);
 	}
 
-	public static void revoke(String id, DIDDocument issuer, String storepass)
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static void revoke(String id, DIDDocument signer, String storepass)
 			throws DIDStoreException, DIDBackendException {
-		revoke(DIDURL.valueOf(id), issuer, null, storepass, null);
+		revoke(DIDURL.valueOf(id), signer, null, storepass, null);
 	}
 
-	public static CompletableFuture<Void> revokeAsync(DIDURL id, DIDDocument issuer,
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain
+	 * in asynchronous mode.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static CompletableFuture<Void> revokeAsync(DIDURL id, DIDDocument signer,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				revoke(id, issuer, signKey, storepass, adapter);
+				revoke(id, signer, signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -1147,16 +1815,40 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain
+	 * in asynchronous mode.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public static CompletableFuture<Void> revokeAsync(DIDURL id,
-			DIDDocument issuer, DIDURL signKey, String storepass) {
-		return revokeAsync(id, issuer, signKey, storepass, null);
+			DIDDocument signer, DIDURL signKey, String storepass) {
+		return revokeAsync(id, signer, signKey, storepass, null);
 	}
 
-	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument issuer,
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain
+	 * in asynchronous mode.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument signer,
 			String signKey, String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				revoke(id, issuer, signKey, storepass, adapter);
+				revoke(id, signer, signKey, storepass, adapter);
 			} catch (DIDException e) {
 				throw new CompletionException(e);
 			}
@@ -1165,31 +1857,99 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain
+	 * in asynchronous mode.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param signKey the key id to sign the revoke transaction
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public static CompletableFuture<Void> revokeAsync(String id,
-			DIDDocument issuer, String signKey, String storepass) {
-		return revokeAsync(id, issuer, signKey, storepass, null);
+			DIDDocument signer, String signKey, String storepass) {
+		return revokeAsync(id, signer, signKey, storepass, null);
 	}
 
-	public static CompletableFuture<Void> revokeAsync(DIDURL id, DIDDocument issuer,
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain
+	 * in asynchronous mode.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static CompletableFuture<Void> revokeAsync(DIDURL id, DIDDocument signer,
 			String storepass, DIDTransactionAdapter adapter) {
-		return revokeAsync(id, issuer, null, storepass, adapter);
+		return revokeAsync(id, signer, null, storepass, adapter);
 	}
 
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain
+	 * in asynchronous mode.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public static CompletableFuture<Void> revokeAsync(DIDURL id,
-			DIDDocument issuer, String storepass) {
-		return revokeAsync(id, issuer, null, storepass, null);
+			DIDDocument signer, String storepass) {
+		return revokeAsync(id, signer, null, storepass, null);
 	}
 
-	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument issuer,
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain
+	 * in asynchronous mode.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @param adapter an optional DIDTransactionAdapter object, use the
+	 * 				  DIDBackend's default implementation if null
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
+	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument signer,
 			String storepass, DIDTransactionAdapter adapter) {
-		return revokeAsync(id, issuer, null, storepass, adapter);
+		return revokeAsync(id, signer, null, storepass, adapter);
 	}
 
+	/**
+	 * Revoke a credential by id and announce the revocation to the ID chain
+	 * in asynchronous mode.
+	 *
+	 * @param id the id of the credential to be revoke
+	 * @param signer the DID document of credential owner or issuer
+	 * @param storepass the password of the DID store
+	 * @throws DIDStoreException if an error occurred when accessing the DID store
+	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 */
 	public static CompletableFuture<Void> revokeAsync(String id,
-			DIDDocument issuer, String storepass) {
-		return revokeAsync(id, issuer, null, storepass, null);
+			DIDDocument signer, String storepass) {
+		return revokeAsync(id, signer, null, storepass, null);
 	}
 
+	/**
+	 * Resolve the specific VerifiableCredential object.
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @param force if true then ignore the local cache and resolve the
+	 * 				credential from the ID chain directly; otherwise will try
+	 * 				to load the credential from the local cache, if the local
+	 * 				cache not contains this credential, then resolve it from
+	 * 				the ID chain
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	public static VerifiableCredential resolve(DIDURL id, DID issuer, boolean force)
 			throws DIDResolveException {
 		if (id == null)
@@ -1203,28 +1963,73 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return vc;
 	}
 
+	/**
+	 * Resolve the specific VerifiableCredential object.
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @param force if true then ignore the local cache and resolve the
+	 * 				credential from the ID chain directly; otherwise will try
+	 * 				to load the credential from the local cache, if the local
+	 * 				cache not contains this credential, then resolve it from
+	 * 				the ID chain
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	public static VerifiableCredential resolve(String id, String issuer, boolean force)
 			throws DIDResolveException {
 		return resolve(DIDURL.valueOf(id), DID.valueOf(issuer), force);
 	}
 
+	/**
+	 * Resolve the specific VerifiableCredential object.
+	 *
+	 * <p>
+	 * By default, this method will try to load the credential from the local
+	 * cache, if the local cache not contains this credential, then try
+	 * to resolve it from the ID chain.
+	 * </p>
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	public static VerifiableCredential resolve(DIDURL id, DID issuer)
 			throws DIDResolveException {
 		return resolve(id, issuer, false);
 	}
 
+	/**
+	 * Resolve the specific VerifiableCredential object.
+	 *
+	 * <p>
+	 * By default, this method will try to load the credential from the local
+	 * cache, if the local cache not contains this credential, then try
+	 * to resolve it from the ID chain.
+	 * </p>
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	public static VerifiableCredential resolve(String id, String issuer)
 			throws DIDResolveException {
 		return resolve(DIDURL.valueOf(id), DID.valueOf(issuer), false);
 	}
 
 	/**
-	 * Resolve VerifiableCredential object.
+	 * Resolve the specific VerifiableCredential object.
 	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 * @param id the id of the target credential
+	 * @param force if true then ignore the local cache and resolve the
+	 * 				credential from the ID chain directly; otherwise will try
+	 * 				to load the credential from the local cache, if the local
+	 * 				cache not contains this credential, then resolve it from
+	 * 				the ID chain
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public static VerifiableCredential resolve(DIDURL id, boolean force)
 			throws DIDResolveException {
@@ -1232,12 +2037,16 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Resolve VerifiableCredential object.
+	 * Resolve the specific VerifiableCredential object.
 	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed
+	 * @param id the id of the target credential
+	 * @param force if true then ignore the local cache and resolve the
+	 * 				credential from the ID chain directly; otherwise will try
+	 * 				to load the credential from the local cache, if the local
+	 * 				cache not contains this credential, then resolve it from
+	 * 				the ID chain
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public static VerifiableCredential resolve(String id, boolean force)
 			throws DIDResolveException {
@@ -1245,11 +2054,17 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Resolve VerifiableCredential object.
+	 * Resolve the specific VerifiableCredential object.
 	 *
-	 * @param id the credential id
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 * <p>
+	 * By default, this method will try to load the credential from the local
+	 * cache, if the local cache not contains this credential, then try
+	 * to resolve it from the ID chain.
+	 * </p>
+	 *
+	 * @param id the id of the target credential
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public static VerifiableCredential resolve(DIDURL id)
 			throws DIDResolveException {
@@ -1257,11 +2072,17 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Resolve VerifiableCredential object.
+	 * Resolve the specific VerifiableCredential object.
 	 *
-	 * @param id the credential id
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 * <p>
+	 * By default, this method will try to load the credential from the local
+	 * cache, if the local cache not contains this credential, then try
+	 * to resolve it from the ID chain.
+	 * </p>
+	 *
+	 * @param id the id of the target credential
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public static VerifiableCredential resolve(String id)
 			throws DIDResolveException {
@@ -1269,12 +2090,17 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Resolve VerifiableCredential object.
+	 * Resolve the specific VerifiableCredential object in asynchronous mode.
 	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @param force if true then ignore the local cache and resolve the
+	 * 				credential from the ID chain directly; otherwise will try
+	 * 				to load the credential from the local cache, if the local
+	 * 				cache not contains this credential, then resolve it from
+	 * 				the ID chain
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			VerifiableCredential object if success; null otherwise
 	 */
 	public static CompletableFuture<VerifiableCredential> resolveAsync(DIDURL id, DID issuer, boolean force) {
 		CompletableFuture<VerifiableCredential> future = CompletableFuture.supplyAsync(() -> {
@@ -1289,12 +2115,17 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Resolve VerifiableCredential object.
+	 * Resolve the specific VerifiableCredential object in asynchronous mode.
 	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @param force if true then ignore the local cache and resolve the
+	 * 				credential from the ID chain directly; otherwise will try
+	 * 				to load the credential from the local cache, if the local
+	 * 				cache not contains this credential, then resolve it from
+	 * 				the ID chain
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			VerifiableCredential object if success; null otherwise
 	 */
 	public static CompletableFuture<VerifiableCredential> resolveAsync(String id, String issuer, boolean force) {
 		CompletableFuture<VerifiableCredential> future = CompletableFuture.supplyAsync(() -> {
@@ -1308,44 +2139,116 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Resolve the specific VerifiableCredential object in asynchronous mode.
+	 *
+	 * <p>
+	 * By default, this method will try to load the credential from the local
+	 * cache, if the local cache not contains this credential, then try
+	 * to resolve it from the ID chain.
+	 * </p>
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			VerifiableCredential object if success; null otherwise
+	 */
 	public static CompletableFuture<VerifiableCredential> resolveAsync(DIDURL id, DID issuer) {
 		return resolveAsync(id, issuer, false);
 	}
 
+	/**
+	 * Resolve the specific VerifiableCredential object in asynchronous mode.
+	 *
+	 * <p>
+	 * By default, this method will try to load the credential from the local
+	 * cache, if the local cache not contains this credential, then try
+	 * to resolve it from the ID chain.
+	 * </p>
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			VerifiableCredential object if success; null otherwise
+	 */
 	public static CompletableFuture<VerifiableCredential> resolveAsync(String id, String issuer) {
 		return resolveAsync(id, issuer, false);
 	}
 
+	/**
+	 * Resolve the specific VerifiableCredential object in asynchronous mode.
+	 *
+	 * @param id the id of the target credential
+	 * @param force if true then ignore the local cache and resolve the
+	 * 				credential from the ID chain directly; otherwise will try
+	 * 				to load the credential from the local cache, if the local
+	 * 				cache not contains this credential, then resolve it from
+	 * 				the ID chain
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			VerifiableCredential object if success; null otherwise
+	 */
 	public static CompletableFuture<VerifiableCredential> resolveAsync(DIDURL id, boolean force) {
 		return resolveAsync(id, null, force);
 	}
 
+	/**
+	 * Resolve the specific VerifiableCredential object in asynchronous mode.
+	 *
+	 * @param id the id of the target credential
+	 * @param force if true then ignore the local cache and resolve the
+	 * 				credential from the ID chain directly; otherwise will try
+	 * 				to load the credential from the local cache, if the local
+	 * 				cache not contains this credential, then resolve it from
+	 * 				the ID chain
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			VerifiableCredential object if success; null otherwise
+	 */
 	public static CompletableFuture<VerifiableCredential> resolveAsync(String id, boolean force) {
 		return resolveAsync(id, null, force);
 	}
 
 	/**
-	 * Resolve VerifiableCredential object.
+	 * Resolve the specific VerifiableCredential object in asynchronous mode.
 	 *
-	 * @param id the credential id
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
+	 * <p>
+	 * By default, this method will try to load the credential from the local
+	 * cache, if the local cache not contains this credential, then try
+	 * to resolve it from the ID chain.
+	 * </p>
+	 *
+	 * @param id the id of the target credential
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			VerifiableCredential object if success; null otherwise
 	 */
 	public static CompletableFuture<VerifiableCredential> resolveAsync(DIDURL id) {
 		return resolveAsync(id, null, false);
 	}
 
 	/**
-	 * Resolve VerifiableCredential object.
+	 * Resolve the specific VerifiableCredential object in asynchronous mode.
 	 *
-	 * @param id the credential id
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
+	 * <p>
+	 * By default, this method will try to load the credential from the local
+	 * cache, if the local cache not contains this credential, then try
+	 * to resolve it from the ID chain.
+	 * </p>
+	 *
+	 * @param id the id of the target credential
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			VerifiableCredential object if success; null otherwise
 	 */
 	public static CompletableFuture<VerifiableCredential> resolveAsync(String id) {
 		return resolveAsync(id, null, false);
 	}
 
+	/**
+	 * Resolve all transaction of the specific credential.
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	public static CredentialBiography resolveBiography(DIDURL id, DID issuer)
 			throws DIDResolveException {
 		checkArgument(id != null, "Invalid credential id");
@@ -1353,6 +2256,13 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return DIDBackend.getInstance().resolveCredentialBiography(id, issuer);
 	}
 
+	/**
+	 * Resolve all transaction of the specific credential.
+	 *
+	 * @param id the id of the target credential
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	public static CredentialBiography resolveBiography(DIDURL id)
 			throws DIDResolveException {
 		checkArgument(id != null, "Invalid credential id");
@@ -1360,16 +2270,39 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return DIDBackend.getInstance().resolveCredentialBiography(id);
 	}
 
+	/**
+	 * Resolve all transaction of the specific credential.
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	public static CredentialBiography resolveBiography(String id, String issuer)
 			throws DIDResolveException {
 		return resolveBiography(DIDURL.valueOf(id), DID.valueOf(issuer));
 	}
 
+	/**
+	 * Resolve all transaction of the specific credential.
+	 *
+	 * @param id the id of the target credential
+	 * @return the resolved VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	public static CredentialBiography resolveBiography(String id)
 			throws DIDResolveException {
 		return resolveBiography(id, null);
 	}
 
+	/**
+	 * Resolve all transaction of the specific credential in asynchronous mode.
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			CredentialBiography object if success; null otherwise
+	 */
 	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(DIDURL id, DID issuer) {
 		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -1382,6 +2315,13 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Resolve all transaction of the specific credential in asynchronous mode.
+	 *
+	 * @param id the id of the target credential
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			CredentialBiography object if success; null otherwise
+	 */
 	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(DIDURL id) {
 		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -1394,6 +2334,14 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Resolve all transaction of the specific credential in asynchronous mode.
+	 *
+	 * @param id the id of the target credential
+	 * @param issuer optional, the issuer's did
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			CredentialBiography object if success; null otherwise
+	 */
 	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(String id, String issuer) {
 		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -1406,6 +2354,13 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * Resolve all transaction of the specific credential in asynchronous mode.
+	 *
+	 * @param id the id of the target credential
+	 * @return a new CompletableStage, the result is the resolved
+	 * 			CredentialBiography object if success; null otherwise
+	 */
 	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(String id) {
 		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -1418,6 +2373,17 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * List the published credentials that owned by the specific DID.
+	 *
+	 * @param id the id of the target credential
+	 * @param skip set to skip N credentials ahead in this request
+	 * 		  (useful for pagination).
+	 * @param limit set the limit of credentials returned in the request
+	 * 		  (useful for pagination).
+	 * @return an array of DIDURL denoting the credentials
+	 * @exception DIDResolveException if an error occurred when resolving the list
+	 */
 	public static List<DIDURL> list(DID did, int skip, int limit)
 			throws DIDResolveException {
 		checkArgument(did != null, "Invalid did");
@@ -1425,6 +2391,15 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return DIDBackend.getInstance().listCredentials(did, skip, limit);
 	}
 
+	/**
+	 * List the published credentials that owned by the specific DID.
+	 *
+	 * @param id the id of the target credential
+	 * @param limit set the limit of credentials returned in the request
+	 * 		  (useful for pagination).
+	 * @return an array of DIDURL denoting the credentials
+	 * @exception DIDResolveException if an error occurred when resolving the list
+	 */
 	public static List<DIDURL> list(DID did, int limit)
 			throws DIDResolveException {
 		checkArgument(did != null, "Invalid did");
@@ -1432,6 +2407,13 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return DIDBackend.getInstance().listCredentials(did, 0, limit);
 	}
 
+	/**
+	 * List the published credentials that owned by the specific DID.
+	 *
+	 * @param id the id of the target credential
+	 * @return an array of DIDURL denoting the credentials
+	 * @exception DIDResolveException if an error occurred when resolving the list
+	 */
 	public static List<DIDURL> list(DID did)
 			throws DIDResolveException {
 		checkArgument(did != null, "Invalid did");
@@ -1439,6 +2421,18 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return DIDBackend.getInstance().listCredentials(did, 0, 0);
 	}
 
+	/**
+	 * List the published credentials that owned by the specific DID in
+	 * asynchronous mode.
+	 *
+	 * @param id the id of the target credential
+	 * @param skip set to skip N credentials ahead in this request
+	 * 		  (useful for pagination).
+	 * @param limit set the limit of credentials returned in the request
+	 * 		  (useful for pagination).
+	 * @return a new CompletableStage, the result is an array of DIDURL
+	 * 		   denoting the credentials
+	 */
 	public static CompletableFuture<List<DIDURL>> listAsync(DID did, int skip, int limit) {
 		CompletableFuture<List<DIDURL>> future = CompletableFuture.supplyAsync(() -> {
 			try {
@@ -1451,21 +2445,40 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	}
 
+	/**
+	 * List the published credentials that owned by the specific DID in
+	 * asynchronous mode.
+	 *
+	 * @param id the id of the target credential
+	 * @param limit set the limit of credentials returned in the request
+	 * 		  (useful for pagination).
+	 * @return a new CompletableStage, the result is an array of DIDURL
+	 * 		   denoting the credentials
+	 */
 	public static CompletableFuture<List<DIDURL>> listAsync(DID did, int limit) {
 		return listAsync(did, 0, limit);
 	}
 
+	/**
+	 * List the published credentials that owned by the specific DID in
+	 * asynchronous mode.
+	 *
+	 * @param id the id of the target credential
+	 * @return a new CompletableStage, the result is an array of DIDURL
+	 * 		   denoting the credentials
+	 */
 	public static CompletableFuture<List<DIDURL>> listAsync(DID did) {
 		return listAsync(did, 0, 0);
 	}
 
 	/**
-	 * Parse a VerifiableCredential object from from a string JSON
+	 * Parse the VerifiableCredential object from a string JSON
 	 * representation.
 	 *
-	 * @param content the string JSON content for building the object
+	 * @param content the string JSON content to deserialize the VerifiableCredential object
 	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedCredentialException if a parse error occurs
+	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiableCredential parse(String content)
 			throws MalformedCredentialException {
@@ -1480,11 +2493,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Parse a VerifiableCredential object from from a Reader object.
+	 * Parse the VerifiableCredential object from a Reader object.
 	 *
-	 * @param src Reader object used to read JSON content for building the object
+	 * @param src the Reader object to deserialize the VerifiableCredential object
 	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedCredentialException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiableCredential parse(Reader src)
@@ -1500,11 +2513,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Parse a VerifiableCredential object from from a InputStream object.
+	 * Parse the VerifiableCredential object from an input stream object.
 	 *
-	 * @param src InputStream object used to read JSON content for building the object
+	 * @param src the InputStream object to deserialize the VerifiableCredential object
 	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedCredentialException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiableCredential parse(InputStream src)
@@ -1520,11 +2533,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Parse a VerifiableCredential object from from a File object.
+	 * Parse the VerifiableCredential object from a File object.
 	 *
-	 * @param src File object used to read JSON content for building the object
+	 * @param src the File object to deserialize the VerifiableCredential object
 	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedCredentialException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiableCredential parse(File src)
@@ -1540,12 +2553,12 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Parse a VerifiableCredential object from from a string JSON
+	 * Parse the VerifiableCredential object from a string JSON
 	 * representation.
 	 *
-	 * @param content the string JSON content for building the object
+	 * @param content the string representation of he credential object
 	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedCredentialException if a parse error occurs
 	 * @deprecated use {@link #parse(String)} instead
 	 */
 	@Deprecated
@@ -1555,11 +2568,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Parse a VerifiableCredential object from from a Reader object.
+	 * Parse the VerifiableCredential object from a reader object.
 	 *
-	 * @param src Reader object used to read JSON content for building the object
+	 * @param src the Reader object to deserialize the credential object
 	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedCredentialException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(Reader)} instead
 	 */
@@ -1570,11 +2583,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Parse a VerifiableCredential object from from a InputStream object.
+	 * Parse the VerifiableCredential object from an input stream object.
 	 *
-	 * @param src InputStream object used to read JSON content for building the object
+	 * @param src the InputStream object to deserialize the credential object
 	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedCredentialException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(InputStream)} instead
 	 */
@@ -1585,11 +2598,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Parse a VerifiableCredential object from from a File object.
+	 * Parse the VerifiableCredential object from a File object.
 	 *
-	 * @param src File object used to read JSON content for building the object
+	 * @param src the File object to deserialize the credential object
 	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedCredentialException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(File)} instead
 	 */
@@ -1600,21 +2613,23 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * The builder object defines the APIs to create the Credential.
+	 * The Builder object is a helper class to create a credential object.
 	 *
-	 * The credential object is sealed object. After set the contents for new
+	 * The credential object is immutable object. After set the contents for new
 	 * credential, should call seal {@link Builder#seal(String)} method to
 	 * create the final credential object.
 	 */
 	public static class Builder {
 		private Issuer issuer;
 		private DID target;
+
 		private VerifiableCredential credential;
 
 		/**
-		 * Create a credential builder for DID.
+		 * Create a credential builder.
 		 *
-		 * @param target the owner of Credential
+		 * @param issuer the credential issuer object
+		 * @param target who the new credential issue to
 		 */
 		protected Builder(Issuer issuer, DID target) {
 			this.issuer = issuer;
@@ -1631,10 +2646,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		/**
-		 * Set Credential id.
+		 * Set the credential id.
 		 *
-		 * @param id the Credential id
-		 * @return the Builder object
+		 * @param id the credential id
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder id(DIDURL id) {
 			checkNotSealed();
@@ -1649,10 +2664,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		/**
-		 * Set Credential id.
+		 * Set the credential id.
 		 *
-		 * @param id the Credential id
-		 * @return the Builder object
+		 * @param id the credential id
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder id(String id) {
 			return id(DIDURL.valueOf(target, id));
@@ -1690,10 +2705,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		/**
-		 * Set expires time for Credential.
+		 * Set expire time for the credential.
 		 *
 		 * @param expirationDate the expires time
-		 * @return the Builder object
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder expirationDate(Date expirationDate) {
 			checkNotSealed();
@@ -1712,10 +2727,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		/**
-		 * Set Credential's subject.
+		 * Set the claim properties to the credential subject from a map object.
 		 *
-		 * @param properties the subject content
-		 * @return the Builder object
+		 * @param json a map object include the claims
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder properties(Map<String, Object> properties) {
 			checkNotSealed();
@@ -1731,10 +2746,10 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		/**
-		 * Set Credential's subject.
+		 * Set the claim properties to the credential subject from JSON data.
 		 *
-		 * @param json the subject subject with json format
-		 * @return the Builder object
+		 * @param json the JSON string include the claims
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder properties(String json) {
 			checkNotSealed();
@@ -1752,11 +2767,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		/**
-		 * Set Credential's subject.
+		 * Add new claim property to the credential subject.
 		 *
 		 * @param name the property name
 		 * @param value the property value
-		 * @return the Builder object
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder propertie(String name, Object value) {
 			checkNotSealed();
@@ -1787,9 +2802,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 * credential.
 		 *
 		 * @param storepass the password for DIDStore
-		 * @return the Credential object
+		 * @return the sealed credential object
 		 * @throws MalformedCredentialException if the Credential is malformed
-		 * @throws DIDStoreException if an error occurs when access DID store
+		 * @throws DIDStoreException if an error occurs when accessing the DID store
 		 */
 		public VerifiableCredential seal(String storepass)
 				throws MalformedCredentialException, DIDStoreException {

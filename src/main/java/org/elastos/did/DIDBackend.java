@@ -61,12 +61,21 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 /**
- * The class is to provide the backend for resolving DID.
+ * The class is an abstraction for the ID chain.
  */
 public class DIDBackend {
-	private static final int DEFAULT_CACHE_INITIAL_CAPACITY = 16;
-	private static final int DEFAULT_CACHE_MAX_CAPACITY = 64;
-	private static final int DEFAULT_CACHE_TTL = 10 * 60 * 1000;
+	/**
+	 * The default initial capacity for the resolve cache.
+	 */
+	public static final int DEFAULT_CACHE_INITIAL_CAPACITY = 16;
+	/**
+	 * The default maximum capacity for the resolve cache.
+	 */
+	public static final int DEFAULT_CACHE_MAX_CAPACITY = 64;
+	/**
+	 * The default cache TTL.
+	 */
+	public static final int DEFAULT_CACHE_TTL = 10 * 60 * 1000;
 
 	private static Random random = new Random();
 
@@ -80,26 +89,28 @@ public class DIDBackend {
 	private static DIDBackend instance;
 
 	/**
-	 * The interface to indicate how to get local did document, if this did is not published to chain.
+	 * The interface is used to provide local resolve capability to the DID SDK.
 	 */
+	@FunctionalInterface
 	public interface LocalResolveHandle {
 		/**
-		 * Resolve DID content(DIDDocument).
+		 * Resolve the DIDDocument for the specific DID.
 		 *
-		 * @param did the DID object
-		 * @return DIDDocument object
+		 * @param did the DID to be resolve
+		 * @return the DIDDocument object
 		 */
 		public DIDDocument resolve(DID did);
 	}
 
 	/**
-	 * Create a DIDBackend with the adapter and the cache specification.
-     *
-     * @param adapter the DIDAdapter object
-     * @param initialCacheCapacity the initial cache size, 0 for default size
-     * @param maxCacheCapacity the maximum cache capacity, 0 for default capacity
-     * @param int cacheTtl the live time for the cached entries, 0 for default
-     */
+	 * Construct a DIDBackend instance with the adapter and the cache
+	 * specification.
+	 *
+	 * @param adapter a DIDAdapter implementation
+	 * @param initialCacheCapacity the initial cache size
+	 * @param maxCacheCapacity the maximum cache capacity
+	 * @param cacheTtl the live time for the cached entries
+	 */
 	private DIDBackend(DIDAdapter adapter, int initialCacheCapacity,
 			int maxCacheCapacity, int cacheTtl) {
 		if (initialCacheCapacity < 0)
@@ -157,14 +168,15 @@ public class DIDBackend {
 	}
 	*/
 
-    /**
-	 * Initialize the DIDBackend with the adapter and the cache specification.
-     *
-     * @param adapter the DIDAdapter object
-     * @param initialCacheCapacity the initial cache size, 0 for default size
-     * @param maxCacheCapacity the maximum cache capacity, 0 for default capacity
-     * @param int cacheTtl the live time for the cached entries, 0 for default
-     */
+	/**
+	 * Initialize the DIDBackend with the given adapter and the cache
+	 * specification.
+	 *
+	 * @param adapter a DIDAdapter implementation
+	 * @param initialCacheCapacity the initial cache size
+	 * @param maxCacheCapacity the maximum cache capacity
+	 * @param cacheTtl the live time for the cached entries
+	 */
 	public static synchronized void initialize(DIDAdapter adapter,
 			int initialCacheCapacity, int maxCacheCapacity, int cacheTtl) {
 		checkArgument(adapter != null, "Invalid adapter");
@@ -177,40 +189,43 @@ public class DIDBackend {
 				maxCacheCapacity, cacheTtl);
 	}
 
-    /**
-	 * Initialize the DIDBackend with the adapter and the cache specification.
-     *
-     * @param adapter the DIDAdapter object
-     * @param maxCacheCapacity the maximum cache capacity, 0 for default capacity
-     * @param int cacheTtl the live time for the cached entries, 0 for default
-     */
+	/**
+	 * Initialize the DIDBackend with the given adapter and the cache
+	 * specification.
+	 *
+	 * @param adapter a DIDAdapter implementation
+	 * @param maxCacheCapacity the maximum cache capacity
+	 * @param cacheTtl the live time for the cached entries
+	 */
 	public static void initialize(DIDAdapter adapter, int maxCacheCapacity, int cacheTtl) {
 		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY, maxCacheCapacity, cacheTtl);
 	}
 
-    /**
-	 * Initialize the DIDBackend with the adapter and the cache specification.
-     *
-     * @param adapter the DIDAdapter object
-     * @param int cacheTtl the live time for the cached entries, 0 for default
-     */
+	/**
+	 * Initialize the DIDBackend with the given adapter and the cache
+	 * specification.
+	 *
+	 * @param adapter a DIDAdapter implementation
+	 * @param cacheTtl the live time for the cached entries
+	 */
 	public static void initialize(DIDAdapter adapter, int cacheTtl) {
 		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY,
 				DEFAULT_CACHE_MAX_CAPACITY, cacheTtl);
 	}
 
-    /**
-	 * Initialize the DIDBackend with the adapter.
-     *
-     * @param adapter the DIDAdapter object
-     */
+	/**
+	 * Initialize the DIDBackend with the given adapter and the default cache
+	 * specification.
+	 *
+	 * @param adapter a DIDAdapter implementation
+	 */
 	public static void initialize(DIDAdapter adapter) {
 		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY,
 				DEFAULT_CACHE_MAX_CAPACITY, DEFAULT_CACHE_TTL);
 	}
 
 	/**
-	 * Get DIDBackend instance according to specified DIDAdapter object.
+	 * Get the previous initialized DIDBackend instance.
 	 *
 	 * @return the DIDBackend instance
 	 */
@@ -220,24 +235,23 @@ public class DIDBackend {
 
 	private String generateRequestId() {
 		byte[] bin = new byte[16];
-	    random.nextBytes(bin);
-	    return Hex.toHexString(bin);
+		random.nextBytes(bin);
+		return Hex.toHexString(bin);
 	}
 
-	/**
-	 * Get DIDAdapter object.
-	 *
-	 * @return the DIDAdapter object from DIDBackend.
-	 */
 	private DIDAdapter getAdapter() {
 		return adapter;
 	}
 
 	/**
-     * Set DID Local Resolve handle in order to give the method handle which did document to verify.
-     * If handle != NULL, set DID Local Resolve Handle; If handle == NULL, clear this handle.
-     *
-	 * @param handle the ResolveHandle object
+	 * Set a local resolve handle for DID local resolving.
+	 *
+	 * <p>
+	 * The DIDBackend instance will remove the previous installed handle if
+	 * the handle is NULL, replace the previous handle otherwise.
+	 * </p>
+	 *
+	 * @param handle a ResolveHandle instance
 	 */
 	public void setResolveHandle(LocalResolveHandle handle) {
 		resolveHandle = handle;
@@ -306,13 +320,13 @@ public class DIDBackend {
 		}
 	}
 
-    /**
-     * Resolve all DID transactions.
-     *
-     * @param did the specified DID object
-     * @return the DIDBiography object
-     * @throws DIDResolveException throw this exception if resolving did transcations failed.
-     */
+	/**
+	 * Resolve all transactions for a specific DID.
+	 *
+	 * @param did the DID object to be resolve
+	 * @return the DIDBiography object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	protected DIDBiography resolveDidBiography(DID did) throws DIDResolveException {
 		DIDBiography rr = resolveDidBiography(did, true, false);
 		if (rr.getStatus() == DIDBiography.Status.NOT_FOUND)
@@ -322,13 +336,13 @@ public class DIDBackend {
 	}
 
 	/**
-	 * Resolve DID content(DIDDocument).
+	 * Resolve the specific DID.
 	 *
-	 * @param did the DID object
-	 * @param force force = true, DID content must be from chain.
-	 *              force = false, DID content could be from chain or local cache.
+	 * @param did the DID object to be resolve
+	 * @param force ignore the local cache and resolve from the ID chain if true;
+	 * 		  		try to use cache first if false.
 	 * @return the DIDDocument object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	protected DIDDocument resolveDid(DID did, boolean force)
 			throws DIDResolveException {
@@ -398,11 +412,11 @@ public class DIDBackend {
 	}
 
 	/**
-	 * Resolve DID content(DIDDocument).
+	 * Resolve the specific DID.
 	 *
-	 * @param did the DID object
+	 * @param did the DID object to be resolve
 	 * @return the DIDDocument object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	protected DIDDocument resolveDid(DID did) throws DIDResolveException {
 		return resolveDid(did, false);
@@ -425,16 +439,64 @@ public class DIDBackend {
 		}
 	}
 
+	/**
+	 * Resolve the all the credential transactions.
+	 *
+	 * <p>
+	 * If the credential already declared on the ID chain, this method will
+	 * return all credential transactions include the revoke transaction.
+	 * The issuer parameter will be ignored in this case.
+	 * </p>
+	 *
+	 * <p>
+	 * If the credential not declared on the ID chain, this method will
+	 * return the revoke transactions from the credential owner if it exists;
+	 * If an issuer DID is given, this method also will return the revoke
+	 * transactions from the given issuer if it exists
+	 * </p>
+	 *
+	 * @param id the credential id
+	 * @param issuer an optional issuer'd DID
+	 * @return a CredentialBiography object
+	 * @throws DIDResolveException if an error occurred when resolving the credential
+	 */
 	protected CredentialBiography resolveCredentialBiography(DIDURL id, DID issuer)
 			throws DIDResolveException {
 		return resolveCredentialBiography(id, issuer, false);
 	}
 
+	/**
+	 * Resolve the all the credential transactions.
+	 *
+	 * <p>
+	 * If the credential already declared on the ID chain, this method will
+	 * return all credential transactions include the revoke transaction.
+	 * </p>
+	 *
+	 * <p>
+	 * If the credential not declared on the ID chain, this method will
+	 * return the revoke transactions from the credential owner if it exists.
+	 * </p>
+	 *
+	 * @param id the credential id
+	 * @return a CredentialBiography object
+	 * @throws DIDResolveException if an error occurred when resolving the credential
+	 */
 	protected CredentialBiography resolveCredentialBiography(DIDURL id)
 			throws DIDResolveException {
 		return resolveCredentialBiography(id, null, false);
 	}
 
+	/**
+	 * Resolve the specific credential.
+	 *
+	 * @param id the credential id
+	 * @param issuer an optional issuer'd DID
+	 * @param force ignore the local cache and resolve from the ID chain if true;
+	 * 		  		try to use cache first if false.
+	 * @return the VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving the credential
+	 */
 	protected VerifiableCredential resolveCredential(DIDURL id, DID issuer, boolean force)
 			throws DIDResolveException {
 		log.debug("Resolving credential {}...", id);
@@ -454,7 +516,6 @@ public class DIDBackend {
 
 			if (bio.size() < 1 || bio.size() > 2)
 				throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
-
 
 			if (bio.size() == 1) {
 				if (!tx.getRequest().isValid())
@@ -500,21 +561,57 @@ public class DIDBackend {
 		return vc;
 	}
 
+	/**
+	 * Resolve the specific credential.
+	 *
+	 * @param id the credential id
+	 * @param issuer an optional issuer'd DID
+	 * @return the VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving the credential
+	 */
 	protected VerifiableCredential resolveCredential(DIDURL id, DID issuer)
 			throws DIDResolveException {
 		return resolveCredential(id, issuer, false);
 	}
 
+	/**
+	 * Resolve the specific credential.
+	 *
+	 * @param id the credential id
+	 * @param force ignore the local cache and resolve from the ID chain if true;
+	 * 		  		try to use cache first if false.
+	 * @return the VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving the credential
+	 */
 	protected VerifiableCredential resolveCredential(DIDURL id, boolean force)
 			throws DIDResolveException {
 		return resolveCredential(id, null, force);
 	}
 
+	/**
+	 * Resolve the specific credential.
+	 *
+	 * @param id the credential id
+	 * @return the VerifiableCredential object
+	 * @throws DIDResolveException if an error occurred when resolving the credential
+	 */
 	protected VerifiableCredential resolveCredential(DIDURL id)
 			throws DIDResolveException {
 		return resolveCredential(id, null, false);
 	}
 
+	/**
+	 * List the declared credentials that owned by the specific DID from
+	 * the ID chain.
+	 *
+	 * @param did the target DID
+	 * @param skip set to skip N credentials ahead in this request
+	 * 		  (useful for pagination).
+	 * @param limit set the limit of credentials returned in the request
+	 * 		  (useful for pagination).
+	 * @return an array of DIDURL denoting the credentials
+	 * @throws DIDResolveException
+	 */
 	protected List<DIDURL> listCredentials(DID did, int skip, int limit)
 			throws DIDResolveException {
 		log.info("List credentials for {}", did);
@@ -564,18 +661,22 @@ public class DIDBackend {
 		}
 	}
 
+	/**
+	 * Clear all data that cached by this DIDBackend instance.
+	 */
 	public void clearCache() {
 		cache.invalidateAll();
 	}
 
 	/**
-	 * Publish 'create' id transaction for the new did.
+	 * Publish a new DID creation transaction to the ID chain.
 	 *
-	 * @param doc the DIDDocument object
-	 * @param signKey the key to sign
+	 * @param doc the DIDDocument object to be publish
+	 * @param signKey the key to sign the transaction
 	 * @param storepass the password for DIDStore
-	 * @throws DIDTransactionException publishing did failed because of did transaction error.
-	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
+	 * @param adapter a DIDTransactionAdapter instance or null for default
+	 * @throws DIDTransactionException if an error when publish the transaction
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected void createDid(DIDDocument doc, DIDURL signKey,
 			String storepass, DIDTransactionAdapter adapter)
@@ -586,14 +687,15 @@ public class DIDBackend {
 	}
 
 	/**
-	 * Publish 'Update' id transaction for the existed did.
+	 * Publish a DID update transaction to the ID chain.
 	 *
-	 * @param doc the DIDDocument object
+	 * @param doc the DIDDocument object to be update
 	 * @param previousTxid the previous transaction id string
-	 * @param signKey the key to sign
+	 * @param signKey the key to sign the transaction
 	 * @param storepass the password for DIDStore
-	 * @throws DIDTransactionException publishing did failed because of did transaction error.
-	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
+	 * @param adapter a DIDTransactionAdapter instance or null for default
+	 * @throws DIDTransactionException if an error when publish the transaction
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected void updateDid(DIDDocument doc, String previousTxid,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
@@ -603,6 +705,17 @@ public class DIDBackend {
 		invalidDidCache(doc.getSubject());
 	}
 
+	/**
+	 * Publish a customized DID transfer transaction to the ID chain.
+	 *
+	 * @param doc the new DIDDocument object after transfer
+	 * @param ticket the valid TransferTicket object
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for DIDStore
+	 * @param adapter a DIDTransactionAdapter instance or null for default
+	 * @throws DIDTransactionException if an error when publish the transaction
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void transferDid(DIDDocument doc, TransferTicket ticket,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDTransactionException {
@@ -611,15 +724,16 @@ public class DIDBackend {
 		invalidDidCache(doc.getSubject());
 	}
 
-    /**
-     * Publish id transaction to deactivate the existed did.
-     *
-     * @param doc the DIDDocument object
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @throws DIDTransactionException publishing did failed because of did transaction error.
-     * @throws DIDStoreException did document does not attach store or there is no sign key to get.
-     */
+	/**
+	 * Publish a DID deactivate transaction to the ID chain.
+	 *
+	 * @param doc the DIDDocument object to be deactivate
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for DIDStore
+	 * @param adapter a DIDTransactionAdapter instance or null for default
+	 * @throws DIDTransactionException if an error when publish the transaction
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void deactivateDid(DIDDocument doc, DIDURL signKey,
 			String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException {
@@ -629,15 +743,16 @@ public class DIDBackend {
 	}
 
 	/**
-     * Publish id transaction to deactivate the existed did.
+	 * Publish a DID deactivate transaction to the ID chain.
 	 *
-	 * @param target the DID to be deactivated
-	 * @param targetSignKey the key to sign of specified DID
-	 * @param signer the signer's DIDDocument object
-	 * @param signKey the key to sign
+	 * @param target the target DIDDocument object to be deactivate
+	 * @param targetSignKey the authorization key of the target DIDDocument
+	 * @param signer the authorized DID document by the target DID
+	 * @param signKey the key to sign the transaction
 	 * @param storepass the password for DIDStore
-     * @throws DIDTransactionException publishing did failed because of did transaction error.
-     * @throws DIDStoreException did document does not attach store or there is no sign key to get.
+	 * @param adapter a DIDTransactionAdapter instance or null for default
+	 * @throws DIDTransactionException if an error when publish the transaction
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected void deactivateDid(DIDDocument target, DIDURL targetSignKey,
 			DIDDocument signer, DIDURL signKey, String storepass,
@@ -649,6 +764,17 @@ public class DIDBackend {
 		invalidDidCache(target.getSubject());
 	}
 
+	/**
+	 * Publish a credential declare transaction to the ID chain.
+	 *
+	 * @param vc a VerifiableCredential object to be declared
+	 * @param signer the credential controller's DIDDocument
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for DIDStore
+	 * @param adapter a DIDTransactionAdapter instance or null for default
+	 * @throws DIDTransactionException if an error when publish the transaction
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void declareCredential(VerifiableCredential vc, DIDDocument signer,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException {
@@ -659,6 +785,17 @@ public class DIDBackend {
 		invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
+	/**
+	 * Publish a credential revoke transaction to the ID chain.
+	 *
+	 * @param vc a VerifiableCredential object to be revoke
+	 * @param signer the credential controller or issuer's DIDDocument
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for DIDStore
+	 * @param adapter a DIDTransactionAdapter instance or null for default
+	 * @throws DIDTransactionException if an error when publish the transaction
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void revokeCredential(VerifiableCredential vc, DIDDocument signer,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException {
@@ -669,6 +806,17 @@ public class DIDBackend {
 		invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
+	/**
+	 * Publish a credential revoke transaction to the ID chain.
+	 *
+	 * @param vc a VerifiableCredential id to be revoke
+	 * @param signer the credential controller or issuer's DIDDocument
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for DIDStore
+	 * @param adapter a DIDTransactionAdapter instance or null for default
+	 * @throws DIDTransactionException if an error when publish the transaction
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void revokeCredential(DIDURL vc, DIDDocument signer,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDTransactionException, DIDStoreException {

@@ -33,6 +33,7 @@ import org.elastos.did.exception.DIDTransactionException;
  * will call this interface to publish the transaction.
  * </p>
  */
+@FunctionalInterface
 public interface DIDTransactionAdapter {
 	/**
 	 * Create and publish a ID chain transaction with the given

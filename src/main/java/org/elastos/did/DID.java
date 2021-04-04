@@ -198,9 +198,11 @@ public class DID implements Comparable<DID> {
 	/**
 	 * Resolve the DID document.
 	 *
+	 * <p>
 	 * By default, this method will try to load the document from the local
 	 * cache, if the local cache not contains this DID, then try to resolve
-	 * it from the ID chain
+	 * it from the ID chain.
+	 * </p>
 	 *
 	 * @return the DIDDocument object
 	 * @throws DIDResolveException if an error occurred when resolving DID

@@ -30,20 +30,23 @@ import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 
 /**
- * A issuer is the DID to issue Credential. Issuer includes issuer's did and
- * issuer's sign key.
+ * This class represents a VerifiableCredential issuer.
+ *
+ * <p>
+ * This class can be instantiated by a DID, and use to issue credentials for
+ * 3rd parties.
+ * </p>
  */
 public class Issuer {
 	private DIDDocument self;
 	private DIDURL signKey;
 
 	/**
-	 * Constructs Issuer object with the given value.
+	 * Create an issuer instance by the specific DID and sign key id.
 	 *
-	 * @param doc the Issuer's document
-	 * @param signKey the specified issuer's key to sign
-	 * @throws DIDStoreException there is no store to attatch
-	 * @throws InvalidKeyException the sign key is not an authenication key.
+	 * @param doc the Issuer's DID document
+	 * @param signKey the specified key to sign the credentials
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public Issuer(DIDDocument doc, DIDURL signKey) throws DIDStoreException {
 		checkArgument(doc != null, "Invalid document");
@@ -52,36 +55,33 @@ public class Issuer {
 	}
 
 	/**
-	 * Constructs Issuer object with the given value.
+	 * Create an issuer instance by the specific DID and sign key id.
 	 *
-	 * @param doc the Issuer's document
-	 * @param signKey the specified issuer's key to sign
-	 * @throws DIDStoreException there is no store to attatch
-	 * @throws InvalidKeyException the sign key is not an authenication key.
+	 * @param doc the Issuer's DID document
+	 * @param signKey the specified key to sign the credentials
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public Issuer(DIDDocument doc, String signKey) throws DIDStoreException {
 		this(doc, DIDURL.valueOf(doc.getSubject(), signKey));
 	}
 
 	/**
-	 * Constructs Issuer object with the given value.
+	 * Create an issuer instance by the specific DID and default key.
 	 *
-	 * @param doc the Issuer's document
-	 * @throws DIDStoreException there is no store to attach
-	 * @throws InvalidKeyException the sign key is not an authentication key
+	 * @param doc the Issuer's DID document
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public Issuer(DIDDocument doc) throws DIDStoreException {
 		this(doc, (DIDURL)null);
 	}
 
 	/**
-	 * Constructs Issuer object with the given value.
+	 * Create an issuer instance by the specific DID and sign key id.
 	 *
-	 * @param did the Issuer's DID
-	 * @param signKey the specified issuer's key to sign
-	 * @param store the DIDStore object
-	 * @throws DIDStoreException there is no store to attach
-	 * @throws InvalidKeyException the sign key is not an authentication key
+	 * @param did the Issuer's DID object
+	 * @param signKey the specified key to sign the credentials
+	 * @param store where to load the issuer's document and keys
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public Issuer(DID did, DIDURL signKey, DIDStore store) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
@@ -95,13 +95,12 @@ public class Issuer {
 	}
 
 	/**
-	 * Constructs Issuer object with the given value.
+	 * Create an issuer instance by the specific DID and sign key id.
 	 *
 	 * @param did the Issuer's DID
-	 * @param signKey the specified issuer's key to sign
-	 * @param store the DIDStore object
-	 * @throws DIDStoreException there is no store to attach
-	 * @throws InvalidKeyException the sign key is not an authentication key
+	 * @param signKey the specified key to sign the credentials
+	 * @param store where to load the issuer's document and keys
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public Issuer(String did, String signKey, DIDStore store)
 			throws DIDStoreException {
@@ -109,24 +108,22 @@ public class Issuer {
 	}
 
 	/**
-	 * Constructs Issuer object with the given value.
+	 * Create an issuer instance by the specific DID and the default key.
 	 *
-	 * @param did the Issuer's DID
-	 * @param store the DIDStore object
-	 * @throws DIDStoreException there is no store to attach
-	 * @throws InvalidKeyException the sign key is not an authentication key
+	 * @param did the Issuer's DID object
+	 * @param store from where to load the issuer's document and keys
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public Issuer(DID did, DIDStore store) throws DIDStoreException {
 		this(did, null, store);
 	}
 
 	/**
-	 * Constructs Issuer object with the given value.
+	 * Create an issuer instance by the specific DID and the default key.
 	 *
 	 * @param did the Issuer's DID
-	 * @param store the DIDStore object
-	 * @throws DIDStoreException there is no store to attach
-	 * @throws InvalidKeyException the sign key is not an authentication key
+	 * @param store from where to load the issuer's document and keys
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public Issuer(String did, DIDStore store) throws DIDStoreException {
 		this(DID.valueOf(did), null, store);
@@ -151,7 +148,7 @@ public class Issuer {
 	}
 
 	/**
-	 * Get Issuer's DID.
+	 * Get the issuer's DID.
 	 *
 	 * @return the DID object
 	 */
@@ -160,32 +157,32 @@ public class Issuer {
 	}
 
 	/**
-	 * Get issuer's DIDDocument.
+	 * Get the issuer's DID document object.
 	 *
-	 * @return the DIDDocument object.
+	 * @return the DIDDocument object
 	 */
 	protected DIDDocument getDocument() {
 		return self;
 	}
 
 	/**
-	 * Get Issuer's sign key.
+	 * Get the key id that use to sign the credentials.
 	 *
-	 * @return the sign key
+	 * @return the id of the sign key
 	 */
 	public DIDURL getSignKey() {
 		return signKey;
 	}
 
-	protected String sign(String storepass, byte[] data) throws DIDStoreException {
+	String sign(String storepass, byte[] data) throws DIDStoreException {
 		return self.sign(signKey, storepass, data);
 	}
 
 	/**
-	 * Issue Credential to the specified DID.
+	 * Issue a credential to the given DID.
 	 *
-	 * @param did the owner of Credential
-	 * @return the VerifiableCredential builder to issuer Credential
+	 * @param did the owner of credential
+	 * @return a VerifiableCredential.Builder object to issue the credential
 	 */
 	public Builder issueFor(DID did) {
 		checkArgument(did != null, "Invalid did");
@@ -194,10 +191,10 @@ public class Issuer {
 	}
 
 	/**
-	 * Issue Credential to the specified DID.
+	 * Issue a credential to the given DID.
 	 *
-	 * @param did the owner of Credential
-	 * @return the VerifiableCredential builder to issuer Credential
+	 * @param did the owner of credential
+	 * @return a VerifiableCredential.Builder object to issue the credential
 	 */
 	public Builder issueFor(String did) {
 		return issueFor(DID.valueOf(did));

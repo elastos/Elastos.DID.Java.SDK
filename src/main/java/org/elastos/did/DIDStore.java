@@ -74,10 +74,22 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 /**
- * DIDStore is local store for all DIDs.
+ * This class represents a storage facility for DID objects and private keys.
+ *
+ * The DIDStore manages different types of entries:
+ * - RootIdentity
+ * - DIDDocument
+ * - VerifiableCredential
+ * - PrivateKey
  */
 public final class DIDStore {
+	/**
+	 * The type string for DIDStore.
+	 */
 	protected static final String DID_STORE_TYPE = "did:elastos:store";
+	/**
+	 * Current DIDStore version.
+	 */
 	protected static final int DID_STORE_VERSION = 3;
 
 	private static final int CACHE_INITIAL_CAPACITY = 16;
@@ -92,6 +104,9 @@ public final class DIDStore {
 	private DIDStorage storage;
 	private Metadata metadata;
 
+	/**
+	 * the default conflict handle implementation.
+	 */
 	protected static final ConflictHandle defaultConflictHandle = (c, l) -> {
 		l.getMetadata().setPublishTime(c.getMetadata().getPublishTime());
 		l.getMetadata().setSignature(c.getMetadata().getSignature());
@@ -222,12 +237,13 @@ public final class DIDStore {
 	}
 
 	/**
-	 * The interface for ConflictHandle to indicate how to resolve the conflict,
+	 * ConflictHandle is a interface for solving the conflict,
 	 * if the local document is different with the one resolved from chain.
 	 */
+	@FunctionalInterface
 	public interface ConflictHandle {
 		/**
-	     * The method to merge two did document.
+		 * The method to merge two did document.
 		 *
 		 * @param chainCopy the document from chain
 		 * @param localCopy the document from local device
@@ -236,11 +252,43 @@ public final class DIDStore {
 		DIDDocument merge(DIDDocument chainCopy, DIDDocument localCopy);
 	}
 
+	/**
+	 * A filter for DIDs.
+	 *
+	 * <p>
+	 * Instances of this interface may be passed to the listDids(DIDFilter)
+	 * method of the DIDStore class.
+	 * </p>
+	 */
+	@FunctionalInterface
 	public interface DIDFilter {
-		public boolean select(DID did);
+		/**
+		 * Tests whether or not the specified DID should be included in a
+		 * DIDs list.
+		 *
+		 * @param did the DID to be tested
+		 * @return true if and only if DID should be included
+		 */
+		public boolean accept(DID did);
 	}
 
+	/**
+	 * A filter for DIDURLs.
+	 *
+	 * <p>
+	 * Instances of this interface may be passed to the
+	 * listCredentials(CredentialFilter) method of the DIDStore class.
+	 * </p>
+	 */
+	@FunctionalInterface
 	public interface CredentialFilter {
+		/**
+		 * Tests whether or not the specified id should be included in a
+		 * id list.
+		 *
+		 * @param id the DIDURL to be tested
+		 * @return true if and only if DIDURL should be included
+		 */
 		public boolean select(DIDURL id);
 	}
 
@@ -284,14 +332,13 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Initialize or check the DIDStore.
+	 * Open a DIDStore instance with given storage location.
 	 *
-	 * @param type the type for different file system
-	 * @param location the location of DIDStore
-	 * @param initialCacheCapacity the initial capacity for cache
-	 * @param maxCacheCapacity the max capacity for cache
+	 * @param location the storage location for the DIDStore
+	 * @param initialCacheCapacity the initial cache capacity
+	 * @param maxCacheCapacity the maximum cache capacity
 	 * @return the DIDStore object
-	 * @throws DIDStoreException Unsupport the specified store type.
+	 * @throws DIDStoreException if an error occurred when opening the store
 	 */
 	public static DIDStore open(File location,
 			int initialCacheCapacity, int maxCacheCapacity) throws DIDStoreException {
@@ -308,6 +355,15 @@ public final class DIDStore {
 		return new DIDStore(initialCacheCapacity, maxCacheCapacity, storage);
 	}
 
+	/**
+	 * Open a DIDStore instance with given storage location.
+	 *
+	 * @param location the storage location for the DIDStore
+	 * @param initialCacheCapacity the initial cache capacity
+	 * @param maxCacheCapacity the maximum cache capacity
+	 * @return the DIDStore object
+	 * @throws DIDStoreException if an error occurred when opening the store
+	 */
 	public static DIDStore open(String location,
 			int initialCacheCapacity, int maxCacheCapacity) throws DIDStoreException {
 		checkArgument(location != null && !location.isEmpty(), "Invalid store location");
@@ -315,22 +371,31 @@ public final class DIDStore {
 		return open(new File(location), initialCacheCapacity, maxCacheCapacity);
 	}
 
+	/**
+	 * Open a DIDStore instance with given storage location.
+	 *
+	 * @param location the storage location for the DIDStore
+	 * @return the DIDStore object
+	 * @throws DIDStoreException if an error occurred when opening the store
+	 */
 	public static DIDStore open(File location) throws DIDStoreException {
 		return open(location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 	}
 
 	/**
-	 * Initialize or check the DIDStore.
+	 * Open a DIDStore instance with given storage location.
 	 *
-	 * @param type the type for different file system
-	 * @param location the location of DIDStore
+	 * @param location the storage location for the DIDStore
 	 * @return the DIDStore object
-	 * @throws DIDStoreException Unsupport the specified store type.
+	 * @throws DIDStoreException if an error occurred when opening the store
 	 */
 	public static DIDStore open(String location) throws DIDStoreException {
 		return open(location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
 	}
 
+	/**
+	 * Close this DIDStore object.
+	 */
 	public void close() {
 		// log.verbose("Cache statistics: {}", cache.stats().toString());
 		cache.invalidateAll();
@@ -358,14 +423,6 @@ public final class DIDStore {
 		}
 	}
 
-	/**
-	 * Encrypt by Base64 method.
-	 *
-	 * @param input the data be encrypted
-	 * @param passwd the password for encrypting
-	 * @return the encrypt result
-	 * @throws DIDStoreException Encrypt data error.
-	 */
 	private static String encryptToBase64(byte[] input, String passwd)
 			throws DIDStoreException {
 		try {
@@ -378,14 +435,6 @@ public final class DIDStore {
 		}
 	}
 
-	/**
-	 * Decrypt data from Base64 method.
-	 *
-	 * @param input the data to decrypted
-	 * @param passwd the password for decrypting
-	 * @return the original data before encrpting
-	 * @throws DIDStoreException Decrypt private key error.
-	 */
 	private static byte[] decryptFromBase64(String input, String passwd)
 			throws DIDStoreException {
 		try {
@@ -433,6 +482,13 @@ public final class DIDStore {
 		return result;
 	}
 
+	/**
+	 * Save the RootIdentity object with private keys to this DID store.
+	 *
+	 * @param identity an RootIdentity object
+	 * @param storepass the password for this DID store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void storeRootIdentity(RootIdentity identity, String storepass)
 			throws DIDStoreException {
 		checkArgument(identity != null, "Invalid identity");
@@ -456,12 +512,26 @@ public final class DIDStore {
 		cache.invalidate(Key.forRootIdentityPrivateKey(identity.getId()));
 	}
 
+	/**
+	 * Save the RootIdentity object to this DID store(Update the derive index
+	 * only).
+	 *
+	 * @param identity an RootIdentity object
+	 * @param storepass the password for this DID store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void storeRootIdentity(RootIdentity identity)
 			throws DIDStoreException {
 		checkArgument(identity != null, "Invalid identity");
 		storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
 	}
 
+	/**
+	 * Set the identity as the default RootIdentity of the DIDStore.
+	 *
+	 * @param identity a RootIdentity object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void setDefaultRootIdentity(RootIdentity identity) throws DIDStoreException {
 		checkArgument(identity != null, "Invalid identity");
 
@@ -471,20 +541,20 @@ public final class DIDStore {
 		metadata.setDefaultRootIdentity(identity.getId());
 	}
 
-    /**
-     * Load private identity from DIDStore.
-     *
-     * @param storepass the password for DIDStore
-     * @return the HDKey object(private identity)
-     * @throws DIDStoreException there is invalid private identity in DIDStore.
-     */
+	/**
+	 * Load a RootIdentity object from this DIDStore.
+	 *
+	 * @param id the id of the RootIdentity
+	 * @return the RootIdentity object, null if the identity not exists
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public RootIdentity loadRootIdentity(String id) throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
 		try {
 			Object value = cache.get(Key.forRootIdentity(id), new Callable<Object>() {
-			    @Override
-			    public Object call() throws DIDStoreException {
+				@Override
+				public Object call() throws DIDStoreException {
 					RootIdentity identity = storage.loadRootIdentity(id);
 					if (identity != null) {
 						identity.setMetadata(loadRootIdentityMetadata(id));
@@ -492,7 +562,7 @@ public final class DIDStore {
 					} else {
 						return NULL;
 					}
-			    }
+				}
 			});
 
 			return value == NULL ? null : (RootIdentity)value;
@@ -501,6 +571,12 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Load the default RootIdentity object from this DIDStore.
+	 *
+	 * @return the default RootIdentity object, null if the identity exists
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public RootIdentity loadRootIdentity() throws DIDStoreException {
 		String id = metadata.getDefaultRootIdentity();
 		if (id == null || id.isEmpty()) {
@@ -518,22 +594,23 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Judge whether private identity exists in DIDStore.
+	 * Check whether the RootIdentity exists in this DIDStore.
 	 *
-	 * @return the returned value is true if private identity exists;
-	 *         the returned value if false if private identity doesnot exist.
-	 * @throws DIDStoreException Unsupport the specified store type.
+	 * @return true if exists else false
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean containsRootIdentity(String id) throws DIDStoreException {
 		return storage.loadRootIdentity(id) != null;
 	}
 
 	/**
-	 * Export mnemonic from DIDStore
+	 * Export the mnemonic of the specific RootIdentity from this DIDStore.
 	 *
+	 * @param id the id of the RootIdentity
 	 * @param storepass the password for DIDStore
- 	 * @return the mnemonic string
-	 * @throws DIDStoreException there is no mnemonic in DID Store.
+	 * @return the mnemonic string, null if the identity not exists or does
+	 * 		   not have mnemonic
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected String exportRootIdentityMnemonic(String id, String storepass)
 			throws DIDStoreException {
@@ -547,6 +624,13 @@ public final class DIDStore {
 			return null;
 	}
 
+	/**
+	 * Check whether the RootIdentity has mnemonic.
+	 *
+	 * @param id the id of the RootIdentity
+	 * @return true if exists else false
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected boolean containsRootIdentityMnemonic(String id) throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
@@ -554,19 +638,12 @@ public final class DIDStore {
 		return encryptedMnemonic != null;
 	}
 
-    /**
-     * Load private identity from DIDStore.
-     *
-     * @param storepass the password for DIDStore
-     * @return the HDKey object(private identity)
-     * @throws DIDStoreException there is invalid private identity in DIDStore.
-     */
 	private HDKey loadRootIdentityPrivateKey(String id, String storepass)
 			throws DIDStoreException {
 		try {
 			Object value = cache.get(Key.forRootIdentityPrivateKey(id), new Callable<Object>() {
-			    @Override
-			    public Object call() throws DIDStorageException {
+				@Override
+				public Object call() throws DIDStorageException {
 					String encryptedKey = storage.loadRootIdentityPrivateKey(id);
 					return encryptedKey != null ? encryptedKey : NULL;			    }
 			});
@@ -582,7 +659,7 @@ public final class DIDStore {
 		}
 	}
 
-	protected HDKey derive(String id, String path, String storepass)
+	HDKey derive(String id, String path, String storepass)
 			throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid identity");
 		checkArgument(path != null && !path.isEmpty(), "Invalid path");
@@ -595,6 +672,13 @@ public final class DIDStore {
 		return key;
 	}
 
+	/**
+	 * Delete the specific RootIdentity object from this store.
+	 *
+	 * @param id the id of RootIdentity object
+	 * @return true if the identity exists and delete successful; false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public boolean deleteRootIdentity(String id) throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
@@ -611,14 +695,33 @@ public final class DIDStore {
 		return success;
 	}
 
+	/**
+	 * List all RootIdentity object from this store.
+	 *
+	 * @return an array of RootIdentity objects
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public List<RootIdentity> listRootIdentities() throws DIDStoreException {
 		return Collections.unmodifiableList(storage.listRootIdentities());
 	}
 
+	/**
+	 * Check whether the this store has RootIdentity objects.
+	 *
+	 * @return true if the store has RootIdentity objects else false
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public boolean containsRootIdentities() throws DIDStoreException {
 		return storage.containsRootIdenities();
 	}
 
+	/**
+	 * Save the RootIdentity metadata to this store.
+	 *
+	 * @param id the id of the RootIdentity object
+	 * @param metadata a RootIdentity.Metadata object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void storeRootIdentityMetadata(String id, RootIdentity.Metadata metadata)
 			throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
@@ -627,6 +730,12 @@ public final class DIDStore {
 		storage.storeRootIdentityMetadata(id, metadata);
 	}
 
+	/**
+	 * Read the RootIdentity metadata from this store.
+	 *
+	 * @param id the id of the RootIdentity object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected RootIdentity.Metadata loadRootIdentityMetadata(String id)
 			throws DIDStoreException {
 		checkArgument(id != null && !id.isEmpty(), "Invalid id");
@@ -642,12 +751,12 @@ public final class DIDStore {
 		return metadata;
 	}
 
-    /**
-     * Store DID Document in the DIDStore.
-     *
-     * @param doc the DIDDocument object
-     * @throws DIDStoreException DIDStore error.
-     */
+	/**
+	 * Save the DID document to this store.
+	 *
+	 * @param doc the DIDDocument object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public void storeDid(DIDDocument doc) throws DIDStoreException {
 		checkArgument(doc != null, "Invalid doc");
 
@@ -667,19 +776,19 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Load the specified DID content(DIDDocument).
+	 * Read the specific DID document from this store.
 	 *
-	 * @param did the specified DID
+	 * @param did the DID to be load
 	 * @return the DIDDocument object
-	 * @throws DIDStoreException DIDStore error.
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public DIDDocument loadDid(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 
 		try {
 			Object value = cache.get(Key.forDidDocument(did), new Callable<Object>() {
-			    @Override
-			    public Object call() throws DIDStoreException {
+				@Override
+				public Object call() throws DIDStoreException {
 					DIDDocument doc = storage.loadDid(did);
 					if (doc != null) {
 						doc.setMetadata(loadDidMetadata(did));
@@ -687,7 +796,7 @@ public final class DIDStore {
 					} else {
 						return NULL;
 					}
-			    }
+				}
 			});
 
 			return value == NULL ? null : (DIDDocument)value;
@@ -697,47 +806,45 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Load the specified DID content(DIDDocument).
+	 * Read the specific DID document from this store.
 	 *
-	 * @param did the specified DID string
+	 * @param did the DID to be load
 	 * @return the DIDDocument object
-	 * @throws DIDStoreException DIDStore error.
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public DIDDocument loadDid(String did) throws DIDStoreException {
 		return loadDid(DID.valueOf(did));
 	}
 
-    /**
-     * Judge whether containing the specified DID or not.
-     *
-     * @param did the specified DID
-     * @return the returned value is true if the specified DID is in the DIDStore;
-     *         the returned value is false if the specified DID is not in the DIDStore.
-     * @throws DIDStoreException DIDStore error.
-     */
+	/**
+	 * Check if this store contains the specific DID.
+	 *
+	 * @param did the specified DID
+	 * @return true if the store contains this DID, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public boolean containsDid(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 		return loadDid(did) != null;
 	}
 
-    /**
-     * Judge whether containing the specified DID or not.
-     *
-     * @param did the specified DID string
-     * @return the returned value is true if the specified DID is in the DIDStore;
-     *         the returned value is false if the specified DID is not in the DIDStore.
-     * @throws DIDStoreException DIDStore error.
-     */
+	/**
+	 * Check if this store contains the specific DID.
+	 *
+	 * @param did the specified DID
+	 * @return true if the store contains this DID, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public boolean containsDid(String did) throws DIDStoreException {
 		return containsDid(DID.valueOf(did));
 	}
 
 	/**
-	 * Store DID Metadata.
+	 * Save the DID Metadata to this store.
 	 *
-	 * @param did the owner of Metadata
-	 * @param metadata the meta data
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did the owner of the metadata object
+	 * @param metadata the DID metadata object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected void storeDidMetadata(DID did, DIDMetadata metadata)
 			throws DIDStoreException {
@@ -751,19 +858,19 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Load Meta data for the specified DID.
+	 * Read the specific DID metadata object for this store.
 	 *
-	 * @param did the specified DID
-	 * @return the Meta data
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did a DID to be load
+	 * @return the DID metadata object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected DIDMetadata loadDidMetadata(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 
 		try {
 			Object value = cache.get(Key.forDidMetadata(did) , new Callable<Object>() {
-			    @Override
-			    public Object call() throws DIDStorageException {
+				@Override
+				public Object call() throws DIDStorageException {
 					DIDMetadata metadata = storage.loadDidMetadata(did);
 					if (metadata != null) {
 						metadata.setDid(did);
@@ -773,7 +880,7 @@ public final class DIDStore {
 					}
 
 					return metadata;
-			    }
+				}
 			});
 
 			return value == NULL ? null : (DIDMetadata)value;
@@ -782,15 +889,18 @@ public final class DIDStore {
 		}
 	}
 
-
-    /**
-     * Delete the specified DID.
-     *
-     * @param did the specified DID
-     * @return the returned value is true if deleting is successful;
-     *         the returned value is false if deleting is failed.
-     * @throws DIDStoreException DIDStore error.
-     */
+	/**
+	 * Delete the specific DID from this store.
+	 *
+	 * <p>
+	 * When delete the DID, all private keys, credentials that owned by this
+	 * DID will also be deleted.
+	 * </p>
+	 *
+	 * @param did the DID to be delete
+	 * @return true if the DID exist and deleted successful, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public boolean deleteDid(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 
@@ -813,23 +923,27 @@ public final class DIDStore {
 		return success;
 	}
 
-    /**
-     * Delete the specified DID.
-     *
-     * @param did the specified DID string
-     * @return the returned value is true if deleting is successful;
-     *         the returned value is false if deleting is failed.
-     * @throws DIDStoreException DIDStore error.
-     */
+	/**
+	 * Delete the specific DID from this store.
+	 *
+	 * <p>
+	 * When delete the DID, all private keys, credentials that owned by this
+	 * DID will also be deleted.
+	 * </p>
+	 *
+	 * @param did the DID to be delete
+	 * @return true if the DID exist and deleted successful, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public boolean deleteDid(String did) throws DIDStoreException {
 		return deleteDid(DID.valueOf(did));
 	}
 
 	/**
-	 * List all DIDs according to the specified condition.
+	 * List all DIDs from this store.
 	 *
-	 * @return the DID array.
-	 * @throws DIDStoreException DIDStore error.
+	 * @return an array of DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public List<DID> listDids() throws DIDStoreException {
 		List<DID> dids = storage.listDids();
@@ -841,6 +955,13 @@ public final class DIDStore {
 		return Collections.unmodifiableList(dids);
 	}
 
+	/**
+	 * List all DIDs that satisfy the specified filter from this store.
+	 *
+	 * @param filter a DID filter
+	 * @return an array of DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public List<DID> selectDids(DIDFilter filter) throws DIDStoreException {
 		List<DID> dids = listDids();
 
@@ -848,7 +969,7 @@ public final class DIDStore {
 			List<DID> dest = new ArrayList<DID>();
 
 			for (DID did : dids) {
-				if (filter.select(did))
+				if (filter.accept(did))
 					dest.add(did);
 			}
 
@@ -859,10 +980,10 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Store the specified Credential.
+	 * Save the credential object to this store.
 	 *
-	 * @param credential the Credential object
-	 * @throws DIDStoreException DIDStore error.
+	 * @param credential a VerifiableCredential object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public void storeCredential(VerifiableCredential credential)
 			throws DIDStoreException {
@@ -881,12 +1002,11 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Load the specified Credential.
+	 * Read the specific credential object from this store.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the Credential object
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the credential id
+	 * @return the VerifiableCredential object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public VerifiableCredential loadCredential(DIDURL id)
 			throws DIDStoreException {
@@ -894,16 +1014,16 @@ public final class DIDStore {
 
 		try {
 			Object value = cache.get(Key.forCredential(id), new Callable<Object>() {
-			    @Override
-			    public Object call() throws DIDStoreException {
-			    	VerifiableCredential vc = storage.loadCredential(id);
+				@Override
+				public Object call() throws DIDStoreException {
+					VerifiableCredential vc = storage.loadCredential(id);
 					if (vc != null) {
 						vc.setMetadata(loadCredentialMetadata(id));
 						return vc;
 					} else {
 						return NULL;
 					}
-			    }
+				}
 			});
 
 			return value == NULL ? null : (VerifiableCredential)value;
@@ -913,12 +1033,11 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Load the specified Credential.
+	 * Read the specific credential object from this store.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the Credential object
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the credential id
+	 * @return the VerifiableCredential object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public VerifiableCredential loadCredential(String id)
 			throws DIDStoreException {
@@ -926,13 +1045,11 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Judge whether does DIDStore contain the specified credential.
+	 * Check whether this store contains the specific credential.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID;
-	 *         the returned value is false if there is credentials owned the specific DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the credential id
+	 * @return true if the store contains this credential, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean containsCredential(DIDURL id)
 			throws DIDStoreException {
@@ -941,13 +1058,11 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Judge whether does DIDStore contain the specified credential.
+	 * Check whether this store contains the specific credential.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID;
-	 *         the returned value is false if there is credentials owned the specific DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the credential id
+	 * @return true if the store contains this credential, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean containsCredential(String id)
 			throws DIDStoreException {
@@ -955,11 +1070,12 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Judge whether does DIDStore contain any credential owned the specific DID.
+	 * Check whether this store contains the credentials that owned by the
+	 * specific DID.
 	 *
-	 * @param did the owner of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did the credential owner's DID
+	 * @return true if the store contains this credential, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean containsCredentials(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
@@ -967,24 +1083,24 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Judge whether does DIDStore contain any credential owned the specific DID.
+	 * Check whether this store contains the credentials that owned by the
+	 * specific DID.
 	 *
-	 * @param did the owner of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did the credential owner's DID
+	 * @return true if the store contains this credential, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean containsCredentials(String did) throws DIDStoreException {
 		return containsCredentials(DID.valueOf(did));
 	}
 
-    /**
-     * Store meta data for the specified Credential.
-     *
-     * @param did the owner of the specified Credential
-     * @param id the identifier of Credential
-     * @param metadata the meta data for Credential
-     * @throws DIDStoreException DIDStore error.
-     */
+	/**
+	 * Save the credential's metadata to this store.
+	 *
+	 * @param id the credential id
+	 * @param metadata the credential metadata object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	protected void storeCredentialMetadata(DIDURL id,
 			CredentialMetadata metadata) throws DIDStoreException {
 		checkArgument(id != null, "Invalid credential id");
@@ -997,12 +1113,11 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Load the meta data about the specified Credential.
+	 * Read the credential's metadata from this store.
 	 *
-	 * @param did the owner of Credential
-     * @param id the identifier of Credential
-	 * @return the meta data for Credential
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the credential id
+	 * @return the credential metadata object
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected CredentialMetadata loadCredentialMetadata(DIDURL id)
 			throws DIDStoreException {
@@ -1010,8 +1125,8 @@ public final class DIDStore {
 
 		try {
 			Object value = cache.get(Key.forCredentialMetadata(id), new Callable<Object>() {
-			    @Override
-			    public Object call() throws DIDStorageException {
+				@Override
+				public Object call() throws DIDStorageException {
 					CredentialMetadata metadata = storage.loadCredentialMetadata(id);
 					if (metadata != null) {
 						metadata.setId(id);
@@ -1021,7 +1136,7 @@ public final class DIDStore {
 					}
 
 					return metadata;
-			    }
+				}
 			});
 
 			return value == NULL ? null : (CredentialMetadata)value;
@@ -1031,13 +1146,11 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Delete the specified Credential
+	 * Delete the specific credential from this store.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID;
-	 *         the returned value is false if there is credentials owned the specific DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the credential id to be delete
+	 * @return true if the credential exist and deleted successful, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean deleteCredential(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid credential id");
@@ -1052,24 +1165,22 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Delete the specified Credential
+	 * Delete the specific credential from this store.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @return the returned value is true if there is no credential owned the specific DID;
-	 *         the returned value is false if there is credentials owned the specific DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the credential id to be delete
+	 * @return true if the credential exist and deleted successful, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean deleteCredential(String id) throws DIDStoreException {
 		return deleteCredential(DIDURL.valueOf(id));
 	}
 
 	/**
-	 * List the Credentials owned the specified DID.
+	 * List all credentials that owned the specific DID.
 	 *
-	 * @param did the owner of Credential
-	 * @return the Credential array owned the specified DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did the credential owner's DID
+	 * @return an array of DIDURL denoting the credentials
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public List<DIDURL> listCredentials(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
@@ -1084,24 +1195,24 @@ public final class DIDStore {
 	}
 
 	/**
-	 * List the Credentials owned the specified DID.
+	 * List all credentials that owned the specific DID.
 	 *
-	 * @param did the owner of Credential
-	 * @return the Credential array owned the specified DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did the credential owner's DID
+	 * @return an array of DIDURL denoting the credentials
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public List<DIDURL> listCredentials(String did) throws DIDStoreException {
 		return listCredentials(DID.valueOf(did));
 	}
 
 	/**
-	 * Select the Credentials according to the specified condition.
+	 * List all credentials that owned the specific DID and satisfy the
+	 * specified filter from this store.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @param type the Credential type
-	 * @return the Credential array
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did the credential owner's DID
+	 * @param filter a credential filter
+	 * @return an array of DIDURL denoting the credentials
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public List<DIDURL> selectCredentials(DID did, CredentialFilter filter)
 			throws DIDStoreException {
@@ -1124,13 +1235,13 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Select the Credentials according to the specified condition.
+	 * List all credentials that owned the specific DID and satisfy the
+	 * specified filter from this store.
 	 *
-	 * @param did the owner of Credential
-	 * @param id the identifier of Credential
-	 * @param type the Credential type
-	 * @return the Credential array
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did the credential owner's DID
+	 * @param filter a credential filter
+	 * @return an array of DIDURL denoting the credentials
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public List<DIDURL> selectCredentials(String did, CredentialFilter filter)
 			throws DIDStoreException {
@@ -1138,13 +1249,13 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Store private key. Encrypt and encode private key with base64url method.
+	 * Save the DID's private key to the store, the private key will be encrypt
+	 * using the store password.
 	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @param privateKey the original private key(32 bytes)
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the private key id
+	 * @param privateKey the binary extended private key
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public void storePrivateKey(DIDURL id, byte[] privateKey,
 			String storepass) throws DIDStoreException {
@@ -1159,13 +1270,13 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Store private key. Encrypt and encode private key with base64url method.
+	 * Save the DID's private key to the store, the private key will be encrypt
+	 * using the store password.
 	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @param privateKey the original private key(32 bytes)
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the private key id
+	 * @param privateKey the binary extended private key
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public void storePrivateKey(String id, byte[] privateKey,
 			String storepass) throws DIDStoreException {
@@ -1175,11 +1286,11 @@ public final class DIDStore {
 	private String loadPrivateKey(DIDURL id) throws DIDStoreException {
 		try {
 			Object value = cache.get(Key.forDidPrivateKey(id), new Callable<Object>() {
-			    @Override
-			    public Object call() throws DIDStoreException {
+				@Override
+				public Object call() throws DIDStoreException {
 					String encryptedKey = storage.loadPrivateKey(id);
 					return encryptedKey != null ? encryptedKey : NULL;
-			    }
+				}
 			});
 
 			return value == NULL ? null : (String)value;
@@ -1188,16 +1299,7 @@ public final class DIDStore {
 		}
 	}
 
-	/**
-	 * Load private key.
-	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @param storepass the password for DIDStore
-	 * @return the original private key
-	 * @throws DIDStoreException DIDStore error.
-	 */
-	protected byte[] loadPrivateKey(DIDURL id, String storepass)
+	byte[] loadPrivateKey(DIDURL id, String storepass)
 			throws DIDStoreException {
 		checkArgument(id != null, "Invalid private key id");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -1212,13 +1314,11 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Judge that the specified key has private key in DIDStore.
+	 * Check if this store contains the specific private key.
 	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @return the returned value is true if there is private keys owned the specified key;
-	 *         the returned value is false if there is no private keys owned the specified key.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the key id
+	 * @return true if this store contains the specific key, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean containsPrivateKey(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid private key id");
@@ -1226,25 +1326,24 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Judge that the specified key has private key in DIDStore.
+	 * Check if this store contains the specific private key.
 	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @return the returned value is true if there is private keys owned the specified key;
-	 *         the returned value is false if there is no private keys owned the specified key.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the key id
+	 * @return true if this store contains the specific key, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean containsPrivateKey(String id) throws DIDStoreException {
 		return containsPrivateKey(DIDURL.valueOf(id));
 	}
 
 	/**
-	 * Judge whether there is private key owned the specified DID in DIDStore.
+	 * Check if this store contains the private keys that owned by the
+	 * specific DID.
 	 *
-	 * @param did the specified DID
-	 * @return the returned value is true if there is private keys owned the specified DID;
-	 *         the returned value is false if there is no private keys owned the specified DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did the owner's DID
+	 * @return true if this store contains the private keys owned by the the
+	 * 		   DID, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean containsPrivateKeys(DID did) throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
@@ -1252,26 +1351,24 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Judge whether there is private key owned the specified DID in DIDStore.
+	 * Check if this store contains the private keys that owned by the
+	 * specific DID.
 	 *
-	 * @param did the specified DID string
-	 * @return the returned value is true if there is private keys owned the specified DID;
-	 *         the returned value is false if there is no private keys owned the specified DID.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param did the owner's DID
+	 * @return true if this store contains the private keys owned by the the
+	 * 		   DID, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean containsPrivateKeys(String did) throws DIDStoreException {
 		return containsPrivateKeys(DID.valueOf(did));
 	}
 
-
 	/**
-	 * Delete the private key owned to the specified key.
+	 * Delete the specific private key from this store.
 	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @return the returned value is true if deleting private keys successfully;
-	 *         the returned value is false if deleting private keys failed.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the key id
+	 * @return true if the private key exist and deleted successful, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean deletePrivateKey(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid private key id");
@@ -1284,27 +1381,24 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Delete the private key owned to the specified key.
+	 * Delete the specific private key from this store.
 	 *
-	 * @param did the owner of key
-	 * @param id the identifier of key
-	 * @return the returned value is true if deleting private keys successfully;
-	 *         the returned value is false if deleting private keys failed.
-	 * @throws DIDStoreException DIDStore error.
+	 * @param id the key id
+	 * @return true if the private key exist and deleted successful, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean deletePrivateKey(String id) throws DIDStoreException {
 		return deletePrivateKey(DIDURL.valueOf(id));
 	}
 
 	/**
-	 * Sign the digest data by the specified key.
+	 * Sign the digest using the specified key.
 	 *
-	 * @param did the owner of sign key
-	 * @param id the identifier of sign key
-	 * @param storepass the password for DIDStore
-	 * @param digest the digest data
-	 * @return the signature string
-	 * @throws DIDStoreException can not get DID Document if no specified sign key.
+	 * @param id the key id
+	 * @param storepass the password for this store
+	 * @param digest the binary digest in bytes array
+	 * @return the base64(URL safe) encoded signature string
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected String sign(DIDURL id, String storepass, byte[] digest)
 			throws DIDStoreException {
@@ -1320,13 +1414,13 @@ public final class DIDStore {
 				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 	}
 
-    /**
-     * Change password for DIDStore.
-     *
-     * @param oldPassword the old password
-     * @param newPassword the new password
-     * @throws DIDStoreException DIDStore error.
-     */
+	/**
+	 * Change the password for this store.
+	 *
+	 * @param oldPassword the old password
+	 * @param newPassword the new password
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public void changePassword(String oldPassword, String newPassword)
 			throws DIDStoreException {
 		checkArgument(oldPassword != null && !oldPassword.isEmpty(), "Invalid old password");
@@ -1340,6 +1434,28 @@ public final class DIDStore {
 		cache.invalidateAll();
 	}
 
+	/**
+	 *
+	 * @param handle
+	 * @throws DIDResolveException
+	 * @throws DIDStoreException
+	 */
+
+	/**
+	 * Synchronize all RootIdentities, DIDs and credentials in this store.
+	 *
+	 * <p>
+	 * If the ConflictHandle is not set by the developers, this method will
+	 * use the default ConflictHandle implementation: if conflict between
+	 * the chain copy and the local copy, it will keep the local copy, but
+	 * update the local metadata with the chain copy.
+	 * </p>
+	 *
+	 * @param handle an application defined handle to process the conflict
+	 * 				 between the chain copy and the local copy
+	 * @throws DIDResolveException if an error occurred when resolving DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public void synchronize(ConflictHandle handle)
 			throws DIDResolveException, DIDStoreException {
 
@@ -1399,10 +1515,31 @@ public final class DIDStore {
 		}
 	}
 
+	/**
+	 * Synchronize all RootIdentities, DIDs and credentials in this store.
+	 *
+	 * @throws DIDResolveException if an error occurred when resolving DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public void synchronize() throws DIDResolveException, DIDStoreException {
 		synchronize(null);
 	}
 
+	/**
+	 * Synchronize all RootIdentities, DIDs and credentials in
+	 * asynchronous mode.
+	 *
+	 * <p>
+	 * If the ConflictHandle is not set by the developers, this method will
+	 * use the default ConflictHandle implementation: if conflict between
+	 * the chain copy and the local copy, it will keep the local copy, but
+	 * update the local metadata with the chain copy.
+	 * </p>
+	 *
+	 * @param handle an application defined handle to process the conflict
+	 * 				 between the chain copy and the local copy
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> synchronizeAsync(ConflictHandle handle) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
@@ -1415,6 +1552,12 @@ public final class DIDStore {
 		return future;
 	}
 
+	/**
+	 * Synchronize all RootIdentities, DIDs and credentials in
+	 * asynchronous mode.
+	 *
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> synchronizeAsync() {
 		return synchronizeAsync(null);
 	}
@@ -1706,15 +1849,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content
-     * include document, credentials, private keys and meta.
+	 * Export the specific DID with all DID objects that related with this DID,
+	 * include: document, credentials, private keys and their metadata.
 	 *
-	 * @param did the specified DID
-	 * @param out the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param did the DID to be export
+	 * @param out the output stream that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportDid(DID did, OutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
@@ -1727,15 +1870,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content
-     * include document, credentials, private keys and meta.
+	 * Export the specific DID with all DID objects that related with this DID,
+	 * include: document, credentials, private keys and their metadata.
 	 *
-	 * @param did the specified DID
-	 * @param out the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param did the DID to be export
+	 * @param out the output stream that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportDid(String did, OutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
@@ -1743,15 +1886,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content
-     *  include document, credentials, private keys and meta.
+	 * Export the specific DID with all DID objects that related with this DID,
+	 * include: document, credentials, private keys and their metadata.
 	 *
-	 * @param did the specified DID
-	 * @param out the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param did the DID to be export
+	 * @param out the writer object that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportDid(DID did, Writer out, String password,
 			String storepass) throws DIDStoreException, IOException {
@@ -1764,15 +1907,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content
-     * include document, credentials, private keys and meta.
+	 * Export the specific DID with all DID objects that related with this DID,
+	 * include: document, credentials, private keys and their metadata.
 	 *
-	 * @param did the specified DID string
-	 * @param out the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param did the DID to be export
+	 * @param out the writer object that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportDid(String did, Writer out, String password, String storepass)
 			throws DIDStoreException, IOException {
@@ -1780,15 +1923,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content
-     * include document, credentials, private keys and meta.
+	 * Export the specific DID with all DID objects that related with this DID,
+	 * include: document, credentials, private keys and their metadata.
 	 *
-	 * @param did the specified DID
-	 * @param file the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param did the DID to be export
+	 * @param file the File object that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportDid(DID did, File file, String password, String storepass)
 			throws DIDStoreException, IOException {
@@ -1801,15 +1944,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content
-     * include document, credentials, private keys and meta.
+	 * Export the specific DID with all DID objects that related with this DID,
+	 * include: document, credentials, private keys and their metadata.
 	 *
-	 * @param did the specified DID string
-	 * @param file the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param did the DID to be export
+	 * @param file the File object that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportDid(String did, File file, String password, String storepass)
 			throws DIDStoreException, IOException {
@@ -1817,15 +1960,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content
-     * include document, credentials, private keys and meta.
+	 * Export the specific DID with all DID objects that related with this DID,
+	 * include: document, credentials, private keys and their metadata.
 	 *
-	 * @param did the specified DID
-	 * @param file the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param did the DID to be export
+	 * @param file the file name that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportDid(DID did, String file, String password, String storepass)
 			throws DIDStoreException, IOException {
@@ -1838,15 +1981,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export DID information into file with json format. The json content
-     * include document, credentials, private keys and meta.
+	 * Export the specific DID with all DID objects that related with this DID,
+	 * include: document, credentials, private keys and their metadata.
 	 *
-	 * @param did the specified DID string
-	 * @param file the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param did the DID to be export
+	 * @param file the file name that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportDid(String did, String file, String password, String storepass)
 			throws DIDStoreException, IOException {
@@ -1878,14 +2021,15 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Import DID information by input.
+	 * Import a DID and all related DID object from the exported data to
+	 * this store.
 	 *
-	 * @param in the import input
-	 * @param password the password to decrypt private key in input
-	 * @param storepass the password for DIDStore
+	 * @param in the input stream for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importDid(InputStream in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -1903,14 +2047,15 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Import DID information by input.
+	 * Import a DID and all related DID object from the exported data to
+	 * this store.
 	 *
-	 * @param in the import input
-	 * @param password the password to decrypt private key in input
-	 * @param storepass the password for DIDStore
+	 * @param in the reader object for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importDid(Reader in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -1928,14 +2073,15 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Import DID information by input.
+	 * Import a DID and all related DID object from the exported data to
+	 * this store.
 	 *
-	 * @param file the import input
-	 * @param password the password to decrypt private key in input
-	 * @param storepass the password for DIDStore
+	 * @param file the file object for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importDid(File file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -1953,14 +2099,15 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Import DID information by input.
+	 * Import a DID and all related DID object from the exported data to
+	 * this store.
 	 *
-	 * @param file the import input
-	 * @param password the password to decrypt private key in input
-	 * @param storepass the password for DIDStore
+	 * @param file the file name for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importDid(String file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2136,15 +2283,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export private identity information into file with json format.
-     * The json content include mnemonic(encrypted), extended private key(encrypted),
-     * extended public key(if has it, dont't encrypted) and index.
+	 * Export the specific RootIdentity, include: mnemonic, private key,
+	 * pre-derived public key, derive index, metadata...
 	 *
-	 * @param out the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param id the id of the RootIdentity to be export
+	 * @param out the output stream that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportRootIdentity(String id, OutputStream out,
 			String password, String storepass)
@@ -2158,15 +2305,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export private identity information into file with json format.
-     * The json content include mnemonic(encrypted), extended private key(encrypted),
-     * extended public key(if has it, dont't encrypted) and index.
+	 * Export the specific RootIdentity, include: mnemonic, private key,
+	 * pre-derived public key, derive index, metadata...
 	 *
-	 * @param out the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param id the id of the RootIdentity to be export
+	 * @param out the writer object that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportRootIdentity(String id, Writer out,
 			String password, String storepass)
@@ -2180,15 +2327,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export private identity information into file with json format.
-     * The json content include mnemonic(encrypted), extended private key(encrypted),
-     * extended public key(if has it, dont't encrypted) and index.
+	 * Export the specific RootIdentity, include: mnemonic, private key,
+	 * pre-derived public key, derive index, metadata...
 	 *
-	 * @param file the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param id the id of the RootIdentity to be export
+	 * @param out the file object that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportRootIdentity(String id, File file,
 			String password, String storepass)
@@ -2202,15 +2349,15 @@ public final class DIDStore {
 	}
 
 	/**
-     * Export private identity information into file with json format.
-     * The json content include mnemonic(encrypted), extended private key(encrypted),
-     * extended public key(if has it, dont't encrypted) and index.
+	 * Export the specific RootIdentity, include: mnemonic, private key,
+	 * pre-derived public key, derive index, metadata...
 	 *
-	 * @param file the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param id the id of the RootIdentity to be export
+	 * @param out the file name that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportRootIdentity(String id, String file,
 			String password, String storepass)
@@ -2241,16 +2388,15 @@ public final class DIDStore {
 			metadata.setDefaultRootIdentity(id);
 	}
 
-
 	/**
-     * Import private identity by input.
+	 * Import a RootIdentity object from the exported data to this store.
 	 *
-	 * @param in the import input
-	 * @param password the password to decrypt private key in input
-	 * @param storepass the password to DIDStore
+	 * @param in the input stream for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importRootIdentity(InputStream in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException  {
@@ -2267,14 +2413,14 @@ public final class DIDStore {
 	}
 
 	/**
-     * Import private identity by input.
+	 * Import a RootIdentity object from the exported data to this store.
 	 *
-	 * @param in the import input
-	 * @param password the password to decrypt private key in input
-	 * @param storepass the password to DIDStore
+	 * @param in the reader object for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importRootIdentity(Reader in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2291,14 +2437,14 @@ public final class DIDStore {
 	}
 
 	/**
-     * Import private identity by input.
+	 * Import a RootIdentity object from the exported data to this store.
 	 *
-	 * @param file the import input
-	 * @param password the password to decrypt private key in input
-	 * @param storepass the password to DIDStore
+	 * @param file the file object for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importRootIdentity(File file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2315,14 +2461,14 @@ public final class DIDStore {
 	}
 
 	/**
-     * Import private identity by input.
+	 * Import a RootIdentity object from the exported data to this store.
 	 *
-	 * @param file the import input
-	 * @param password the password to decrypt private key in input
-	 * @param storepass the password to DIDStore
+	 * @param file the file name for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importRootIdentity(String file, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2334,13 +2480,13 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Export all store information.
+	 * Export all DID objects from this store.
 	 *
-	 * @param out the export output
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param out the zip output stream that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportStore(ZipOutputStream out, String password,
 			String storepass) throws DIDStoreException, IOException {
@@ -2368,13 +2514,13 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Export all store information to zip file.
+	 * Export all DID objects from this store.
 	 *
-	 * @param zipFile the export zip file
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param zipFile the ZipFile object that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportStore(File zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
@@ -2388,13 +2534,13 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Export all store information to zip file.
+	 * Export all DID objects from this store.
 	 *
-	 * @param zipFile the export zip file
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @param zipFile the zip file name that the data export to
+	 * @param password the password to encrypt the private keys in the exported data
+	 * @param storepass the password for this store
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when writing the exported data
 	 */
 	public void exportStore(String zipFile, String password, String storepass)
 			throws DIDStoreException, IOException {
@@ -2406,14 +2552,14 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Import Store information from input.
+	 * Import a exported DIDStore from the exported data to this store.
 	 *
-	 * @param in the import input
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
+	 * @param in the zip input stream for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importStore(ZipInputStream in, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2441,14 +2587,14 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Import Store information from zip file.
+	 * Import a exported DIDStore from the exported data to this store.
 	 *
-	 * @param zipFile the import zip file
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
+	 * @param zipFile the ZipFile object for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importStore(File zipFile, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
@@ -2462,14 +2608,14 @@ public final class DIDStore {
 	}
 
 	/**
-	 * Import Store information from zip file.
+	 * Import a exported DIDStore from the exported data to this store.
 	 *
-	 * @param zipFile the import zip file
-	 * @param password the password to encrypt the private key in output
-	 * @param storepass the password for DIDStore
+	 * @param zipFile the zip file name for the exported data
+	 * @param password the password for the exported data
+	 * @param storepass the password for this store
 	 * @throws MalformedExportDataException if the exported data is invalid
-	 * @throws DIDStoreException DIDStore error
-	 * @throws IOException write json string failed
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws IOException if an IO error occurred when reading the exported data
 	 */
 	public void importStore(String zipFile, String password, String storepass)
 			throws MalformedExportDataException, DIDStoreException, IOException {
