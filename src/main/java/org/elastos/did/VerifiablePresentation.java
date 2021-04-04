@@ -59,8 +59,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
- * A Presentation can be targeted to a specific verifier by using a Linked Data
- * Proof that includes a nonce and realm.
+ * A Presentation object is used to combine and present credentials.
+ * They can be packaged in such a way that the authorship of the data is
+ * verifiable. The data in a presentation is often all about the same
+ * subject, but there is no limit to the number of subjects or issuers
+ * in the presentation.
  *
  * This also helps prevent a verifier from reusing a verifiable presentation as
  * their own.
@@ -163,59 +166,64 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		}
 
 		/**
-		 * Get presentation type.
+		 * Get the proof type.
 		 *
 		 * @return the type string
 		 */
-	    public String getType() {
-	    	return type;
-	    }
+		public String getType() {
+			return type;
+		}
 
-	    /**
-	     * Get key to sign Presentation.
-	     *
-	     * @return the sign key
-	     */
-	    public DIDURL getVerificationMethod() {
-	    	return verificationMethod;
-	    }
+		/**
+		 * Get the verification method.
+		 *
+		 * @return the id of key to sign this proof
+		 */
+		public DIDURL getVerificationMethod() {
+			return verificationMethod;
+		}
 
-	    /**
-	     * Get realm string of Presentation.
-	     *
-	     * @return the realm string
-	     */
-	    public String getRealm() {
-	    	return realm;
-	    }
+		/**
+		 * Get the realm string of this presentation object.
+		 *
+		 * @return the realm string
+		 */
+		public String getRealm() {
+			return realm;
+		}
 
-	    /**
-	     * Get nonce string of Presentation.
-	     *
-	     * @return the nonce string
-	     */
-	    public String getNonce() {
-	    	return nonce;
-	    }
+		/**
+		 * Get the nonce string of this presentation object.
+		 *
+		 * @return the nonce string
+		 */
+		public String getNonce() {
+			return nonce;
+		}
 
-	    /**
-	     * Get signature string of Presentation.
-	     *
-	     * @return the signature string
-	     */
-	    public String getSignature() {
-	    	return signature;
-	    }
+		/**
+		 * Get signature value of this presentation object.
+		 *
+		 * @return the signature string
+		 */
+		public String getSignature() {
+			return signature;
+		}
 	}
 
 	/**
-	 * Constructs the simplest Presentation.
+	 * Constructs a presentation object for given holder.
+	 *
+	 * @param holder the holder's DID of this presentation object
 	 */
 	protected VerifiablePresentation(DID holder) {
 		this.holder = holder;
 		credentials = new TreeMap<DIDURL, VerifiableCredential>();
 	}
 
+	/**
+	 * Default constructor.
+	 */
 	protected VerifiablePresentation() {
 		this(null);
 	}
@@ -223,7 +231,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	/**
 	 * Copy constructor.
 	 *
-	 * @param vp the source VerifiablePresentation object.
+	 * @param vp the source VerifiablePresentation object
 	 */
 	private VerifiablePresentation(VerifiablePresentation vp, boolean withProof) {
 		this.id = vp.id;
@@ -236,21 +244,26 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			this.proof = vp.proof;
 	}
 
+	/**
+	 * Get the id of this presentation object.
+	 *
+	 * @return the id object
+	 */
 	public DIDURL getId() {
 		return id;
 	}
 
 	/**
-	 * Get the type of Presentation.
+	 * Get the types of this presentation object.
 	 *
-	 * @return the type string
+	 * @return an array of type string
 	 */
 	public List<String> getType() {
 		return Collections.unmodifiableList(type);
 	}
 
 	/**
-	 * Get the holder of the Presentation.
+	 * Get the holder of this presentation object.
 	 *
 	 * @return the holder's DID
 	 */
@@ -267,16 +280,16 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Get the time created Presentation.
+	 * Get the time created this presentation object.
 	 *
-	 * @return the time created
+	 * @return the create time stamp
 	 */
 	public Date getCreated() {
 		return created;
 	}
 
 	/**
-	 * Get the count of Credentials in the Presentation.
+	 * Get the count of Credentials in this presentation object.
 	 *
 	 * @return the Credentials' count
 	 */
@@ -285,19 +298,19 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Get all Credentials in the Presentation.
+	 * Get all Credentials in this presentation object.
 	 *
-	 * @return the Credential array
+	 * @return an array of all credentials
 	 */
 	public List<VerifiableCredential> getCredentials() {
 		return Collections.unmodifiableList(_credentials);
 	}
 
 	/**
-	 * Get the specified Credential.
+	 * Get the specified credential.
 	 *
-	 * @param id the specified Credential id
-	 * @return the Credential object
+	 * @param id the specified credential id
+	 * @return the credential object
 	 */
 	public VerifiableCredential getCredential(DIDURL id) {
 		checkArgument(id != null, "Invalid credential id");
@@ -309,19 +322,19 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Get the specified Credential.
+	 * Get the specified credential.
 	 *
-	 * @param id the specified Credential id string
-	 * @return the Credential object
+	 * @param id the specified credential id string
+	 * @return the credential object
 	 */
 	public VerifiableCredential getCredential(String id) {
 		return getCredential(DIDURL.valueOf(getHolder(), id));
 	}
 
 	/**
-	 * Get Presentation Proof object.
+	 * Get the proof object of this presentation.
 	 *
-	 * @return the Presentation Proof object
+	 * @return the proof object
 	 */
 	public Proof getProof() {
 		return proof;
@@ -330,7 +343,6 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	/**
 	 * Sanitize routine before sealing or after deserialization.
 	 *
-	 * @param withProof check the proof object or not
 	 * @throws MalformedPresentationException if the presentation object is invalid
 	 */
 	@Override
@@ -367,10 +379,10 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Check whether the Presentation is genuine or not.
+	 * Check whether the presentation is genuine or not.
 	 *
-	 * @return whether the Credential object is genuine
-	 * @throws DIDResolveException if error occurs when resolve the DID documents
+	 * @return whether the credential object is genuine
+	 * @throws DIDResolveException if error occurs when resolving the DIDs
 	 */
 	public boolean isGenuine() throws DIDResolveException {
 		DIDDocument holderDoc = getHolder().resolve();
@@ -385,7 +397,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 			return false;
 
-		// Credential should signed by authentication key.
+		// credential should signed by authentication key.
 		if (!holderDoc.isAuthenticationKey(proof.getVerificationMethod()))
 			return false;
 
@@ -427,8 +439,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	/**
 	 * Check whether the presentation is valid or not.
 	 *
-	 * @return whether the Credential object is valid
-	 * @throws DIDResolveException if error occurs when resolve the DID documents
+	 * @return whether the credential object is valid
+	 * @throws DIDResolveException if error occurs when resolve the DIDs
 	 */
 	public boolean isValid() throws DIDResolveException {
 		DIDDocument holderDoc = getHolder().resolve();
@@ -443,7 +455,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 			return false;
 
-		// Credential should signed by authentication key.
+		// credential should signed by authentication key.
 		if (!holderDoc.isAuthenticationKey(proof.getVerificationMethod()))
 			return false;
 
@@ -465,9 +477,9 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Check whether the Credential is valid in asynchronous mode.
+	 * Check whether the credential is valid in asynchronous mode.
 	 *
-	 * @return the new CompletableStage if success; null otherwise.
+	 * @return the new CompletableStage if success.
 	 * 	       The boolean result is valid or not
 	 */
 	public CompletableFuture<Boolean> isValidAsync() {
@@ -483,12 +495,12 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Parse a VerifiablePresentation object from from a string JSON
+	 * Parse a VerifiablePresentation object from a string JSON
 	 * representation.
 	 *
 	 * @param content the string JSON content for building the object
 	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedPresentationException if a parse error occurs
 	 */
 	public static VerifiablePresentation parse(String content)
 			throws MalformedPresentationException {
@@ -503,11 +515,11 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Parse a VerifiablePresentation object from from a Reader object.
+	 * Parse a VerifiablePresentation object from a Reader object.
 	 *
 	 * @param src Reader object used to read JSON content for building the object
 	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedPresentationException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiablePresentation parse(Reader src)
@@ -523,11 +535,11 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Parse a VerifiablePresentation object from from a InputStream object.
+	 * Parse a VerifiablePresentation object from an InputStream object.
 	 *
 	 * @param src InputStream object used to read JSON content for building the object
 	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedPresentationException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiablePresentation parse(InputStream src)
@@ -543,11 +555,11 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Parse a VerifiablePresentation object from from a File object.
+	 * Parse a VerifiablePresentation object from a File object.
 	 *
 	 * @param src File object used to read JSON content for building the object
 	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedPresentationException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiablePresentation parse(File src)
@@ -563,12 +575,12 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Parse a VerifiablePresentation object from from a string JSON
+	 * Parse a VerifiablePresentation object from a string JSON
 	 * representation.
 	 *
 	 * @param content the string JSON content for building the object
 	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedPresentationException if a parse error occurs
 	 * @deprecated use {@link #parse(String)} instead
 	 */
 	@Deprecated
@@ -578,11 +590,11 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Parse a VerifiablePresentation object from from a Reader object.
+	 * Parse a VerifiablePresentation object from a Reader object.
 	 *
 	 * @param src Reader object used to read JSON content for building the object
 	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedPresentationException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(Reader)} instead
 	 */
@@ -593,11 +605,11 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Parse a VerifiablePresentation object from from a InputStream object.
+	 * Parse a VerifiablePresentation object from an InputStream object.
 	 *
 	 * @param src InputStream object used to read JSON content for building the object
 	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedPresentationException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(InputStream)} instead
 	 */
@@ -608,11 +620,11 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Parse a VerifiablePresentation object from from a File object.
+	 * Parse a VerifiablePresentation object from a File object.
 	 *
 	 * @param src File object used to read JSON content for building the object
 	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
+	 * @throws MalformedPresentationException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 * @deprecated use {@link #parse(File)} instead
 	 */
@@ -627,10 +639,9 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @param did the owner of Presentation.
 	 * @param signKey the key to sign
-	 * @param store the specified DIDStore
+	 * @param store the DIDStore to load sign key
 	 * @return the presentation Builder object
-	 * @throws DIDStoreException can not load DID
-	 * @throws InvalidKeyException if the signKey is invalid
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public static Builder createFor(DID did, DIDURL signKey, DIDStore store)
 			throws DIDStoreException {
@@ -654,6 +665,15 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		return new Builder(holder, signKey);
 	}
 
+	/**
+	 * Get the Builder object to create presentation for DID.
+	 *
+	 * @param did the owner of Presentation.
+	 * @param signKey the key to sign
+	 * @param store the DIDStore to load sign key
+	 * @return the presentation Builder object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public static Builder createFor(String did, String signKey, DIDStore store)
 			throws DIDStoreException {
 		return createFor(DID.valueOf(did), DIDURL.valueOf(DID.valueOf(did), signKey), store);
@@ -662,24 +682,31 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	/**
 	 * Get the Builder object to create presentation for DID.
 	 *
-	 * @param did the owner of the presentation
-	 * @param store the specified DIDStore
+	 * @param did the owner of Presentation.
+	 * @param store the DIDStore to load sign key
 	 * @return the presentation Builder object
-	 * @throws DIDStoreException can not load DID
-	 * @throws InvalidKeyException if the signKey is invalid
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public static Builder createFor(DID did, DIDStore store)
 			throws DIDStoreException {
 		return createFor(did, null, store);
 	}
 
+	/**
+	 * Get the Builder object to create presentation for DID.
+	 *
+	 * @param did the owner of Presentation.
+	 * @param store the DIDStore to load sign key
+	 * @return the presentation Builder object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public static Builder createFor(String did, DIDStore store)
 			throws DIDStoreException {
 		return createFor(DID.valueOf(did), null, store);
 	}
 
 	/**
-     * Presentation Builder object to create presentation.
+	 * Presentation Builder object to create presentation.
 	 */
 	public static class Builder {
 		private DIDDocument holder;
@@ -689,10 +716,10 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		private VerifiablePresentation presentation;
 
 		/**
-		 * Create a Builder object with issuer information.
+		 * Create a Builder object with given holder and sign key.
 		 *
-		 * @param holder the Presentation's holder
-		 * @param signKey the key to sign Presentation
+		 * @param holder the holder's DID document
+		 * @param signKey the key to sign the presentation
 		 */
 		protected Builder(DIDDocument holder, DIDURL signKey) {
 			this.holder = holder;
@@ -705,6 +732,12 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 				throw new AlreadySealedException();
 		}
 
+		/**
+		 * Set the id for the presentation.
+		 *
+		 * @param id the presentation id
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder id(DIDURL id) {
 			checkNotSealed();
 			checkArgument(id != null && (id.getDid() == null || id.getDid().equals(holder.getSubject())),
@@ -714,15 +747,21 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			return this;
 		}
 
+		/**
+		 * Set the id for the presentation.
+		 *
+		 * @param id the presentation id
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder id(String id) {
 			return id(DIDURL.valueOf(holder.getSubject(), id));
 		}
 
 		/**
-		 * Set Credential types.
+		 * Set credential types.
 		 *
-		 * @param types the set of types
-		 * @return the Builder object
+		 * @param types the type strings
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder type(String ... types) {
 			checkNotSealed();
@@ -733,10 +772,10 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		}
 
 		/**
-		 * Add Credentials to Presentation.
+		 * Add credentials to the new presentation object.
 		 *
-		 * @param credentials the credentials array
-		 * @return the Presentation Builder object
+		 * @param credentials the credentials to be add
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder credentials(VerifiableCredential ... credentials) {
 			checkNotSealed();
@@ -760,10 +799,10 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		}
 
 		/**
-		 * Set realm for Presentation.
+		 * Set realm for the new presentation.
 		 *
 		 * @param realm the realm string
-		 * @return the Presentation Builder object
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder realm(String realm) {
 			checkNotSealed();
@@ -774,10 +813,10 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		}
 
 		/**
-		 * Set nonce for Presentation.
+		 * Set nonce for the new presentation.
 		 *
 		 * @param nonce the nonce string
-		 * @return the Presentation Builder object
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder nonce(String nonce) {
 			checkNotSealed();
@@ -792,9 +831,9 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		 * presentation.
 		 *
 		 * @param storepass the password for DIDStore
-		 * @return the Presentation object
+		 * @return the new presentation object
 		 * @throws MalformedPresentationException if the presentation is invalid
-		 * @throws DIDStoreException if an error occurs when access DID store
+		 * @throws DIDStoreException if an error occurs when accessing DID store
 		 */
 		public VerifiablePresentation seal(String storepass)
 				throws MalformedPresentationException, DIDStoreException  {

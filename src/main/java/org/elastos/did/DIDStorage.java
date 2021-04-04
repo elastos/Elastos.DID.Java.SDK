@@ -41,6 +41,7 @@ public interface DIDStorage {
 	 * All encrypted data will re-encrypt transparently through this interface.
 	 * </p>
 	 */
+	@FunctionalInterface
 	public interface ReEncryptor {
 		/**
 		 * Re-encrypt the encrypted data.
