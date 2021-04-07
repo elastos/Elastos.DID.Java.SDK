@@ -104,26 +104,25 @@ import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 /**
- * The DIDDocument represents the DID information.
+ * DID documents contain information associated with a DID.
+ * They typically express verification methods, such as cryptographic
+ * public keys, and services relevant to interactions with the DID subject.
  *
- * This is the concrete serialization of the data model, according to a
- * particular syntax.
- *
- * DIDDocument is a set of data that describes the subject of a DID, including
- * public key, authentication(optional), authorization(optional), credential and
- * services. One document must be have one subject, and at least one public
- * key.
+ * <p>
+ * The generic properties supported in a DID document are specified by the
+ * <a href="https://github.com/elastos/Elastos.DID.Method">Elastos DID Method Specification</a>.
+ * </p>
  */
 @JsonPropertyOrder({ DIDDocument.ID,
-    DIDDocument.CONTROLLER,
-    DIDDocument.MULTI_SIGNATURE,
-    DIDDocument.PUBLICKEY,
-    DIDDocument.AUTHENTICATION,
-    DIDDocument.AUTHORIZATION,
-    DIDDocument.VERIFIABLE_CREDENTIAL,
-    DIDDocument.SERVICE,
-    DIDDocument.EXPIRES,
-    DIDDocument.PROOF })
+	DIDDocument.CONTROLLER,
+	DIDDocument.MULTI_SIGNATURE,
+	DIDDocument.PUBLICKEY,
+	DIDDocument.AUTHENTICATION,
+	DIDDocument.AUTHORIZATION,
+	DIDDocument.VERIFIABLE_CREDENTIAL,
+	DIDDocument.SERVICE,
+	DIDDocument.EXPIRES,
+	DIDDocument.PROOF })
 public class DIDDocument extends DIDEntity<DIDDocument> {
 	protected final static String ID = "id";
 	protected final static String PUBLICKEY = "publicKey";
@@ -147,7 +146,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 	@JsonProperty(CONTROLLER)
 	@JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,
-	                    JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
+						JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
 	@JsonInclude(Include.NON_EMPTY)
 	private List<DID> controllers;
 
@@ -192,24 +191,49 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	private HashMap<DID, Proof> proofs;
 
 	private DID effectiveController;
-	public PublicKey defaultPublicKey;
+	private PublicKey defaultPublicKey;
 
 	private DIDMetadata metadata;
 
 	private static final Logger log = LoggerFactory.getLogger(DIDDocument.class);
 
+	/**
+	 * MultiSignature is a digital signature scheme which allows a group of
+	 * users to sign a single document.
+	 */
 	public static class MultiSignature {
 		private int m;
 		private int n;
 
+		/**
+		 * Create a MultiSignature instance with given signature specification.
+		 *
+		 * <p>
+		 * The MultiSignature can be of the m-of-n type where any m private
+		 * keys out of a possible n are required to sign/verify the signature.
+		 * </p>
+		 *
+		 * @param m m required keys
+		 * @param n n possible keys
+		 */
 		public MultiSignature(int m, int n) {
 			apply(m, n);
 		}
 
+		/**
+		 * Copy constructor.
+		 *
+		 * @param ms the source MultiSignature object
+		 */
 		private MultiSignature(MultiSignature ms) {
 			apply(ms.m, ms.n);
 		}
 
+		/**
+		 * Create a MultiSignature instance with given signature specification.
+		 *
+		 * @param mOfN the string format m-of-n(m:n)
+		 */
 		@JsonCreator
 		public MultiSignature(String mOfN) {
 			if (mOfN == null || mOfN.isEmpty())
@@ -222,7 +246,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			apply(Integer.valueOf(mn[0]), Integer.valueOf(mn[1]));
 		}
 
-		protected void apply(int m, int n) {
+		private void apply(int m, int n) {
 			checkArgument(n > 1, "Invalid multisig spec: n should > 1");
 			checkArgument(m > 0 && m <= n,  "Invalid multisig spec: m should > 0 and <= n");
 
@@ -230,14 +254,33 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			this.n = n;
 		}
 
+		/**
+		 * Get the m of requested signatures.
+		 *
+		 * @return m
+		 */
 		public int m() {
 			return m;
 		}
 
+		/**
+		 * Get the n of possible signatures.
+		 *
+		 * @return m
+		 */
 		public int n() {
 			return n;
 		}
 
+		/**
+		 * Compares this MultiSignature to the specified object.
+		 * The result is true if and only if the argument is not null and
+		 * is a MultiSignature object that represents the same schema.
+		 *
+		 * @param obj the object to compare this MultiSignature against
+		 * @return true if the given object represents a MultiSignature
+		 * 		   equivalent to this object, false otherwise
+		 */
 		@Override
 		public boolean equals(Object obj) {
 			if (this == obj)
@@ -251,6 +294,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			return false;
 		}
 
+		/**
+		 * Return the string representation of this MultiSignature object.
+		 *
+		 * @return a string representation of this MultiSignature object
+		 */
 		@Override
 		@JsonValue
 		public String toString() {
@@ -259,9 +307,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-     * Publickey is used for digital signatures, encryption and
-     * other cryptographic operations, which are the basis for purposes such as
-     * authentication or establishing secure communication with service endpoints.
+	 * PublicKey is used for digital signatures, encryption and
+	 * other cryptographic operations, which are the basis for purposes such as
+	 * authentication or establishing secure communication with service endpoints.
 	 */
 	@JsonPropertyOrder({ ID, TYPE, CONTROLLER, PUBLICKEY_BASE58 })
 	@JsonFilter("publicKeyFilter")
@@ -278,12 +326,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		private boolean authorizationKey;
 
 		/**
-		 * Constructs Publickey with the given value.
+		 * Constructs a PublicKey instance with the given values.
 		 *
-		 * @param id the Id for PublicKey
-		 * @param type the type string of PublicKey, default type is "ECDSAsecp256r1"
-		 * @param controller the DID who holds private key
-		 * @param keyBase58 the string from encoded base58 of public key
+		 * @param id the id of the PublicKey
+		 * @param type the key type, default type is "ECDSAsecp256r1"
+		 * @param controller the DID who holds the private key
+		 * @param keyBase58 the base58 encoded public key
 		 */
 		@JsonCreator
 		protected PublicKey(@JsonProperty(value = ID, required = true) DIDURL id,
@@ -299,7 +347,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		/**
 		 * Get the PublicKey id.
 		 *
-		 * @return the identifier
+		 * @return the key id
 		 */
 		@Override
 		public DIDURL getId() {
@@ -317,58 +365,79 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Get the controller of Publickey.
+		 * Get the controller of this PublicKey.
 		 *
-		 * @return the controller
+		 * @return the controller's DID
 		 */
 		public DID getController() {
 			return controller;
 		}
 
 		/**
-		 * Get public key base58 string.
+		 * Get the base58 encoded public key string.
 		 *
-		 * @return the key base58 string
+		 * @return the base58 encoded public key
 		 */
 		public String getPublicKeyBase58() {
 			return keyBase58;
 		}
 
 		/**
-		 * Get public key bytes.
+		 * Get the raw binary public key bytes.
 		 *
-		 * @return the key bytes
+		 * @return a bytes array of binary public key
 		 */
 		public byte[] getPublicKeyBytes() {
 			return Base58.decode(keyBase58);
 		}
 
 		/**
-		 * Check if the key is an authentication key or not.
+		 * Check if the key is an authentication key.
 		 *
-		 * @return if the key is an authentication key or not
+		 * @return if true if is an authentication key, false otherwise
 		 */
 		public boolean isAuthenticationKey() {
 			return authenticationKey;
 		}
 
+		/**
+		 * Set this PublicKey as an authentication key or not.
+		 *
+		 * @param authenticationKey true set this key as an authentication key;
+		 * 		  false remove this key from authentication keys
+		 */
 		private void setAuthenticationKey(boolean authenticationKey) {
 			this.authenticationKey = authenticationKey;
 		}
 
 		/**
-		 * Check if the key is an authorization key or not.
+		 * Check if the key is an authorization key.
 		 *
-		 * @return if the key is an authorization key or not
+		 * @return if true if is an authorization key, false otherwise
 		 */
 		public boolean isAuthorizationKey() {
 			return authorizationKey;
 		}
 
+		/**
+		 * Set this PublicKey as an authorization key or not.
+		 *
+		 * @param authenticationKey true set this key as an authorization key;
+		 * 		  false remove this key from authorization keys
+		 */
 		private void setAuthorizationKey(boolean authorizationKey) {
 			this.authorizationKey = authorizationKey;
 		}
 
+		/**
+		 * Compares this PublicKey to the specified object.
+		 * The result is true if and only if the argument is not null and
+		 * is a PublicKey object that represents the same key.
+		 *
+		 * @param obj the object to compare this PublicKey against
+		 * @return true if the given object represents a PublicKey
+		 * 		   equivalent to this object, false otherwise
+		 */
 		@Override
 		public boolean equals(Object obj) {
 			if (this == obj)
@@ -387,6 +456,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			return false;
 		}
 
+		/**
+		 * Compares this PublicKey with the specified PublicKey.
+		 *
+		 * @param key PublicKey to which this PublicKey is to be compared
+		 * @return -1, 0 or 1 as this PublicKey is less than, equal to,
+		 * 		   or greater than key
+		 */
 		@Override
 		public int compareTo(PublicKey key) {
 			int rc = id.compareTo(key.id);
@@ -407,7 +483,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				return controller.compareTo(key.controller);
 		}
 
-		protected static PropertyFilter getFilter() {
+		static PropertyFilter getFilter() {
 			return new DIDPropertyFilter() {
 				@Override
 				protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
@@ -432,7 +508,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 	@JsonSerialize(using = PublicKeyReference.Serializer.class)
 	@JsonDeserialize(using = PublicKeyReference.Deserializer.class)
-	protected static class PublicKeyReference implements Comparable<PublicKeyReference> {
+	private static class PublicKeyReference implements Comparable<PublicKeyReference> {
 		private DIDURL id;
 		private PublicKey key;
 
@@ -476,13 +552,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		static class Serializer extends StdSerializer<PublicKeyReference> {
 			private static final long serialVersionUID = -6934608221544406405L;
 
+			@SuppressWarnings("unused")
 			public Serializer() {
-		        this(null);
-		    }
+				this(null);
+			}
 
-		    public Serializer(Class<PublicKeyReference> t) {
-		        super(t);
-		    }
+			public Serializer(Class<PublicKeyReference> t) {
+				super(t);
+			}
 
 			@Override
 			public void serialize(PublicKeyReference keyRef, JsonGenerator gen,
@@ -494,36 +571,37 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		static class Deserializer extends StdDeserializer<PublicKeyReference> {
 			private static final long serialVersionUID = -4252894239212420927L;
 
+			@SuppressWarnings("unused")
 			public Deserializer() {
-		        this(null);
-		    }
+				this(null);
+			}
 
-		    public Deserializer(Class<?> t) {
-		        super(t);
-		    }
+			public Deserializer(Class<?> t) {
+				super(t);
+			}
 
 			@Override
 			public PublicKeyReference deserialize(JsonParser p, DeserializationContext ctxt)
 					throws IOException, JsonProcessingException {
-		    	JsonToken token = p.getCurrentToken();
-		    	if (token.equals(JsonToken.VALUE_STRING)) {
-		    		DIDURL id = p.readValueAs(DIDURL.class);
-		    		return new PublicKeyReference(id);
-		    	} else if (token.equals(JsonToken.START_OBJECT)) {
-		    		PublicKey key = p.readValueAs(PublicKey.class);
-		    		return new PublicKeyReference(key);
-		    	} else
-		    		throw ctxt.weirdStringException(p.getText(),
-		    				PublicKey.class, "Invalid public key");
+				JsonToken token = p.getCurrentToken();
+				if (token.equals(JsonToken.VALUE_STRING)) {
+					DIDURL id = p.readValueAs(DIDURL.class);
+					return new PublicKeyReference(id);
+				} else if (token.equals(JsonToken.START_OBJECT)) {
+					PublicKey key = p.readValueAs(PublicKey.class);
+					return new PublicKeyReference(key);
+				} else
+					throw ctxt.weirdStringException(p.getText(),
+							PublicKey.class, "Invalid public key");
 			}
 
 		}
 	}
 
 	/**
-     * A Service may represent any type of service the subject
-     * wishes to advertise, including decentralized identity management services
-     * for further discovery, authentication, authorization, or interaction.
+	 * A Service may represent any type of service the subject
+	 * wishes to advertise, including decentralized identity management services
+	 * for further discovery, authentication, authorization, or interaction.
 	 */
 	@JsonPropertyOrder({ ID, TYPE, SERVICE_ENDPOINT })
 	public static class Service implements DIDObject {
@@ -536,6 +614,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 		private Map<String, Object> properties;
 
+		/**
+		 * Create a Service object with given values.
+		 *
+		 * @param id the service id
+		 * @param type the service type
+		 * @param endpoint the service endpoint, could be URL or any application defined address
+		 * @param properties a map for the extra properties
+		 */
 		protected Service(DIDURL id, String type, String endpoint,
 				Map<String, Object> properties) {
 			this.id = id;
@@ -551,11 +637,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Constructs Service with the given value.
+		 * Create a Service object with given values.
 		 *
-		 * @param id the id for Service
-		 * @param type the type of Service
-		 * @param endpoint the address of service point
+		 * @param id the service id
+		 * @param type the service type
+		 * @param endpoint the service endpoint, could be URL or any application defined address
 		 */
 		@JsonCreator
 		protected Service(@JsonProperty(value = ID, required = true) DIDURL id,
@@ -585,9 +671,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Get service point string.
+		 * Get the service endpoint.
 		 *
-		 * @return the service point string
+		 * @return the service endpoint
 		 */
 		public String getServiceEndpoint() {
 			return endpoint;
@@ -623,6 +709,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			properties.put(name, value);
 		}
 
+		/**
+		 * Get the extra properties of the service.
+		 *
+		 * @return a map object contains the extra properties
+		 */
 		public Map<String, Object> getProperties() {
 			// TODO: make it unmodifiable recursively
 			 return Collections.unmodifiableMap(properties != null ?
@@ -631,7 +722,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * The Proof represents the proof content of DID Document.
+	 * The Proof class represents the proof content of DID Document.
 	 */
 	@JsonPropertyOrder({ TYPE, CREATED, CREATOR, SIGNATURE_VALUE })
 	@JsonFilter("didDocumentProofFilter")
@@ -648,11 +739,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		private String signature;
 
 		/**
-		 * Constructs the proof of DIDDocument with the given value.
+		 * Constructs a Proof object with the given values.
 		 *
 		 * @param type the type of Proof
-		 * @param created the time to create DIDDocument
-		 * @param creator the key to sign
+		 * @param created the create time stamp
+		 * @param creator the key that sign this proof
 		 * @param signature the signature string
 		 */
 		@JsonCreator
@@ -667,9 +758,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Constructs the proof of DIDDocument with the key id and signature string.
+		 * Constructs a Proof object with the given values.
 		 *
-		 * @param creator the key to sign
+		 * @param creator the key that sign this proof
 		 * @param signature the signature string
 		 */
 		protected Proof(DIDURL creator, String signature) {
@@ -677,41 +768,48 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Get Proof type.
+		 * Get the proof type.
 		 *
 		 * @return the type string
 		 */
-	    public String getType() {
-	    	return type;
-	    }
+		public String getType() {
+			return type;
+		}
 
-	    /**
-	     * Get the time to create DIDDocument.
-	     *
-	     * @return the time
-	     */
-	    public Date getCreated() {
-	    	return created;
-	    }
+		/**
+		 * Get the create time of this proof object.
+		 *
+		 * @return the create time stamp
+		 */
+		public Date getCreated() {
+			return created;
+		}
 
-	    /**
-	     * Get the key id to sign.
-	     *
-	     * @return the key id
-	     */
-	    public DIDURL getCreator() {
-	    	return creator;
-	    }
+		/**
+		 * Get the key id that sign this proof object
+		 *
+		 * @return the key id
+		 */
+		public DIDURL getCreator() {
+			return creator;
+		}
 
-	    /**
-	     * Get signature string.
-	     *
-	     * @return the signature string
-	     */
-	    public String getSignature() {
-	    	return signature;
-	    }
+		/**
+		 * Get signature string.
+		 *
+		 * @return the signature string
+		 */
+		public String getSignature() {
+			return signature;
+		}
 
+		/**
+		 * Compares this Proof with the specified Proof object.
+		 *
+		 * @param proof Proof to which this Proof is to be compared
+		 * @return -1, 0 or 1 as this Proof is less than, equal to,
+		 * 		   or greater than proof
+		 */
 		@Override
 		public int compareTo(Proof proof) {
 			int rc = (int)(this.created.getTime() - proof.created.getTime());
@@ -720,7 +818,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			return rc;
 		}
 
-		protected static PropertyFilter getFilter() {
+		static PropertyFilter getFilter() {
 			return new DIDPropertyFilter() {
 				@Override
 				protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
@@ -741,7 +839,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Set the DIDDocument subject.
+	 * Construct a new DIDDocument object with given subject.
 	 *
 	 * @param subject the owner of DIDDocument
 	 */
@@ -754,6 +852,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * Copy constructor.
 	 *
 	 * @param doc the document be copied
+	 * @param withProof copy with the proof or not
 	 */
 	private DIDDocument(DIDDocument doc, boolean withProof) {
 		this.subject = doc.subject;
@@ -779,7 +878,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get subject of DIDDocument.
+	 * Get subject of this DIDDocument.
 	 *
 	 * @return the DID object
 	 */
@@ -823,7 +922,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get contoller's DID.
+	 * Get contoller's DIDs.
 	 *
 	 * @return the Controllers DID list or empty list if no controller
 	 */
@@ -852,7 +951,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Check if current DID has controller.
 	 *
-	 * @return true if has, otherwise false
+	 * @return true if has, false otherwise
 	 */
 	public boolean hasController() {
 		return !controllers.isEmpty();
@@ -861,6 +960,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Check if current DID has specific controller.
 	 *
+	 * @param did the controller's DID that to be test
 	 * @return true if has, otherwise false
 	 */
 	public boolean hasController(DID did) {
@@ -868,22 +968,39 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get controller's DID document.
+	 * Get the specific controller's DID document.
 	 *
+	 * @param did the controller's DID
 	 * @return the DIDDocument object or null if no controller
 	 */
 	protected DIDDocument getControllerDocument(DID did) {
 		return controllerDocs.get(did);
 	}
 
+	/**
+	 * Get the current effective controller for the customized DIDDocument.
+	 *
+	 * @return the effective controller's DID or null if not set
+	 */
 	public DID getEffectiveController() {
 		return effectiveController;
 	}
 
+	/**
+	 * Get the current effective controller's document for the
+	 * customized DIDDocument.
+	 *
+	 * @return the effective controller's document or null if not set
+	 */
 	protected DIDDocument getEffectiveControllerDocument() {
 		return effectiveController == null ? null : getControllerDocument(effectiveController);
 	}
 
+	/**
+	 * Set the current effective controller for the customized DIDDocument.
+	 *
+	 * @param controller the new effective controller
+	 */
 	public void setEffectiveController(DID controller) {
 		checkIsCustomized();
 
@@ -903,18 +1020,28 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 	}
 
+	/**
+	 * Check if this document is a multisig document.
+	 *
+	 * @return true if the document is a multisig document, false otherwise
+	 */
 	public boolean isMultiSignature() {
 		return multisig != null;
 	}
 
+	/**
+	 * Get the multisig specification of this document.
+	 *
+	 * @return the MultiSignature specification
+	 */
 	public MultiSignature getMultiSignature() {
 		return multisig;
 	}
 
 	/**
-	 * Get the count of public keys.
+	 * Get the number of the public keys.
 	 *
-	 * @return the count
+	 * @return the number of the public keys
 	 */
 	public int getPublicKeyCount() {
 		int count = publicKeys.size();
@@ -928,9 +1055,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get the public keys array.
+	 * Get all the public keys.
 	 *
-	 * @return the PublicKey array
+	 * @return a array of PublicKey object
 	 */
 	public List<PublicKey> getPublicKeys() {
 		List<PublicKey> pks = new ArrayList<PublicKey>(publicKeys.values());
@@ -944,11 +1071,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Select public keys with the specified key id or key type.
+	 * Select the public keys by the specified key id or key type.
 	 *
-	 * @param id the key id
-	 * @param type the type string
-	 * @return the matched PublicKey array
+	 * @param id the optional key id
+	 * @param type the optional key type
+	 * @return an array of the matched public keys
 	 */
 	public List<PublicKey> selectPublicKeys(DIDURL id, String type) {
 		checkArgument(id != null || type != null, "Invalid select args");
@@ -976,20 +1103,20 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Select public keys with the specified key id or key type.
+	 * Select the public keys by the specified key id or key type.
 	 *
-	 * @param id the key id string
-	 * @param type the type string
-	 * @return the matched PublicKey array
+	 * @param id the optional key id
+	 * @param type the optional key type
+	 * @return an array of the matched public keys
 	 */
 	public List<PublicKey> selectPublicKeys(String id, String type) {
 		return selectPublicKeys(canonicalId(id), type);
 	}
 
 	/**
-	 * Get public key matched specified key id.
+	 * Get the specific public key.
 	 *
-	 * @param id the key id string
+	 * @param id the key id
 	 * @return the PublicKey object
 	 */
 	public PublicKey getPublicKey(String id) {
@@ -997,7 +1124,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get public key matched specified key id.
+	 * Get the specific public key.
 	 *
 	 * @param id the key id
 	 * @return the PublicKey object
@@ -1029,7 +1156,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Check if the specified public key exists.
 	 *
-	 * @param id the key id string
+	 * @param id the key id
 	 * @return the key exists or not
 	 */
 	public boolean hasPublicKey(String id) {
@@ -1041,7 +1168,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 *
 	 * @param id the key id
 	 * @return the key exists or not
-	 * @throws DIDStoreException there is no store
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean hasPrivateKey(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid publicKey id");
@@ -1055,18 +1182,18 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Check if the specified private key exists.
 	 *
-	 * @param id the key id string
+	 * @param id the key id
 	 * @return the key exists or not
-	 * @throws DIDStoreException there is no store
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public boolean hasPrivateKey(String id) throws DIDStoreException {
 		return hasPrivateKey(canonicalId(id));
 	}
 
 	/**
-	 * Get default key id of did document.
+	 * Get default public key id
 	 *
-	 * @return the default key id
+	 * @return the default public key id
 	 */
 	public DIDURL getDefaultPublicKeyId() {
 		PublicKey pk = getDefaultPublicKey();
@@ -1074,9 +1201,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get default key of did document.
+	 * Get default public key.
 	 *
-	 * @return the default key
+	 * @return the default public key
 	 */
 	public PublicKey getDefaultPublicKey() {
 		if (defaultPublicKey != null)
@@ -1089,11 +1216,10 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get KeyPair object according to the given key id.
+	 * Get the JCE KeyPair object for the given public key.
 	 *
-	 * @param id the given key id
-	 * @return the KeyPair object
-	 * @throws InvalidKeyException there is no the matched key
+	 * @param id the public key id
+	 * @return the JCE KeyPair object
 	 */
 	public KeyPair getKeyPair(DIDURL id) {
 		PublicKey pk;
@@ -1115,21 +1241,19 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get KeyPair object according to the given key id.
+	 * Get the JCE KeyPair object for the given public key.
 	 *
-	 * @param id the key id string
-	 * @return the KeyPair object
-	 * @throws InvalidKeyException there is no matched key
+	 * @param id the public key id
+	 * @return the JCE KeyPair object
 	 */
 	public KeyPair getKeyPair(String id) {
 		return getKeyPair(canonicalId(id));
 	}
 
 	/**
-	 * Get KeyPair object according to the given key id.
+	 * Get the JCE KeyPair object for the default public key.
 	 *
-	 * @return the KeyPair object
-	 * @throws InvalidKeyException there is no the matched key
+	 * @return the JCE KeyPair object
 	 */
 	public KeyPair getKeyPair() {
 		return getKeyPair((DIDURL)null);
@@ -1158,13 +1282,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Derive the index private key.
+	 * Derive a private key from this DID. The new private key will derive from
+	 * the default private key of the this DIDDocument.
 	 *
-	 * @param index the index
-	 * @param storepass the password for DIDStore
+	 * @param index the derive index
+	 * @param storepass the password for the DIDStore
 	 * @return the extended private key format. (the real private key is
 	 *         32 bytes long start from position 46)
-	 * @throws DIDStoreException there is no DID store to get root private key
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public String derive(int index, String storepass) throws DIDStoreException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -1205,13 +1330,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Derive the extended private key according to identifier string and security code.
+	 * Derive a private key from this DID. The new private key will derive from
+	 * the default private key of the this DIDDocument.
 	 *
 	 * @param identifier the identifier string
 	 * @param securityCode the security code
-	 * @param storepass the password for DID store
-	 * @return the extended derived private key
-	 * @throws DIDStoreException there is no DID store to get root private key
+	 * @param storepass the password for the DIDStore
+	 * @return the extended private key format. (the real private key is
+	 *         32 bytes long start from position 46)
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public String derive(String identifier, int securityCode, String storepass)
 			throws DIDStoreException {
@@ -1227,9 +1354,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get the count of authentication keys.
+	 * Get the numbers of the authentication keys.
 	 *
-	 * @return the count of authentication key array
+	 * @return the numbers of authentication keys
 	 */
 	public int getAuthenticationKeyCount() {
 		int count = 0;
@@ -1248,9 +1375,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get the authentication key array.
+	 * Get all the authentication keys.
 	 *
-	 * @return the matched authentication key array
+	 * @return an array of the authentication keys
 	 */
 	public List<PublicKey> getAuthenticationKeys() {
 		List<PublicKey> pks = new ArrayList<PublicKey>();
@@ -1269,11 +1396,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Select the authentication key matched the key id or the type.
+	 * Select the authentication keys by the specified key id or key type.
 	 *
-	 * @param id the key id
-	 * @param type the type of key
-	 * @return the matched authentication key array
+	 * @param id the optional key id
+	 * @param type the optional key type
+	 * @return an array of the matched authentication keys
 	 */
 	public List<PublicKey> selectAuthenticationKeys(DIDURL id, String type) {
 		checkArgument(id != null || type != null, "Invalid select args");
@@ -1303,11 +1430,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Select authentication key array matched the key id or the type
+	 * Select the authentication keys by the specified key id or key type.
 	 *
-	 * @param id the key id string
-	 * @param type the type of key
-	 * @return the matched authentication key array
+	 * @param id the optional key id
+	 * @param type the optional key type
+	 * @return an array of the matched authentication keys
 	 */
 	public List<PublicKey> selectAuthenticationKeys(String id, String type) {
 		return selectAuthenticationKeys(canonicalId(id), type);
@@ -1334,32 +1461,30 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		return getAuthenticationKey(canonicalId(id));
 	}
 
-    /**
-     * Judge whether the given key is authentication key or not.
-     *
-     * @param id the key id
-     * @return the returned value is true if the key is an authentication key;
-     *         the returned value is false if the key is not an authentication key.
-     */
+	/**
+	 * Check whether the given key is authentication key.
+	 *
+	 * @param id the key id string
+	 * @return true if the key is an authentication key, false otherwise
+	 */
 	public boolean isAuthenticationKey(DIDURL id) {
 		return getAuthenticationKey(id) != null;
 	}
 
-    /**
-     * Judge whether the given key is authentication key or not.
-     *
-     * @param id the key id string
-     * @return the returned value is true if the key is an authentication key;
-     *         the returned value is false if the key is not an authentication key.
-     */
+	/**
+	 * Check whether the given key is authentication key.
+	 *
+	 * @param id the key id string
+	 * @return true if the key is an authentication key, false otherwise
+	 */
 	public boolean isAuthenticationKey(String id) {
 		return isAuthenticationKey(canonicalId(id));
 	}
 
 	/**
-	 * Get the count of authorization key.
+	 * Get the numbers of the authorization keys.
 	 *
-	 * @return the count
+	 * @return the numbers of the authorization keys
 	 */
 	public int getAuthorizationKeyCount() {
 		int count = 0;
@@ -1373,9 +1498,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get the authorization key array.
+	 * Get all the authorization keys.
 	 *
-	 * @return the  array
+	 * @return an array of authorization keys
 	 */
 	public List<PublicKey> getAuthorizationKeys() {
 		List<PublicKey> pks = new ArrayList<PublicKey>();
@@ -1389,11 +1514,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Select the authorization key array matched the key id or the type.
+	 * Select the authorization keys by the specified key id or key type.
 	 *
-	 * @param id the key id
-	 * @param type the type of key
-	 * @return the matched authorization key array
+	 * @param id the optional key id
+	 * @param type the optional key type
+	 * @return an array of the matched authorization keys
 	 */
 	public List<PublicKey> selectAuthorizationKeys(DIDURL id, String type) {
 		checkArgument(id != null || type != null, "Invalid select args");
@@ -1418,21 +1543,21 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Select the authorization key array matched the key id or the type.
+	 * Select the authorization keys by the specified key id or key type.
 	 *
-	 * @param id the key id string
-	 * @param type the type of key
-	 * @return the matched authorization key array
+	 * @param id the optional key id
+	 * @param type the optional key type
+	 * @return an array of the matched authorization keys
 	 */
 	public List<PublicKey> selectAuthorizationKeys(String id, String type) {
 		return selectAuthorizationKeys(canonicalId(id), type);
 	}
 
 	/**
-	 * Get authorization key matched the given key id.
+	 * Get the specific authorization key.
 	 *
 	 * @param id the key id
-	 * @return the authorization key object
+	 * @return the PublicKey object
 	 */
 	public PublicKey getAuthorizationKey(DIDURL id) {
 		PublicKey pk = getPublicKey(id);
@@ -1440,61 +1565,59 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get authorization key matched the given key id.
+	 * Get the specific authorization key.
 	 *
-	 * @param id the key id string
-	 * @return the authorization key object
+	 * @param id the key id
+	 * @return the PublicKey object
 	 */
 	public PublicKey getAuthorizationKey(String id) {
 		return getAuthorizationKey(canonicalId(id));
 	}
 
 	/**
-	 * Judge whether the public key matched the given key id is an authorization key.
+	 * Check whether the given key is authorization key.
 	 *
-	 * @param id the key id
-	 * @return the returned value is true if the matched key is an authorization key;
-	 *         the returned value is false if the matched key is not an authorization key.
+	 * @param id the key id string
+	 * @return true if the key is an authorization key, false otherwise
 	 */
 	public boolean isAuthorizationKey(DIDURL id) {
 		return getAuthorizationKey(id) != null;
 	}
 
 	/**
-	 * Judge whether the public key matched the given key id is an authorization key.
+	 * Check whether the given key is authorization key.
 	 *
 	 * @param id the key id string
-	 * @return the returned value is true if the matched key is an authorization key;
-	 *         the returned value is false if the matched key is not an authorization key.
+	 * @return true if the key is an authorization key, false otherwise
 	 */
 	public boolean isAuthorizationKey(String id) {
 		return isAuthorizationKey(canonicalId(id));
 	}
 
 	/**
-	 * Get the count of Credential array.
+	 * Get the numbers of the credentials.
 	 *
-	 * @return the count
+	 * @return the numbers of the credentials
 	 */
 	public int getCredentialCount() {
 		return credentials.size();
 	}
 
 	/**
-	 * Get the Credential array.
+	 * Get all the credential.
 	 *
-	 * @return the Credential array
+	 * @return an array of the credential objects
 	 */
 	public List<VerifiableCredential> getCredentials() {
 		return Collections.unmodifiableList(_credentials);
 	}
 
 	/**
-	 * Select the Credential array matched the given credential id or the type.
+	 * Select the credentials by the specified id or type.
 	 *
-	 * @param id the credential id
-	 * @param type the type of credential
-	 * @return the matched Credential array
+	 * @param id the optional credential id
+	 * @param type the optional credential type
+	 * @return an array of the matched credentials
 	 */
 	public List<VerifiableCredential> selectCredentials(DIDURL id, String type) {
 		checkArgument(id != null || type != null, "Invalid select args");
@@ -1516,21 +1639,21 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Select the Credential array matched the given credential id or the type.
+	 * Select the credentials by the specified id or type.
 	 *
-	 * @param id the credential id string
-	 * @param type the type of credential
-	 * @return the matched Credential array
+	 * @param id the optional credential id
+	 * @param type the optional credential type
+	 * @return an array of the matched credentials
 	 */
 	public List<VerifiableCredential> selectCredentials(String id, String type) {
 		return selectCredentials(canonicalId(id), type);
 	}
 
 	/**
-	 * Get the Credential matched the given credential id.
+	 * Get the specific credential.
 	 *
 	 * @param id the credential id
-	 * @return the matched Credential object
+	 * @return the credential object
 	 */
 	public VerifiableCredential getCredential(DIDURL id) {
 		checkArgument(id != null, "Invalid Credential id");
@@ -1539,39 +1662,39 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get the Credential matched the given credential id.
+	 * Get the specific credential.
 	 *
-	 * @param id the credential id string
-	 * @return the matched Credential object
+	 * @param id the credential id
+	 * @return the credential object
 	 */
 	public VerifiableCredential getCredential(String id) {
 		return getCredential(canonicalId(id));
 	}
 
 	/**
-	 * Get the count of Service array.
+	 * Get the numbers of the services.
 	 *
-	 * @return the count
+	 * @return the numbers of the services
 	 */
 	public int getServiceCount() {
 		return services.size();
 	}
 
 	/**
-	 * Get the Service array.
+	 * Get all the services.
 	 *
-	 * @return the Service array
+	 * @return an array of the services
 	 */
 	public List<Service> getServices() {
 		return Collections.unmodifiableList(_services);
 	}
 
 	/**
-	 * Select Service array matched the given service id or the type.
+	 * Select the services by the specified id or type.
 	 *
-	 * @param id the service id
-	 * @param type the type of service
-	 * @return the matched Service array
+	 * @param id the optional service id
+	 * @param type the optional service type
+	 * @return an array of the matched services
 	 */
 	public List<Service> selectServices(DIDURL id, String type) {
 		checkArgument(id != null || type != null, "Invalid select args");
@@ -1593,21 +1716,21 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Select the Service array matched the given service id or the type.
+	 * Select the services by the specified id or type.
 	 *
-	 * @param id the service id string
-	 * @param type the type of service
-	 * @return the matched Service array
+	 * @param id the optional service id
+	 * @param type the optional service type
+	 * @return an array of the matched services
 	 */
 	public List<Service> selectServices(String id, String type) {
 		return selectServices(canonicalId(id), type);
 	}
 
 	/**
-	 * Get the Service matched the given service id.
+	 * Get the specific service.
 	 *
 	 * @param id the service id
-	 * @return the matched Service object
+	 * @return the service object
 	 */
 	public Service getService(DIDURL id) {
 		checkArgument(id != null, "Invalid service id");
@@ -1615,26 +1738,26 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get the Service matched the given service id.
+	 * Get the specific service.
 	 *
-	 * @param id the service id string
-	 * @return the matched Service object
+	 * @param id the service id
+	 * @return the service object
 	 */
 	public Service getService(String id) {
 		return getService(canonicalId(id));
 	}
 
-    /**
-     * Get expires time of did document.
-     *
-     * @return the expires time
-     */
+	/**
+	 * Get expire time of this DIDDocument.
+	 *
+	 * @return the expire time
+	 */
 	public Date getExpires() {
 		return expires;
 	}
 
 	/**
-	 * Get last modified time.
+	 * Get last modified time of this DIDDocument.
 	 *
 	 * @return the last modified time
 	 */
@@ -1643,16 +1766,23 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get last modified time.
+	 * Get signature of this DIDDocumet.
 	 *
-	 * @return the last modified time
+	 * <p>
+	 * For single-signed DIDDocument object, the document signature is the
+	 * proof's signature. For multi-signed DIDDocument object, the document
+	 * signature is the first proof's signature.
+	 * </p>
+	 *
+	 * @return the signature string
 	 */
 	public String getSignature() {
 		return getProof().getSignature();
 	}
 
 	/**
-	 * Get Proof object from did document.
+	 * Get the proof object of this DIDDocument. if this document is a
+	 * multi-signed document, this method returns the first proof object.
 	 *
 	 * @return the Proof object
 	 */
@@ -1663,16 +1793,16 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Get all Proof objects.
 	 *
-	 * @return list of the Proof objects
+	 * @return an array of the Proof objects
 	 */
 	public List<Proof> getProofs() {
 		return Collections.unmodifiableList(_proofs);
 	}
 
 	/**
-	 * Get current object's DID context.
+	 * Return the subject DID.
 	 *
-	 * @return the DID object or null
+	 * @return a DID object
 	 */
 	@Override
 	protected DID getSerializeContextDid() {
@@ -1682,7 +1812,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Sanitize routine before sealing or after deserialization.
 	 *
-	 * @param withProof check the proof object or not
 	 * @throws MalformedDocumentException if the document object is invalid
 	 */
 	@Override
@@ -2012,9 +2141,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Set DID Metadata object for did document.
+	 * Set the metadata object for this DIDDocument.
 	 *
-	 * @param metadata the DIDMetadataImpl object
+	 * @param metadata a DIDMetadata object
 	 */
 	protected void setMetadata(DIDMetadata metadata) {
 		this.metadata = metadata;
@@ -2022,7 +2151,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get DID Metadata object from did document.
+	 * Get the metadata object of this DIDDocument.
 	 *
 	 * @return the DIDMetadata object
 	 */
@@ -2048,10 +2177,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Judge whether the did document is expired or not.
+	 * Check if this DIDDocument is expired.
 	 *
-	 * @return the returned value is true if the did document is expired;
-	 *         the returned value is false if the did document is not expired.
+	 * @return true if expired, false otherwise
 	 */
 	public boolean isExpired() {
 		Calendar now = Calendar.getInstance(Constants.UTC);
@@ -2063,10 +2191,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Judge whether the did document is tampered or not.
+	 * Check is this DIDDocument is genuine.
 	 *
-	 * @return the returned value is true if the did document is genuine;
-	 *         the returned value is false if the did document is not genuine.
+	 * @return true if genuine, false otherwise
 	 */
 	public boolean isGenuine() {
 		// Proofs count should match with multisig
@@ -2115,21 +2242,19 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Judge whether the did document is deactivated or not.
+	 * Check if this DIDDocument is deactivated.
 	 *
-	 * @return the returned value is true if the did document is genuine;
-	 *         the returned value is false if the did document is not genuine.
+	 * @return true if deactivated, false otherwise
 	 */
 	public boolean isDeactivated() {
 		return getMetadata().isDeactivated();
 	}
 
 	/**
-	 * Check whether the ticket is qualified.
-	 * Qualified check will only check the number of signatures meet the
-	 * requirement.
+	 * Check if this DIDDocument is qualified. It means the proof matched
+	 * With the multisig specification.
 	 *
-	 * @return true is the ticket is qualified else false
+	 * @return true if qualified, false otherwise
 	 */
 	public boolean isQualified() {
 		if (_proofs == null || _proofs.isEmpty())
@@ -2139,10 +2264,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Judge whether the did document is valid or not.
+	 * Check if this DIDDocument is valid.
 	 *
-	 * @return the returned value is true if the did document is valid;
-	 *         the returned value is false if the did document is not valid.
+	 * @return true if valid, false otherwise
 	 */
 	public boolean isValid() {
 		if (isDeactivated() || isExpired() || !isGenuine())
@@ -2179,10 +2303,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Get DID Document Builder object.
+	 * Get DIDDocument Builder object to editing this DIDDocument.
 	 *
 	 * @return the Builder object
-	 * @throws DIDStoreException
 	 */
 	public Builder edit() {
 		if (!isCustomizedDid()) {
@@ -2198,6 +2321,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 	}
 
+	/**
+	 * Get DIDDocument Builder object to editing this DIDDocument.
+	 *
+	 * @param controller the effective controller to editing a customized DIDDocument
+	 * @return the Builder object
+	 */
 	public Builder edit(DIDDocument controller) {
 		checkIsCustomized();
 
@@ -2216,12 +2345,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Sign the data by the specified key.
 	 *
-	 * @param id the key id
-	 * @param storepass the password for DIDStore
+	 * @param id the key id to sign the data
+	 * @param storepass the password for the DIDStore
 	 * @param data the data be signed
 	 * @return the signature string
-	 * @throws InvalidKeyException if the sign key is invalid
-	 * @throws DIDStoreException there is no DIDStore to get private key
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public String sign(DIDURL id, String storepass, byte[] ... data)
 			throws DIDStoreException {
@@ -2236,12 +2364,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Sign the data by the specified key.
 	 *
-	 * @param id the key id string
-	 * @param storepass the password for DIDStore
+	 * @param id the key id to sign the data
+	 * @param storepass the password for the DIDStore
 	 * @param data the data be signed
 	 * @return the signature string
-	 * @throws InvalidKeyException if the sign key is invalid
-	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public String sign(String id, String storepass, byte[] ... data)
 			throws DIDStoreException {
@@ -2249,26 +2376,25 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Sign the data by the default key.
+	 * Sign the data using the default key.
 	 *
-	 * @param storepass the password for DIDStore
+	 * @param storepass the password for the DIDStore
 	 * @param data the data be signed
 	 * @return the signature string
-	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public String sign(String storepass, byte[] ... data) throws DIDStoreException {
 		return sign((DIDURL)null, storepass, data);
 	}
 
 	/**
-	 * Sign the digest data by the specified key.
+	 * Sign the digest by the specified key.
 	 *
-	 * @param id the key id
-	 * @param storepass the password for DIDStore
-	 * @param digest the digest data to be signed
+	 * @param id the key id to sign the data
+	 * @param storepass the password for the DIDStore
+	 * @param digest the raw digest to be signed
 	 * @return the signature string
-	 * @throws InvalidKeyException if the sign key is invalid
-	 * @throws DIDStoreException there is no DIDStore to get private key
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public String signDigest(DIDURL id, String storepass, byte[] digest)
 			throws DIDStoreException {
@@ -2288,14 +2414,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Sign the digest data by the specified key.
+	 * Sign the digest by the specified key.
 	 *
-	 * @param id the key id string
-	 * @param storepass the password for DIDStore
-	 * @param digest the digest data to be signed
+	 * @param id the key id to sign the data
+	 * @param storepass the password for the DIDStore
+	 * @param digest the raw digest to be signed
 	 * @return the signature string
-	 * @throws InvalidKeyException if the sign key is invalid
-	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public String signDigest(String id, String storepass, byte[] digest)
 			throws DIDStoreException {
@@ -2303,12 +2428,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Sign the digest data by the default key.
+	 * Sign the digest by the default key.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @param digest the digest data to be signed
+	 * @param storepass the password for the DIDStore
+	 * @param digest the raw digest to be signed
 	 * @return the signature string
-	 * @throws DIDStoreException there is no DIDStore to get private key.
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public String signDigest(String storepass, byte[] digest)
 			throws DIDStoreException {
@@ -2316,13 +2441,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Verify the signature string by data and the sign key.
+	 * Verify the signature by the specific key and the data.
 	 *
 	 * @param id the key id
 	 * @param signature the signature string
-	 * @param data the data to be signed
-	 * @return the returned value is true if verifing data is successfully;
-	 *         the returned value is false if verifing data is not successfully.
+	 * @param data the data to be checked
+	 * @return true if the signature was verified, false otherwise
 	 */
 	public boolean verify(DIDURL id, String signature, byte[] ... data) {
 		checkArgument(signature != null && !signature.isEmpty(), "Invalid signature");
@@ -2333,38 +2457,35 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Verify the signature string by data and the sign key.
+	 * Verify the signature by the specific key and the data.
 	 *
-	 * @param id the key id string
+	 * @param id the key id
 	 * @param signature the signature string
-	 * @param data the data to be signed
-	 * @return the returned value is true if verifing data is successfully;
-	 *         the returned value is false if verifing data is not successfully.
+	 * @param data the data to be checked
+	 * @return true if the signature was verified, false otherwise
 	 */
 	public boolean verify(String id, String signature, byte[] ... data) {
 		return verify(canonicalId(id), signature, data);
 	}
 
 	/**
-	 * Verify the signature string by data and the default key.
+	 * Verify the signature by the default key and the data.
 	 *
 	 * @param signature the signature string
-	 * @param data the data to be signed
-	 * @return the returned value is true if verifing data is successfully;
-	 *         the returned value is false if verifing data is not successfully.
+	 * @param data the data to be checked
+	 * @return true if the signature was verified, false otherwise
 	 */
 	public boolean verify(String signature, byte[] ... data) {
 		return verify((DIDURL)null, signature, data);
 	}
 
 	/**
-	 * Verify the digest by the specified key.
+	 * Verify the signature by the specific key and the raw digest.
 	 *
 	 * @param id the key id
 	 * @param signature the signature string
-	 * @param digest the digest data be signed
-	 * @return the returned value is true if verifing digest is successfully;
-	 *         the returned value is false if verifing digest is not successfully.
+	 * @param digest the raw digest to be checked
+	 * @return true if the signature was verified, false otherwise
 	 */
 	public boolean verifyDigest(DIDURL id, String signature, byte[] digest) {
 		checkArgument(signature != null && !signature.isEmpty(), "Invalid signature");
@@ -2386,30 +2507,38 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Verify the digest by the specified key.
+	 * Verify the signature by the specific key and the raw digest.
 	 *
-	 * @param id the key id string
+	 * @param id the key id
 	 * @param signature the signature string
-	 * @param digest the digest data be signed
-	 * @return the returned value is true if verifing digest is successfully;
-	 *         the returned value is false if verifing digest is not successfully.
+	 * @param digest the raw digest to be checked
+	 * @return true if the signature was verified, false otherwise
 	 */
 	public boolean verifyDigest(String id, String signature, byte[] digest) {
 		return verifyDigest(canonicalId(id), signature, digest);
 	}
 
 	/**
-	 * Verify the digest by the default key.
+	 * Verify the signature by the default key and the raw digest.
 	 *
 	 * @param signature the signature string
-	 * @param digest the digest data be signed
-	 * @return the returned value is true if verifing digest is successfully;
-	 *         the returned value is false if verifing digest is not successfully.
+	 * @param digest the raw digest to be checked
+	 * @return true if the signature was verified, false otherwise
 	 */
 	public boolean verifyDigest(String signature, byte[] digest) {
 		return verifyDigest((DIDURL)null, signature, digest);
 	}
 
+	/**
+	 * Create a JwtBuilder instance using current DIDDocument.
+	 *
+	 * <p>
+	 * When the JwtBuilder sign the JWT, the JwtBuilder will lookup the keys
+	 * through this DIDDocument object.
+	 * </p>
+	 *
+	 * @return a JwtBuilder instance
+	 */
 	public JwtBuilder jwtBuilder() {
 		JwtBuilder builder = new JwtBuilder(getSubject().toString(), new KeyProvider() {
 
@@ -2428,6 +2557,16 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		return builder.setIssuer(getSubject().toString());
 	}
 
+	/**
+	 * Create a JwtParserBuilder instance using current DIDDocument.
+	 *
+	 * <p>
+	 * When the JwtParserBuilder verify the JWT, the JwtParserBuilder will
+	 * lookup the keys through this DIDDocument object.
+	 * </p>
+	 *
+	 * @return a JwtParserBuilder instance
+	 */
 	public JwtParserBuilder jwtParserBuilder() {
 		JwtParserBuilder jpb = new JwtParserBuilder(new KeyProvider() {
 
@@ -2446,27 +2585,78 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		return jpb;
 	}
 
+	/**
+	 * Create a new customized DID using current DID as the controller.
+	 *
+	 * @param did the new customized identifier
+	 * @param force do not try to resolving the DID, create the document directly
+	 * @param storepass the password for the DIDStore
+	 * @return the new created DIDDocument
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public DIDDocument newCustomizedDid(DID did, boolean force, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		return newCustomizedDid(did, null, 1, force, storepass);
 	}
 
+	/**
+	 * Create a new customized DID using current DID as the controller.
+	 *
+	 * @param did the new customized identifier
+	 * @param storepass the password for the DIDStore
+	 * @return the new created DIDDocument
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public DIDDocument newCustomizedDid(DID did, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		return newCustomizedDid(did, false, storepass);
 	}
 
+	/**
+	 * Create a new customized DID using current DID as the controller.
+	 *
+	 * @param did the new customized identifier
+	 * @param force do not try to resolving the DID, create the document directly
+	 * @param storepass the password for the DIDStore
+	 * @return the new created DIDDocument
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public DIDDocument newCustomizedDid(String did, boolean force, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		return newCustomizedDid(DID.valueOf(did), force, storepass);
 	}
 
+	/**
+	 * Create a new customized DID using current DID as the controller.
+	 *
+	 * @param did the new customized identifier
+	 * @param storepass the password for the DIDStore
+	 * @return the new created DIDDocument
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public DIDDocument newCustomizedDid(String did, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		return newCustomizedDid(DID.valueOf(did), false, storepass);
 	}
 
-	public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, boolean force, String storepass)
+	/**
+	 * Create a new customized DID using current DID as the controller.
+	 *
+	 * @param did the new customized identifier
+	 * @param controllers the other controllers for the new customized DID
+	 * @param multisig how many signatures are required
+	 * @param force do not try to resolving the DID, create the document directly
+	 * @param storepass the password for the DIDStore
+	 * @return the new created DIDDocument
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig,
+			boolean force, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		checkArgument(did != null, "Invalid DID");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -2510,12 +2700,36 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 	}
 
-	public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, String storepass)
-			throws DIDResolveException, DIDStoreException {
+	/**
+	 * Create a new customized DID using current DID as the controller.
+	 *
+	 * @param did the new customized identifier
+	 * @param controllers the other controllers for the new customized DID
+	 * @param multisig how many signatures are required
+	 * @param storepass the password for the DIDStore
+	 * @return the new created DIDDocument
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig,
+			String storepass) throws DIDResolveException, DIDStoreException {
 		return newCustomizedDid(did, controllers, multisig, false, storepass);
 	}
 
-	public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, boolean force, String storepass)
+	/**
+	 * Create a new customized DID using current DID as the controller.
+	 *
+	 * @param did the new customized identifier
+	 * @param controllers the other controllers for the new customized DID
+	 * @param multisig how many signatures are required
+	 * @param force do not try to resolving the DID, create the document directly
+	 * @param storepass the password for the DIDStore
+	 * @return the new created DIDDocument
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public DIDDocument newCustomizedDid(String did, String controllers[],
+			int multisig, boolean force, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		List<DID> _controllers = new ArrayList<DID>(controllers.length);
 		for (String ctrl : controllers)
@@ -2525,11 +2739,34 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				multisig, force, storepass);
 	}
 
-	public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, String storepass)
+	/**
+	 * Create a new customized DID using current DID as the controller.
+	 *
+	 * @param did the new customized identifier
+	 * @param controllers the other controllers for the new customized DID
+	 * @param multisig how many signatures are required
+	 * @param storepass the password for the DIDStore
+	 * @return the new created DIDDocument
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public DIDDocument newCustomizedDid(String did, String controllers[],
+			int multisig, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		return newCustomizedDid(did, controllers, multisig, false, storepass);
 	}
 
+	/**
+	 * Create a TransferTicket object for the this (customized) DIDDocument.
+	 * The document should have an effective controller, otherwise this method
+	 * will fail.
+	 *
+	 * @param to who the did will transfer to
+	 * @param storepass the password for the DIDStore
+	 * @return the TransferTicket object
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public TransferTicket createTransferTicket(DID to, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		checkArgument(to != null, "Invalid to");
@@ -2543,6 +2780,16 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		return ticket;
 	}
 
+	/**
+	 * Create a TransferTicket object(as a controller of the customized DID).
+	 *
+	 * @param did the target customized DID to be transfer
+	 * @param to who the did will transfer to
+	 * @param storepass the password for the DIDStore
+	 * @return the TransferTicket object
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public TransferTicket createTransferTicket(DID did, DID to, String storepass)
 			throws DIDResolveException, DIDStoreException {
 		checkArgument(did != null, "Invalid did");
@@ -2569,6 +2816,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		return ticket;
 	}
 
+	/**
+	 * Sign and seal the TransferTicket object. The current DID should be
+	 * the controller of the DID that the TransferTicket to be transfer.
+	 *
+	 * @param ticket the TransferTicket object to be sign
+	 * @param storepass the password for the DIDStore
+	 * @return the signed TransferTicket object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public TransferTicket sign(TransferTicket ticket, String storepass)
 			throws DIDStoreException {
 		checkArgument(ticket != null, "Invalid ticket");
@@ -2579,6 +2835,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		return ticket;
 	}
 
+	/**
+	 * Sign and seal the customized DIDDocument object. The current DID should
+	 * be the controller of the target DIDDocument.
+	 *
+	 * @param doc the customized DIDDocument object to be sign
+	 * @param storepass the password for the DIDStore
+	 * @return the signed DIDDocument object
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
 	public DIDDocument sign(DIDDocument doc, String storepass) throws DIDStoreException {
 		checkArgument(doc != null, "Invalid document");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -2609,6 +2874,17 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
+	 */
 	public void publish(TransferTicket ticket, DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
 		checkArgument(ticket.isValid(), "Invalid ticket");
@@ -2639,31 +2915,91 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		DIDBackend.getInstance().transferDid(this, ticket, signKey, storepass, adapter);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
+	 */
 	public void publish(TransferTicket ticket, DIDURL signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
 		publish(ticket,signKey, storepass, null);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
+	 */
 	public void publish(TransferTicket ticket, String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
 		publish(ticket, canonicalId(signKey), storepass, adapter);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
+	 */
 	public void publish(TransferTicket ticket, String signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
 		publish(ticket, canonicalId(signKey), storepass, null);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument.
+	 * Sign the transaction using the default key.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
+	 */
 	public void publish(TransferTicket ticket, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
 		publish(ticket, (DIDURL)null, storepass, adapter);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument.
+	 * Sign the transaction using the default key.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
+	 */
 	public void publish(TransferTicket ticket, String storepass)
 			throws DIDStoreException, DIDBackendException {
 		publish(ticket, (DIDURL)null, storepass, null);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument
+	 * in asynchronous mode.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> publishAsync(TransferTicket ticket,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -2677,26 +3013,73 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		return future;
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument
+	 * in asynchronous mode.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> publishAsync(TransferTicket ticket,
 			DIDURL signKey, String storepass) {
 		return publishAsync(ticket, signKey, storepass, null);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument
+	 * in asynchronous mode.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> publishAsync(TransferTicket ticket,
 			String signKey, String storepass, DIDTransactionAdapter adapter) {
 		return publishAsync(ticket, canonicalId(signKey), storepass, adapter);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument
+	 * in asynchronous mode.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> publishAsync(TransferTicket ticket,
 			String signKey, String storepass) {
 		return publishAsync(ticket, canonicalId(signKey), storepass, null);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument
+	 * in asynchronous mode. Sign the transaction using the default key.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> publishAsync(TransferTicket ticket,
 			String storepass, DIDTransactionAdapter adapter) {
 		return publishAsync(ticket, (DIDURL)null, storepass, adapter);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current (customized) DIDDocument
+	 * in asynchronous mode. Sign the transaction using the default key.
+	 *
+	 * @param ticket the TransferTicket for current DID
+	 * @param storepass the password for the DIDStore
+	 * @return a new CompletableStage
+	 */
 	public CompletableFuture<Void> publishAsync(TransferTicket ticket, String storepass) {
 		return publishAsync(ticket, (DIDURL)null, storepass, null);
 	}
@@ -2704,15 +3087,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Publish DID Document to the ID chain.
 	 *
-	 * @param signKey the key to sign
-	 * @param force force = true, must be publish whether the local document is lastest one or not;
-	 *              force = false, must not be publish if the local document is not the lastest one,
-	 *              and must resolve at first.
-	 *
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @param signKey the key to sign the transaction
+	 * @param force if true will ignore the conflict between local copy and
+	 * 				the chain copy; otherwise will check the conflict
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(DIDURL signKey, boolean force, String storepass,
 			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
@@ -2802,15 +3184,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	/**
 	 * Publish DID Document to the ID chain.
 	 *
-	 * @param signKey the key to sign
-	 * @param force force = true, must be publish whether the local document is lastest one or not;
-	 *              force = false, must not be publish if the local document is not the lastest one,
-	 *              and must resolve at first.
-	 *
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @param signKey the key to sign the transaction
+	 * @param force if true will ignore the conflict between local copy and
+	 * 				the chain copy; otherwise will check the conflict
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(DIDURL signKey, boolean force, String storepass)
 			throws DIDStoreException, DIDBackendException {
@@ -2818,13 +3197,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain without force mode.
+	 * Publish DID Document to the ID chain.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -2832,13 +3212,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain without force mode.
+	 * Publish DID Document to the ID chain.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(DIDURL signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
@@ -2846,17 +3225,16 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain.
+	 * Publish DID Document to the ID chain.
 	 *
-	 * @param signKey the key to sign
-	 * @param force force = true, must be publish whether the local document is lastest one or not;
-	 *              force = false, must not be publish if the local document is not the lastest one,
-	 *              and must resolve at first.
-	 *
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @param signKey the key to sign the transaction
+	 * @param force if true will ignore the conflict between local copy and
+	 * 				the chain copy; otherwise will check the conflict
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(String signKey, boolean force, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -2864,17 +3242,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain.
+	 * Publish DID Document to the ID chain.
 	 *
-	 * @param signKey the key to sign
-	 * @param force force = true, must be publish whether the local document is lastest one or not;
-	 *              force = false, must not be publish if the local document is not the lastest one,
-	 *              and must resolve at first.
-	 *
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @param signKey the key to sign the transaction
+	 * @param force if true will ignore the conflict between local copy and
+	 * 				the chain copy; otherwise will check the conflict
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(String signKey, boolean force, String storepass)
 			throws DIDStoreException, DIDBackendException {
@@ -2882,13 +3257,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain without force mode.
+	 * Publish DID Document to the ID chain.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -2896,13 +3272,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain without force mode.
+	 * Publish DID Document to the ID chain.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
-	 * @throws InvalidKeyException there is no an authentication key.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(String signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
@@ -2910,12 +3285,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain without force mode.
-	 * Specify the default key to sign.
+	 * Publish DID Document to the ID chain. Sign the transaction using
+	 * the default key.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -2923,26 +3300,27 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain without force mode.
-	 * Specify the default key to sign.
+	 * Publish DID Document to the ID chain. Sign the transaction using
+	 * the default key.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @throws DIDBackendException publish did failed because of DIDBackend error.
-	 * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void publish(String storepass) throws DIDStoreException, DIDBackendException {
 		publish((DIDURL)null, false, storepass, null);
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 * Publish DID Document to the ID chain in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param force force = true, must be publish whether the local document is lastest one or not;
-	 *              force = false, must not be publish if the local document is not the lastest one,
-	 *              and must resolve at first.
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param force if true will ignore the conflict between local copy and
+	 * 				the chain copy; otherwise will check the conflict
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(DIDURL signKey, boolean force,
 			String storepass, DIDTransactionAdapter adapter) {
@@ -2958,14 +3336,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 * Publish DID Document to the ID chain in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param force force = true, must be publish whether the local document is lastest one or not;
-	 *              force = false, must not be publish if the local document is not the lastest one,
-	 *              and must resolve at first.
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param force if true will ignore the conflict between local copy and
+	 * 				the chain copy; otherwise will check the conflict
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(DIDURL signKey, boolean force,
 			String storepass) {
@@ -2973,14 +3350,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 * Publish DID Document to the ID chain in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param force force = true, must be publish whether the local document is lastest one or not;
-	 *              force = false, must not be publish if the local document is not the lastest one,
-	 *              and must resolve at first.
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param force if true will ignore the conflict between local copy and
+	 * 				the chain copy; otherwise will check the conflict
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(String signKey, boolean force,
 			String storepass, DIDTransactionAdapter adapter) {
@@ -2996,14 +3374,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
+	 * Publish DID Document to the ID chain in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param force force = true, must be publish whether the local document is lastest one or not;
-	 *              force = false, must not be publish if the local document is not the lastest one,
-	 *              and must resolve at first.
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param force if true will ignore the conflict between local copy and
+	 * 				the chain copy; otherwise will check the conflict
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(String signKey, boolean force,
 			String storepass) {
@@ -3011,12 +3388,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
-	 * Also this method is defined without force mode.
+	 * Publish DID Document to the ID chain in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(DIDURL signKey, String storepass,
 			DIDTransactionAdapter adapter) {
@@ -3024,24 +3402,24 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
-	 * Also this method is defined without force mode.
+	 * Publish DID Document to the ID chain in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(DIDURL signKey, String storepass) {
 		return publishAsync(signKey, false, storepass, null);
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
-	 * Also this method is defined without force mode.
+	 * Publish DID Document to the ID chain in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(String signKey, String storepass,
 			DIDTransactionAdapter adapter) {
@@ -3049,47 +3427,49 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
-	 * Also this method is defined without force mode.
+	 * Publish DID Document to the ID chain in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(String signKey, String storepass) {
 		return publishAsync(signKey, false, storepass, null);
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
-	 * Also this method is defined without force mode and specify the default key to sign.
+	 * Publish DID Document to the ID chain in asynchronous mode. Sign the
+	 * transaction using the default key.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(String storepass, DIDTransactionAdapter adapter) {
 		return publishAsync((DIDURL)null, false, storepass, adapter);
 	}
 
 	/**
-	 * Publish DID content(DIDDocument) to chain with asynchronous mode.
-	 * Also this method is defined without force mode and specify the default key to sign.
+	 * Publish DID Document to the ID chain in asynchronous mode. Sign the
+	 * transaction using the default key.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> publishAsync(String storepass) {
 		return publishAsync((DIDURL)null, false, storepass, null);
 	}
 
 	/**
-	 * Deactivate self use authentication key.
+	 * Deactivate this DID using the authentication key.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key
-	 * @throws DIDStoreException deactivate did failed because of did store error
-	 * @throws DIDBackendException deactivate did failed because of did backend error
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -3122,13 +3502,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate self use authentication key.
+	 * Deactivate this DID using the authentication key.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key
-	 * @throws DIDStoreException deactivate did failed because of did store error
-	 * @throws DIDBackendException deactivate did failed because of did backend error
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(DIDURL signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
@@ -3136,13 +3515,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate self use authentication key.
+	 * Deactivate this DID using the authentication key.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key
-	 * @throws DIDStoreException deactivate did failed because of did store error
-	 * @throws DIDBackendException deactivate did failed because of did backend error
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -3150,13 +3530,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate self use authentication key.
+	 * Deactivate this DID using the authentication key.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key
-	 * @throws DIDStoreException deactivate did failed because of did store error
-	 * @throws DIDBackendException deactivate did failed because of did backend error
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(String signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
@@ -3164,13 +3543,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate self use authentication key.
-	 * Specify the default key to sign.
+	 * Deactivate this DID using the authentication key. Sign the transaction
+	 * using the default key.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key
-	 * @throws DIDStoreException deactivate did failed because of did store error
-	 * @throws DIDBackendException deactivate did failed because of did backend error
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -3178,24 +3558,25 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate self use authentication key.
-	 * Specify the default key to sign.
+	 * Deactivate this DID using the authentication key. Sign the transaction
+	 * using the default key.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key
-	 * @throws DIDStoreException deactivate did failed because of did store error
-	 * @throws DIDBackendException deactivate did failed because of did backend error
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(String storepass) throws DIDStoreException, DIDBackendException {
 		deactivate((DIDURL)null, storepass, null);
 	}
 
 	/**
-	 * Deactivate self use authentication key with asynchronous mode.
+	 * Deactivate this DID using the authentication key in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(DIDURL signKey, String storepass,
 			DIDTransactionAdapter adapter) {
@@ -3211,22 +3592,24 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate self use authentication key with asynchronous mode.
+	 * Deactivate this DID using the authentication key in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(DIDURL signKey, String storepass) {
 		return deactivateAsync(signKey, storepass, null);
 	}
 
 	/**
-	 * Deactivate self use authentication key with asynchronous mode.
+	 * Deactivate this DID using the authentication key in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(String signKey, String storepass,
 			DIDTransactionAdapter adapter) {
@@ -3242,47 +3625,51 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate self use authentication key with asynchronous mode.
+	 * Deactivate this DID using the authentication key in asynchronous mode.
 	 *
-	 * @param signKey the key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(String signKey, String storepass) {
 		return deactivateAsync(signKey, storepass, (DIDTransactionAdapter)null);
 	}
 
 	/**
-	 * Deactivate self use authentication key with asynchronous mode.
-	 * Specify the default key to sign.
+	 * Deactivate this DID using the authentication key in asynchronous mode.
+	 * Sign the transaction using the default key.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(String storepass, DIDTransactionAdapter adapter) {
 		return deactivateAsync((DIDURL)null, storepass, adapter);
 	}
 
 	/**
-	 * Deactivate self use authentication key with asynchronous mode.
-	 * Specify the default key to sign.
+	 * Deactivate this DID using the authentication key in asynchronous mode.
+	 * Sign the transaction using the default key.
 	 *
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(String storepass) {
 		return deactivateAsync((DIDURL)null, storepass, null);
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID.
+	 * Deactivate the target DID with the authorization.
 	 *
-	 * @param target the target DID
-	 * @param signKey the authorizor's key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key.
-	 * @throws DIDStoreException deactivate did failed because of did store error.
-	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @param target the DID to be deactivated
+	 * @param signKey the key to sign the transaction, should be
+	 * 		  authorized by the target DID
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(DID target, DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -3356,14 +3743,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID.
+	 * Deactivate the target DID with the authorization.
 	 *
-	 * @param target the target DID
-	 * @param signKey the authorizor's key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key.
-	 * @throws DIDStoreException deactivate did failed because of did store error.
-	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @param target the DID to be deactivated
+	 * @param signKey the key to sign the transaction, should be
+	 * 		  authorized by the target DID
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(DID target, DIDURL signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
@@ -3371,14 +3758,16 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID.
+	 * Deactivate the target DID with the authorization.
 	 *
-	 * @param target the target DID string
-	 * @param signKey the authorizor's key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key.
-	 * @throws DIDStoreException deactivate did failed because of did store error.
-	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @param target the DID to be deactivated
+	 * @param signKey the key to sign the transaction, should be
+	 * 		  authorized by the target DID
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(String target, String signKey, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -3386,14 +3775,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID.
+	 * Deactivate the target DID with the authorization.
 	 *
-	 * @param target the target DID string
-	 * @param signKey the authorizor's key to sign
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key.
-	 * @throws DIDStoreException deactivate did failed because of did store error.
-	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @param target the DID to be deactivated
+	 * @param signKey the key to sign the transaction, should be
+	 * 		  authorized by the target DID
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(String target, String signKey, String storepass)
 			throws DIDStoreException, DIDBackendException {
@@ -3401,13 +3790,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID.
+	 * Deactivate the target DID with the authorization. This method will
+	 * check the authorized key automatically.
 	 *
-	 * @param target the target DID string
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key.
-	 * @throws DIDStoreException deactivate did failed because of did store error.
-	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @param target the DID to be deactivated
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(DID target, String storepass, DIDTransactionAdapter adapter)
 			throws DIDStoreException, DIDBackendException {
@@ -3415,13 +3806,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID.
+	 * Deactivate the target DID with the authorization. This method will
+	 * check the authorized key automatically.
 	 *
-	 * @param target the target DID string
-	 * @param storepass the password for DIDStore
-	 * @throws InvalidKeyException there is no an authentication key.
-	 * @throws DIDStoreException deactivate did failed because of did store error.
-	 * @throws DIDBackendException deactivate did failed because of did backend error.
+	 * @param target the DID to be deactivated
+	 * @param storepass the password for the DIDStore
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
 	 */
 	public void deactivate(DID target, String storepass)
 			throws DIDStoreException, DIDBackendException {
@@ -3429,12 +3820,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 * Deactivate the target DID with the authorization in asynchronous mode.
 	 *
-	 * @param target the target DID
-	 * @param signKey the authorizor's key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param target the DID to be deactivated
+	 * @param signKey the key to sign the transaction, should be
+	 * 		  authorized by the target DID
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(DID target,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
@@ -3450,12 +3844,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 * Deactivate the target DID with the authorization in asynchronous mode.
 	 *
-	 * @param target the target DID
-	 * @param signKey the authorizor's key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param target the DID to be deactivated
+	 * @param signKey the key to sign the transaction, should be
+	 * 		  authorized by the target DID
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(DID target,
 			DIDURL signKey, String storepass) {
@@ -3463,14 +3858,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 * Deactivate the target DID with the authorization in asynchronous mode.
 	 *
-	 * @param target the target DID
-	 * @param did the authorizor's DID.
-	 * @param confirms the count of confirms
-	 * @param signKey the authorizor's key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param target the DID to be deactivated
+	 * @param signKey the key to sign the transaction, should be
+	 * 		  authorized by the target DID
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(String target,
 			String signKey, String storepass, DIDTransactionAdapter adapter) {
@@ -3486,14 +3882,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 * Deactivate the target DID with the authorization in asynchronous mode.
 	 *
-	 * @param target the target DID
-	 * @param did the authorizor's DID.
-	 * @param confirms the count of confirms
-	 * @param signKey the authorizor's key to sign
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param target the DID to be deactivated
+	 * @param signKey the key to sign the transaction, should be
+	 * 		  authorized by the target DID
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(String target,
 			String signKey, String storepass) {
@@ -3501,12 +3896,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 * Deactivate the target DID with the authorization in asynchronous mode.
+	 * This method will check the authorized key automatically.
 	 *
-	 * @param target the target DID
-	 * @param did the authorizor's DID, use the default key to sign.
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param target the DID to be deactivated
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(DID target, String storepass,
 			DIDTransactionAdapter adapter) {
@@ -3514,23 +3911,23 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Deactivate target DID by authorizor's DID with asynchronous mode.
+	 * Deactivate the target DID with the authorization in asynchronous mode.
+	 * This method will check the authorized key automatically.
 	 *
-	 * @param target the target DID
-	 * @param did the authorizor's DID, use the default key to sign.
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
+	 * @param target the DID to be deactivated
+	 * @param storepass the password for the DIDStore
+	 * @return the new CompletableStage
 	 */
 	public CompletableFuture<Void> deactivateAsync(DID target, String storepass) {
 		return deactivateAsync(target, null, storepass, null);
 	}
 
 	/**
-	 * Parse a DIDDocument object from from a string JSON representation.
+	 * Parse the DIDDocument object from a string JSON representation.
 	 *
-	 * @param content the string JSON content for building the object.
-	 * @return the DIDDocument object.
-	 * @throws MalformedDocumentException if a parse error occurs.
+	 * @param content the string JSON content to deserialize the document object
+	 * @return the DIDDocument object
+	 * @throws MalformedDocumentException if a parse error occurs
 	 */
 	public static DIDDocument parse(String content) throws MalformedDocumentException {
 		try {
@@ -3544,9 +3941,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Parse a DIDDocument object from from a Reader object.
+	 * Parse the DIDDocument object from a Reader object.
 	 *
-	 * @param src Reader object used to read JSON content for building the object
+	 * @param src the Reader object to deserialize the document object
 	 * @return the DIDDocument object
 	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
@@ -3564,9 +3961,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Parse a DIDDocument object from from a InputStream object.
+	 * Parse the DIDDocument object from an InputStream object.
 	 *
-	 * @param src InputStream object used to read JSON content for building the object
+	 * @param src the input stream object to deserialize the document object
 	 * @return the DIDDocument object
 	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
@@ -3584,9 +3981,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Parse a DIDDocument object from from a File object.
+	 * Parse the DIDDocument object from a File object.
 	 *
-	 * @param src File object used to read JSON content for building the object
+	 * @param src the File object to deserialize the document object
 	 * @return the DIDDocument object
 	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
@@ -3604,9 +4001,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Parse a DIDDocument object from from a string JSON representation.
+	 * Parse the DIDDocument object from a string JSON representation.
 	 *
-	 * @param content the string JSON content for building the object
+	 * @param content the string JSON content to deserialize the document object
 	 * @return the DIDDocument object
 	 * @throws MalformedDocumentException if a parse error occurs
 	 * @deprecated use {@link #parse(String)} instead
@@ -3617,9 +4014,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Parse a DIDDocument object from from a Reader object.
+	 * Parse the DIDDocument object from a Reader object.
 	 *
-	 * @param src Reader object used to read JSON content for building the object
+	 * @param src the Reader object to deserialize the document object
 	 * @return the DIDDocument object
 	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
@@ -3632,9 +4029,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Parse a DIDDocument object from from a InputStream object.
+	 * Parse the DIDDocument object from an InputStream object.
 	 *
-	 * @param src InputStream object used to read JSON content for building the object
+	 * @param src the input stream object to deserialize the document object
 	 * @return the DIDDocument object
 	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
@@ -3647,9 +4044,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-	 * Parse a DIDDocument object from from a File object.
+	 * Parse the DIDDocument object from a File object.
 	 *
-	 * @param src File object used to read JSON content for building the object
+	 * @param src the File object to deserialize the document object
 	 * @return the DIDDocument object
 	 * @throws MalformedDocumentException if a parse error occurs
 	 * @throws IOException if an IO error occurs
@@ -3662,7 +4059,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	}
 
 	/**
-     * Builder object to create or modify the DIDDocument.
+	 * Builder object to create or modify the DIDDocument.
 	 */
 	public static class Builder {
 		private DIDDocument document;
@@ -3684,6 +4081,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * Constructs DID Document Builder with given customizedDid and DIDStore.
 		 *
 		 * @param did the specified DID
+		 * @param controller the effective controller to create the document
 		 * @param store the DIDStore object
 		 */
 		protected Builder(DID did, DIDDocument controller, DIDStore store) {
@@ -3704,13 +4102,20 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		/**
 		 * Constructs DID Document Builder with given DID Document.
 		 *
-		 * @param doc the DID Document object
+		 * @param doc a DIDDocument object to be modify
 		 */
 		protected Builder(DIDDocument doc) {
 			this.document = doc.copy();
 		}
 
-		public Builder(DIDDocument doc, DIDDocument controller) {
+		/**
+		 * Construct a builder instance for the customized DID document
+		 * with effective controller.
+		 *
+		 * @param doc a customized DIDDocument object to be modify
+		 * @param controller one the the controller of the doc
+		 */
+		protected Builder(DIDDocument doc, DIDDocument controller) {
 			this.document = doc.copy();
 			this.document.effectiveController = controller.getSubject();
 			// if (controller.getMetadata().attachedStore())
@@ -3745,9 +4150,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Get document subject from did document builder.
+		 * Get the subject DID of this builder.
 		 *
-		 * @return the owner of did document builder
+		 * @return the subject of document builder
 		 */
 		public DID getSubject() {
 			checkNotSealed();
@@ -3758,7 +4163,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * Add a new controller to the customized DID document.
 		 *
 		 * @param controller the new controller's DID
-		 * @return the Builder object
+		 * @return the Builder instance for method chaining
 		 * @throws DIDResolveException if failed resolve the new controller's DID
 		 */
 		public Builder addController(DID controller) throws DIDResolveException {
@@ -3795,7 +4200,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * Add a new controller to the customized DID document.
 		 *
 		 * @param controller the new controller's DID
-		 * @return the Builder object
+		 * @return the Builder instance for method chaining
 		 * @throws DIDResolveException if failed resolve the new controller's DID
 		 */
 		public Builder addController(String controller) throws DIDResolveException {
@@ -3803,10 +4208,10 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Remove controller from the customized DID document.
+		 * Remove the specific controller from the customized document.
 		 *
 		 * @param controller the controller's DID to be remove
-		 * @return the Builder object
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removeController(DID controller) {
 			checkArgument(controller != null, "Invalid controller");
@@ -3826,20 +4231,20 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Remove controller from the customized DID document.
+		 * Remove the specific controller from the customized document.
 		 *
 		 * @param controller the controller's DID to be remove
-		 * @return the Builder object
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removeController(String controller) {
 			return removeController(DID.valueOf(controller));
 		}
 
 		/**
-		 * Set multiple signature for multi-controllers DID document.
+		 * Set multisig specification for multi-controllers DID document.
 		 *
 		 * @param m the required signature count
-		 * @return the Builder object
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder setMultiSignature(int m) {
 			checkNotSealed();
@@ -3867,40 +4272,41 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		private void addPublicKey(PublicKey key) {
-	        if (document.publicKeys == null) {
-	        	document.publicKeys = new TreeMap<DIDURL, PublicKey>();
-	        } else {
-	            // Check the existence, both id and keyBase58
-	            for (PublicKey pk : document.publicKeys.values()) {
-	                if (pk.getId().equals(key.getId()))
-	                    throw new DIDObjectAlreadyExistException("PublicKey id '"
-	                            + key.getId() + "' already exist.");
+			if (document.publicKeys == null) {
+				document.publicKeys = new TreeMap<DIDURL, PublicKey>();
+			} else {
+				// Check the existence, both id and keyBase58
+				for (PublicKey pk : document.publicKeys.values()) {
+					if (pk.getId().equals(key.getId()))
+						throw new DIDObjectAlreadyExistException("PublicKey id '"
+								+ key.getId() + "' already exist.");
 
-	                if (pk.getPublicKeyBase58().equals(key.getPublicKeyBase58()))
-	                    throw new DIDObjectAlreadyExistException("PublicKey '"
-	                            + key.getPublicKeyBase58() + "' already exist.");
-	            }
-	        }
+					if (pk.getPublicKeyBase58().equals(key.getPublicKeyBase58()))
+						throw new DIDObjectAlreadyExistException("PublicKey '"
+								+ key.getPublicKeyBase58() + "' already exist.");
+				}
+			}
 
-	        document.publicKeys.put(key.getId(), key);
-	        if (document.defaultPublicKey == null) {
-	        	String address = HDKey.toAddress(key.getPublicKeyBytes());
+			document.publicKeys.put(key.getId(), key);
+			if (document.defaultPublicKey == null) {
+				String address = HDKey.toAddress(key.getPublicKeyBytes());
 				if (address.equals(getSubject().getMethodSpecificId())) {
 					document.defaultPublicKey = key;
 					key.setAuthenticationKey(true);
 				}
 			}
 
-	        invalidateProof();
+			invalidateProof();
 		}
 
 		/**
 		 * Add PublicKey to did document builder.
 		 *
 		 * @param id the key id
+		 * @param type the key type
 		 * @param controller the owner of public key
-		 * @param pk the public key base58 string
-		 * @return the DID Document Builder object
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addPublicKey(DIDURL id, String type, DID controller, String pk) {
 			checkNotSealed();
@@ -3918,37 +4324,70 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		/**
 		 * Add PublicKey to did document builder.
 		 *
-		 * @param id the key id string
+		 * @param id the key id
+		 * @param type the key type
 		 * @param controller the owner of public key
-		 * @param pk the public key base58 string
-		 * @return the DID Document Builder object
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addPublicKey(String id, String type, String controller, String pk) {
 			return addPublicKey(canonicalId(id), type, DID.valueOf(controller), pk);
 		}
 
+		/**
+		 * Add PublicKey to did document builder.
+		 *
+		 * @param id the key id
+		 * @param controller the owner of public key
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder addPublicKey(DIDURL id, DID controller, String pk) {
 			return addPublicKey(id, null, controller, pk);
 		}
 
+		/**
+		 * Add PublicKey to did document builder.
+		 *
+		 * @param id the key id
+		 * @param controller the owner of public key
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder addPublicKey(String id, String controller, String pk) {
 			return addPublicKey(id, null, controller, pk);
 		}
 
+		/**
+		 * Add PublicKey to did document builder.
+		 *
+		 * @param id the key id
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder addPublicKey(DIDURL id, String pk) {
 			return addPublicKey(id, null, null, pk);
 		}
 
+		/**
+		 * Add PublicKey to did document builder.
+		 *
+		 * @param id the key id
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder addPublicKey(String id, String pk) {
 			return addPublicKey(id, null, null, pk);
 		}
 
 		/**
-		 * Remove PublicKey with the specified key id.
+		 * Remove the specific public key from the document.
+		 * If call this method with forced mode, it will remove the key
+		 * even it reference by the others.
 		 *
-		 * @param id the key id
-		 * @param force the owner of public key
-		 * @return the DID Document Builder object
+		 * @param id the key id to be remove
+		 * @param force if true will remove the key even it reference by the others
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removePublicKey(DIDURL id, boolean force) {
 			checkNotSealed();
@@ -3958,72 +4397,76 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				throw new DIDObjectNotExistException(id.toString());
 
 			id = canonicalId(id);
-	        PublicKey pk = document.publicKeys.get(id);
-	        if (pk == null)
-	            throw new DIDObjectNotExistException(id.toString());
+			PublicKey pk = document.publicKeys.get(id);
+			if (pk == null)
+				throw new DIDObjectNotExistException(id.toString());
 
-	        // Can not remove default public key
-	        if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
-	            throw new DIDObjectHasReferenceException(id.toString() + "is default key");
+			// Can not remove default public key
+			if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
+				throw new DIDObjectHasReferenceException(id.toString() + "is default key");
 
-	        if (!force) {
-	            if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
-	                throw new DIDObjectHasReferenceException(id.toString());
-	        }
+			if (!force) {
+				if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
+					throw new DIDObjectHasReferenceException(id.toString());
+			}
 
-	        if (document.publicKeys.remove(id) != null) {
-		        try {
-		        	// TODO: should delete the loosed private key when store the document
-		            if (document.getMetadata().attachedStore())
-		                document.getMetadata().getStore().deletePrivateKey(id);
-		        } catch (DIDStoreException ignore) {
-		            log.error("INTERNAL - Remove private key", ignore);
-		        }
+			if (document.publicKeys.remove(id) != null) {
+				try {
+					// TODO: should delete the loosed private key when store the document
+					if (document.getMetadata().attachedStore())
+						document.getMetadata().getStore().deletePrivateKey(id);
+				} catch (DIDStoreException ignore) {
+					log.error("INTERNAL - Remove private key", ignore);
+				}
 
-		        invalidateProof();
-	        }
+				invalidateProof();
+			}
 
 			return this;
 		}
 
 		/**
-		 * Remove PublicKey matched the specified key id.
+		 * Remove the specific public key from the document.
+		 * If call this method with forced mode, it will remove the key
+		 * even it reference by the others.
 		 *
-		 * @param id the key id
-	     * @param force force = true, the matched key must be removed.
-	     *              force = false, the matched key must not be removed if this key is authentiacation
-	     *              or authorization key.
-		 * @return the DID Document Builder object
+		 * @param id the key id to be remove
+		 * @param force if true will remove the key even it reference by the others
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removePublicKey(String id, boolean force) {
 			return removePublicKey(canonicalId(id), force);
 		}
 
 		/**
-		 * Remove PublicKey matched the specified key id without force module.
+		 * Remove the specific public key from the document.
+		 * It should not reference by authentication or authorization when
+		 * removing the public key.
 		 *
-		 * @param id the key id
-		 * @return the DID Document Builder object
+		 * @param id the key id to be remove
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removePublicKey(DIDURL id) {
 			return removePublicKey(id, false);
 		}
 
 		/**
-		 * Remove PublicKey matched the specified key id without force module.
+		 * Remove the specific public key from the document.
+		 * It should not reference by authentication or authorization when
+		 * removing the public key.
 		 *
-		 * @param id the key id
-		 * @return the DID Document Builder object
+		 * @param id the key id to be remove
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removePublicKey(String id) {
 			return removePublicKey(id, false);
 		}
 
 		/**
-		 * Add the exist Public Key matched the key id to be Authentication key.
+		 * Add an exists public key as authentication key.
 		 *
-		 * @param id the key id
-		 * @return the DID Document Builder object
+		 * @param id the key id to be add to authentication keys
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addAuthenticationKey(DIDURL id) {
 			checkNotSealed();
@@ -4033,39 +4476,38 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				throw new DIDObjectNotExistException(id.toString());
 
 			id = canonicalId(id);
-	        PublicKey key = document.publicKeys.get(id);
-	        if (key == null)
-	            throw new DIDObjectNotExistException(id.toString());
+			PublicKey key = document.publicKeys.get(id);
+			if (key == null)
+				throw new DIDObjectNotExistException(id.toString());
 
-	        // Check the controller is current DID subject
-	        if (!key.getController().equals(getSubject()))
-	            throw new IllegalUsageException(id.toString());
+			// Check the controller is current DID subject
+			if (!key.getController().equals(getSubject()))
+				throw new IllegalUsageException(id.toString());
 
-	        if (!key.isAuthenticationKey()) {
-	        	key.setAuthenticationKey(true);
-	        	invalidateProof();
-	        }
+			if (!key.isAuthenticationKey()) {
+				key.setAuthenticationKey(true);
+				invalidateProof();
+			}
 
 			return this;
 		}
 
 		/**
-		 * Add the exist Public Key matched the key id to be Authentication key.
+		 * Add an exists public key as authentication key.
 		 *
-		 * @param id the key id string
-		 * @return the DID Document Builder object
+		 * @param id the key id to be add to authentication keys
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addAuthenticationKey(String id) {
 			return addAuthenticationKey(canonicalId(id));
 		}
 
 		/**
-		 * Add the PublicKey named the key id to be an authentication key.
-		 * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+		 * Add a new authentication key to the document.
 		 *
-		 * @param id the key id
-		 * @param pk the public key base58 string
-		 * @return the DID Document Builder
+		 * @param id the new authentication key id
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addAuthenticationKey(DIDURL id, String pk) {
 			checkNotSealed();
@@ -4081,22 +4523,24 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add the PublicKey named the key id to be an authentication key.
-		 * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+		 * Add a new authentication key to the document.
 		 *
-		 * @param id the key id string
-		 * @param pk the public key base58 string
-		 * @return the DID Document Builder
+		 * @param id the new authentication key id
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addAuthenticationKey(String id, String pk) {
 			return addAuthenticationKey(canonicalId(id), pk);
 		}
 
 		/**
-		 * Remove Authentication Key matched the given id.
+		 * Remove the specific authentication key from the document.
+		 * After remove the authentication key, the key still in the
+		 * public keys, this method only remove the authentication
+		 * reference from the public key.
 		 *
-		 * @param id the key id
-		 * @return the DID Document Builder
+		 * @param id the key id to be remove
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removeAuthenticationKey(DIDURL id) {
 			checkNotSealed();
@@ -4106,40 +4550,43 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				throw new DIDObjectNotExistException(id.toString());
 
 			id = canonicalId(id);
-	        PublicKey key = document.publicKeys.get(id);
-	        if (key == null || !key.isAuthenticationKey())
-	            throw new DIDObjectNotExistException(id.toString());
+			PublicKey key = document.publicKeys.get(id);
+			if (key == null || !key.isAuthenticationKey())
+				throw new DIDObjectNotExistException(id.toString());
 
-	        // Can not remove default public key
-	        if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
-	            throw new DIDObjectHasReferenceException(
-	                    "Cannot remove the default PublicKey from authentication.");
+			// Can not remove default public key
+			if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
+				throw new DIDObjectHasReferenceException(
+						"Cannot remove the default PublicKey from authentication.");
 
-	        if (key.isAuthenticationKey()) {
-	        	key.setAuthenticationKey(false);
-	        	invalidateProof();
-	        } else {
-	            throw new DIDObjectNotExistException(id.toString());
-	        }
+			if (key.isAuthenticationKey()) {
+				key.setAuthenticationKey(false);
+				invalidateProof();
+			} else {
+				throw new DIDObjectNotExistException(id.toString());
+			}
 
 			return this;
 		}
 
 		/**
-		 * Remove Authentication Key matched the given id.
+		 * Remove the specific authentication key from the document.
+		 * After remove the authentication key, the key still in the
+		 * public keys, this method only remove the authentication
+		 * reference from the public key.
 		 *
-		 * @param id the key id string
-		 * @return the DID Document Builder
+		 * @param id the key id to be remove
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removeAuthenticationKey(String id) {
 			return removeAuthenticationKey(canonicalId(id));
 		}
 
 		/**
-		 * Add the exist Public Key matched the key id to be Authorization key.
+		 * Add an exists public key as authorization key.
 		 *
-		 * @param id the key id
-		 * @return the DID Document Builder
+		 * @param id the key id to be add to authorization keys
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addAuthorizationKey(DIDURL id) {
 			checkNotSealed();
@@ -4152,40 +4599,39 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				throw new DIDObjectNotExistException(id.toString());
 
 			id = canonicalId(id);
-	        PublicKey key = document.publicKeys.get(id);
-	        if (key == null)
-	            throw new DIDObjectNotExistException(id.toString());
+			PublicKey key = document.publicKeys.get(id);
+			if (key == null)
+				throw new DIDObjectNotExistException(id.toString());
 
-	        // Can not authorize to self
-	        if (key.getController().equals(getSubject()))
-	            throw new IllegalUsageException(id.toString());
+			// Can not authorize to self
+			if (key.getController().equals(getSubject()))
+				throw new IllegalUsageException(id.toString());
 
-	        if (!key.isAuthorizationKey()) {
-	        	key.setAuthorizationKey(true);
-	        	invalidateProof();
-	        }
+			if (!key.isAuthorizationKey()) {
+				key.setAuthorizationKey(true);
+				invalidateProof();
+			}
 
 			return this;
 		}
 
 		/**
-		 * Add the exist Public Key matched the key id to be Authorization Key.
+		 * Add an exists public key as authorization key.
 		 *
-		 * @param id the key id string
-		 * @return the DID Document Builder
+		 * @param id the key id to be add to authorization keys
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addAuthorizationKey(String id) {
 			return addAuthorizationKey(canonicalId(id));
 		}
 
 		/**
-		 * Add the PublicKey named key id to be Authorization Key.
-		 * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+		 * Add a new authorization key.
 		 *
-		 * @param id the key id
-		 * @param controller the owner of public key
-		 * @param pk the public key base58 string
-		 * @return the DID Document Builder
+		 * @param id the new authorization key id
+		 * @param controller the owner of the authorization
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addAuthorizationKey(DIDURL id, DID controller, String pk) {
 			checkNotSealed();
@@ -4208,31 +4654,25 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add the PublicKey named key id to be Authorization Key.
-		 * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+		 * Add a new authorization key.
 		 *
-		 * @param id the key id string
-		 * @param controller the owner of public key
-		 * @param pk the public key base58 string
-		 * @return the DID Document Builder
+		 * @param id the new authorization key id
+		 * @param controller the owner of the authorization
+		 * @param pk the base58 encoded public key
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addAuthorizationKey(String id, String controller, String pk) {
 			return addAuthorizationKey(canonicalId(id), DID.valueOf(controller), pk);
 		}
 
 		/**
-         * Add the specified key to be an Authorization key.
-         * This specified key is the key of specified controller.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
+		 * Authorize to the DID and the specific key.
 		 *
-		 * @param id the key id
-		 * @param controller the owner of 'key'
-		 * @param key the key of controller to be an Authorization key.
-		 * @return the DID Document Builder
-		 * @throws DIDResolveException resolve controller failed.
-		 * @throws InvalidKeyException the key is not an authentication key.
+		 * @param id the new authorization key id
+		 * @param controller the DID that authorized to
+		 * @param key the key id that controller by the controller to be authorize
+		 * @return the Builder instance for method chaining
+		 * @throws DIDResolveException if an error occurred when resolving the DIDs
 		 */
 		public Builder authorizationDid(DIDURL id, DID controller, DIDURL key)
 				throws DIDResolveException {
@@ -4277,16 +4717,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-         * Add Authorization key to Authentication array according to DID.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
+		 * Authorize to the DID and the DID's default key.
 		 *
-		 * @param id the key id string
-		 * @param controller the owner of public key
-		 * @return the DID Document Builder
-		 * @throws DIDResolveException resolve controller failed.
-		 * @throws InvalidKeyException the key is not an authentication key.
+		 * @param id the new authorization key id
+		 * @param controller the DID that authorized to
+		 * @return the Builder instance for method chaining
+		 * @throws DIDResolveException if an error occurred when resolving the DIDs
 		 */
 		public Builder authorizationDid(DIDURL id, DID controller)
 				throws DIDResolveException {
@@ -4294,17 +4730,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-         * Add Authorization key to Authentication array according to DID.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
+		 * Authorize to the DID and the specific key.
 		 *
-		 * @param id the key id string
-		 * @param controller the owner of public key
-		 * @param key the key of controller to be an Authorization key.
-		 * @return the DID Document Builder
-		 * @throws DIDResolveException resolve controller failed.
-		 * @throws InvalidKeyException the key is not an authentication key.
+		 * @param id the new authorization key id
+		 * @param controller the DID that authorized to
+		 * @param key the key id that controller by the controller to be authorize
+		 * @return the Builder instance for method chaining
+		 * @throws DIDResolveException if an error occurred when resolving the DIDs
 		 */
 		public Builder authorizationDid(String id, String controller, String key)
 				throws DIDResolveException {
@@ -4313,16 +4745,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-         * Add Authorization key to Authentication array according to DID.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
+		 * Authorize to the DID and the DID's default key.
 		 *
-		 * @param id the key id string
-		 * @param controller the owner of public key
-		 * @return the DID Document Builder
-		 * @throws DIDResolveException resolve controller failed.
-		 * @throws InvalidKeyException the key is not an authentication key.
+		 * @param id the new authorization key id
+		 * @param controller the DID that authorized to
+		 * @return the Builder instance for method chaining
+		 * @throws DIDResolveException if an error occurred when resolving the DIDs
 		 */
 		public Builder authorizationDid(String id, String controller)
 				throws DIDResolveException {
@@ -4330,10 +4758,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Remove the Authorization Key matched the given id.
+		 * Remove the specific authorization key from the document.
+		 * After remove the authorization key, the key still in the
+		 * public keys, this method only remove the authorization
+		 * reference from the public key.
 		 *
-		 * @param id the key id
-		 * @return the DID Document Builder
+		 * @param id the key id to be remove
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removeAuthorizationKey(DIDURL id) {
 			checkNotSealed();
@@ -4343,68 +4774,70 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				throw new DIDObjectNotExistException(id.toString());
 
 			id = canonicalId(id);
-	        PublicKey key = document.publicKeys.get(id);
-	        if (key == null)
-	            throw new DIDObjectNotExistException(id.toString());
+			PublicKey key = document.publicKeys.get(id);
+			if (key == null)
+				throw new DIDObjectNotExistException(id.toString());
 
-	        if (key.isAuthorizationKey()) {
-	        	key.setAuthorizationKey(false);
-	        	invalidateProof();
-	        } else {
-	            throw new DIDObjectNotExistException(id.toString());
-	        }
+			if (key.isAuthorizationKey()) {
+				key.setAuthorizationKey(false);
+				invalidateProof();
+			} else {
+				throw new DIDObjectNotExistException(id.toString());
+			}
 
 			return this;
 		}
 
 		/**
-		 * Remove the Authorization Key matched the given id.
+		 * Remove the specific authorization key from the document.
+		 * After remove the authorization key, the key still in the
+		 * public keys, this method only remove the authorization
+		 * reference from the public key.
 		 *
-		 * @param id the key id string
-		 * @return the DID Document Builder
+		 * @param id the key id to be remove
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removeAuthorizationKey(String id) {
 			return removeAuthorizationKey(canonicalId(id));
 		}
 
 		/**
-		 * Add Credentail to DID Document Builder.
+		 * Add a credential object to the document.
 		 *
-		 * @param vc the Verifiable Credential object
-		 * @return the DID Document Builder
+		 * @param vc the VerifiableCredential object to be add
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addCredential(VerifiableCredential vc) {
 			checkNotSealed();
 			checkArgument(vc != null, "Invalid credential");
 
-	        // Check the credential belongs to current DID.
-	        if (!vc.getSubject().getId().equals(getSubject()))
-	            throw new IllegalUsageException(vc.getSubject().getId().toString());
+			// Check the credential belongs to current DID.
+			if (!vc.getSubject().getId().equals(getSubject()))
+				throw new IllegalUsageException(vc.getSubject().getId().toString());
 
-	        if (document.credentials == null) {
-	            document.credentials = new TreeMap<DIDURL, VerifiableCredential>();
-	        } else {
-	            if (document.credentials.containsKey(vc.getId()))
-	                throw new DIDObjectAlreadyExistException(vc.getId().toString());
-	        }
+			if (document.credentials == null) {
+				document.credentials = new TreeMap<DIDURL, VerifiableCredential>();
+			} else {
+				if (document.credentials.containsKey(vc.getId()))
+					throw new DIDObjectAlreadyExistException(vc.getId().toString());
+			}
 
-	        document.credentials.put(vc.getId(), vc);
-	        invalidateProof();
+			document.credentials.put(vc.getId(), vc);
+			invalidateProof();
 
 			return this;
 		}
 
 		/**
-		 * Add Credential with the given values.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id
-		 * @param types the Credential types set
-		 * @param subject the Credential subject(key/value)
-		 * @param expirationDate the Credential expires time
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param types the credential types
+		 * @param subject the claims for the credential subject
+		 * @param expirationDate the expiration time for the credential
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(DIDURL id, String[] types,
 				Map<String, Object> subject, Date expirationDate, String storepass)
@@ -4438,16 +4871,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add Credential with the given values.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id string
-		 * @param types the Credential types set
-		 * @param subject the Credential subject(key/value)
-		 * @param expirationDate the Credential expires time
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param types the credential types
+		 * @param subject the claims for the credential subject
+		 * @param expirationDate the expiration time for the credential
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(String id, String[] types,
 				Map<String, Object> subject, Date expirationDate, String storepass)
@@ -4457,15 +4889,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add SelfProclaimed Credential with the given values.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id
-		 * @param subject the Credential subject(key/value)
-		 * @param expirationDate the Credential expires time
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param subject the claims for the credential subject
+		 * @param expirationDate the expiration time for the credential
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(DIDURL id, Map<String, Object> subject,
 				Date expirationDate, String storepass) throws DIDStoreException {
@@ -4473,15 +4904,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add SelfProclaimed Credential with the given values.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id string
-		 * @param subject the Credential subject(key/value)
-		 * @param expirationDate the Credential expires time
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param subject the claims for the credential subject
+		 * @param expirationDate the expiration time for the credential
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(String id, Map<String, Object> subject,
 				Date expirationDate, String storepass) throws DIDStoreException {
@@ -4489,16 +4919,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add Credential with the given values.
-		 * The Credential expires time is the document expires time of Credential subject id.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id
-		 * @param types the Credential id
-		 * @param subject the Credential subject(key/value)
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param types the credential types
+		 * @param subject the claims for the credential subject
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(DIDURL id, String[] types,
 				Map<String, Object> subject, String storepass) throws DIDStoreException {
@@ -4506,16 +4934,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add Credential with the given values.
-		 * The Credential expires time is the document expires time of Credential subject id.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id string
-		 * @param types the Credential id
-		 * @param subject the Credential subject(key/value)
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param types the credential types
+		 * @param subject the claims for the credential subject
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(String id, String[] types,
 				Map<String, Object> subject, String storepass) throws DIDStoreException {
@@ -4523,15 +4949,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add SelfProclaimed Credential with the given values.
-		 * The Credential expires time is the document expires time of Credential subject id.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id
-		 * @param subject the Credential subject(key/value)
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param subject the claims for the credential subject
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(DIDURL id, Map<String, Object> subject,
 				String storepass) throws DIDStoreException {
@@ -4539,15 +4963,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add SelfProclaimed Credential with the given values.
-		 * The Credential expires time is the document expires time of Credential subject id.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id string
-		 * @param subject the Credential subject(key/value)
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param subject the claims for the credential subject
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(String id, Map<String, Object> subject,
 				String storepass) throws DIDStoreException {
@@ -4555,25 +4977,23 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add Credential with the given values.
-		 * Credential subject supports json string.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id
-		 * @param types the Credential types
-		 * @param json the Credential subject(json string)
-		 * @param expirationDate the Credential expires time
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param types the credential types
+		 * @param jsonSubject a JSON string represented claims for the credential subject
+		 * @param expirationDate the expiration time for the credential
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(DIDURL id, String[] types,
-				String json, Date expirationDate, String storepass)
+				String jsonSubject, Date expirationDate, String storepass)
 				throws DIDStoreException {
 			checkNotSealed();
 			checkArgument(id != null && (id.getDid() == null || id.getDid().equals(getSubject())),
 					"Invalid publicKey id");
-			checkArgument(json != null && !json.isEmpty(), "Invalid json");
+			checkArgument(jsonSubject != null && !jsonSubject.isEmpty(), "Invalid json");
 			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 			Issuer issuer = new Issuer(document);
@@ -4587,7 +5007,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			try {
 				VerifiableCredential vc = cb.id(canonicalId(id))
 						.type(types)
-						.properties(json)
+						.properties(jsonSubject)
 						.expirationDate(expirationDate)
 						.seal(storepass);
 
@@ -4600,133 +5020,115 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Add Credential with the given values.
-		 * Credential subject supports json string.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id string
-		 * @param types the Credential types
-		 * @param json the Credential subject(json string)
-		 * @param expirationDate the Credential expires time
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param types the credential types
+		 * @param jsonSubject a JSON string represented claims for the credential subject
+		 * @param expirationDate the expiration time for the credential
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(String id, String[] types,
-				String json, Date expirationDate, String storepass)
+				String jsonSubject, Date expirationDate, String storepass)
 				throws DIDStoreException {
-			return addCredential(canonicalId(id), types, json, expirationDate, storepass);
+			return addCredential(canonicalId(id), types, jsonSubject, expirationDate, storepass);
 		}
 
 		/**
-		 * Add SelfProclaimed Credential with the given values.
-		 * Credential subject supports json string.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id
-		 * @param json the Credential subject(json string)
-		 * @param expirationDate the Credential expires time
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param jsonSubject a JSON string represented claims for the credential subject
+		 * @param expirationDate the expiration time for the credential
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
-		public Builder addCredential(DIDURL id, String json,
+		public Builder addCredential(DIDURL id, String jsonSubject,
 				Date expirationDate, String storepass) throws DIDStoreException {
-			return addCredential(id, null, json, expirationDate, storepass);
+			return addCredential(id, null, jsonSubject, expirationDate, storepass);
 		}
 
 		/**
-		 * Add SelfProclaimed Credential with the given values.
-		 * Credential subject supports json string.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id string
-		 * @param json the Credential subject(json string)
-		 * @param expirationDate the Credential expires time
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param jsonSubject a JSON string represented claims for the credential subject
+		 * @param expirationDate the expiration time for the credential
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
-		public Builder addCredential(String id, String json,
+		public Builder addCredential(String id, String jsonSubject,
 				Date expirationDate, String storepass) throws DIDStoreException {
-			return addCredential(canonicalId(id), null, json, expirationDate, storepass);
+			return addCredential(canonicalId(id), null, jsonSubject, expirationDate, storepass);
 		}
 
 		/**
-		 * Add Credential with the given values.
-		 * Credential subject supports json string.
-		 * The Credential expires time is the document expires time of Credential subject id.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id
-		 * @param types the Credential types
-		 * @param json the Credential subject(json string)
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param types the credential types
+		 * @param jsonSubject a JSON string represented claims for the credential subject
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(DIDURL id, String[] types,
-				String json, String storepass) throws DIDStoreException {
-			return addCredential(id, types, json, null, storepass);
+				String jsonSubject, String storepass) throws DIDStoreException {
+			return addCredential(id, types, jsonSubject, null, storepass);
 		}
 
 		/**
-		 * Add Credential with the given values.
-		 * Credential subject supports json string.
-		 * The Credential expires time is the document expires time of Credential subject id.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id
-		 * @param types the Credential types
-		 * @param json the Credential subject(json string)
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param types the credential types
+		 * @param jsonSubject a JSON string represented claims for the credential subject
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
 		public Builder addCredential(String id, String[] types,
-				String json, String storepass) throws DIDStoreException {
-			return addCredential(canonicalId(id), types, json, null, storepass);
+				String jsonSubject, String storepass) throws DIDStoreException {
+			return addCredential(canonicalId(id), types, jsonSubject, null, storepass);
 		}
 
 		/**
-		 * Add SelfProclaimed Credential with the given values.
-		 * Credential subject supports json string.
-		 * The Credential expires time is the document expires time of Credential subject id.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id
-		 * @param json the Credential subject(json string)
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param jsonSubject a JSON string represented claims for the credential subject
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
-		public Builder addCredential(DIDURL id, String json, String storepass)
+		public Builder addCredential(DIDURL id, String jsonSubject, String storepass)
 				throws DIDStoreException {
-			return addCredential(id, null, json, null, storepass);
+			return addCredential(id, null, jsonSubject, null, storepass);
 		}
 
 		/**
-		 * Add SelfProclaimed Credential with the given values.
-		 * Credential subject supports json string.
-		 * The Credential expires time is the document expires time of Credential subject id.
+		 * Add a self-proclaimed credential to the document.
 		 *
-		 * @param id the Credential id string
-		 * @param json the Credential subject(json string)
-		 * @param storepass the password for DIDStore
-		 * @return the DID Document Builder
-		 * @throws DIDStoreException there is no DID store to attach.
-		 * @throws InvalidKeyException there is no authentication key.
+		 * @param id the credential id
+		 * @param jsonSubject a JSON string represented claims for the credential subject
+		 * @param storepass the password for the store
+		 * @return the Builder instance for method chaining
+		 * @throws DIDStoreException if an error occurred when accessing the store
 		 */
-		public Builder addCredential(String id, String json, String storepass)
+		public Builder addCredential(String id, String jsonSubject, String storepass)
 				throws DIDStoreException {
-			return addCredential(canonicalId(id), null, json, null, storepass);
+			return addCredential(canonicalId(id), null, jsonSubject, null, storepass);
 		}
 
 		/**
-		 * Remove Credential with the specified id.
+		 * Remove the specific credential from the document.
 		 *
-		 * @param id the Credential id
-		 * @return the DID Document Builder
+		 * @param id the id of the credential to be remove
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removeCredential(DIDURL id) {
 			checkNotSealed();
@@ -4738,28 +5140,29 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			if (document.credentials.remove(canonicalId(id)) != null)
 				invalidateProof();
 			else
-	            throw new DIDObjectNotExistException(id.toString());
+				throw new DIDObjectNotExistException(id.toString());
 
 			return this;
 		}
 
 		/**
-		 * Remove Credential with the specified id.
+		 * Remove the specific credential from the document.
 		 *
-		 * @param id the Credential id string
-		 * @return the DID Document Builder
+		 * @param id the id of the credential to be remove
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removeCredential(String id) {
 			return removeCredential(canonicalId(id));
 		}
 
 		/**
-		 * Add Service.
+		 * Add a new service to the document.
 		 *
-		 * @param id the specified Service id
-		 * @param type the Service type
-		 * @param endpoint the service point's adderss
-		 * @return the DID Document Builder
+		 * @param id the service id
+		 * @param type the service type
+		 * @param endpoint the service endpoint
+		 * @param properties the application defined extra properties
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addService(DIDURL id, String type, String endpoint,
 				Map<String, Object> properties) {
@@ -4770,47 +5173,64 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			checkArgument(endpoint != null && !endpoint.isEmpty(), "Invalid endpoint");
 
 			Service svc = new Service(canonicalId(id), type, endpoint, properties);
-	        if (document.services == null)
-	        	document.services = new TreeMap<DIDURL, Service>();
-	        else {
-	            if (document.services.containsKey(svc.getId()))
-	                throw new DIDObjectAlreadyExistException("Service '"
-	                        + svc.getId() + "' already exist.");
-	        }
+			if (document.services == null)
+				document.services = new TreeMap<DIDURL, Service>();
+			else {
+				if (document.services.containsKey(svc.getId()))
+					throw new DIDObjectAlreadyExistException("Service '"
+							+ svc.getId() + "' already exist.");
+			}
 
-	        document.services.put(svc.getId(), svc);
-	        invalidateProof();
+			document.services.put(svc.getId(), svc);
+			invalidateProof();
 
 			return this;
 		}
 
+		/**
+		 * Add a new service to the document.
+		 *
+		 * @param id the service id
+		 * @param type the service type
+		 * @param endpoint the service endpoint
+		 * @param properties the application defined extra properties
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder addService(String id, String type, String endpoint,
 				Map<String, Object> properties) {
 			return addService(canonicalId(id), type, endpoint, properties);
 		}
 
+		/**
+		 * Add a new service to the document.
+		 *
+		 * @param id the service id
+		 * @param type the service type
+		 * @param endpoint the service endpoint
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder addService(DIDURL id, String type, String endpoint) {
 			return addService(id, type, endpoint, null);
 		}
 
 		/**
-		 * Add Service.
+		 * Add a new service to the document.
 		 *
-		 * @param id the specified Service id string
-		 * @param type the Service type
-		 * @param endpoint the service point's adderss
-		 * @return the DID Document Builder
+		 * @param id the service id
+		 * @param type the service type
+		 * @param endpoint the service endpoint
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder addService(String id, String type, String endpoint) {
 			return addService(canonicalId(id), type, endpoint, null);
 		}
 
-        /**
-         * Remove the Service with the specified id.
-         *
-         * @param id the Service id
-         * @return the DID Document Builder
-         */
+		/**
+		 * Remove the specific service from the document.
+		 *
+		 * @param id the id of the service to be remove
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder removeService(DIDURL id) {
 			checkNotSealed();
 			checkArgument(id != null, "Invalid credential id");
@@ -4821,17 +5241,17 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			if (document.services.remove(canonicalId(id)) != null)
 				invalidateProof();
 			else
-	            throw new DIDObjectNotExistException(id.toString());
+				throw new DIDObjectNotExistException(id.toString());
 
 			return this;
 		}
 
-        /**
-         * Remove the Service with the specified id.
-         *
-         * @param id the Service id string
-         * @return the DID Document Builder
-         */
+		/**
+		 * Remove the specific service from the document.
+		 *
+		 * @param id the id of the service to be remove
+		 * @return the Builder instance for method chaining
+		 */
 		public Builder removeService(String id) {
 			return removeService(canonicalId(id));
 		}
@@ -4843,9 +5263,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Set the current time to be expires time for DID Document Builder.
+		 * Set the document use the default expire time.
 		 *
-		 * @return the DID Document Builder
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder setDefaultExpires() {
 			checkNotSealed();
@@ -4857,10 +5277,10 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		/**
-		 * Set the specified time to be expires time for DID Document Builder.
+		 * Set the expires time for the document.
 		 *
-		 * @param expires the specified time
-		 * @return the DID Document Builder
+		 * @param expires the expire time
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder setExpires(Date expires) {
 			checkNotSealed();
@@ -4882,7 +5302,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * Remove the proof that created by the specific controller.
 		 *
 		 * @param controller the controller's DID
-		 * @return the DID Document Builder
+		 * @return the Builder instance for method chaining
 		 */
 		public Builder removeProof(DID controller) {
 			checkNotSealed();
@@ -4980,11 +5400,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * Seal the document object, attach the generated proof to the
 		 * document.
 		 *
-		 * @param storepass the password for DIDStore
-		 * @return the DIDDocument object
+		 * @param storepass the password for the DIDStore
+		 * @return the new DIDDocument object
 		 * @throws InvalidKeyException if no valid sign key to seal the document
 		 * @throws MalformedDocumentException if the DIDDocument is malformed
-		 * @throws DIDStoreException if an error occurs when access DID store
+		 * @throws DIDStoreException if an error occurs when accessing the store
 		 */
 		public DIDDocument seal(String storepass)
 				throws MalformedDocumentException, DIDStoreException {

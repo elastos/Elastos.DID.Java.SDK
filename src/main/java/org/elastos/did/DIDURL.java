@@ -70,7 +70,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	/**
 	 * Constructs a DIDURL object with the given DID base and a url string.
 	 *
-	 * @param base a DID base of the DIDURL object, if the url is a relative DIDURL
+	 * @param baseRef a DID base of the DIDURL object, if the url is a relative DIDURL
 	 * @param url a string representation of DIDURL
 	 * @throws MalformedDIDURLException if the url in wrong syntax
 	 */
@@ -122,7 +122,7 @@ public class DIDURL implements Comparable<DIDURL> {
 	/**
 	 * Constructs a DIDURL object with the given DID base and a DIDURL object.
 	 *
-	 * @param base a DID base of the DIDURL object, if the url is a relative DIDURL
+	 * @param baseRef a DID base of the DIDURL object, if the url is a relative DIDURL
 	 * @param url a DIDURL object
 	 */
 	public DIDURL(DID baseRef, DIDURL url) {
@@ -627,6 +627,9 @@ public class DIDURL implements Comparable<DIDURL> {
 		}
 	}
 
+	/**
+	 * Builder class to create or modify a DIDURL.
+	 */
 	public static class Builder {
 		private DIDURL url;
 

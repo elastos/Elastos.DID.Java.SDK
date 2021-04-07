@@ -481,6 +481,7 @@ public final class RootIdentity {
 	 * @param overwrite true for overwriting the existing one, fail otherwise
 	 * @param storepass the password for DIDStore
 	 * @return the new created DIDDocument object
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public DIDDocument newDid(int index, boolean overwrite, String storepass)
@@ -533,6 +534,7 @@ public final class RootIdentity {
 	 * @param index the derive index
 	 * @param storepass the password for DIDStore
 	 * @return the new created DIDDocument object
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public DIDDocument newDid(int index, String storepass)
@@ -546,6 +548,7 @@ public final class RootIdentity {
 	 * @param overwrite true for overwriting the existing one, fail otherwise
 	 * @param storepass the password for DIDStore
 	 * @return the new created DIDDocument object
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public synchronized DIDDocument newDid(boolean overwrite, String storepass)
@@ -560,6 +563,7 @@ public final class RootIdentity {
 	 *
 	 * @param storepass the password for DIDStore
 	 * @return the new created DIDDocument object
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public DIDDocument newDid(String storepass)

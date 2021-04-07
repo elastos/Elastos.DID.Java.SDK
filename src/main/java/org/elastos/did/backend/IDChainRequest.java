@@ -143,7 +143,7 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 		 * Returns the Status enumeration constant of the specified name.
 		 * (This is a helper method for JSON deserialization)
 		 *
-		 * @param value the operation name
+		 * @param name the operation name
 		 * @return the enumeration constant
 		 */
 		@JsonCreator

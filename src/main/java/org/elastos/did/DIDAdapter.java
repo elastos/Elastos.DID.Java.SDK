@@ -39,7 +39,6 @@ public interface DIDAdapter extends DIDTransactionAdapter {
 	/**
 	 * Perform the resolve request.
 	 *
-	 * @param requestId an application defined request identifier
 	 * @param request a string representation of resolve request
 	 * @return the resolve result
 	 * @throws DIDResolveException if error occurred when resolving

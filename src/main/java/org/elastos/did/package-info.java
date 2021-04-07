@@ -24,7 +24,7 @@
  * Elastos DID SDK
  *
  * <p>
- * Elastos DID is a W3C compatible DID method.
+ * Elastos DID is a W3C compatible DID method implementation.
  * See <a href="https://github.com/elastos/Elastos.DID.Method">Elastos DID method specification</a>.
  * </p>
  *

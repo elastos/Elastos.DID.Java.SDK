@@ -301,6 +301,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	 * Check whether the ticket is genuine or not.
 	 *
 	 * @return true is the ticket is genuine else false
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 */
 	public boolean isGenuine() throws DIDResolveException {
 		DIDDocument doc = getDocument();
@@ -352,6 +353,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	 * Check whether the ticket is genuine and valid to use.
 	 *
 	 * @return true is the ticket is valid else false
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 */
 	public boolean isValid() throws DIDResolveException {
 		DIDDocument doc = getDocument();
@@ -379,6 +381,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	 *</p>
 	 *
 	 * @return true is the ticket is qualified else false
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 */
 	public boolean isQualified() throws DIDResolveException {
 		if (proofs == null || proofs.isEmpty())
