@@ -33,7 +33,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
-/**
  * The abstract super class for all resolve response. Include:
  * - DIDResolveResponse
  * - CredentialResolveResponse
@@ -186,7 +185,8 @@ public abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DID
 	/**
 	 * Get the error message. null if the response is a success response,
 	 * or an error message if the response is an error response with message.
-	 * @return
+	 *
+	 * @return the error message
 	 */
 	public String getErrorMessage() {
 		return error.getMessage();

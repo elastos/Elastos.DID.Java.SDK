@@ -111,6 +111,7 @@ public class Mnemonic {
 	 * Create a Mnemonic object with default language.
 	 *
 	 * @return the Mnemonic object
+	 * @throws MnemonicException if an error occurred when create the Mnemonic object
 	 */
 	public static Mnemonic getInstance() throws MnemonicException {
 		return getInstance(null);

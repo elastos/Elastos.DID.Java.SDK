@@ -24,6 +24,9 @@ package org.elastos.did.backend;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+/**
+ * DID(document) resolve response object.
+ */
 public class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDBiography> {
 	@JsonCreator
 	protected DIDResolveResponse() {

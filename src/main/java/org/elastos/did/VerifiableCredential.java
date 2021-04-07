@@ -475,7 +475,6 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	/**
 	 * Sanitize routine before sealing or after deserialization.
 	 *
-	 * @param withProof check the proof object or not
 	 * @throws MalformedCredentialException if the credential object is invalid
 	 */
 	@Override
@@ -1799,8 +1798,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param storepass the password of the DID store
 	 * @param adapter an optional DIDTransactionAdapter object, use the
 	 * 				  DIDBackend's default implementation if null
-	 * @throws DIDStoreException if an error occurred when accessing the DID store
-	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 * @return the new CompletableStage
 	 */
 	public static CompletableFuture<Void> revokeAsync(DIDURL id, DIDDocument signer,
 			DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
@@ -1823,8 +1821,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param signer the DID document of credential owner or issuer
 	 * @param signKey the key id to sign the revoke transaction
 	 * @param storepass the password of the DID store
-	 * @throws DIDStoreException if an error occurred when accessing the DID store
-	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 * @return the new CompletableStage
 	 */
 	public static CompletableFuture<Void> revokeAsync(DIDURL id,
 			DIDDocument signer, DIDURL signKey, String storepass) {
@@ -1841,8 +1838,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param storepass the password of the DID store
 	 * @param adapter an optional DIDTransactionAdapter object, use the
 	 * 				  DIDBackend's default implementation if null
-	 * @throws DIDStoreException if an error occurred when accessing the DID store
-	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 * @return the new CompletableStage
 	 */
 	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument signer,
 			String signKey, String storepass, DIDTransactionAdapter adapter) {
@@ -1865,8 +1861,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param signer the DID document of credential owner or issuer
 	 * @param signKey the key id to sign the revoke transaction
 	 * @param storepass the password of the DID store
-	 * @throws DIDStoreException if an error occurred when accessing the DID store
-	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 * @return the new CompletableStage
 	 */
 	public static CompletableFuture<Void> revokeAsync(String id,
 			DIDDocument signer, String signKey, String storepass) {
@@ -1882,8 +1877,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param storepass the password of the DID store
 	 * @param adapter an optional DIDTransactionAdapter object, use the
 	 * 				  DIDBackend's default implementation if null
-	 * @throws DIDStoreException if an error occurred when accessing the DID store
-	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 * @return the new CompletableStage
 	 */
 	public static CompletableFuture<Void> revokeAsync(DIDURL id, DIDDocument signer,
 			String storepass, DIDTransactionAdapter adapter) {
@@ -1897,8 +1891,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param id the id of the credential to be revoke
 	 * @param signer the DID document of credential owner or issuer
 	 * @param storepass the password of the DID store
-	 * @throws DIDStoreException if an error occurred when accessing the DID store
-	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 * @return the new CompletableStage
 	 */
 	public static CompletableFuture<Void> revokeAsync(DIDURL id,
 			DIDDocument signer, String storepass) {
@@ -1914,8 +1907,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param storepass the password of the DID store
 	 * @param adapter an optional DIDTransactionAdapter object, use the
 	 * 				  DIDBackend's default implementation if null
-	 * @throws DIDStoreException if an error occurred when accessing the DID store
-	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 * @return the new CompletableStage
 	 */
 	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument signer,
 			String storepass, DIDTransactionAdapter adapter) {
@@ -1929,8 +1921,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param id the id of the credential to be revoke
 	 * @param signer the DID document of credential owner or issuer
 	 * @param storepass the password of the DID store
-	 * @throws DIDStoreException if an error occurred when accessing the DID store
-	 * @throws DIDBackendException if an error occurred when publish the transaction
+	 * @return the new CompletableStage
 	 */
 	public static CompletableFuture<Void> revokeAsync(String id,
 			DIDDocument signer, String storepass) {
@@ -2376,7 +2367,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	/**
 	 * List the published credentials that owned by the specific DID.
 	 *
-	 * @param id the id of the target credential
+	 * @param did the did to be list
 	 * @param skip set to skip N credentials ahead in this request
 	 * 		  (useful for pagination).
 	 * @param limit set the limit of credentials returned in the request
@@ -2394,7 +2385,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	/**
 	 * List the published credentials that owned by the specific DID.
 	 *
-	 * @param id the id of the target credential
+	 * @param did the did to be list
 	 * @param limit set the limit of credentials returned in the request
 	 * 		  (useful for pagination).
 	 * @return an array of DIDURL denoting the credentials
@@ -2410,7 +2401,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	/**
 	 * List the published credentials that owned by the specific DID.
 	 *
-	 * @param id the id of the target credential
+	 * @param did the did to be list
 	 * @return an array of DIDURL denoting the credentials
 	 * @exception DIDResolveException if an error occurred when resolving the list
 	 */
@@ -2425,7 +2416,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * List the published credentials that owned by the specific DID in
 	 * asynchronous mode.
 	 *
-	 * @param id the id of the target credential
+	 * @param did the did to be list
 	 * @param skip set to skip N credentials ahead in this request
 	 * 		  (useful for pagination).
 	 * @param limit set the limit of credentials returned in the request
@@ -2449,7 +2440,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * List the published credentials that owned by the specific DID in
 	 * asynchronous mode.
 	 *
-	 * @param id the id of the target credential
+	 * @param did the did to be list
 	 * @param limit set the limit of credentials returned in the request
 	 * 		  (useful for pagination).
 	 * @return a new CompletableStage, the result is an array of DIDURL
@@ -2463,7 +2454,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * List the published credentials that owned by the specific DID in
 	 * asynchronous mode.
 	 *
-	 * @param id the id of the target credential
+	 * @param did the did to be list
 	 * @return a new CompletableStage, the result is an array of DIDURL
 	 * 		   denoting the credentials
 	 */
@@ -2478,7 +2469,6 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param content the string JSON content to deserialize the VerifiableCredential object
 	 * @return the VerifiableCredential object
 	 * @throws MalformedCredentialException if a parse error occurs
-	 * @throws IOException if an IO error occurs
 	 */
 	public static VerifiableCredential parse(String content)
 			throws MalformedCredentialException {
@@ -2729,7 +2719,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		/**
 		 * Set the claim properties to the credential subject from a map object.
 		 *
-		 * @param json a map object include the claims
+		 * @param properties a map object include the claims
 		 * @return the Builder instance for method chaining
 		 */
 		public Builder properties(Map<String, Object> properties) {

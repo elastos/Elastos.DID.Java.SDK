@@ -358,6 +358,7 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 	 * @param name the property name to be get
 	 * @return the Date value of the specified property name, or
 	 *         {@code null} if this metadata not contains the property name
+	 * @throws ParseException if can not parse the value as date
 	 */
 	public Date getExtraDate(String name) throws ParseException {
 		checkArgument(name != null && !name.isEmpty(), "Invalid name");

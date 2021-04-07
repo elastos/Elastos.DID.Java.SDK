@@ -150,7 +150,6 @@ public class DID implements Comparable<DID> {
 	 * Get the metadata object that associated with this DID.
 	 *
 	 * @return the metadata object
-	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public synchronized DIDMetadata getMetadata() {
 		if (metadata == null) {
@@ -169,9 +168,8 @@ public class DID implements Comparable<DID> {
 	 * Check the DID is deactivated or not.
 	 *
 	 * @return the DID deactivated status
-	 * @throws DIDResolveException
 	 */
-	public boolean isDeactivated() throws DIDResolveException {
+	public boolean isDeactivated() {
 		return getMetadata().isDeactivated();
 	}
 

@@ -596,6 +596,7 @@ public final class DIDStore {
 	/**
 	 * Check whether the RootIdentity exists in this DIDStore.
 	 *
+	 * @param id the id of the RootIdentity to be check
 	 * @return true if exists else false
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
@@ -2331,7 +2332,7 @@ public final class DIDStore {
 	 * pre-derived public key, derive index, metadata...
 	 *
 	 * @param id the id of the RootIdentity to be export
-	 * @param out the file object that the data export to
+	 * @param file the file object that the data export to
 	 * @param password the password to encrypt the private keys in the exported data
 	 * @param storepass the password for this store
 	 * @throws DIDStoreException if an error occurred when accessing the store
@@ -2353,7 +2354,7 @@ public final class DIDStore {
 	 * pre-derived public key, derive index, metadata...
 	 *
 	 * @param id the id of the RootIdentity to be export
-	 * @param out the file name that the data export to
+	 * @param file the file name that the data export to
 	 * @param password the password to encrypt the private keys in the exported data
 	 * @param storepass the password for this store
 	 * @throws DIDStoreException if an error occurred when accessing the store

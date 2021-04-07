@@ -70,7 +70,7 @@ import com.sun.net.httpserver.HttpServer;
  * Elastos DID method specification</a>.
  * </p>
  *
- * <h3>Create ID transaction</h3>
+ * <strong>Create ID transaction</strong>
  * <p>
  * <b>Endpoint</b>: /idtx<br>
  * <b>Method</b>: POST<br>
@@ -80,7 +80,7 @@ import com.sun.net.httpserver.HttpServer;
  * <b>Success Status</b>: 202<br>
  * </p>
  *
- * <h3>Resolve</h3>
+ * <strong>Resolve</strong>
  * <p>
  * <b>Endpoint</b>: /resolve<br>
  * <b>Method</b>: POST<br>
@@ -90,7 +90,7 @@ import com.sun.net.httpserver.HttpServer;
  * <b>Success Status</b>: 200<br>
  * </p>
  *
- * <h3>Reset test data</h3>
+ * <strong>Reset test data</strong>
  * <p>
  * <b>Endpoint</b>: /reset<br>
  * <b>Parameters</b>(optional): idtxsonly, vctxsonly<br>
@@ -100,7 +100,7 @@ import com.sun.net.httpserver.HttpServer;
  * <b>Success Status</b>: 200<br>
  * </p>
  *
- * <h3>Shutdown the simulated ID chain</h3>
+ * <strong>Shutdown the simulated ID chain</strong>
  * <p>
  * <b>Endpoint</b>: /shutdown<br>
  * <b>Method</b>: POST<br>
@@ -109,19 +109,17 @@ import com.sun.net.httpserver.HttpServer;
  * <b>Success Status</b>: 202<br>
  * </p>
  *
- * <h3>Command line to start the simulated ID chain<h3>
- * <p>
+ * <strong>Command line to start the simulated ID chain</strong>
  * <pre>
  * $ java -jar did.jar simchain --help
- * Usage: org.elastos.did.util.Main simchain [-ehV] [-i=<host>] [-p=<port>]
+ * Usage: org.elastos.did.util.Main simchain [-ehV] [-i=&lt;host&gt;] [-p=&lt;port&gt;]
  * Simulated ID Chain for testing.
- *   -i, --interface=<host>   Server interface, default: localhost
- *   -p, --port=<port>        Server port, default 9123.
+ *   -i, --interface=&lt;host&gt;   Server interface, default: localhost
+ *   -p, --port=&lt;port&gt;        Server port, default 9123.
  *   -e, --verbase            Verbose error output, default false.
  *   -h, --help               Show this help message and exit.
  *   -V, --version            Print version information and exit.
  * </pre>
- * </p>
  */
 public class SimulatedIDChain {
 	// For mini HTTP server
@@ -714,6 +712,7 @@ public class SimulatedIDChain {
 	 * method will block current thread until the HTTP server shutdown graceful.
 	 *
 	 * @throws IOException if there is a error when start the HTTP server
+	 * @throws InterruptedException if interrupted by the signals
 	 * @see start()
 	 */
 	public synchronized void run() throws IOException, InterruptedException {
