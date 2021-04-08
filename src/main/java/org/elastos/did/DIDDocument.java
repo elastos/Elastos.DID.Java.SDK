@@ -4674,7 +4674,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * @return the Builder instance for method chaining
 		 * @throws DIDResolveException if an error occurred when resolving the DIDs
 		 */
-		public Builder authorizationDid(DIDURL id, DID controller, DIDURL key)
+		public Builder authorizeDid(DIDURL id, DID controller, DIDURL key)
 				throws DIDResolveException {
 			checkNotSealed();
 			checkArgument(id != null && (id.getDid() == null || id.getDid().equals(getSubject())),
@@ -4724,9 +4724,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * @return the Builder instance for method chaining
 		 * @throws DIDResolveException if an error occurred when resolving the DIDs
 		 */
-		public Builder authorizationDid(DIDURL id, DID controller)
+		public Builder authorizeDid(DIDURL id, DID controller)
 				throws DIDResolveException {
-			return authorizationDid(id, controller, null);
+			return authorizeDid(id, controller, null);
 		}
 
 		/**
@@ -4738,9 +4738,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * @return the Builder instance for method chaining
 		 * @throws DIDResolveException if an error occurred when resolving the DIDs
 		 */
-		public Builder authorizationDid(String id, String controller, String key)
+		public Builder authorizeDid(String id, String controller, String key)
 				throws DIDResolveException {
-			return authorizationDid(canonicalId(id),
+			return authorizeDid(canonicalId(id),
 					DID.valueOf(controller), DIDURL.valueOf(controller, key));
 		}
 
@@ -4752,9 +4752,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 * @return the Builder instance for method chaining
 		 * @throws DIDResolveException if an error occurred when resolving the DIDs
 		 */
-		public Builder authorizationDid(String id, String controller)
+		public Builder authorizeDid(String id, String controller)
 				throws DIDResolveException {
-			return authorizationDid(id, controller, null);
+			return authorizeDid(id, controller, null);
 		}
 
 		/**

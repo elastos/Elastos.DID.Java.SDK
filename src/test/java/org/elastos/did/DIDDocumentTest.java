@@ -4191,7 +4191,7 @@ public class DIDDocumentTest {
 
     	DIDDocument target = identity.newDid(TestConfig.storePass);
     	DIDDocument.Builder db = target.edit();
-    	db.authorizationDid("#recovery", doc.getSubject().toString());
+    	db.authorizeDid("#recovery", doc.getSubject().toString());
     	target = db.seal(TestConfig.storePass);
     	assertNotNull(target);
     	assertEquals(1, target.getAuthorizationKeyCount());
