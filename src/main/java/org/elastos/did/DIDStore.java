@@ -289,7 +289,7 @@ public final class DIDStore {
 		 * @param id the DIDURL to be tested
 		 * @return true if and only if DIDURL should be included
 		 */
-		public boolean select(DIDURL id);
+		public boolean accept(DIDURL id);
 	}
 
 	private DIDStore(int initialCacheCapacity, int maxCacheCapacity,
@@ -963,7 +963,7 @@ public final class DIDStore {
 	 * @return an array of DIDs
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
-	public List<DID> selectDids(DIDFilter filter) throws DIDStoreException {
+	public List<DID> listDids(DIDFilter filter) throws DIDStoreException {
 		List<DID> dids = listDids();
 
 		if (filter != null) {
@@ -1215,7 +1215,7 @@ public final class DIDStore {
 	 * @return an array of DIDURL denoting the credentials
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
-	public List<DIDURL> selectCredentials(DID did, CredentialFilter filter)
+	public List<DIDURL> listCredentials(DID did, CredentialFilter filter)
 			throws DIDStoreException {
 		checkArgument(did != null, "Invalid did");
 
@@ -1225,7 +1225,7 @@ public final class DIDStore {
 			List<DIDURL> dest = new ArrayList<DIDURL>();
 
 			for (DIDURL id : vcs) {
-				if (filter.select(id))
+				if (filter.accept(id))
 					dest.add(id);
 			}
 
@@ -1244,9 +1244,9 @@ public final class DIDStore {
 	 * @return an array of DIDURL denoting the credentials
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
-	public List<DIDURL> selectCredentials(String did, CredentialFilter filter)
+	public List<DIDURL> listCredentials(String did, CredentialFilter filter)
 			throws DIDStoreException {
-		return selectCredentials(DID.valueOf(did), filter);
+		return listCredentials(DID.valueOf(did), filter);
 	}
 
 	/**
