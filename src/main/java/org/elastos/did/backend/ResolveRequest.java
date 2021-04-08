@@ -22,11 +22,16 @@
 
 package org.elastos.did.backend;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.elastos.did.DIDEntity;
 import org.elastos.did.exception.DIDSyntaxException;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -50,7 +55,6 @@ public abstract class ResolveRequest<T, P> extends DIDEntity<T> {
 	private String requestId;
 	@JsonProperty(METHOD)
 	private String method;
-	@JsonProperty(PARAMETERS)
 	private P params;
 
 	/**
@@ -98,6 +102,40 @@ public abstract class ResolveRequest<T, P> extends DIDEntity<T> {
 	 */
 	protected P getParameters() {
 		return params;
+	}
+
+	/**
+	 * Map an array(single element) of the parameter objects to parameter object.
+	 *
+	 * <p>
+	 * NOTICE: this is required by the Ethereum RPC call schema.
+	 * </p>
+	 *
+	 * @param params an array of the parameter objects
+	 */
+	@JsonSetter(PARAMETERS)
+	private void _setParameters(List<P> params) {
+		this.params = (params == null || params.isEmpty()) ? null : params.get(0);
+	}
+
+	/**
+	 * Map the parameter object to an single element array.
+	 *
+	 * <p>
+	 * NOTICE: this is required by the Ethereum RPC call schema.
+	 * </p>
+	 *
+	 * @return an array(single element) of the parameter objects
+	 */
+	@JsonGetter(PARAMETERS)
+	private List<P> _getParameters() {
+		if (params != null) {
+			List<P> ret = new ArrayList<P>(1);
+			ret.add(params);
+			return ret;
+		} else {
+			return null;
+		}
 	}
 
 	/**
