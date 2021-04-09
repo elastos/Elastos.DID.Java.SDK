@@ -973,7 +973,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @param did the controller's DID
 	 * @return the DIDDocument object or null if no controller
 	 */
-	protected DIDDocument getControllerDocument(DID did) {
+	public DIDDocument getControllerDocument(DID did) {
 		return controllerDocs.get(did);
 	}
 
@@ -3479,6 +3479,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		if (signKey == null && getDefaultPublicKeyId() == null)
 			throw new NoEffectiveControllerException(getSubject().toString());
 
+		signKey = canonicalId(signKey);
+
 		// Document should use the IDChain's copy
 		DIDDocument doc = getSubject().resolve(true);
 		if (doc == null)
@@ -3491,8 +3493,17 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		if (signKey == null) {
 			signKey = doc.getDefaultPublicKeyId();
 		} else {
-			if (!doc.isAuthenticationKey(signKey))
-				throw new InvalidKeyException(signKey.toString());
+			if (!doc.isCustomizedDid()) {
+				// the signKey should be default key or authorization key
+				if (!doc.getDefaultPublicKeyId().equals(signKey) &&
+						doc.getAuthorizationKey(signKey) == null)
+					throw new InvalidKeyException(signKey.toString());
+			} else {
+				// the signKey should be controller's default key
+				DIDDocument controller = doc.getControllerDocument(signKey.getDid());
+				if (controller == null || !controller.getDefaultPublicKeyId().equals(signKey))
+					throw new InvalidKeyException(signKey.toString());
+			}
 		}
 
 		DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);

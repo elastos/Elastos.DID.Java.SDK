@@ -490,8 +490,17 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 			if (!doc.isAuthenticationKey(signKey))
 				return false;
 		} else {
-			if (!doc.isAuthenticationKey(signKey) && !doc.isAuthorizationKey(signKey))
-				return false;
+			if (!doc.isCustomizedDid()) {
+				// the signKey should be default key or authorization key
+				if (!doc.getDefaultPublicKeyId().equals(signKey) &&
+						doc.getAuthorizationKey(signKey) == null)
+					return false;
+			} else {
+				// the signKey should be controller's default key
+				DIDDocument controller = doc.getControllerDocument(signKey.getDid());
+				if (controller == null || !controller.getDefaultPublicKeyId().equals(signKey))
+					return false;
+			}
 		}
 
 		return doc.verify(proof.getVerificationMethod(), proof.getSignature(),
