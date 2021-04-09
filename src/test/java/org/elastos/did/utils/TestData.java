@@ -42,7 +42,7 @@ import org.elastos.did.RootIdentity;
 import org.elastos.did.TransferTicket;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
-import org.elastos.did.backend.SPVAdapter;
+import org.elastos.did.backend.Web3Adapter;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 
@@ -127,21 +127,21 @@ public final class TestData {
 
 	public void waitForWalletAvaliable() throws DIDException {
 		// need synchronize?
-		if (DIDTestExtension.getAdapter() instanceof SPVAdapter) {
-			SPVAdapter spvAdapter = (SPVAdapter)DIDTestExtension.getAdapter();
+		if (DIDTestExtension.getAdapter() instanceof Web3Adapter) {
+			Web3Adapter adapter = (Web3Adapter)DIDTestExtension.getAdapter();
 
 			System.out.print("Waiting for wallet available...");
 			long start = System.currentTimeMillis();
 			while (true) {
-				try {
-					Thread.sleep(30000);
-				} catch (InterruptedException ignore) {
-				}
-
-				if (spvAdapter.isAvailable()) {
+				if (adapter.isAvailable()) {
 					long duration = (System.currentTimeMillis() - start + 500) / 1000;
 					System.out.println("OK(" + duration + "s)");
 					break;
+				}
+
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException ignore) {
 				}
 			}
 		}

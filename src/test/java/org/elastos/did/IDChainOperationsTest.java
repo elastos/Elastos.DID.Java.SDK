@@ -107,6 +107,7 @@ public class IDChainOperationsTest {
 
 		testData.waitForWalletAvaliable();
 		DIDDocument resolved = did.resolve();
+		assertNotNull(resolved);
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
 		assertEquals(doc.toString(true), resolved.toString(true));

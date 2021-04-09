@@ -32,14 +32,14 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 
 public final class TestConfig {
-	public static String network;
+	public static String rpcEndpoint;
+	public static String contractAddress;
+
+	public static String walletPath;
+	public static String walletPassword;
 
 	public static String passphrase;
 	public static String storePass;
-
-	public static String walletDir;
-	public static String walletId;
-	public static String walletPassword;
 
 	public static String tempDir;
 	public static String storeRoot;
@@ -59,18 +59,17 @@ public final class TestConfig {
 
 		String sysTemp = System.getProperty("java.io.tmpdir");
 
-		network = config.getProperty("network");
-		System.setProperty("org.elastos.did.network", network);
+		rpcEndpoint = config.getProperty("idchain.rpcEndpoint");
+		contractAddress = config.getProperty("idchain.contractAddress");
+
+		walletPath = config.getProperty("wallet.path");
+		walletPassword = config.getProperty("wallet.password");
 
 		passphrase = config.getProperty("mnemnoic.passphrase");
 		storePass = config.getProperty("store.pass");
 
 		tempDir = config.getProperty("temp.dir", sysTemp);
 		storeRoot = config.getProperty("store.root", tempDir + "/DIDStore");
-
-		walletDir = config.getProperty("wallet.dir");
-		walletId = config.getProperty("wallet.id");
-		walletPassword = config.getProperty("wallet.password");
 
 		level = Level.valueOf(config.getProperty("log.level", "info").toUpperCase());
 
