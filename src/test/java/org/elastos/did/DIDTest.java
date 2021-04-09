@@ -30,10 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.MalformedDIDException;
@@ -42,7 +39,6 @@ import org.elastos.did.utils.TestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(DIDTestExtension.class)
@@ -128,43 +124,6 @@ public class DIDTest {
 		other = new DID("did:elastos:1234567890");
 		assertFalse(did.equals(other));
 		assertFalse(did.equals("did:elastos:1234567890"));
-	}
-
-	@Test
-	@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
-	public void testResolve() throws DIDException, IOException {
-		ArrayList<DID> dids = new ArrayList<DID>(16);
-
-		BufferedReader input = new BufferedReader(new InputStreamReader(
-				getClass().getClassLoader().getResourceAsStream("testdata/dids.restore")));
-		input.lines().forEach((didstr) -> {
-			try {
-				DID did = new DID(didstr);
-				dids.add(did);
-			} catch (MalformedDIDException ignore) {
-			}
-		});
-		input.close();
-
-		long start = System.currentTimeMillis();
-		for (DID did : dids) {
-			DIDDocument doc = did.resolve();
-			assertNotNull(doc);
-		}
-		long end = System.currentTimeMillis();
-
-		System.out.println(String.format("First time resovle %d DIDs took %d Milliseconds",
-				dids.size(), (end-start)));
-
-		start = System.currentTimeMillis();
-		for (DID did : dids) {
-			DIDDocument doc = did.resolve();
-			assertNotNull(doc);
-		}
-		end = System.currentTimeMillis();
-
-		System.out.println(String.format("Second time resovle %d DIDs took %d Milliseconds",
-				dids.size(), (end-start)));
 	}
 
 	@Test

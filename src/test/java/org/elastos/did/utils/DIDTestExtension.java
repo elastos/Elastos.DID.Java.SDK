@@ -26,8 +26,8 @@ import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 
 import org.elastos.did.DIDAdapter;
 import org.elastos.did.DIDBackend;
-import org.elastos.did.backend.SPVAdapter;
 import org.elastos.did.backend.SimulatedIDChain;
+import org.elastos.did.backend.Web3Adapter;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource;
@@ -38,19 +38,12 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 
 	private void setup(String name) throws Exception {
 		// Force load TestConfig first!!!
-		String network = TestConfig.network;
+		String rpcEndpoint = TestConfig.rpcEndpoint;
 
 		if (name.equals("IDChainOperationsTest")) {
-			if (network.equalsIgnoreCase("mainnet") || network.equalsIgnoreCase("testnet")) {
-				adapter = new SPVAdapter(network,
-					TestConfig.walletDir, TestConfig.walletId,
-					new SPVAdapter.PasswordCallback() {
-						@Override
-						public String getPassword(String walletDir, String walletId) {
-							return TestConfig.walletPassword;
-						}
-					});
-			}
+			// When run the IDChainOperationsTest only
+			adapter = new Web3Adapter(rpcEndpoint, TestConfig.contractAddress,
+					TestConfig.walletPath, TestConfig.walletPassword);
 		}
 
 		if (adapter == null) {
@@ -66,9 +59,6 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 	public void close() throws Throwable {
 		if (simChain != null)
 			simChain.stop();
-
-		if (adapter != null && adapter instanceof SPVAdapter)
-			((SPVAdapter)adapter).destroy();
 
 		simChain = null;
 		adapter = null;
@@ -86,7 +76,8 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 	}
 
 	public static void resetData() {
-		simChain.reset();
+		if (simChain != null)
+			simChain.reset();
 	}
 
 	public static DIDAdapter getAdapter() {

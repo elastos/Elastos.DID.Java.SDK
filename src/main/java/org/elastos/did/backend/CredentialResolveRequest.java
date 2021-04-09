@@ -37,7 +37,7 @@ public class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 	protected static final String PARAMETER_ID = "id";
 	protected static final String PARAMETER_ISSUER = "issuer";
 
-	public static final String METHOD_NAME = "resolvecredential";
+	public static final String METHOD_NAME = "did_resolveCredential";
 
 	/**
 	 * The parameters object for credential resolve request.
