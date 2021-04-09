@@ -51,6 +51,7 @@ import org.elastos.did.exception.AlreadySignedException;
 import org.elastos.did.exception.CanNotRemoveEffectiveControllerException;
 import org.elastos.did.exception.DIDAlreadyExistException;
 import org.elastos.did.exception.DIDBackendException;
+import org.elastos.did.exception.DIDControllersChangedException;
 import org.elastos.did.exception.DIDDeactivatedException;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDExpiredException;
@@ -3131,6 +3132,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 				log.error("Publish failed because DID is deactivated.");
 				throw new DIDDeactivatedException(getSubject().toString());
+			}
+
+			if (isCustomizedDid()) {
+				List<DID> orgControllers = resolvedDoc.getControllers();
+				List<DID> curControllers = getControllers();
+
+				if (!curControllers.equals(orgControllers))
+					throw new DIDControllersChangedException();
 			}
 
 			reolvedSignautre = resolvedDoc.getProof().getSignature();
