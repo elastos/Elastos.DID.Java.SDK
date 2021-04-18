@@ -405,6 +405,9 @@ public final class DIDStore {
 	}
 
 	private static String calcFingerprint(String password) throws DIDStoreException {
+		// Here should use Argon2, better to avoid the password attack.
+		// But spongycastle library not include the Argon2 implementation,
+		// so here we use one-time AES encryption to secure the password hash.
 		MD5Digest md5 = new MD5Digest();
 		byte[] digest = new byte[md5.getDigestSize()];
 		byte[] passwd = password.getBytes();
