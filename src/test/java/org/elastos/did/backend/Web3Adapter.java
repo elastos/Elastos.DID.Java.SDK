@@ -23,6 +23,7 @@
 package org.elastos.did.backend;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +31,8 @@ import java.util.concurrent.ExecutionException;
 
 import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.exception.DIDTransactionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Function;
@@ -39,17 +42,23 @@ import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.TransactionManager;
+import org.web3j.utils.Convert;
 
 public class Web3Adapter extends DefaultDIDAdapter {
 	private static final int MAX_WAIT_BLOCKS = 5;
 	private static final BigInteger WAIT_FOR_CONFIRMS = BigInteger.valueOf(3);
 
-	private String contactAddress;
+	private static final Logger log = LoggerFactory.getLogger(Web3Adapter.class);
+
+	private String contractAddress;
 
 	private Web3j web3j;
 	private Credentials account;
@@ -59,13 +68,27 @@ public class Web3Adapter extends DefaultDIDAdapter {
 			String walletFile, String walletPassword) {
 		super(rpcEndpoint);
 		initWeb3j(rpcEndpoint, walletFile, walletPassword);
-		this.contactAddress = contractAddress;
+		this.contractAddress = contractAddress;
 	}
 
 	private void initWeb3j(String rpcEndpoint, String walletFile, String walletPassword) {
 		web3j = Web3j.build(new HttpService(rpcEndpoint));
 		try {
 			account = WalletUtils.loadCredentials(walletPassword, walletFile);
+			BigDecimal balance = BigDecimal.ZERO;
+			try {
+				EthGetBalance ethGetBalance = web3j.ethGetBalance(account.getAddress(),
+						 DefaultBlockParameterName.LATEST).sendAsync().get();
+				BigInteger wei = ethGetBalance.getBalance();
+				balance = Convert.fromWei(new BigDecimal(wei), Convert.Unit.ETHER);
+			} catch (InterruptedException | ExecutionException e) {
+				log.info("Get wallet balance error", e);
+			}
+
+			System.out.println("================================================");
+			System.out.format("Wallet address: %s\n", account.getAddress());
+			System.out.format("Wallet balance: %s\n", balance.toString());
+			System.out.println("================================================");
 		} catch (IOException | CipherException e) {
 			throw new RuntimeException("Can not load wallet: " + e.getMessage(), e);
 		}
@@ -82,21 +105,23 @@ public class Web3Adapter extends DefaultDIDAdapter {
 		String encodedContract = FunctionEncoder.encode(contract);
 
 		try {
-			BigInteger nonce = null;
 			//BigInteger gasPrice = web3j.ethGasPrice().sendAsync().get().getGasPrice();
 			BigInteger gasPrice = new BigInteger("1000000000000");
 			BigInteger gasLimit = new BigInteger("3000000");
 
-			Transaction tx = Transaction.createFunctionCallTransaction(
-					 account.getAddress(), nonce, gasPrice, gasLimit,
-					 contactAddress, null, encodedContract);
+			TransactionManager txManager = new RawTransactionManager(web3j, account);
+			EthSendTransaction ethSendTx = txManager.sendTransaction(
+					gasPrice,
+					gasLimit,
+				    contractAddress,
+				    encodedContract,
+				    BigInteger.ZERO);
 
-			EthSendTransaction txResponse = web3j.ethSendTransaction(tx).sendAsync().get();
-			if (txResponse.hasError())
+			if (ethSendTx.hasError())
 				throw new DIDTransactionException("Error send transaction: " +
-						txResponse.getError().getMessage());
+						ethSendTx.getError().getMessage());
 
-			String txHash = txResponse.getTransactionHash();
+			String txHash = ethSendTx.getTransactionHash();
 
 			int waitBlocks = MAX_WAIT_BLOCKS;
 			while (true) {
@@ -116,7 +141,7 @@ public class Web3Adapter extends DefaultDIDAdapter {
 			}
 
 			lastTxHash = txHash;
-		} catch(ExecutionException | InterruptedException e) {
+		} catch(ExecutionException | InterruptedException | IOException e) {
 			throw new DIDTransactionException("Error create transaction: " + e.getMessage(), e);
 		}
 	}
