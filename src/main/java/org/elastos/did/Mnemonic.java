@@ -148,15 +148,15 @@ public class Mnemonic {
 	}
 
 	/**
-	 * Generate a random mnemonic.
+	 * Generate a mnemonic from entropy.
+	 *
+	 * @param entropy the entropy data to generate mnemonic
 	 *
 	 * @return the mnemonic string
 	 * @throws MnemonicException if an error occurred when generating the words list
 	 */
-	public String generate() throws MnemonicException {
+	public String generate(byte[] entropy) throws MnemonicException {
 		try {
-			byte[] entropy = new byte[TWELVE_WORDS_ENTROPY];
-			new SecureRandom().nextBytes(entropy);
 			List<String> words = mc.toMnemonic(entropy);
 
 			StringJoiner joiner = new StringJoiner(" ");
@@ -167,6 +167,18 @@ public class Mnemonic {
 		} catch (org.bitcoinj.crypto.MnemonicException e) {
 			throw new MnemonicException(e);
 		}
+	}
+
+	/**
+	 * Generate a random mnemonic.
+	 *
+	 * @return the mnemonic string
+	 * @throws MnemonicException if an error occurred when generating the words list
+	 */
+	public String generate() throws MnemonicException {
+		byte[] entropy = new byte[TWELVE_WORDS_ENTROPY];
+		new SecureRandom().nextBytes(entropy);
+		return generate(entropy);
 	}
 
 	/**
