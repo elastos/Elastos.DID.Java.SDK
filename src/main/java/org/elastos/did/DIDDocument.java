@@ -1174,10 +1174,19 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	public boolean hasPrivateKey(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid publicKey id");
 
-		if (hasPublicKey(id) && getMetadata().attachedStore())
-			return getMetadata().getStore().containsPrivateKey(id);
-		else
-			return false;
+        if (!hasPublicKey(id) || !getMetadata().attachedStore())
+        	return false;
+
+        if (getMetadata().getStore().containsPrivateKey(id))
+        	return true;
+
+        // TODO: should consider the DIDStore.hasPrivateKey/s
+        String rootIdentity = getMetadata().getRootIdentityId();
+        int index = getMetadata().getIndex();
+        if (rootIdentity == null || index < 0)
+        	return false;
+
+        return getMetadata().getStore().containsRootIdentity(rootIdentity);
 	}
 
 	/**

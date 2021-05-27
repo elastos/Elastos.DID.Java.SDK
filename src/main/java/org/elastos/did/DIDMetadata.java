@@ -115,7 +115,11 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 * @param id a derive index
 	 */
 	protected int getIndex() {
-		return getInteger(INDEX);
+		try {
+			return getInteger(INDEX);
+		} catch (NumberFormatException e) {
+			return -1;
+		}
 	}
 
 	/**
