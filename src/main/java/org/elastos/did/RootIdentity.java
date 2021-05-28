@@ -252,6 +252,51 @@ public final class RootIdentity {
 		return new RootIdentity(key, index);
 	}
 
+	/**
+	 * Get RootIdentity Id from mnemonic and an optional passphrase.
+	 *
+	 * @param mnemonic the mnemonic string
+	 * @param passphrase the extra passphrase to generate seed with the mnemonic
+	 * @return the RootIdentity Id
+	 */
+	public static String getId(String mnemonic, String passphrase) {
+		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid mnemonic");
+
+		try {
+			checkArgument(Mnemonic.checkIsValid(mnemonic), "Invalid mnemonic.");
+		} catch (MnemonicException e) {
+			throw new IllegalArgumentException(e);
+		}
+
+		if (passphrase == null)
+			passphrase = "";
+
+		RootIdentity identity = new RootIdentity(mnemonic, passphrase);
+        String id = identity.getId();
+		identity.wipe();
+
+		return id;
+	}
+
+	/**
+	 * Get a RootIdentity Id from a root extended private key.
+	 *
+	 * @param extentedPrivateKey the root extended private key
+	 * @return the RootIdentity Id
+	 */
+	public static String getId(String extentedPrivateKey) {
+		checkArgument(extentedPrivateKey != null && !extentedPrivateKey.isEmpty(),
+				"Invalid extended private key");
+
+		HDKey rootPrivateKey = HDKey.deserialize(Base58.decode(extentedPrivateKey));
+
+		RootIdentity identity = new RootIdentity(rootPrivateKey);
+        String id = identity.getId();
+		identity.wipe();
+
+		return id;
+	}
+
 	private void wipe() {
 		rootPrivateKey.wipe();
 

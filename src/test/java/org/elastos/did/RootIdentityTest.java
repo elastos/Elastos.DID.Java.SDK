@@ -93,6 +93,22 @@ public class RootIdentityTest {
 	}
 
 	@Test
+	public void testGetPrivateIdentityId() throws DIDException {
+		String mnemonic = "pact reject sick voyage foster fence warm luggage cabbage any subject carbon";
+		String rootKey = "xprv9s21ZrQH143K4biiQbUq8369meTb1R8KnstYFAKtfwk3vF8uvFd1EC2s49bMQsbdbmdJxUWRkuC48CXPutFfynYFVGnoeq8LJZhfd9QjvUt";
+
+    	assertFalse(store.containsRootIdentities());
+
+    	String id1 = RootIdentity.getId(mnemonic, "helloworld");
+    	assertNotNull(id1);
+    	String id2 = RootIdentity.getId(rootKey);
+    	assertNotNull(id2);
+    	assertEquals(id1, id2);
+
+    	assertFalse(store.containsRootIdentities());
+	}
+
+	@Test
 	public void testCreateDIDWithAlias() throws DIDException {
     	RootIdentity identity = testData.getRootIdentity();
 
