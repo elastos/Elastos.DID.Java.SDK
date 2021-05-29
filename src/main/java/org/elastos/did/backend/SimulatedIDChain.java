@@ -829,6 +829,7 @@ public class SimulatedIDChain {
 				ObjectMapper mapper = new ObjectMapper();
 				InputStream is = exchange.getRequestBody();
 				JsonNode requestJson = mapper.readTree(is);
+				log.trace("ID chain request JSON:\n{}", requestJson.toPrettyString());
 				JsonNode header = requestJson.get(IDChainRequest.HEADER);
 				if (header == null) {
 					log.error("Invalid IDChain request, missing header");

@@ -40,6 +40,7 @@ import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.jwt.JwtParser;
 import org.elastos.did.jwt.JwtParserBuilder;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -47,6 +48,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -290,11 +293,21 @@ public class Main {
 		@Option(names = {"-p", "--port"}, description = "Server port, default 9123.")
 		private int port = 9123;
 
-		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
+		@Option(names = {"-e", "--verbose"}, description = "Verbose error output, default false.")
 		private boolean verbose = false;
+
+		@Option(names = {"-l", "--loglevel"}, description = "Log level, default is info(trace, debug, info, warn, error).")
+		private String logLevel = "info";
+
 
 		@Override
 		public Integer call() throws Exception {
+			Level level = Level.valueOf(logLevel);
+
+			// We use logback as the default logging backend
+		    Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+		    root.setLevel(level);
+
 			try {
 				SimulatedIDChain simChain = new SimulatedIDChain(host, port);
 				DIDBackend.initialize(simChain.getAdapter(), 0, 0, 0);
