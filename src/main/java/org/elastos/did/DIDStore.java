@@ -1342,7 +1342,9 @@ public final class DIDStore {
 	 */
 	public boolean containsPrivateKey(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid private key id");
-		return loadPrivateKey(id) != null;
+
+		String privatekey = loadPrivateKey(id);
+		return privatekey != null && !privatekey.isEmpty();
 	}
 
 	/**
