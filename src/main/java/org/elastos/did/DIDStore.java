@@ -98,6 +98,7 @@ public final class DIDStore {
 	private static final Object NULL = new Object();
 
 	private static final String DID_EXPORT = "did.elastos.export/2.0";
+	private static final String DID_LAZY_PRIVATEKEY = "lazy-private-key";
 
 	private Cache<Key, Object> cache;
 
@@ -1253,6 +1254,19 @@ public final class DIDStore {
 	}
 
 	/**
+	 * Save the DID's lazy private key string to the store.
+	 *
+	 * @param id the private key id
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	protected void storeLazyPrivateKey(DIDURL id) throws DIDStoreException {
+		checkArgument(id != null, "Invalid private key id");
+
+		storage.storePrivateKey(id, DID_LAZY_PRIVATEKEY);
+		cache.put(Key.forDidPrivateKey(id), DID_LAZY_PRIVATEKEY);
+	}
+
+	/**
 	 * Save the DID's private key to the store, the private key will be encrypt
 	 * using the store password.
 	 *
@@ -1309,7 +1323,9 @@ public final class DIDStore {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
 		String encryptedKey = loadPrivateKey(id);
-		if (encryptedKey == null) {
+		if (encryptedKey == null || encryptedKey.isEmpty()) {
+			return null;
+		} else if (encryptedKey.equals(DID_LAZY_PRIVATEKEY)) {
 			// fail-back to lazy private key generation
 			return RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
 		} else {

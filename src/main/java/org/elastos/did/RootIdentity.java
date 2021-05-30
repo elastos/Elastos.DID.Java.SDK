@@ -704,6 +704,7 @@ public final class RootIdentity {
 		metadata.setIndex(index);
 
 		getStore().storeDid(finalDoc);
+		getStore().storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
 		return true;
 	}
 

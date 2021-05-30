@@ -847,6 +847,21 @@ public class IDChainOperationsTest {
 		assertEquals(5, restoredDids.size());
 		Collections.sort(restoredDids);
 
+		//create a credential for testing lazy private key
+		DID did = restoredDids.get(0);
+		Issuer issuer = new Issuer(did, cleanStore);
+
+		Map<String, Object> props= new HashMap<String, Object>();
+		props.put("name", "John");
+		props.put("gender", "Male");
+
+		VerifiableCredential.Builder cb = issuer.issueFor(did);
+		VerifiableCredential vc = cb.id("#selfCredential")
+			.type("BasicProfileCredential")
+			.properties(props)
+			.seal(TestConfig.storePass);
+		assertEquals("John", vc.getSubject().getProperty("name"));
+
 		List<DID> originalDids = new ArrayList<DID>(dids);
 		Collections.sort(originalDids);
 
