@@ -297,16 +297,16 @@ public class Main {
 		private boolean verbose = false;
 
 		@Option(names = {"-l", "--loglevel"}, description = "Log level, default is info(trace, debug, info, warn, error).")
-		private String logLevel = "info";
+		private String level = "info";
 
 
 		@Override
 		public Integer call() throws Exception {
-			Level level = Level.valueOf(logLevel);
+			Level logLevel = Level.valueOf(level);
 
 			// We use logback as the default logging backend
 		    Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-		    root.setLevel(level);
+		    root.setLevel(logLevel);
 
 			try {
 				SimulatedIDChain simChain = new SimulatedIDChain(host, port);
