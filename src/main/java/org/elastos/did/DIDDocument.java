@@ -1175,9 +1175,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		checkArgument(id != null, "Invalid publicKey id");
 
 		if (hasPublicKey(id) && getMetadata().attachedStore())
- 			return getMetadata().getStore().containsPrivateKey(id);
- 		else
- 			return false;
+			return getMetadata().getStore().containsPrivateKey(id);
+		else
+			return false;
 	}
 
 	/**
