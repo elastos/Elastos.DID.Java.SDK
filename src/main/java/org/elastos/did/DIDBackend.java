@@ -225,6 +225,15 @@ public class DIDBackend {
 	}
 
 	/**
+	 * Check if the DIDBackend already initialized.
+	 *
+	 * @return the DIDBackend initialized or not
+	 */
+	public static boolean isInitialized() {
+		return instance != null;
+	}
+
+	/**
 	 * Get the previous initialized DIDBackend instance.
 	 *
 	 * @return the DIDBackend instance
