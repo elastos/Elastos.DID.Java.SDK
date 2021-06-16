@@ -1584,7 +1584,7 @@ public final class DIDStore {
 		return synchronizeAsync(null);
 	}
 
-	@JsonPropertyOrder({ "type", "id", "document", "credential", "privatekey",
+	@JsonPropertyOrder({ "type", "id", "document", "credential", "privateKey",
 						 "created", "fingerprint" })
 	@JsonInclude(Include.NON_NULL)
 	static class DIDExport extends DIDEntity<DIDExport> {
@@ -1596,7 +1596,7 @@ public final class DIDStore {
 		private Document document;
 		@JsonProperty("credential")
 		private List<Credential> credentials;
-		@JsonProperty("privatekey")
+		@JsonProperty("privateKey")
 		private List<PrivateKey> privatekeys;
 		@JsonProperty("created")
 		private Date created;
