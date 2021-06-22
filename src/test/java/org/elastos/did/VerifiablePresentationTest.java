@@ -68,7 +68,10 @@ public class VerifiablePresentationTest {
 		DIDDocument user = cd.getDocument("user1");
 		VerifiablePresentation vp = cd.getPresentation("user1", "nonempty");
 
-		assertNull(vp.getId());
+		if (version == 1)
+			assertNull(vp.getId());
+		else
+			assertNotNull(vp.getId());
 		assertEquals(1, vp.getType().size());
 		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType().get(0));
 		assertEquals(user.getSubject(), vp.getHolder());
@@ -104,7 +107,10 @@ public class VerifiablePresentationTest {
 		DIDDocument user = cd.getDocument("user1");
 		VerifiablePresentation vp = cd.getPresentation("user1", "empty");
 
-		assertNull(vp.getId());
+		if (version == 1)
+			assertNull(vp.getId());
+		else
+			assertNotNull(vp.getId());
 		assertEquals(1, vp.getType().size());
 		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType().get(0));
 		assertEquals(user.getSubject(), vp.getHolder());

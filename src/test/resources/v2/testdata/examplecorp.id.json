@@ -5,8 +5,8 @@
     "id" : "did:elastos:example#profile",
     "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
     "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-03-19T08:41:56Z",
-    "expirationDate" : "2026-03-19T08:41:56Z",
+    "issuanceDate" : "2021-06-22T04:36:02Z",
+    "expirationDate" : "2026-06-22T04:36:02Z",
     "credentialSubject" : {
       "id" : "did:elastos:example",
       "email" : "contact@example.com",
@@ -15,16 +15,16 @@
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-03-19T08:41:56Z",
+      "created" : "2021-06-22T04:36:02Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "5ZdrWV8NCTrnoYUASNA-Xtc15LzOuDGGVoQA9mbdiVYEzzNsxzKli0Tvh-4iHZtY9mBzIb_EyCjSc1wvwqtOjw"
+      "signature" : "JmT_Y2G97z8EDktl-bplxQ5OaOzSFI0XIyiBQNUPFaL6TtNpbv4Qe45N5ey74fMARkRrFBUQmeUx0W7r0pk4pg"
     }
   } ],
-  "expires" : "2026-03-19T08:41:56Z",
+  "expires" : "2026-06-22T04:36:02Z",
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-19T08:41:56Z",
+    "created" : "2021-06-22T04:36:02Z",
     "creator" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "signatureValue" : "9yXPOgwOD1HIUJ8NIVHy57nABHRAQZuHuf0Nn5yYt7zA5ZDHwCG3T5S4OlJg9JO7NC40wtliXZWrm6Ude6zcRA"
+    "signatureValue" : "koV0OUknvSjTPuG1Omvqt8cbdnZGSVpfJDUjy611jIVQuVQwNdgqYDY9pUjVyg8GKMsD9lrZfRh0mtOobZxR6Q"
   }
 }

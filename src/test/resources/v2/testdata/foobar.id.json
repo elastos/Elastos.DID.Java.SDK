@@ -6,36 +6,36 @@
     "id" : "did:elastos:foobar#key2",
     "type" : "ECDSAsecp256r1",
     "controller" : "did:elastos:foobar",
-    "publicKeyBase58" : "29H6LLQ7QCdnNNqBXGWPcwj6VJApRAFL4d5Y2BvB25YjF"
+    "publicKeyBase58" : "cbPMbF3ypbBWMxfAhRShfb4rLXEqC4MPdhhhe2brZPDj"
   }, {
     "id" : "did:elastos:foobar#key3",
     "type" : "ECDSAsecp256r1",
     "controller" : "did:elastos:foobar",
-    "publicKeyBase58" : "psQpw2BuBNNyFJC17f9B1pwBb3BikGPKmMwJ8kfUWozU"
+    "publicKeyBase58" : "jFievW4jHDjS5F7iJvQeLVg36hWQR11Az32oTisFZhf6"
   } ],
   "authentication" : [ "did:elastos:foobar#key2", "did:elastos:foobar#key3" ],
   "verifiableCredential" : [ {
     "id" : "did:elastos:foobar#email",
     "type" : [ "BasicProfileCredential", "EmailCredential", "InternetAccountCredential" ],
     "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-03-19T08:41:56Z",
-    "expirationDate" : "2026-03-19T08:41:56Z",
+    "issuanceDate" : "2021-06-22T04:36:02Z",
+    "expirationDate" : "2026-06-22T04:36:02Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
       "email" : "foobar@example.com"
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-03-19T08:41:56Z",
+      "created" : "2021-06-22T04:36:02Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "5ywLxa8kWBWQ5ubg4OJT-GrbFyUc_wUaDtKGa39sPkY1UqM7j67m5t-T6IoTW9h_C2R_o5RTd5r35zJyDSs0gQ"
+      "signature" : "ZUBOKCW9pxNMwCQoQ8paBz_7TarlSn_MVVoQtI_G1_h3WUfhq1HcLVdyUzSedALpREhCLrgYLzgkfPKvxKMCag"
     }
   }, {
     "id" : "did:elastos:foobar#profile",
     "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
     "issuer" : "did:elastos:foobar",
-    "issuanceDate" : "2021-03-19T08:41:56Z",
-    "expirationDate" : "2026-03-19T08:41:56Z",
+    "issuanceDate" : "2021-06-22T04:36:02Z",
+    "expirationDate" : "2026-06-22T04:36:02Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
       "email" : "contact@foobar.com",
@@ -44,9 +44,9 @@
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-03-19T08:41:56Z",
+      "created" : "2021-06-22T04:36:02Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "8LU5hAfdSl9Oyx9d9U7XjYhOQ-SLaUI6eocnWxhDkefsWoNheoeHzrDXMAG9DxLwOOohquKEeCpI0dEuPwqO6w"
+      "signature" : "-7OPaKW-afRZKmXqnQhJijHPIl81zNQBIEf5dgCrnKwdIyCXWEAttxbpVkQdmuVB8OvM8P4gBDnel8CLaMBymA"
     }
   } ],
   "service" : [ {
@@ -59,49 +59,49 @@
     "serviceEndpoint" : "https://foobar.com/credentials",
     "ABC" : "Helloworld",
     "BAR" : "Foobar",
-    "DATE" : "2021-03-19T08:41:56Z",
+    "DATE" : "2021-06-22T04:36:02Z",
     "FOO" : 678,
     "FOOBAR" : "Lalala...",
     "MAP" : {
       "ABC" : "Helloworld",
       "BAR" : "Foobar",
-      "DATE" : "2021-03-19T08:41:56Z",
+      "DATE" : "2021-06-22T04:36:02Z",
       "FOO" : 678,
       "FOOBAR" : "Lalala...",
       "abc" : "helloworld",
       "bar" : "foobar",
-      "date" : "2021-03-19T08:41:56Z",
+      "date" : "2021-06-22T04:36:02Z",
       "foo" : 123,
       "foobar" : "lalala..."
     },
     "abc" : "helloworld",
     "bar" : "foobar",
-    "date" : "2021-03-19T08:41:56Z",
+    "date" : "2021-06-22T04:36:02Z",
     "foo" : 123,
     "foobar" : "lalala...",
     "map" : {
       "ABC" : "Helloworld",
       "BAR" : "Foobar",
-      "DATE" : "2021-03-19T08:41:56Z",
+      "DATE" : "2021-06-22T04:36:02Z",
       "FOO" : 678,
       "FOOBAR" : "Lalala...",
       "abc" : "helloworld",
       "bar" : "foobar",
-      "date" : "2021-03-19T08:41:56Z",
+      "date" : "2021-06-22T04:36:02Z",
       "foo" : 123,
       "foobar" : "lalala..."
     }
   } ],
-  "expires" : "2026-03-19T08:41:56Z",
+  "expires" : "2026-06-22T04:36:02Z",
   "proof" : [ {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-19T08:41:56Z",
+    "created" : "2021-06-22T04:36:02Z",
     "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "-ssRB3s7ucza0EkSYz9CU1lDT3Daw-KZqR7ixOgAw97YMr1TfkYb0TzlMO1BWSPq0fBcfma6r1QIRpzPu3H1JA"
+    "signatureValue" : "adT7J4RTfSSTSUsTroAK2TPHbVYGTRiFWtqOwF5TJaLnl42emyf246BW9kA88h92BEUBJHOM50XA7WQQ9WIV_Q"
   }, {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-19T08:41:56Z",
+    "created" : "2021-06-22T04:36:02Z",
     "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
-    "signatureValue" : "vTmkZMYkSlIKBkzTZM09A66TiW5vYjC0A-pFW_fmUj4OSa3iXexcVnpRfBzXAkTU0jszHJ_1RQbE7Wr3A_NQyw"
+    "signatureValue" : "cDY-6W9ydRn5lLqhMqejxSW-UgzbqVMReC90S0acySUTtRGrkXWUUnoY_TezhiwZ9QfaHzUqKI_lHODi2x6swg"
   } ]
 }
