@@ -24,7 +24,6 @@ package org.elastos.did;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.text.ParseException;
 import java.util.Date;
 
 import org.elastos.did.exception.DIDStoreException;
@@ -118,11 +117,7 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	 * @return the published time
 	 */
 	public Date getPublishTime() {
-		try {
-			return getDate(PUBLISHED);
-		} catch (ParseException e) {
-			return null;
-		}
+		return getDate(PUBLISHED, null);
 	}
 
 	/**
@@ -142,7 +137,7 @@ public class CredentialMetadata extends AbstractMetadata implements Cloneable {
 	 * @return true if credential is revoked, otherwise false
 	 */
 	public boolean isRevoked( ) {
-		return getBoolean(REVOKED);
+		return getBoolean(REVOKED, false);
 	}
 
 	/**

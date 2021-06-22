@@ -204,7 +204,7 @@ public final class DIDStore {
 		}
 
 		public int getVersion() {
-			return getInteger(VERSION);
+			return getInteger(VERSION, -1);
 		}
 
 		private void setFingerprint(String fingerprint) {

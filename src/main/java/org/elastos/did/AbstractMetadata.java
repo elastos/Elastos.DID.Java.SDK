@@ -153,11 +153,13 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 	 * the property name.
 	 *
 	 * @param name the property name to be get
+	 * @param defaultValue the default value to be use if the property not exists
 	 * @return the boolean value of the specified property name, or
 	 *         false if this metadata not contains the property name
 	 */
-	protected boolean getBoolean(String name) {
-		return Boolean.valueOf(get(name));
+	protected boolean getBoolean(String name, boolean defaultValue) {
+		String strValue = get(name);
+		return strValue != null ? Boolean.valueOf(strValue) : defaultValue;
 	}
 
 	/**
@@ -178,11 +180,22 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 	 * the property name.
 	 *
 	 * @param name the property name to be get
+	 * @param defaultValue the default value to be use if the property not exists
 	 * @return the integer value of the specified property name, or
 	 *         0 if this metadata not contains the property name
 	 */
-	protected int getInteger(String name) {
-		return Integer.valueOf(get(name));
+	protected int getInteger(String name, int defaultValue) {
+		String strValue = get(name);
+		int value = defaultValue;
+
+		if (strValue != null) {
+			try {
+				value = Integer.valueOf(strValue);
+			} catch (NumberFormatException ignore) {
+			}
+		}
+
+		return value;
 	}
 
 	/**
@@ -203,11 +216,22 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 	 * contains the property name.
 	 *
 	 * @param name the property name to be get
+	 * @param defaultValue the default value to be use if the property not exists
 	 * @return the Date value of the specified property name, or
 	 *         null if this metadata not contains the property name
 	 */
-	protected Date getDate(String name) throws ParseException {
-		return dateFormat.parse(get(name));
+	protected Date getDate(String name, Date defaultValue) {
+		String strValue = get(name);
+		Date value = defaultValue;
+
+		if (strValue != null) {
+			try {
+				value = dateFormat.parse(strValue);
+			} catch (ParseException ignore) {
+			}
+		}
+
+		return value;
 	}
 
 	/**
@@ -298,13 +322,14 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 	 * not contains the property name.
 	 *
 	 * @param name the property name to be get
+	 * @param defaultValue the default value to be use if the property not exists
 	 * @return the boolean value of the specified property name, or
 	 *         false if this metadata not contains the property name
 	 */
-	public boolean getExtraBoolean(String name) {
+	public boolean getExtraBoolean(String name, boolean defaultValue) {
 		checkArgument(name != null && !name.isEmpty(), "Invalid name");
 
-		return getBoolean(USER_EXTRA_PREFIX + name);
+		return getBoolean(USER_EXTRA_PREFIX + name, defaultValue);
 	}
 
 	/**
@@ -327,13 +352,14 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 	 * not contains the property name.
 	 *
 	 * @param name the property name to be get
+	 * @param defaultValue the default value to be use if the property not exists
 	 * @return the integer value of the specified property name, or
 	 *         0 if this metadata not contains the property name
 	 */
-	public int getExtraInteger(String name) {
+	public int getExtraInteger(String name, int defaultValue) {
 		checkArgument(name != null && !name.isEmpty(), "Invalid name");
 
-		return getInteger(USER_EXTRA_PREFIX + name);
+		return getInteger(USER_EXTRA_PREFIX + name, defaultValue);
 	}
 
 	/**
@@ -356,14 +382,14 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 	 * not contains the property name.
 	 *
 	 * @param name the property name to be get
+	 * @param defaultValue the default value to be use if the property not exists
 	 * @return the Date value of the specified property name, or
 	 *         {@code null} if this metadata not contains the property name
-	 * @throws ParseException if can not parse the value as date
 	 */
-	public Date getExtraDate(String name) throws ParseException {
+	public Date getExtraDate(String name, Date defaultValue) {
 		checkArgument(name != null && !name.isEmpty(), "Invalid name");
 
-		return getDate(USER_EXTRA_PREFIX + name);
+		return getDate(USER_EXTRA_PREFIX + name, defaultValue);
 	}
 
 	/**

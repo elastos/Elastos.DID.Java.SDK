@@ -22,7 +22,6 @@
 
 package org.elastos.did;
 
-import java.text.ParseException;
 import java.util.Date;
 
 import org.elastos.did.exception.DIDStoreException;
@@ -115,11 +114,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 * @param id a derive index
 	 */
 	protected int getIndex() {
-		try {
-			return getInteger(INDEX);
-		} catch (NumberFormatException e) {
-			return -1;
-		}
+		return getInteger(INDEX, -1);
 	}
 
 	/**
@@ -197,11 +192,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 * @return the published time
 	 */
 	public Date getPublishTime() {
-		try {
-			return getDate(PUBLISHED);
-		} catch (ParseException e) {
-			return null;
-		}
+		return getDate(PUBLISHED, null);
 	}
 
 	/**
@@ -221,7 +212,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 * @return true if DID is deactivated, otherwise false
 	 */
 	public boolean isDeactivated( ) {
-		return getBoolean(DEACTIVATED);
+		return getBoolean(DEACTIVATED, false);
 	}
 
 	/**
