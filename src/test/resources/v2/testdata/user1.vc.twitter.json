@@ -2,16 +2,16 @@
   "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#twitter",
   "type" : [ "InternetAccountCredential", "TwitterCredential" ],
   "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-  "issuanceDate" : "2021-03-19T08:41:55Z",
-  "expirationDate" : "2026-03-19T08:41:55Z",
+  "issuanceDate" : "2021-06-22T04:36:01Z",
+  "expirationDate" : "2026-06-22T04:36:01Z",
   "credentialSubject" : {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
     "twitter" : "@john"
   },
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-19T08:41:55Z",
+    "created" : "2021-06-22T04:36:01Z",
     "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "signature" : "zz-Os0L2d6fnoMNmi5lHO_cgqvQ6KuTVMna7idyuekXsLP5WxqaVqtrsOUHK4i5mCKAy3q9p7sfLt90rMeCTow"
+    "signature" : "QcA9tVoxvsVXzJKZIBVDiWX3EX8VlPoiAkt2fN5ejTvovSb6Fi0RmZpp8fDwgBsbOTT2gnX-CcnkZkCBFdBnvA"
   }
 }

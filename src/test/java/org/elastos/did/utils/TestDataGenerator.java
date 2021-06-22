@@ -332,7 +332,8 @@ public class TestDataGenerator {
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
 				doc.getSubject(), store);
 
-		VerifiablePresentation vp = pb.credentials(vcProfile, vcEmail)
+		VerifiablePresentation vp = pb.id("#user1-vp-nonempty")
+				.credentials(vcProfile, vcEmail)
 				.credentials(vcPassport)
 				.credentials(vcTwitter)
 				.realm("https://example.com/")
@@ -348,7 +349,8 @@ public class TestDataGenerator {
 		pb = VerifiablePresentation.createFor(
 				doc.getSubject(), store);
 
-		vp = pb.realm("https://example.com/")
+		vp = pb.id("#user1-vp-empty")
+				.realm("https://example.com/")
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
 
@@ -361,8 +363,7 @@ public class TestDataGenerator {
 		pb = VerifiablePresentation.createFor(
 				doc.getSubject(), store);
 
-		vp = pb.id("#test-vp")
-				.type("TestPresentation", "FooBar")
+		vp = pb.type("TestPresentation", "FooBar")
 				.credentials(vcProfile, vcEmail)
 				.credentials(vcPassport)
 				.credentials(vcTwitter)
@@ -680,7 +681,7 @@ public class TestDataGenerator {
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
 				doc.getSubject(), signKey, store);
 
-		VerifiablePresentation vp = pb
+		VerifiablePresentation vp = pb.id("#foobar-vp-nonempty")
 				.credentials(vcProfile, vcEmail)
 				.credentials(vcServices)
 				.credentials(vcLicense)
@@ -697,7 +698,8 @@ public class TestDataGenerator {
 		pb = VerifiablePresentation.createFor(
 				doc.getSubject(), new DIDURL("did:elastos:foobar#key2"), store);
 
-		vp = pb.realm("https://example.com/")
+		vp = pb.id("#foobar-vp-empty")
+				.realm("https://example.com/")
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
 
@@ -710,8 +712,7 @@ public class TestDataGenerator {
 		pb = VerifiablePresentation.createFor(
 				doc.getSubject(), signKey, store);
 
-		vp = pb.id("#test-vp")
-				.type("TestPresentation", "FooBar")
+		vp = pb.type("TestPresentation", "FooBar")
 				.credentials(vcProfile, vcEmail)
 				.credentials(vcServices)
 				.credentials(vcLicense)
