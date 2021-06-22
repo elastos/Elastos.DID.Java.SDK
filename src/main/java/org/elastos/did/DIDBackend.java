@@ -272,6 +272,8 @@ public class DIDBackend {
 
 		String requestJson = request.serialize(true);
 		InputStream is = getAdapter().resolve(requestJson);
+		if (is == null)
+			throw new DIDResolveException("Unknown error, got null result.");
 
 		ResolveResponse<?, ?> response = null;
 		try {
