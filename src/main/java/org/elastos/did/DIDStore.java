@@ -707,7 +707,17 @@ public final class DIDStore {
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public List<RootIdentity> listRootIdentities() throws DIDStoreException {
-		return Collections.unmodifiableList(storage.listRootIdentities());
+		List<RootIdentity> ids = storage.listRootIdentities();
+		for (RootIdentity id : ids) {
+			RootIdentity.Metadata metadata = storage.loadRootIdentityMetadata(id.getId());
+			if (metadata == null)
+				metadata = new RootIdentity.Metadata();
+			metadata.setId(id.getId());
+			metadata.attachStore(this);
+			id.setMetadata(metadata);
+		}
+
+		return Collections.unmodifiableList(ids);
 	}
 
 	/**
@@ -953,7 +963,11 @@ public final class DIDStore {
 	public List<DID> listDids() throws DIDStoreException {
 		List<DID> dids = storage.listDids();
 		for (DID did : dids) {
-			DIDMetadata metadata = loadDidMetadata(did);
+			DIDMetadata metadata = storage.loadDidMetadata(did);
+			if (metadata == null)
+				metadata = new DIDMetadata();
+			metadata.setDid(did);
+			metadata.attachStore(this);
 			did.setMetadata(metadata);
 		}
 
@@ -1192,7 +1206,11 @@ public final class DIDStore {
 
 		List<DIDURL> ids = storage.listCredentials(did);
 		for (DIDURL id : ids) {
-			CredentialMetadata metadata = loadCredentialMetadata(id);
+			CredentialMetadata metadata = storage.loadCredentialMetadata(id);
+			if (metadata == null)
+				metadata = new CredentialMetadata();
+			metadata.setId(id);
+			metadata.attachStore(this);
 			id.setMetadata(metadata);
 		}
 
