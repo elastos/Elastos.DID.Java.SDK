@@ -47,8 +47,8 @@ import org.slf4j.LoggerFactory;
  * </p>
  */
 public class DefaultDIDAdapter implements DIDAdapter {
-	private static final String MAINNET_RESOLVER = "http://api.elastos.io:20606";
-	private static final String TESTNET_RESOLVER = "http://api.elastos.io:21606";
+	private static final String MAINNET_RESOLVER = "https://api.elastos.io/eid";
+	private static final String TESTNET_RESOLVER = "https://api-testnet.elastos.io/eid";
 
 	private URL resolver;
 
