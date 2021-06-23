@@ -22,6 +22,7 @@
 
 package org.elastos.did;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -31,6 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -415,6 +418,43 @@ public class DIDStoreTest {
 
 		assertFalse(store.containsCredential(new DIDURL(user.getSubject(), "#twitter")));
 		assertFalse(store.containsCredential(user.getSubject().toString() + "#passport"));
+	}
+
+	@Test
+	public void testSynchronizeStore() throws DIDException {
+		RootIdentity identity = testData.getRootIdentity();
+
+		for (int i = 0; i < 5; i++) {
+    		String alias = "my did " + i;
+        	DIDDocument doc = identity.newDid(TestConfig.storePass);
+        	doc.getMetadata().setAlias(alias);
+        	assertTrue(doc.isValid());
+
+        	DIDDocument resolved = doc.getSubject().resolve();
+        	assertNull(resolved);
+
+        	doc.publish(TestConfig.storePass);
+
+        	resolved = doc.getSubject().resolve();
+        	assertNotNull(resolved);
+		}
+
+		DIDStore store = testData.getStore();
+		List<DID> dids = new ArrayList<DID>(store.listDids());
+		Collections.sort(dids);
+		for (DID did : dids) {
+			boolean success = store.deleteDid(did);
+			assertTrue(success);
+		}
+
+		List<DID> empty = store.listDids();
+		assertTrue(empty.isEmpty());
+
+		store.synchronize();
+		List<DID> syncedDids =  new ArrayList<DID>(store.listDids());
+		Collections.sort(syncedDids);
+
+		assertArrayEquals(dids.toArray(), syncedDids.toArray());
 	}
 
 	@Test

@@ -1502,7 +1502,7 @@ public final class DIDStore {
 		if (handle == null)
 			handle = defaultConflictHandle;
 
-		List<RootIdentity> identities = storage.listRootIdentities();
+		List<RootIdentity> identities = listRootIdentities();
 		for (RootIdentity identity : identities) {
 			identity.synchronize(handle);
 		}
