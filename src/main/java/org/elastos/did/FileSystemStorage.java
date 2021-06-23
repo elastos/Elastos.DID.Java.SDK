@@ -199,11 +199,11 @@ class FileSystemStorage implements DIDStorage {
 
 	private static String toPath(DIDURL id) {
 		String path = id.toString(id.getDid());
-		return path.replace(';', '.').replace('/', '_').replace('?', '-');
+		return path.replace(';', '+').replace('/', '~').replace('?', '!');
 	}
 
 	private static DIDURL toDIDURL(DID did, String path) {
-		path = path.replace('.', ';').replace('_', '/').replace('-', '?');
+		path = path.replace('+', ';').replace('~', '/').replace('!', '?');
 		return new DIDURL(did, path);
 	}
 
