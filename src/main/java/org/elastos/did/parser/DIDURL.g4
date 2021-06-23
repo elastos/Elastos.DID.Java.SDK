@@ -90,7 +90,7 @@ frag
 	;
 
 STRING
-	: ([a-zA-Z~0-9] | HEX) ([a-zA-Z0-9.-] | HEX)*
+	: ([a-zA-Z~0-9] | HEX) ([a-zA-Z0-9._\-] | HEX)*
 	;
 
 HEX
