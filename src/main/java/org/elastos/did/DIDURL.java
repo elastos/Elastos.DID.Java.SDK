@@ -536,7 +536,7 @@ public class DIDURL implements Comparable<DIDURL> {
 				throw ctxt.weirdStringException(p.getText(), DIDURL.class, "Invalid DIDURL");
 
 			String url = p.getText().trim();
-			return new DIDURL(null, url);
+			return url.isEmpty() ? null : new DIDURL(null, url);
 		}
 	}
 

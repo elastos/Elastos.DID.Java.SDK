@@ -2763,7 +2763,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		 * @param value the property value
 		 * @return the Builder instance for method chaining
 		 */
-		public Builder propertie(String name, Object value) {
+		public Builder property(String name, Object value) {
 			checkNotSealed();
 			checkArgument(name != null && !name.isEmpty() && !name.equals(ID), "Invalid name");
 
