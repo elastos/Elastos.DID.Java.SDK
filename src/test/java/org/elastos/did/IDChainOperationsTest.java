@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -1143,7 +1144,35 @@ public class IDChainOperationsTest {
 		assertEquals(originalSignature, doc.getSignature());
 	}
 
-	//@Test
-	//@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
+    @Test
+    @Order(30)
+    // TODO: Temp case, should remove after all DID2 features online.
+    public void testResolveVC() throws DIDException {
+    	DIDURL id = new DIDURL("did:elastos:iZrzd9TFbVhRBgcnjoGYQhqkHf7emhxdYu#1234");
 
+    	VerifiableCredential vc = VerifiableCredential.resolve(id);
+    	assertNull(vc);
+    }
+
+	@Test
+	@Order(40)
+	// TODO: should improve after all DID2 features online
+	public void testSynchronizeStore() throws DIDException {
+		List<DID> dids = new ArrayList<DID>(store.listDids());
+		Collections.sort(dids);
+		for (DID did : dids) {
+			System.out.println("-------- " + did);
+			boolean success = store.deleteDid(did);
+			assertTrue(success);
+		}
+
+		List<DID> empty = store.listDids();
+		assertTrue(empty.isEmpty());
+
+		store.synchronize();
+		List<DID> syncedDids =  new ArrayList<DID>(store.listDids());
+		Collections.sort(syncedDids);
+
+		assertArrayEquals(dids.toArray(), syncedDids.toArray());
+	}
 }

@@ -1012,7 +1012,7 @@ public class VerifiableCredentialTest {
     		VerifiableCredential vc = selfIssuer.issueFor(did)
     				.id("#test" + i)
     				.type("SelfProclaimedCredential")
-    				.propertie("index", Integer.valueOf(i))
+    				.property("index", Integer.valueOf(i))
     				.seal(TestConfig.storePass);
 
     		vc.getMetadata().attachStore(doc.getStore());
