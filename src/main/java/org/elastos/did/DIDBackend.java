@@ -412,7 +412,10 @@ public class DIDBackend {
 			throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
 
 		DIDDocument doc = tx.getRequest().getDocument();
-		DIDMetadata metadata = new DIDMetadata(doc.getSubject());
+		// NOTICE: if the document already used and attached with store,
+		//         here should keep the resolved instance attach with store too.
+		DIDStore store = doc.getStore();
+		DIDMetadata metadata = new DIDMetadata(doc.getSubject(), store);
 		metadata.setTransactionId(tx.getTransactionId());
 		metadata.setSignature(doc.getProof().getSignature());
 		metadata.setPublishTime(tx.getTimestamp());
