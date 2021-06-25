@@ -1531,12 +1531,15 @@ public final class DIDStore {
 					// Local copy was modified
 					finalDoc = handle.merge(resolvedDoc, localDoc);
 					if (finalDoc == null || !finalDoc.getSubject().equals(did)) {
+						localDoc.getMetadata().attachStore(this);
 						log.error("Conflict handle merge the DIDDocument error.");
 						throw new DIDStoreException("deal with local modification error.");
 					} else {
 						log.debug("Conflict handle return the final copy.");
 					}
 				}
+
+				localDoc.getMetadata().attachStore(this);
 
 				storage.storeDid(finalDoc);
 			}

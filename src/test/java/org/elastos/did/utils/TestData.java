@@ -87,6 +87,14 @@ public final class TestData {
     	return store;
 	}
 
+	public DIDStore reOpenStore() throws DIDException {
+		if (store != null)
+			store.close();
+
+		store = DIDStore.open(TestConfig.storeRoot);
+		return store;
+	}
+
 	public synchronized RootIdentity getRootIdentity() throws DIDException {
 		if (identity == null) {
 	    	mnemonic =  Mnemonic.getInstance().generate();

@@ -484,6 +484,14 @@ public final class RootIdentity {
 
 		HDKey key = preDerivedPublicKey.derive("0/" + index);
 		DID did = new DID(DID.METHOD, key.getAddress());
+
+		/*
+		DIDMetadata metadata = new DIDMetadata(did, getStore());
+		metadata.setRootIdentityId(getId());
+		metadata.setIndex(index);
+		did.setMetadata(metadata);
+		*/
+
 		return did;
 	}
 
@@ -691,6 +699,7 @@ public final class RootIdentity {
 				// Local copy was modified
 				finalDoc = handle.merge(resolvedDoc, localDoc);
 				if (finalDoc == null || !finalDoc.getSubject().equals(did)) {
+					localDoc.getMetadata().attachStore(getStore());
 					log.error("Conflict handle merge the DIDDocument error.");
 					throw new DIDStoreException("deal with local modification error.");
 				} else {
@@ -702,6 +711,9 @@ public final class RootIdentity {
 		DIDMetadata metadata = finalDoc.getMetadata();
 		metadata.setRootIdentityId(getId());
 		metadata.setIndex(index);
+
+		if (localDoc != null)
+			localDoc.getMetadata().attachStore(getStore());
 
 		getStore().storeDid(finalDoc);
 		getStore().storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());

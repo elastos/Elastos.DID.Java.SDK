@@ -571,6 +571,26 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return metadata;
 	}
 
+	/**
+	 * Whether the credential object has metadata attached.
+	 *
+	 * @return true if has metadata attached, false otherwise
+	 */
+	protected boolean hasMetadata() {
+		if (metadata == null)
+			return false;
+
+		if (metadata.isEmpty())
+			return false;
+
+		return true;
+	}
+
+	/**
+	 * Get the attached DIDStore object.
+	 *
+	 * @return the DIDStore object if attached with store, null otherwise
+	 */
 	private DIDStore getStore() {
 		return metadata.getStore();
 	}

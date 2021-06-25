@@ -412,16 +412,16 @@ public class DIDBackend {
 			throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
 
 		DIDDocument doc = tx.getRequest().getDocument();
-		// NOTICE: if the document already used and attached with store,
-		//         here should keep the resolved instance attach with store too.
-		DIDStore store = doc.getStore();
-		DIDMetadata metadata = new DIDMetadata(doc.getSubject(), store);
-		metadata.setTransactionId(tx.getTransactionId());
-		metadata.setSignature(doc.getProof().getSignature());
-		metadata.setPublishTime(tx.getTimestamp());
-		if (bio.getStatus() == DIDBiography.Status.DEACTIVATED)
-			metadata.setDeactivated(true);
-		doc.setMetadata(metadata);
+		// NOTICE: if the document already has metadata, reuse it.
+		if (!doc.hasMetadata()) {
+			DIDMetadata metadata = new DIDMetadata(doc.getSubject());
+			metadata.setTransactionId(tx.getTransactionId());
+			metadata.setSignature(doc.getProof().getSignature());
+			metadata.setPublishTime(tx.getTimestamp());
+			if (bio.getStatus() == DIDBiography.Status.DEACTIVATED)
+				metadata.setDeactivated(true);
+			doc.setMetadata(metadata);
+		}
 		return doc;
 	}
 
@@ -566,12 +566,14 @@ public class DIDBackend {
 			throw new DIDResolveException("Invalid credential transaction, signature mismatch.");
 
 		VerifiableCredential vc = tx.getRequest().getCredential();
-		CredentialMetadata metadata = new CredentialMetadata(vc.getId());
-		metadata.setTransactionId(tx.getTransactionId());
-		metadata.setPublishTime(tx.getTimestamp());
-		if (bio.getStatus() == CredentialBiography.Status.REVOKED)
-			metadata.setRevoked(true);
-		vc.setMetadata(metadata);
+		if (!vc.hasMetadata()) {
+			CredentialMetadata metadata = new CredentialMetadata(vc.getId());
+			metadata.setTransactionId(tx.getTransactionId());
+			metadata.setPublishTime(tx.getTimestamp());
+			if (bio.getStatus() == CredentialBiography.Status.REVOKED)
+				metadata.setRevoked(true);
+			vc.setMetadata(metadata);
+		}
 		return vc;
 	}
 
