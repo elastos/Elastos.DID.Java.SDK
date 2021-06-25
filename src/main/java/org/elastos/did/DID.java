@@ -187,8 +187,11 @@ public class DID implements Comparable<DID> {
 	public DIDDocument resolve(boolean force)
 			throws DIDResolveException {
 		DIDDocument doc = DIDBackend.getInstance().resolveDid(this, force);
-		if (doc != null)
+		if (doc != null) {
+			if (metadata != null)
+				doc.getMetadata().merge(metadata);
 			setMetadata(doc.getMetadata());
+		}
 
 		return doc;
 	}

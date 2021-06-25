@@ -424,6 +424,9 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 					props.put(k, v);
 			}
 		});
+
+		if (store == null && metadata.store != null)
+			store = metadata.store;
 	}
 
 	/**
