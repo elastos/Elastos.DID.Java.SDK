@@ -2265,6 +2265,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 
 		doc.controllers = controllers;
 		doc.controllerDocs = controllerDocs;
+		doc.effectiveController = effectiveController;
 		doc.multisig = multisig;
 		doc.publicKeys = publicKeys;
 		doc._publickeys = _publickeys;
@@ -3129,7 +3130,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		}
 
 		String lastTxid = null;
-		String reolvedSignautre = null;
+		String reolvedSignature = null;
 		DIDDocument resolvedDoc = getSubject().resolve(true);
 		if (resolvedDoc != null) {
 			if (resolvedDoc.isDeactivated()) {
@@ -3147,7 +3148,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 					throw new DIDControllersChangedException();
 			}
 
-			reolvedSignautre = resolvedDoc.getProof().getSignature();
+			reolvedSignature = resolvedDoc.getProof().getSignature();
 
 			if (!force) {
 				String localPrevSignature = getMetadata().getPreviousSignature();
@@ -3160,13 +3161,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 					throw new DIDNotUpToDateException(getSubject().toString());
 				} else if (localPrevSignature == null || localSignature == null) {
 					String ls = localPrevSignature != null ? localPrevSignature : localSignature;
-					if (!ls.equals(reolvedSignautre)) {
+					if (!ls.equals(reolvedSignature)) {
 						log.error("Current copy not based on the lastest on-chain copy, signature mismatch.");
 						throw new DIDNotUpToDateException(getSubject().toString());
 					}
 				} else {
-					if (!localSignature.equals(reolvedSignautre) &&
-						!localPrevSignature.equals(reolvedSignautre)) {
+					if (!localSignature.equals(reolvedSignature) &&
+						!localPrevSignature.equals(reolvedSignature)) {
 						log.error("Current copy not based on the lastest on-chain copy, signature mismatch.");
 						throw new DIDNotUpToDateException(getSubject().toString());
 					}
@@ -3191,7 +3192,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 			DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
 		}
 
-		getMetadata().setPreviousSignature(reolvedSignautre);
+		if (reolvedSignature != null )
+			getMetadata().setPreviousSignature(reolvedSignature);
 		getMetadata().setSignature(getProof().getSignature());
 	}
 
@@ -3503,6 +3505,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 			throw new DIDDeactivatedException(getSubject().toString());
 		else
 			doc.getMetadata().attachStore(getStore());
+
+		doc.effectiveController = effectiveController;
 
 		if (signKey == null) {
 			signKey = doc.getDefaultPublicKeyId();
