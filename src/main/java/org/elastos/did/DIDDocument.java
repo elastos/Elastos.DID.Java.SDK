@@ -124,7 +124,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 	DIDDocument.SERVICE,
 	DIDDocument.EXPIRES,
 	DIDDocument.PROOF })
-public class DIDDocument extends DIDEntity<DIDDocument> {
+public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	protected final static String ID = "id";
 	protected final static String PUBLICKEY = "publicKey";
 	protected final static String TYPE = "type";
@@ -187,6 +187,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 	private Map<DID, DIDDocument> controllerDocs;
 	private Map<DIDURL, PublicKey> publicKeys;
+	private Map<DIDURL, PublicKey>  authenticationKeys;
+	private Map<DIDURL, PublicKey>  authorizationKeys;
 	private Map<DIDURL, VerifiableCredential> credentials;
 	private Map<DIDURL, Service> services;
 	private HashMap<DID, Proof> proofs;
@@ -323,8 +325,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		private DID controller;
 		@JsonProperty(PUBLICKEY_BASE58)
 		private String keyBase58;
-		private boolean authenticationKey;
-		private boolean authorizationKey;
 
 		/**
 		 * Constructs a PublicKey instance with the given values.
@@ -390,44 +390,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		 */
 		public byte[] getPublicKeyBytes() {
 			return Base58.decode(keyBase58);
-		}
-
-		/**
-		 * Check if the key is an authentication key.
-		 *
-		 * @return if true if is an authentication key, false otherwise
-		 */
-		public boolean isAuthenticationKey() {
-			return authenticationKey;
-		}
-
-		/**
-		 * Set this PublicKey as an authentication key or not.
-		 *
-		 * @param authenticationKey true set this key as an authentication key;
-		 * 		  false remove this key from authentication keys
-		 */
-		private void setAuthenticationKey(boolean authenticationKey) {
-			this.authenticationKey = authenticationKey;
-		}
-
-		/**
-		 * Check if the key is an authorization key.
-		 *
-		 * @return if true if is an authorization key, false otherwise
-		 */
-		public boolean isAuthorizationKey() {
-			return authorizationKey;
-		}
-
-		/**
-		 * Set this PublicKey as an authorization key or not.
-		 *
-		 * @param authenticationKey true set this key as an authorization key;
-		 * 		  false remove this key from authorization keys
-		 */
-		private void setAuthorizationKey(boolean authorizationKey) {
-			this.authorizationKey = authorizationKey;
 		}
 
 		/**
@@ -862,6 +824,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		this.effectiveController = doc.effectiveController;
 		this.multisig = doc.multisig;
 		this.publicKeys = doc.publicKeys;
+		this.authenticationKeys = doc.authenticationKeys;
+		this.authorizationKeys = doc.authorizationKeys;
 		this._publickeys = doc._publickeys;
 		this._authentications = doc._authentications;
 		this._authorizations = doc._authorizations;
@@ -1360,12 +1324,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @return the numbers of authentication keys
 	 */
 	public int getAuthenticationKeyCount() {
-		int count = 0;
-
-		for (PublicKey pk : publicKeys.values()) {
-			if (pk.isAuthenticationKey())
-				count++;
-		}
+		int count = authenticationKeys.size();
 
 		if (hasController()) {
 			for (DIDDocument doc : controllerDocs.values())
@@ -1383,10 +1342,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	public List<PublicKey> getAuthenticationKeys() {
 		List<PublicKey> pks = new ArrayList<PublicKey>();
 
-		for (PublicKey pk : publicKeys.values()) {
-			if (pk.isAuthenticationKey())
-				pks.add(pk);
-		}
+		pks.addAll(authenticationKeys.values());
 
 		if (hasController()) {
 			for (DIDDocument doc : controllerDocs.values())
@@ -1409,10 +1365,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		id = canonicalId(id);
 
 		List<PublicKey> pks = new ArrayList<PublicKey>();
-		for (PublicKey pk : publicKeys.values()) {
-			if (!pk.isAuthenticationKey())
-				continue;
-
+		for (PublicKey pk : authenticationKeys.values()) {
 			if (id != null && !pk.getId().equals(id))
 				continue;
 
@@ -1448,8 +1401,21 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @return the matched authentication key object
 	 */
 	public PublicKey getAuthenticationKey(DIDURL id) {
-		PublicKey pk = getPublicKey(id);
-		return (pk != null && pk.isAuthenticationKey()) ? pk : null;
+		checkArgument(id != null, "Invalid publicKey id");
+
+		id = canonicalId(id);
+
+		PublicKey pk = authenticationKeys.get(id);
+		if (pk != null)
+			return pk;
+
+		if (hasController()) {
+			DIDDocument doc = controllerDocs.get(id.getDid());
+			if (doc != null)
+				return doc.getAuthenticationKey(id);
+		}
+
+		return null;
 	}
 
 	/**
@@ -1488,14 +1454,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @return the numbers of the authorization keys
 	 */
 	public int getAuthorizationKeyCount() {
-		int count = 0;
-
-		for (PublicKey pk : publicKeys.values()) {
-			if (pk.isAuthorizationKey())
-				count++;
-		}
-
-		return count;
+		return authorizationKeys.size();
 	}
 
 	/**
@@ -1504,12 +1463,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @return an array of authorization keys
 	 */
 	public List<PublicKey> getAuthorizationKeys() {
-		List<PublicKey> pks = new ArrayList<PublicKey>();
-
-		for (PublicKey pk : publicKeys.values()) {
-			if (pk.isAuthorizationKey())
-				pks.add(pk);
-		}
+		List<PublicKey> pks = new ArrayList<PublicKey>(authorizationKeys.values());
 
 		return Collections.unmodifiableList(pks);
 	}
@@ -1527,10 +1481,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		id = canonicalId(id);
 
 		List<PublicKey> pks = new ArrayList<PublicKey>();
-		for (PublicKey pk : publicKeys.values()) {
-			if (!pk.isAuthorizationKey())
-				continue;
-
+		for (PublicKey pk : authorizationKeys.values()) {
 			if (id != null && !pk.getId().equals(id))
 				continue;
 
@@ -1561,8 +1512,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 	 * @return the PublicKey object
 	 */
 	public PublicKey getAuthorizationKey(DIDURL id) {
-		PublicKey pk = getPublicKey(id);
-		return pk != null && pk.isAuthorizationKey() ? pk : null;
+		checkArgument(id != null, "Invalid publicKey id");
+		return authorizationKeys.get(id);
 	}
 
 	/**
@@ -1898,6 +1849,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		}
 
 		if (_authentications != null && _authentications.size() > 0) {
+			authenticationKeys = new TreeMap<DIDURL, PublicKey>();
+
 			PublicKey pk;
 
 			for (PublicKeyReference keyRef : _authentications) {
@@ -1939,15 +1892,17 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 					pks.put(pk.getId(), pk);
 				}
 
-				pk.setAuthenticationKey(true);
+				authenticationKeys.put(pk.getId(), pk);
 			}
 
 			Collections.sort(_authentications);
 		} else {
 			_authentications = Collections.emptyList();
+			authenticationKeys = Collections.emptyMap();
 		}
 
 		if (_authorizations != null && _authorizations.size() > 0) {
+			authorizationKeys = new TreeMap<DIDURL, PublicKey>();
 			PublicKey pk;
 
 			for (PublicKeyReference keyRef : _authorizations) {
@@ -1993,12 +1948,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 					pks.put(pk.getId(), pk);
 				}
 
-				pk.setAuthorizationKey(true);
+				authorizationKeys.put(pk.getId(), pk);
 			}
 
 			Collections.sort(_authorizations);
 		} else {
 			_authorizations = Collections.emptyList();
+			authorizationKeys = Collections.emptyMap();
 		}
 
 		// for customized DID with controller, could be no public keys
@@ -2016,15 +1972,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				String address = HDKey.toAddress(pk.getPublicKeyBytes());
 				if (address.equals(getSubject().getMethodSpecificId())) {
 					defaultPublicKey = pk;
-					if (!pk.isAuthenticationKey()) {
-						pk.setAuthenticationKey(true);
+					if (!authenticationKeys.containsKey(pk.getId())) {
 						if (_authentications.isEmpty()) {
 							_authentications = new ArrayList<PublicKeyReference>();
-							_authentications.add(new PublicKeyReference(pk));
-						} else {
-							_authentications.add(new PublicKeyReference(pk));
-							Collections.sort(_authentications);
+							authenticationKeys = new TreeMap<DIDURL, PublicKey>();
 						}
+
+						_authentications.add(new PublicKeyReference(pk));
+						authenticationKeys.put(pk.getId(), pk);
+						Collections.sort(_authentications);
 					}
 
 					break;
@@ -2303,6 +2259,33 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		return true;
 	}
 
+	@Override
+	public DIDDocument clone() {
+		DIDDocument doc = new DIDDocument(subject);
+
+		doc.controllers = controllers;
+		doc.controllerDocs = controllerDocs;
+		doc.multisig = multisig;
+		doc.publicKeys = publicKeys;
+		doc._publickeys = _publickeys;
+		doc.authenticationKeys = authenticationKeys;
+		doc._authentications = _authentications;
+		doc.authorizationKeys = authorizationKeys;
+		doc._authorizations = _authorizations;
+		doc.defaultPublicKey = defaultPublicKey;
+		doc.credentials = credentials;
+		doc._credentials = _credentials;
+		doc.services = services;
+		doc._services = _services;
+		doc.expires = expires;
+		doc.proofs = proofs;
+		doc._proofs = _proofs;
+		doc.metadata = getMetadata().clone();
+
+		return doc;
+	}
+
+	// Used for Builder create a writable copy.
 	private DIDDocument copy() {
 		DIDDocument doc = new DIDDocument(subject);
 
@@ -2311,6 +2294,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		if (this.multisig != null)
 			doc.multisig = new MultiSignature(this.multisig);
 		doc.publicKeys = new TreeMap<DIDURL, PublicKey>(publicKeys);
+		doc.authenticationKeys = new TreeMap<DIDURL, PublicKey>(authenticationKeys);
+		doc.authorizationKeys = new TreeMap<DIDURL, PublicKey>(authorizationKeys);
 		doc.defaultPublicKey = this.defaultPublicKey;
 		doc.credentials = new TreeMap<DIDURL, VerifiableCredential>(credentials);
 		doc.services = new TreeMap<DIDURL, Service>(services);
@@ -4314,6 +4299,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 		private void addPublicKey(PublicKey key) {
 			if (document.publicKeys == null) {
 				document.publicKeys = new TreeMap<DIDURL, PublicKey>();
+				document.authenticationKeys = new TreeMap<DIDURL, PublicKey>();
+				document.authorizationKeys = new TreeMap<DIDURL, PublicKey>();
 			} else {
 				// Check the existence, both id and keyBase58
 				for (PublicKey pk : document.publicKeys.values()) {
@@ -4332,7 +4319,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				String address = HDKey.toAddress(key.getPublicKeyBytes());
 				if (address.equals(getSubject().getMethodSpecificId())) {
 					document.defaultPublicKey = key;
-					key.setAuthenticationKey(true);
+					document.authenticationKeys.put(key.getId(), key);
 				}
 			}
 
@@ -4446,11 +4433,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				throw new DIDObjectHasReferenceException(id.toString() + "is default key");
 
 			if (!force) {
-				if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
+				if (document.authenticationKeys.containsKey(pk.getId()) ||
+						document.authorizationKeys.containsKey(pk.getId()))
 					throw new DIDObjectHasReferenceException(id.toString());
 			}
 
 			if (document.publicKeys.remove(id) != null) {
+				document.authenticationKeys.remove(id);
+				document.authorizationKeys.remove(id);
+
 				try {
 					// TODO: should delete the loosed private key when store the document
 					if (document.getMetadata().attachedStore())
@@ -4524,8 +4515,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			if (!key.getController().equals(getSubject()))
 				throw new IllegalUsageException(id.toString());
 
-			if (!key.isAuthenticationKey()) {
-				key.setAuthenticationKey(true);
+			if (!document.authenticationKeys.containsKey(id)) {
+				document.authenticationKeys.put(key.getId(), key);
 				invalidateProof();
 			}
 
@@ -4556,8 +4547,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
 
 			PublicKey key = new PublicKey(canonicalId(id), null, getSubject(), pk);
-			key.setAuthenticationKey(true);
 			addPublicKey(key);
+			document.authenticationKeys.put(key.getId(), key);
 
 			return this;
 		}
@@ -4591,7 +4582,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 			id = canonicalId(id);
 			PublicKey key = document.publicKeys.get(id);
-			if (key == null || !key.isAuthenticationKey())
+			if (key == null || !document.authenticationKeys.containsKey(id))
 				throw new DIDObjectNotExistException(id.toString());
 
 			// Can not remove default public key
@@ -4599,12 +4590,10 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				throw new DIDObjectHasReferenceException(
 						"Cannot remove the default PublicKey from authentication.");
 
-			if (key.isAuthenticationKey()) {
-				key.setAuthenticationKey(false);
+			if (document.authenticationKeys.remove(id) != null)
 				invalidateProof();
-			} else {
+			else
 				throw new DIDObjectNotExistException(id.toString());
-			}
 
 			return this;
 		}
@@ -4647,8 +4636,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			if (key.getController().equals(getSubject()))
 				throw new IllegalUsageException(id.toString());
 
-			if (!key.isAuthorizationKey()) {
-				key.setAuthorizationKey(true);
+			if (!document.authorizationKeys.containsKey(id)) {
+				document.authorizationKeys.put(key.getId(), key);
 				invalidateProof();
 			}
 
@@ -4687,8 +4676,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				throw new IllegalUsageException("Key's controller is self.");
 
 			PublicKey key = new PublicKey(canonicalId(id), null, controller, pk);
-			key.setAuthorizationKey(true);
 			addPublicKey(key);
+			document.authorizationKeys.put(key.getId(), key);
 
 			return this;
 		}
@@ -4750,8 +4739,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 			PublicKey pk = new PublicKey(canonicalId(id), targetPk.getType(),
 					controller, targetPk.getPublicKeyBase58());
-			pk.setAuthorizationKey(true);
 			addPublicKey(pk);
+			document.authorizationKeys.put(pk.getId(), pk);
 
 			return this;
 		}
@@ -4818,12 +4807,10 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 			if (key == null)
 				throw new DIDObjectNotExistException(id.toString());
 
-			if (key.isAuthorizationKey()) {
-				key.setAuthorizationKey(false);
+			if (document.authorizationKeys.remove(id) != null)
 				invalidateProof();
-			} else {
+			else
 				throw new DIDObjectNotExistException(id.toString());
-			}
 
 			return this;
 		}
@@ -5387,6 +5374,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 
 			if (document.publicKeys == null || document.publicKeys.isEmpty()) {
 				document.publicKeys = Collections.emptyMap();
+				document.authenticationKeys = Collections.emptyMap();
+				document.authorizationKeys = Collections.emptyMap();
 				document._publickeys = Collections.emptyList();
 				document._authentications = Collections.emptyList();
 				document._authorizations = Collections.emptyList();
@@ -5396,19 +5385,21 @@ public class DIDDocument extends DIDEntity<DIDDocument> {
 				document._authentications = new ArrayList<PublicKeyReference>();
 				document._authorizations = new ArrayList<PublicKeyReference>();
 
-				for (PublicKey pk : document.publicKeys.values()) {
-					if (pk.isAuthenticationKey())
+				if (document.authenticationKeys.isEmpty()) {
+					document._authentications = Collections.emptyList();
+					document.authenticationKeys = Collections.emptyMap();
+				} else {
+					for (PublicKey pk : document.authenticationKeys.values())
 						document._authentications.add(new PublicKeyReference(pk));
-
-					if (pk.isAuthorizationKey())
-						document._authorizations.add(new PublicKeyReference(pk));
 				}
 
-				if (document._authentications.isEmpty())
-					document._authentications = Collections.emptyList();
-
-				if (document._authentications.isEmpty())
+				if (document.authorizationKeys.isEmpty()) {
 					document._authorizations = Collections.emptyList();
+					document.authorizationKeys = Collections.emptyMap();
+				} else {
+					for (PublicKey pk : document.authorizationKeys.values())
+						document._authorizations.add(new PublicKeyReference(pk));
+				}
 			}
 
 			if (document.credentials == null || document.credentials.isEmpty()) {
