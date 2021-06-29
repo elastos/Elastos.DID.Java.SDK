@@ -589,6 +589,7 @@ public final class DIDStore {
 				return null;
 			} else {
 				RootIdentity identity = ids.get(0);
+ 			    identity.setMetadata(loadRootIdentityMetadata(identity.getId()));
 				metadata.setDefaultRootIdentity(identity.getId());
 				return identity;
 			}
