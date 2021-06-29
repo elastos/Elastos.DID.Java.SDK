@@ -778,8 +778,6 @@ public final class DIDStore {
 		if (doc.getStore() != this) {
 			DIDMetadata metadata = loadDidMetadata(doc.getSubject());
 			doc.getMetadata().merge(metadata);
-			storeDidMetadata(doc.getSubject(), doc.getMetadata());
-
 			doc.getMetadata().attachStore(this);
 		}
 		storeDidMetadata(doc.getSubject(), doc.getMetadata());
@@ -1012,8 +1010,6 @@ public final class DIDStore {
 		if (credential.getMetadata().getStore() != this) {
 			CredentialMetadata metadata = loadCredentialMetadata(credential.getId());
 			credential.getMetadata().merge(metadata);
-			storeCredentialMetadata(credential.getId(), credential.getMetadata());
-
 			credential.getMetadata().attachStore(this);
 		}
 		storeCredentialMetadata(credential.getId(), credential.getMetadata());
