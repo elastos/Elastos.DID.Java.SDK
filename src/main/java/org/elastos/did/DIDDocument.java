@@ -3130,7 +3130,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		}
 
 		String lastTxid = null;
-		String reolvedSignature = null;
+		String resolvedSignature = null;
 		DIDDocument resolvedDoc = getSubject().resolve(true);
 		if (resolvedDoc != null) {
 			if (resolvedDoc.isDeactivated()) {
@@ -3148,7 +3148,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 					throw new DIDControllersChangedException();
 			}
 
-			reolvedSignature = resolvedDoc.getProof().getSignature();
+			resolvedSignature = resolvedDoc.getProof().getSignature();
 
 			if (!force) {
 				String localPrevSignature = getMetadata().getPreviousSignature();
@@ -3161,13 +3161,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 					throw new DIDNotUpToDateException(getSubject().toString());
 				} else if (localPrevSignature == null || localSignature == null) {
 					String ls = localPrevSignature != null ? localPrevSignature : localSignature;
-					if (!ls.equals(reolvedSignature)) {
+					if (!ls.equals(resolvedSignature)) {
 						log.error("Current copy not based on the lastest on-chain copy, signature mismatch.");
 						throw new DIDNotUpToDateException(getSubject().toString());
 					}
 				} else {
-					if (!localSignature.equals(reolvedSignature) &&
-						!localPrevSignature.equals(reolvedSignature)) {
+					if (!localSignature.equals(resolvedSignature) &&
+						!localPrevSignature.equals(resolvedSignature)) {
 						log.error("Current copy not based on the lastest on-chain copy, signature mismatch.");
 						throw new DIDNotUpToDateException(getSubject().toString());
 					}
@@ -3192,8 +3192,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 			DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
 		}
 
-		if (reolvedSignature != null )
-			getMetadata().setPreviousSignature(reolvedSignature);
+		if (resolvedSignature != null )
+			getMetadata().setPreviousSignature(resolvedSignature);
 		getMetadata().setSignature(getProof().getSignature());
 	}
 
