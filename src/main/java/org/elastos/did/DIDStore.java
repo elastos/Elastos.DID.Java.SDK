@@ -589,6 +589,13 @@ public final class DIDStore {
 				return null;
 			} else {
 				RootIdentity identity = ids.get(0);
+				RootIdentity.Metadata identityMetadata =
+						storage.loadRootIdentityMetadata(identity.getId());
+				if (identityMetadata == null)
+ 					identityMetadata = new RootIdentity.Metadata();
+ 				identityMetadata.setId(identity.getId());
+ 			    identityMetadata.attachStore(this);
+
 				metadata.setDefaultRootIdentity(identity.getId());
 				return identity;
 			}
