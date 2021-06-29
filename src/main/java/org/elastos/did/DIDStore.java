@@ -109,8 +109,6 @@ public final class DIDStore {
 	 * the default conflict handle implementation.
 	 */
 	protected static final ConflictHandle defaultConflictHandle = (c, l) -> {
-		l.getMetadata().setPublishTime(c.getMetadata().getPublishTime());
-		l.getMetadata().setSignature(c.getMetadata().getSignature());
 		return l;
 	};
 
@@ -784,6 +782,7 @@ public final class DIDStore {
 
 			doc.getMetadata().attachStore(this);
 		}
+		storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
 		for (VerifiableCredential vc : doc.getCredentials())
 			storeCredential(vc);
@@ -1017,6 +1016,7 @@ public final class DIDStore {
 
 			credential.getMetadata().attachStore(this);
 		}
+		storeCredentialMetadata(credential.getId(), credential.getMetadata());
 
 		cache.put(Key.forCredential(credential.getId()), credential);
 	}
@@ -1542,7 +1542,12 @@ public final class DIDStore {
 
 				localDoc.getMetadata().attachStore(this);
 
-				storage.storeDid(finalDoc);
+				DIDMetadata metadata = finalDoc.getMetadata();
+				metadata.setPublishTime(resolvedDoc.getMetadata().getPublishTime());
+				metadata.setSignature(resolvedDoc.getProof().getSignature());
+				metadata.attachStore(this);
+
+				storeDid(finalDoc);
 			}
 
 			List<DIDURL> vcIds = storage.listCredentials(did);

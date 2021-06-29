@@ -411,17 +411,17 @@ public class DIDBackend {
 		if (!tx.getRequest().isValid())
 			throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
 
-		DIDDocument doc = tx.getRequest().getDocument();
-		// NOTICE: if the document already has metadata, reuse it.
-		if (!doc.hasMetadata()) {
-			DIDMetadata metadata = new DIDMetadata(doc.getSubject());
-			metadata.setTransactionId(tx.getTransactionId());
-			metadata.setSignature(doc.getProof().getSignature());
-			metadata.setPublishTime(tx.getTimestamp());
-			if (bio.getStatus() == DIDBiography.Status.DEACTIVATED)
-				metadata.setDeactivated(true);
-			doc.setMetadata(metadata);
-		}
+		// NOTICE: Make a copy from DIDBackend cache.
+		// 		   Avoid share same DIDDocument instance between DIDBackend
+		//         cache and DIDStore cache.
+		DIDDocument doc = tx.getRequest().getDocument().clone();
+		DIDMetadata metadata = doc.getMetadata();
+		metadata.setTransactionId(tx.getTransactionId());
+		metadata.setSignature(doc.getProof().getSignature());
+		metadata.setPublishTime(tx.getTimestamp());
+		if (bio.getStatus() == DIDBiography.Status.DEACTIVATED)
+			metadata.setDeactivated(true);
+
 		return doc;
 	}
 

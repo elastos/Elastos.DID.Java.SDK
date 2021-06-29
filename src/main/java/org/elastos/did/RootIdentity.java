@@ -687,6 +687,7 @@ public final class RootIdentity {
 			// Update metadata off-store, then store back
 			localDoc.getMetadata().detachStore();
 
+			// localdoc == resolveddoc || localdoc not modified since last publish
 			if (localDoc.getSignature().equals(resolvedDoc.getSignature()) ||
 					(localDoc.getMetadata().getSignature() != null &&
 					localDoc.getProof().getSignature().equals(
@@ -709,8 +710,13 @@ public final class RootIdentity {
 		}
 
 		DIDMetadata metadata = finalDoc.getMetadata();
+
+		metadata.setPublishTime(resolvedDoc.getMetadata().getPublishTime());
+		metadata.setSignature(resolvedDoc.getProof().getSignature());
+
 		metadata.setRootIdentityId(getId());
 		metadata.setIndex(index);
+		metadata.attachStore(getStore());
 
 		if (localDoc != null)
 			localDoc.getMetadata().attachStore(getStore());

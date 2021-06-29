@@ -538,6 +538,50 @@ public class DIDStoreTest {
 		assertNotNull(doc.getService("#test"));
 	}
 
+	// NOTICE:
+	// This case try to reproduce the errors from Elastos Essential.
+	// Caused by resolved metadata will overwrite the local metadata.
+	@Test
+	public void testSyncThenResolveThenUpdate3() throws DIDException {
+		RootIdentity identity = testData.getRootIdentity();
+
+		// Create DID
+		String alias = "my test did";
+    	DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	DID did = doc.getSubject();
+    	doc.getMetadata().setAlias(alias);
+    	assertTrue(doc.isValid());
+
+    	DIDDocument resolved = doc.getSubject().resolve();
+    	assertNull(resolved);
+
+    	doc.publish(TestConfig.storePass);
+
+    	resolved = doc.getSubject().resolve();
+    	assertNotNull(resolved);
+
+		// Sync did
+		store.synchronize();
+
+		did.resolve();
+
+		// clear cache and reload document from store.
+		store = testData.reOpenStore();
+		doc = store.loadDid(did);
+
+		// use the previous document instance
+		DIDDocument.Builder db = doc.edit();
+		db.addService("#test", "TestService", "https://www.elastos.org/");
+		doc = db.seal(TestConfig.storePass);
+
+		doc.publish(TestConfig.storePass);
+
+		store.storeDid(doc);
+
+		doc = did.resolve(true);
+		assertNotNull(doc.getService("#test"));
+	}
+
 	@Test
 	public void testChangePassword() throws DIDException {
     	RootIdentity identity = testData.getRootIdentity();
