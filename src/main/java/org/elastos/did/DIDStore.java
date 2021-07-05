@@ -1541,6 +1541,9 @@ public final class DIDStore {
 				DIDMetadata metadata = finalDoc.getMetadata();
 				metadata.setPublishTime(resolvedDoc.getMetadata().getPublishTime());
 				metadata.setSignature(resolvedDoc.getProof().getSignature());
+				if (resolvedDoc.getMetadata().isDeactivated())
+					metadata.setDeactivated(true);
+
 				metadata.attachStore(this);
 
 				storeDid(finalDoc);
