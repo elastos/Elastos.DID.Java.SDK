@@ -713,6 +713,8 @@ public final class RootIdentity {
 
 		metadata.setPublishTime(resolvedDoc.getMetadata().getPublishTime());
 		metadata.setSignature(resolvedDoc.getProof().getSignature());
+		if (resolvedDoc.getMetadata().isDeactivated())
+			metadata.setDeactivated(true);
 
 		metadata.setRootIdentityId(getId());
 		metadata.setIndex(index);
