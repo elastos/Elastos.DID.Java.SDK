@@ -24,13 +24,18 @@ package org.elastos.did.util;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.elastos.did.DID;
 import org.elastos.did.DIDBackend;
+import org.elastos.did.DIDBackend.LocalResolveHandle;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.VerifiableCredential;
@@ -56,8 +61,52 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class Main {
-	public static void setupDIDBackend(String network) throws DIDResolveException {
+	public static class MyResolveHandle implements LocalResolveHandle {
+		private File didDir;
+		private Map<DID, DIDDocument> dids;
+
+		public MyResolveHandle(String dir) throws IOException {
+			if (dir == null || dir.isEmpty())
+				didDir = new File(".");
+			else
+				didDir = new File(dir);
+
+			didDir = didDir.getCanonicalFile();
+			dids = new HashMap<DID, DIDDocument>();
+			System.out.println("Local resolve directory: " + didDir.toString());
+		}
+
+		@Override
+		public DIDDocument resolve(DID did) {
+			if (dids.containsKey(did))
+				return dids.get(did);
+
+			try {
+				File didFile = new File(didDir, did.getMethodSpecificId());
+				if (!didFile.exists() || !didFile.isFile())
+					didFile = new File(didDir, did.getMethodSpecificId() + ".json");
+
+				if (didFile.exists() && didFile.isFile()) {
+					InputStream in = new FileInputStream(didFile);
+					DIDDocument doc = DIDDocument.parse(in);
+					in.close();
+					System.out.println("Load did " + did + " from " + didFile.getAbsolutePath());
+					dids.put(did, doc);
+					return doc;
+				}
+			} catch (Exception e) {
+				System.out.print("Load did  " + did + " error!");
+				e.printStackTrace(System.err);
+			}
+
+			return null;
+		}
+	}
+
+	public static void setupDIDBackend(String network, String localResolveFolder)
+			throws IOException, DIDResolveException {
 		DIDBackend.initialize( new DefaultDIDAdapter(network));
+		DIDBackend.getInstance().setResolveHandle(new MyResolveHandle(localResolveFolder));
 	}
 
 	public static void printJson(PrintStream out, boolean compact, String json) throws IOException {
@@ -84,6 +133,9 @@ public class Main {
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
 		private boolean force = false;
 
+		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")
+		private String local = null;
+
 		@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
 		private boolean compact = false;
 
@@ -99,7 +151,7 @@ public class Main {
 		@Override
 		public Integer call() throws Exception {
 			try {
-				setupDIDBackend(network);
+				setupDIDBackend(network, local);
 
 				DID did = new DID(didstr);
 
@@ -137,6 +189,9 @@ public class Main {
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
 		private boolean force = false;
 
+		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")
+		private String local = null;
+
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
 		private boolean verbose = false;
 
@@ -146,7 +201,7 @@ public class Main {
 		@Override
 		public Integer call() throws Exception {
 			try {
-				setupDIDBackend(network);
+				setupDIDBackend(network, local);
 
 				DIDDocument doc = DIDDocument.parse(new File(documentFile));
 				System.out.format("Genuine: %s\n", doc.isGenuine());
@@ -172,6 +227,9 @@ public class Main {
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
 		private boolean force = false;
 
+		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")
+		private String local = null;
+
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
 		private boolean verbose = false;
 
@@ -181,7 +239,7 @@ public class Main {
 		@Override
 		public Integer call() throws Exception {
 			try {
-				setupDIDBackend(network);
+				setupDIDBackend(network, local);
 
 				VerifiableCredential vc = VerifiableCredential.parse(new File(credentialFile));
 				System.out.format("Genuine: %s\n", vc.isGenuine());
@@ -207,6 +265,9 @@ public class Main {
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
 		private boolean force = false;
 
+		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")
+		private String local = null;
+
 		@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
 		private boolean verbose = false;
 
@@ -216,7 +277,7 @@ public class Main {
 		@Override
 		public Integer call() throws Exception {
 			try {
-				setupDIDBackend(network);
+				setupDIDBackend(network, local);
 
 				VerifiablePresentation vp = VerifiablePresentation.parse(new File(presentationFile));
 				System.out.format("Genuine: %s\n", vp.isGenuine());
@@ -243,6 +304,9 @@ public class Main {
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
 		private boolean force = false;
 
+		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")
+		private String local = null;
+
 		@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
 		private boolean compact = false;
 
@@ -255,7 +319,7 @@ public class Main {
 		@Override
 		public Integer call() throws Exception {
 			try {
-				setupDIDBackend(network);
+				setupDIDBackend(network, local);
 
 				BufferedReader in = new BufferedReader(new FileReader(jwtFile));
 				String token = in.readLine();
