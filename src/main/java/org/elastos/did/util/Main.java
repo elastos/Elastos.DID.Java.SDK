@@ -40,6 +40,7 @@ import org.elastos.did.DIDDocument;
 import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
+import org.elastos.did.VerificationEventListener;
 import org.elastos.did.backend.SimulatedIDChain;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDResolveException;
@@ -103,6 +104,25 @@ public class Main {
 		}
 	}
 
+	public static class ConsoleVerificationEventListener extends VerificationEventListener {
+	    private static final String RESET = "\033[0m";
+	    // private static final String BLACK = "\033[0;30m";
+	    private static final String RED = "\033[0;31m";
+	    private static final String GREEN = "\033[0;32m";
+
+	    private String colorize(String text, String color) {
+	    	return color + text + RESET;
+	    }
+
+		@Override
+		public void done(Object context, boolean succeeded, String message) {
+			String color = succeeded ? GREEN : RED;
+
+			System.out.println("  " + colorize(message, color));
+		}
+
+	}
+
 	public static void setupDIDBackend(String network, String localResolveFolder)
 			throws IOException, DIDResolveException {
 		DIDBackend.initialize( new DefaultDIDAdapter(network));
@@ -159,6 +179,10 @@ public class Main {
 				if (doc == null) {
 					System.out.format("DID %s not exists.\n", did);
 				} else {
+					System.out.println("Verifing the document...");
+					doc.isValid(new ConsoleVerificationEventListener());
+
+					System.out.println("\nDID document:");
 					PrintStream out = System.out;
 					if (outputFile != null)
 						out = new PrintStream(outputFile);
@@ -204,9 +228,8 @@ public class Main {
 				setupDIDBackend(network, local);
 
 				DIDDocument doc = DIDDocument.parse(new File(documentFile));
-				System.out.format("Genuine: %s\n", doc.isGenuine());
-				System.out.format("Expired: %s\n", doc.isExpired());
-				System.out.format("Valid:   %s\n", doc.isValid());
+				System.out.println("Verifing the document...");
+				doc.isValid(new ConsoleVerificationEventListener());
 			} catch(Exception e) {
 				if (verbose)
 					e.printStackTrace();
@@ -242,9 +265,8 @@ public class Main {
 				setupDIDBackend(network, local);
 
 				VerifiableCredential vc = VerifiableCredential.parse(new File(credentialFile));
-				System.out.format("Genuine: %s\n", vc.isGenuine());
-				System.out.format("Expired: %s\n", vc.isExpired());
-				System.out.format("Valid:   %s\n", vc.isValid());
+				System.out.println("Verifing the credenitial...");
+				vc.isValid(new ConsoleVerificationEventListener());
 			} catch(Exception e) {
 				if (verbose)
 					e.printStackTrace();
@@ -280,8 +302,8 @@ public class Main {
 				setupDIDBackend(network, local);
 
 				VerifiablePresentation vp = VerifiablePresentation.parse(new File(presentationFile));
-				System.out.format("Genuine: %s\n", vp.isGenuine());
-				System.out.format("Valid:   %s\n", vp.isValid());
+				System.out.println("Verifing the presentation...");
+				vp.isValid(new ConsoleVerificationEventListener());
 			} catch(Exception e) {
 				if (verbose)
 					e.printStackTrace();
@@ -404,6 +426,11 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
+		// We use logback as the logging backend
+	    Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+	    root.setLevel(Level.WARN);
+
+
 		int exitCode = new CommandLine(new DIDCommand()).execute(args);
 		System.exit(exitCode);
 	}

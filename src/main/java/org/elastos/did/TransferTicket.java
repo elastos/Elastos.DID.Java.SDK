@@ -300,51 +300,155 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	/**
 	 * Check whether the ticket is genuine or not.
 	 *
+	 * @param listener the listener for the verification events and messages
 	 * @return true is the ticket is genuine else false
 	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 */
-	public boolean isGenuine() throws DIDResolveException {
+	public boolean isGenuine(VerificationEventListener listener) throws DIDResolveException {
 		DIDDocument doc = getDocument();
-		if (doc == null)
-			return false;
+		if (doc == null) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: can not resolve the owner document", this.getSubject());
+				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+			}
 
-		if (!doc.isGenuine())
 			return false;
+		}
+
+		if (!doc.isGenuine(listener)) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: the owner document is not genuine", this.getSubject());
+				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+			}
+
+			return false;
+		}
 
 		// Proofs count should match with multisig
 		if ((doc.getControllerCount() > 1 && proofs.size() != doc.getMultiSignature().m()) ||
-				(doc.getControllerCount() <= 1 && proofs.size() != 1))
+				(doc.getControllerCount() <= 1 && proofs.size() != 1)) {
+			listener.failed(this, "Ticket %s: proof size not matched with multisig, %d expected, actual is %d",
+					this.getSubject(), doc.getMultiSignature().m(), proofs.size());
+			listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+
 			return false;
+		}
 
 		TransferTicket tt = new TransferTicket(this, false);
 		String json = tt.serialize(true);
 		byte[] digest = EcdsaSigner.sha256Digest(json.getBytes());
 
-		List<DID> checkedControllers = new ArrayList<DID>(_proofs.size());
-
 		for (Proof proof : _proofs) {
-			if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+			if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE)) {
+				listener.failed(this, "Ticket %s: key type '%s' for proof is not supported",
+						this.getSubject(), proof.getType());
+				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+
 				return false;
+			}
 
 			DIDDocument controllerDoc = doc.getControllerDocument(proof.getVerificationMethod().getDid());
-			if (controllerDoc == null)
-				return false;
+			if (controllerDoc == null) {
+				listener.failed(this, "Ticket %s: can not resolve the document for controller '%s' to verify the proof",
+						this.getSubject(), proof.getVerificationMethod().getDid());
+				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
 
-			if (!controllerDoc.isValid())
 				return false;
+			}
 
-			// if already checked this controller
-			if (checkedControllers.contains(proof.getVerificationMethod().getDid()))
+			if (!controllerDoc.isValid(listener)) {
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: controller '%s' is invalid, failed to verify the proof",
+							this.getSubject(), proof.getVerificationMethod().getDid());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
+
 				return false;
+			}
 
-			if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId()))
+			if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId())) {
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: key '%s' for proof is not default key of '%s'",
+							this.getSubject(), proof.getVerificationMethod(), proof.getVerificationMethod().getDid());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
+
 				return false;
+			}
 
-			if (!doc.verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest))
+			if (!doc.verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest)) {
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: proof '%s' is invalid, signature mismatch",
+							this.getSubject(), proof.getVerificationMethod());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
+
 				return false;
-
-			checkedControllers.add(proof.getVerificationMethod().getDid());
+			}
 		}
+
+
+		if (listener != null)
+			listener.succeeded(this, "Ticket %s: is genuine", this.getSubject());
+
+		return true;
+	}
+
+	/**
+	 * Check whether the ticket is genuine or not.
+	 *
+	 * @return true is the ticket is genuine else false
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 */
+	public boolean isGenuine() throws DIDResolveException {
+		return isGenuine(null);
+	}
+
+	/**
+	 * Check whether the ticket is genuine and valid to use.
+	 *
+	 * @param listener the listener for the verification events and messages
+	 * @return true is the ticket is valid else false
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 */
+	public boolean isValid(VerificationEventListener listener) throws DIDResolveException {
+		DIDDocument doc = getDocument();
+		if (doc == null) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: can not resolve the owners document", this.getSubject());
+				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+			}
+
+			return false;
+		}
+
+		if (!doc.isValid(listener)) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: the owners document is not valid", this.getSubject());
+				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+			}
+
+			return false;
+		}
+
+		if (!isGenuine(listener)) {
+			if (listener != null)
+				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+
+			return false;
+		}
+
+		if (!txid.equals(doc.getMetadata().getTransactionId())) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: the transaction id already out date", this.getSubject());
+				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+			}
+
+			return false;
+		}
+
+		if (listener != null)
+			listener.succeeded(this, "Ticket %s: is valid", this.getSubject());
 
 		return true;
 	}
@@ -356,20 +460,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 */
 	public boolean isValid() throws DIDResolveException {
-		DIDDocument doc = getDocument();
-		if (doc == null)
-			return false;
-
-		if (!doc.isValid())
-			return false;
-
-		if (!isGenuine())
-			return false;
-
-		if (!txid.equals(doc.getMetadata().getTransactionId()))
-			return false;
-
-		return true;
+		return isValid(null);
 	}
 
 	/**

@@ -2170,13 +2170,21 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	/**
 	 * Check is this DIDDocument is genuine.
 	 *
+	 * @param listener the listener for the verification events and messages
 	 * @return true if genuine, false otherwise
 	 */
-	public boolean isGenuine() {
+	public boolean isGenuine(VerificationEventListener listener) {
 		// Proofs count should match with multisig
 		int expectedProofs = multisig == null ? 1 : multisig.m();
-		if (proofs.size() != expectedProofs)
+		if (proofs.size() != expectedProofs) {
+			if (listener != null) {
+				listener.failed(this, "%s: proof size not matched with multisig, %d expected, actual is %d",
+						getSubject(), multisig.m(), proofs.size());
+				listener.failed(this, "%s: is not genuine", getSubject());
+			}
+
 			return false;
+		}
 
 		DIDDocument doc = new DIDDocument(this, false);
 		String json = doc.serialize(true);
@@ -2187,35 +2195,106 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 			Proof proof = getProof();
 
 			// Unsupported public key type;
-			if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
-				return false;
+			if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE)) {
+				if (listener != null) {
+					listener.failed(this, "%s: key type '%s' for proof is not supported",
+							getSubject(), proof.getType());
+					listener.failed(this, "%s: is not genuine", getSubject());
+				}
 
-			if (!proof.getCreator().equals(getDefaultPublicKeyId()))
 				return false;
+			}
 
-			return verifyDigest(proof.getCreator(), proof.getSignature(), digest);
+			if (!proof.getCreator().equals(getDefaultPublicKeyId())) {
+				if (listener != null) {
+					listener.failed(this, "%s: key '%s' for proof is not default key",
+							getSubject(), proof.getCreator());
+					listener.failed(this, "%s: is not genuine", getSubject());
+				}
+
+				return false;
+			}
+
+			boolean result = verifyDigest(proof.getCreator(), proof.getSignature(), digest);
+			if (listener != null) {
+				if (result) {
+					listener.succeeded(this, "%s: is genuine", getSubject());
+				} else {
+					listener.failed(this, "%s: can not verify the signature", getSubject());
+					listener.failed(this, "%s: is not genuine", getSubject());
+				}
+			}
+
+			return result;
 		} else {
 			for (Proof proof : _proofs) {
 				// Unsupported public key type;
-				if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+				if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE)) {
+					if (listener != null) {
+						listener.failed(this, "%s: key type '%s' for proof is not supported",
+								getSubject(), proof.getType());
+						listener.failed(this, "%s: is not genuine", getSubject());
+					}
+
 					return false;
+				}
 
 				DIDDocument controllerDoc = getControllerDocument(proof.getCreator().getDid());
-				if (controllerDoc == null)
-					return false;
+				if (controllerDoc == null) {
+					if (listener != null) {
+						listener.failed(this, "%s: can not resolve the document for controller '%s' to verify the proof",
+								getSubject(), proof.getCreator().getDid());
+						listener.failed(this, "%s: is not genuine", getSubject());
+					}
 
-				if (!controllerDoc.isGenuine())
 					return false;
+				}
 
-				if (!proof.getCreator().equals(controllerDoc.getDefaultPublicKeyId()))
-					return false;
+				if (!controllerDoc.isGenuine(listener)) {
+					if (listener != null) {
+						listener.failed(this, "%s: controller '%s' is not genuine, failed to verify the proof",
+								getSubject(), proof.getCreator().getDid());
+						listener.failed(this, "%s: is not genuine", getSubject());
+					}
 
-				if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest))
 					return false;
+				}
+
+				if (!proof.getCreator().equals(controllerDoc.getDefaultPublicKeyId())) {
+					if (listener != null) {
+						listener.failed(this, "%s: key '%s' for proof is not default key of '%s'",
+								getSubject(), proof.getCreator(), proof.getCreator().getDid());
+						listener.failed(this, "%s: is not genuine", getSubject());
+					}
+
+					return false;
+				}
+
+				if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest)) {
+					if (listener != null) {
+						listener.failed(this, "%s: proof '%s' is invalid, signature mismatch",
+								getSubject(), proof.getCreator());
+						listener.failed(this, "%s: is not genuine", getSubject());
+					}
+
+					return false;
+				}
 			}
+
+			if (listener != null)
+				listener.succeeded(this, "%s: is genuine", getSubject());
 
 			return true;
 		}
+	}
+
+	/**
+	 * Check is this DIDDocument is genuine.
+	 *
+	 * @return true if genuine, false otherwise
+	 */
+	public boolean isGenuine() {
+		return isGenuine(null);
 	}
 
 	/**
@@ -2243,20 +2322,68 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	/**
 	 * Check if this DIDDocument is valid.
 	 *
+	 * @param listener the listener for the verification events and messages
 	 * @return true if valid, false otherwise
 	 */
-	public boolean isValid() {
-		if (isDeactivated() || isExpired() || !isGenuine())
+	public boolean isValid(VerificationEventListener listener) {
+		if (isDeactivated()) {
+			if (listener != null) {
+				listener.failed(this, "%s: is deactivated", getSubject());
+				listener.failed(this, "%s: is invalid", getSubject());
+			}
+
 			return false;
+		}
+
+		if (isExpired()) {
+			if (listener != null) {
+				listener.failed(this, "%s: is expired", getSubject());
+				listener.failed(this, "%s: is invalid", getSubject());
+			}
+
+			return false;
+		}
+
+		if (!isGenuine(listener)) {
+			if (listener != null)
+				listener.failed(this, "%s: is invalid", getSubject());
+
+			return false;
+		}
 
 		if (hasController()) {
 			for (DIDDocument doc : controllerDocs.values()) {
-				if (doc.isDeactivated() || !doc.isGenuine())
+				if (doc.isDeactivated()) {
+					listener.failed(this, "%s: controller '%s' is deactivated",
+							getSubject(), doc.getSubject());
+					listener.failed(this, "%s: is invalid", getSubject());
+
 					return false;
+				}
+
+				if (!doc.isGenuine(listener)) {
+					listener.failed(this, "%s: controller '%s' is not genuine",
+							getSubject(), doc.getSubject());
+					listener.failed(this, "%s: is invalid", getSubject());
+
+					return false;
+				}
 			}
 		}
 
+		if (listener != null)
+			listener.succeeded(this, "%s: is valid", getSubject());
+
 		return true;
+	}
+
+	/**
+	 * Check if this DIDDocument is valid.
+	 *
+	 * @return true if valid, false otherwise
+	 */
+	public boolean isValid() {
+		return isValid(null);
 	}
 
 	@Override

@@ -655,41 +655,132 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	/**
 	 * Check whether this credential object is genuine or not.
 	 *
+	 * @param listener the listener for the verification events and messages
 	 * @return whether the credential object is genuine
 	 * @throws DIDResolveException if error occurs when resolve the DIDs
 	 */
-	public boolean isGenuine() throws DIDResolveException {
-		if (!getId().getDid().equals(getSubject().getId()))
+	public boolean isGenuine(VerificationEventListener listener) throws DIDResolveException {
+		if (!getId().getDid().equals(getSubject().getId())) {
+			if (listener != null) {
+				listener.failed(this, "VC %s: invalid id '%s', should under the scope of '%s'",
+						getId(), getId(), getSubject().getId());
+				listener.failed(this, "VC %s: is not genuine", getId());
+			}
+
 			return false;
+		}
 
 		DIDDocument issuerDoc = issuer.resolve();
-		if (issuerDoc == null)
-			throw new DIDNotFoundException(issuer.toString());
+		if (issuerDoc == null) {
+			//throw new DIDNotFoundException(issuer.toString());
+			if (listener != null) {
+				listener.failed(this, "VC %s: Can not resolve the document for issuer '%s'",
+						getId(), getIssuer());
+				listener.failed(this, "VC %s: is not genuine", getId());
+			}
 
-		if (!issuerDoc.isGenuine())
 			return false;
+		}
+
+		if (!issuerDoc.isGenuine(listener)) {
+			if (listener != null) {
+				listener.failed(this, "VC %s: issuer '%s' is not genuine",
+						getId(), getIssuer());
+				listener.failed(this, "VC %s: is not genuine", getId());
+			}
+
+			return false;
+		}
+
 
 		// Credential should signed by any authentication key.
-		if (!issuerDoc.isAuthenticationKey(proof.getVerificationMethod()))
+		if (!issuerDoc.isAuthenticationKey(proof.getVerificationMethod())) {
+			if (listener != null) {
+				listener.failed(this, "VC %s: key '%s' for proof is not an authencation key of '%s'",
+						getId(), proof.getVerificationMethod(), proof.getVerificationMethod().getDid());
+				listener.failed(this, "VC %s: is not genuine", getId());
+			}
+
 			return false;
+		}
 
 		// Unsupported public key type;
-		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
-			return false; // TODO: should throw an exception?
+		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE)) {
+			if (listener != null) {
+				listener.failed(this, "VC %s: key type '%s' for proof is not supported",
+						getId(), proof.getType());
+				listener.failed(this, "VC %s: is not genuine", getId());
+			}
+
+			return false;
+		}
 
 		VerifiableCredential vc = new VerifiableCredential(this, false);
 		String json = vc.serialize(true);
 		if (!issuerDoc.verify(proof.getVerificationMethod(),
-				proof.getSignature(), json.getBytes()))
+				proof.getSignature(), json.getBytes())) {
+			if (listener != null) {
+				listener.failed(this, "VC %s: proof is invalid, signature mismatch", getId());
+				listener.failed(this, "VC %s: is not genuine", getId());
+			}
+
 			return false;
+		}
 
 		if (!isSelfProclaimed()) {
 			DIDDocument controllerDoc = subject.id.resolve();
-			if (controllerDoc != null && !controllerDoc.isGenuine())
+			if (controllerDoc == null) {
+				if (listener != null) {
+					listener.failed(this, "VC %s: can not resolve the holder's document", getId());
+					listener.failed(this, "VC %s: is not genuine", getId());
+				}
+
 				return false;
+			}
+
+			if (!controllerDoc.isGenuine(listener)) {
+				if (listener != null) {
+					listener.failed(this, "VC %s: holder's document is not genuine", getId());
+					listener.failed(this, "VC %s: is not genuine", getId());
+				}
+
+				return false;
+			}
 		}
 
+		if (listener != null)
+			listener.succeeded(this, "VC %s: is genuine", getId());
+
 		return true;
+	}
+
+	/**
+	 * Check whether this credential object is genuine or not.
+	 *
+	 * @return whether the credential object is genuine
+	 * @throws DIDResolveException if error occurs when resolve the DIDs
+	 */
+	public boolean isGenuine() throws DIDResolveException {
+		return isGenuine(null);
+	}
+
+	/**
+	 * Check whether this credential object is genuine or not in asynchronous mode.
+	 *
+	 * @param listener the listener for the verification events and messages
+	 * @return the new CompletableStage if success; null otherwise.
+	 *         The boolean result is genuine or not
+	 */
+	public CompletableFuture<Boolean> isGenuineAsync(VerificationEventListener listener) {
+		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return isGenuine(listener);
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
 	}
 
 	/**
@@ -699,15 +790,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *         The boolean result is genuine or not
 	 */
 	public CompletableFuture<Boolean> isGenuineAsync() {
-		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return isGenuine();
-			} catch (DIDResolveException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
+		return isGenuineAsync(null);
 	}
 
 	/**
@@ -751,50 +834,137 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	/**
 	 * Check whether this credential object is valid or not.
 	 *
+	 * @param listener the listener for the verification events and messages
 	 * @return whether the credential object is valid
 	 * @throws DIDResolveException if error occurs when resolve the DIDs
 	 */
-	public boolean isValid() throws DIDResolveException {
+	public boolean isValid(VerificationEventListener listener) throws DIDResolveException {
 		if (expirationDate != null) {
 			Calendar now = Calendar.getInstance(Constants.UTC);
 
 			Calendar expireDate  = Calendar.getInstance(Constants.UTC);
 			expireDate.setTime(expirationDate);
 
-			if (now.after(expireDate))
+			if (now.after(expireDate)) {
+				if (listener != null) {
+					listener.failed(this, "VC %s: is expired", getId());
+					listener.failed(this, "VC %s: is invalid", getId());
+				}
+
 				return false;
+			}
 		}
 
 		DIDDocument issuerDoc = issuer.resolve();
-		if (issuerDoc == null)
-			throw new DIDNotFoundException(issuer.toString());
+		if (issuerDoc == null) {
+			//throw new DIDNotFoundException(issuer.toString());
+			if (listener != null) {
+				listener.failed(this, "VC %s: can not resolve the document for issuer '%s'",
+						getId(), getIssuer());
+				listener.failed(this, "VC %s: is invalid", getId());
+			}
 
-		if (!issuerDoc.isValid())
 			return false;
+		}
+
+		if (!issuerDoc.isValid(listener)) {
+			if (listener != null) {
+				listener.failed(this, "VC %s: issuer '%s' is invalid",
+						getId(), getIssuer());
+				listener.failed(this, "VC %s: is invalid", getId());
+			}
+
+			return false;
+		}
 
 		// Credential should signed by any authentication key.
-		if (!issuerDoc.isAuthenticationKey(proof.getVerificationMethod()))
+		if (!issuerDoc.isAuthenticationKey(proof.getVerificationMethod())) {
+			if (listener != null) {
+				listener.failed(this, "VC %s: key '%s' for proof is not an authencation key of '%s'",
+						getId(), proof.getVerificationMethod(), proof.getVerificationMethod().getDid());
+				listener.failed(this, "VC %s: is invalid", this.getSubject());
+			}
+
 			return false;
+		}
 
 		// Unsupported public key type;
-		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
-			return false; // TODO: should throw an exception.
+		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE)){
+			if (listener != null) {
+				listener.failed(this, "VC %s: key type '%s' for proof is not supported",
+						getId(), proof.getType());
+				listener.failed(this, "VC %s: is invalid", getId());
+			}
+
+			return false;
+		}
 
 		VerifiableCredential vc = new VerifiableCredential(this, false);
 		String json = vc.serialize(true);
 		if (!issuerDoc.verify(proof.getVerificationMethod(),
-				proof.getSignature(), json.getBytes()))
-			return false;
+				proof.getSignature(), json.getBytes())){
+			if (listener != null) {
+				listener.failed(this, "VC %s: proof is invalid, signature mismatch", getId());
+				listener.failed(this, "VC %s: is invalid", getId());
+			}
 
+			return false;
+		}
 
 		if (!isSelfProclaimed()) {
 			DIDDocument controllerDoc = subject.id.resolve();
-			if (controllerDoc != null && !controllerDoc.isValid())
+			if (controllerDoc == null) {
+				if (listener != null) {
+					listener.failed(this, "VC %s: can not resolve the holder's document", getId());
+					listener.failed(this, "VC %s: is invalid", getId());
+				}
+
 				return false;
+			}
+
+			if (!controllerDoc.isValid(listener)) {
+				if (listener != null) {
+					listener.failed(this, "VC %s: holder's document is invalid", getId());
+					listener.failed(this, "VC %s: is invalid", getId());
+				}
+
+				return false;
+			}
 		}
 
-		return true;
+		if (listener != null)
+			listener.succeeded(this, "VC %s: is valid", getId());
 
+		return true;
+	}
+
+	/**
+	 * Check whether this credential object is valid or not.
+	 *
+	 * @return whether the credential object is valid
+	 * @throws DIDResolveException if error occurs when resolve the DIDs
+	 */
+	public boolean isValid() throws DIDResolveException {
+		return isValid(null);
+	}
+
+	/**
+	 * Check whether this credential object is valid in asynchronous mode.
+	 *
+	 * @param listener the listener for the verification events and messages
+	 * @return the new CompletableStage if success; null otherwise.
+	 * 	       The boolean result is valid or not
+	 */
+	public CompletableFuture<Boolean> isValidAsync(VerificationEventListener listener) {
+		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return isValid(listener);
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
 	}
 
 	/**
@@ -804,15 +974,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * 	       The boolean result is valid or not
 	 */
 	public CompletableFuture<Boolean> isValidAsync() {
-		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return isValid();
-			} catch (DIDResolveException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
+		return isValidAsync(null);
 	}
 
 	/**
