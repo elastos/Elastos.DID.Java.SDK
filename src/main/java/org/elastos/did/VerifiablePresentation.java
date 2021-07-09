@@ -381,41 +381,121 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	/**
 	 * Check whether the presentation is genuine or not.
 	 *
+	 * @param listener the listener for the verification events and messages
 	 * @return whether the credential object is genuine
 	 * @throws DIDResolveException if error occurs when resolving the DIDs
 	 */
-	public boolean isGenuine() throws DIDResolveException {
+	public boolean isGenuine(VerificationEventListener listener) throws DIDResolveException {
 		DIDDocument holderDoc = getHolder().resolve();
-		if (holderDoc == null)
+		if (holderDoc == null) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: can not resolve the holder's document", getId());
+				listener.failed(this, "VP %s: is not genuine", getId());
+			}
+
 			return false;
+		}
 
 		// Check the integrity of holder' document.
-		if (!holderDoc.isGenuine())
+		if (!holderDoc.isGenuine(listener)) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: holder's document is not genuine", getId());
+				listener.failed(this, "VP %s: is not genuine", getId());
+			}
+
 			return false;
+		}
 
 		// Unsupported public key type;
-		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE)) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: key type '%s' for proof is not supported",
+						getId(), proof.getType());
+				listener.failed(this, "VP %s: is not genuine", getId());
+			}
+
 			return false;
+		}
 
 		// credential should signed by authentication key.
-		if (!holderDoc.isAuthenticationKey(proof.getVerificationMethod()))
+		if (!holderDoc.isAuthenticationKey(proof.getVerificationMethod())) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: Key '%s' for proof is not an authencation key of '%s'",
+						getId(), proof.getVerificationMethod(), proof.getVerificationMethod().getDid());
+				listener.failed(this, "VP %s: is not genuine", getId());
+			}
+
 			return false;
+		}
 
 		// All credentials should owned by holder
 		for (VerifiableCredential vc : credentials.values()) {
-			if (!vc.getSubject().getId().equals(getHolder()))
-				return false;
+			if (!vc.getSubject().getId().equals(getHolder())) {
+				if (listener != null) {
+					listener.failed(this, "VP %s: credential '%s' not owned by the holder '%s'",
+							getId(), vc.getId(), getHolder());
+					listener.failed(this, "VP %s: is not genuine", getId());
+				}
 
-			if (!vc.isGenuine())
 				return false;
+			}
+
+			if (!vc.isGenuine(listener)) {
+				if (listener != null) {
+					listener.failed(this, "VP %s: credential '%s' is not genuine",
+							getId(), vc.getId());
+					listener.failed(this, "VP %s: is not genuine", getId());
+				}
+
+				return false;
+			}
 		}
 
 		VerifiablePresentation vp = new VerifiablePresentation(this, false);
 		String json = vp.serialize(true);
 
-		return holderDoc.verify(proof.getVerificationMethod(),
+		boolean result = holderDoc.verify(proof.getVerificationMethod(),
 				proof.getSignature(), json.getBytes(),
 				proof.getRealm().getBytes(), proof.getNonce().getBytes());
+		if (listener != null) {
+			if (result) {
+				listener.succeeded(this, "VP %s: is genuine", getId());
+			} else {
+				listener.failed(this, "VP %s: proof is invalid, signature mismatch", getId());
+				listener.failed(this, "VP %s: is not genuine", getId());
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Check whether the presentation is genuine or not.
+	 *
+	 * @return whether the credential object is genuine
+	 * @throws DIDResolveException if error occurs when resolving the DIDs
+	 */
+	public boolean isGenuine() throws DIDResolveException {
+		return isGenuine(null);
+	}
+
+	/**
+	 * Check whether the presentation is genuine or not in asynchronous mode.
+	 *
+	 * @param listener the listener for the verification events and messages
+	 * @return the new CompletableStage if success; null otherwise.
+	 *         The boolean result is genuine or not
+	 */
+	public CompletableFuture<Boolean> isGenuineAsync(VerificationEventListener listener) {
+		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return isGenuine(listener);
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
 	}
 
 	/**
@@ -425,15 +505,99 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *         The boolean result is genuine or not
 	 */
 	public CompletableFuture<Boolean> isGenuineAsync() {
-		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return isGenuine();
-			} catch (DIDResolveException e) {
-				throw new CompletionException(e);
-			}
-		});
+		return isGenuineAsync(null);
+	}
 
-		return future;
+	/**
+	 * Check whether the presentation is valid or not.
+	 *
+	 * @param listener the listener for the verification events and messages
+	 * @return whether the credential object is valid
+	 * @throws DIDResolveException if error occurs when resolve the DIDs
+	 */
+	public boolean isValid(VerificationEventListener listener) throws DIDResolveException {
+		DIDDocument holderDoc = getHolder().resolve();
+		if (holderDoc == null) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: can not resolve the holder's document", getId());
+				listener.failed(this, "VP %s: is invalid", getId());
+			}
+
+			return false;
+		}
+
+		// Check the validity of holder' document.
+		if (!holderDoc.isValid(listener)) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: holder's document is invalid", getId());
+				listener.failed(this, "VP %s: is invalid", getId());
+			}
+
+			return false;
+		}
+
+		// Unsupported public key type;
+		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE)) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: Key type '%s' for proof is not supported",
+						getId(), proof.getType());
+				listener.failed(this, "VP %s: is invalid", getId());
+			}
+
+			return false;
+		}
+
+		// credential should signed by authentication key.
+		if (!holderDoc.isAuthenticationKey(proof.getVerificationMethod())){
+			if (listener != null) {
+				listener.failed(this, "VP %s: Key '%s' for proof is not an authencation key of '%s'",
+						getId(), proof.getVerificationMethod(), proof.getVerificationMethod().getDid());
+				listener.failed(this, "VP %s: is invalid", getId());
+			}
+
+			return false;
+		}
+
+
+		// All credentials should owned by holder
+		for (VerifiableCredential vc : credentials.values()) {
+			if (!vc.getSubject().getId().equals(getHolder())) {
+				if (listener != null) {
+					listener.failed(this, "VP %s: credential '%s' not owned by the holder '%s'",
+							getId(), vc.getId(), getHolder());
+					listener.failed(this, "VP %s: is not genuine", getId());
+				}
+
+				return false;
+			}
+
+			if (!vc.isValid(listener)) {
+				if (listener != null) {
+					listener.failed(this, "VP %s: credential '%s' is invalid",
+							getId(), vc.getId());
+					listener.failed(this, "VP %s: is invalid", getId());
+				}
+
+				return false;
+			}
+		}
+
+		VerifiablePresentation vp = new VerifiablePresentation(this, false);
+		String json = vp.serialize(true);
+
+		boolean result = holderDoc.verify(proof.getVerificationMethod(),
+				proof.getSignature(), json.getBytes(),
+				proof.getRealm().getBytes(), proof.getNonce().getBytes());
+		if (listener != null) {
+			if (result) {
+				listener.succeeded(this, "VP %s: is valid", getId());
+			} else {
+				listener.failed(this, "VP %s: proof is invalid, signature mismatch", getId());
+				listener.failed(this, "VP %s: is invalid", getId());
+			}
+		}
+
+		return result;
 	}
 
 	/**
@@ -443,37 +607,26 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws DIDResolveException if error occurs when resolve the DIDs
 	 */
 	public boolean isValid() throws DIDResolveException {
-		DIDDocument holderDoc = getHolder().resolve();
-		if (holderDoc == null)
-			return false;
+		return isValid(null);
+	}
 
-		// Check the validity of holder' document.
-		if (!holderDoc.isValid())
-			return false;
+	/**
+	 * Check whether the credential is valid in asynchronous mode.
+	 *
+	 * @param listener the listener for the verification events and messages
+	 * @return the new CompletableStage if success.
+	 * 	       The boolean result is valid or not
+	 */
+	public CompletableFuture<Boolean> isValidAsync(VerificationEventListener listener) {
+		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return isValid(listener);
+			} catch (DIDResolveException e) {
+				throw new CompletionException(e);
+			}
+		});
 
-		// Unsupported public key type;
-		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
-			return false;
-
-		// credential should signed by authentication key.
-		if (!holderDoc.isAuthenticationKey(proof.getVerificationMethod()))
-			return false;
-
-		// All credentials should owned by holder
-		for (VerifiableCredential vc : credentials.values()) {
-			if (!vc.getSubject().getId().equals(getHolder()))
-				return false;
-
-			if (!vc.isValid())
-				return false;
-		}
-
-		VerifiablePresentation vp = new VerifiablePresentation(this, false);
-		String json = vp.serialize(true);
-
-		return holderDoc.verify(proof.getVerificationMethod(),
-				proof.getSignature(), json.getBytes(),
-				proof.getRealm().getBytes(), proof.getNonce().getBytes());
+		return future;
 	}
 
 	/**
@@ -483,15 +636,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * 	       The boolean result is valid or not
 	 */
 	public CompletableFuture<Boolean> isValidAsync() {
-		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return isValid();
-			} catch (DIDResolveException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
+		return isValidAsync(null);
 	}
 
 	/**

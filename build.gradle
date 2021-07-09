@@ -60,7 +60,7 @@ jar {
     }
 }
 
-task fatJar(type: Jar) {
+task didutil(type: Jar) {
     manifest {
         attributes "Main-Class": "org.elastos.did.util.Main"
     }
