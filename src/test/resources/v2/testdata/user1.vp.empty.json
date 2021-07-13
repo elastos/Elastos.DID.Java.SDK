@@ -2,13 +2,13 @@
   "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#user1-vp-empty",
   "type" : "VerifiablePresentation",
   "holder" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-  "created" : "2021-06-22T04:36:02Z",
+  "created" : "2021-07-13T04:35:55Z",
   "verifiableCredential" : [ ],
   "proof" : {
     "type" : "ECDSAsecp256r1",
     "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
     "realm" : "https://example.com/",
     "nonce" : "873172f58701a9ee686f0630204fee59",
-    "signature" : "J-3d7KGe4gxcE2GJ6-kuBt9hOdx6pVXaBMqd9tyezFGmEuknI5_7w9-qeEFWkLJiE142Nw6Oru5Qq2G2q0mfBA"
+    "signature" : "-L9v5_DwKZXRd4IWo6GAMqQv3_dYyHc5Hx3MIfXLvHUArIUBS9hw1UAtzlHKoq-Lts5r5z-rudLNuJJ7eL9ioQ"
   }
 }
