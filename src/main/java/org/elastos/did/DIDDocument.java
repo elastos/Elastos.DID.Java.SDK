@@ -252,7 +252,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		}
 
 		private void apply(int m, int n) {
-			checkArgument(n > 0, "Invalid multisig spec: n should > 1");
+			checkArgument(n > 0, "Invalid multisig spec: n should > 0");
 			checkArgument(m > 0 && m <= n,  "Invalid multisig spec: m should > 0 and <= n");
 
 			this.m = m;
