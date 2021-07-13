@@ -2,8 +2,8 @@
   "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#json",
   "type" : [ "JsonCredential", "TestCredential" ],
   "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-  "issuanceDate" : "2021-06-22T04:36:01Z",
-  "expirationDate" : "2026-06-22T04:36:01Z",
+  "issuanceDate" : "2021-07-13T04:35:55Z",
+  "expirationDate" : "2026-07-13T04:35:55Z",
   "credentialSubject" : {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
     "Description" : "Technologist",
@@ -56,8 +56,8 @@
   },
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-06-22T04:36:02Z",
+    "created" : "2021-07-13T04:35:55Z",
     "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "signature" : "GOx5z57fD1oPj4LCZCB1bxLkRXuM9OuBcsdemcgio-ShuokASX7TX2zDC9WB9VL-dhH-BX3A9Tg3lPnGEudKtw"
+    "signature" : "EjImtkpyV330qPWpJaf7cS21xK4UYsZ33D6WpHEoAJyGJEvOqI-OyVpMFjcCQetOvDFuJLN6vLC2Rdd8Hpq34w"
   }
 }

@@ -611,6 +611,8 @@ public class TestDataGenerator {
 		store.storeDid(doc);
 		doc.publish(signKey, TestConfig.storePass);
 
+		DIDDocument foobarDoc = doc;
+
 		String json = doc.toString(true);
 		writeTo("foobar.id.normalized.json", json);
 
@@ -748,6 +750,9 @@ public class TestDataGenerator {
 		json = newDoc.toString(false);
 		writeTo("foobar.new-id.compact.json", json);
 
+		// restore the original version
+		store.storeDid(foobarDoc);
+
 		System.out.println("OK");
 	}
 
@@ -842,6 +847,8 @@ public class TestDataGenerator {
 		store.storeDid(doc);
 		doc.publish(users[0].getDefaultPublicKeyId(), TestConfig.storePass);
 
+		DIDDocument bazDoc = doc;
+
 		String json = doc.toString(true);
 		writeTo("baz.id.normalized.json", json);
 
@@ -872,6 +879,9 @@ public class TestDataGenerator {
 
 		json = newDoc.toString(false);
 		writeTo("baz.new-id.compact.json", json);
+
+		// restore the original version
+		store.storeDid(bazDoc);
 
 		System.out.println("OK");
 	}

@@ -2,16 +2,16 @@
   "id" : "did:elastos:foo",
   "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g" ],
   "multisig" : "2:2",
-  "expires" : "2026-06-22T04:36:03Z",
+  "expires" : "2026-07-13T04:35:57Z",
   "proof" : [ {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-06-22T04:36:03Z",
+    "created" : "2021-07-13T04:35:57Z",
     "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "_v8maDgZY6RJVWdxT7HDha2ibdWdCGX4oZBy8U18IvHGajZgETvdUQ_zTvWiLKD6Wn0wwTlIzVEtXeYlbAxpGg"
+    "signatureValue" : "AaVXOvy_vTeaHr-eZzPro-yqWH2b0wAg4uzBPmA09JrH0HtwlustOyLdDccADf2lt-sU5FUpIl2bkids98xG9w"
   }, {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-06-22T04:36:03Z",
+    "created" : "2021-07-13T04:35:57Z",
     "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "signatureValue" : "NV0xr8HMA_7pPsIz9j4Mv8MAKlCAjh5655vh-uaBb7A4uFCHS6UAEA8Qlh3RkBM0qsndSkaihT-LYavqqVgnQQ"
+    "signatureValue" : "3B9AilWvvFR0QETHi5rhaGLRRXRpJplDnthBCU0wEBoaXhSWrc7AT9V3YZndYmYoZQIBNyRgu7XuKfFuCDfzYQ"
   } ]
 }
