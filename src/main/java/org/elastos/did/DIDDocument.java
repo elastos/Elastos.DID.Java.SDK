@@ -205,6 +205,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 * users to sign a single document.
 	 */
 	public static class MultiSignature {
+		private static final MultiSignature ONE_OF_ONE = new MultiSignature(1, 1);
+
 		private int m;
 		private int n;
 
@@ -250,7 +252,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		}
 
 		private void apply(int m, int n) {
-			checkArgument(n > 1, "Invalid multisig spec: n should > 1");
+			checkArgument(n > 0, "Invalid multisig spec: n should > 0");
 			checkArgument(m > 0 && m <= n,  "Invalid multisig spec: m should > 0 and <= n");
 
 			this.m = m;
@@ -3272,6 +3274,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 				List<DID> curControllers = getControllers();
 
 				if (!curControllers.equals(orgControllers))
+					throw new DIDControllersChangedException();
+
+				MultiSignature curMultisig = getMultiSignature() == null ?
+						MultiSignature.ONE_OF_ONE : getMultiSignature();
+				MultiSignature orgMultisig = resolvedDoc.getMultiSignature() == null ?
+						MultiSignature.ONE_OF_ONE : resolvedDoc.getMultiSignature();
+
+				if (!curMultisig.equals(orgMultisig))
 					throw new DIDControllersChangedException();
 			}
 
