@@ -327,9 +327,11 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 		// Proofs count should match with multisig
 		if ((doc.getControllerCount() > 1 && proofs.size() != doc.getMultiSignature().m()) ||
 				(doc.getControllerCount() <= 1 && proofs.size() != 1)) {
-			listener.failed(this, "Ticket %s: proof size not matched with multisig, %d expected, actual is %d",
-					this.getSubject(), doc.getMultiSignature().m(), proofs.size());
-			listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: proof size not matched with multisig, %d expected, actual is %d",
+						this.getSubject(), doc.getMultiSignature().m(), proofs.size());
+				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+			}
 
 			return false;
 		}
@@ -340,18 +342,22 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 
 		for (Proof proof : _proofs) {
 			if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE)) {
-				listener.failed(this, "Ticket %s: key type '%s' for proof is not supported",
-						this.getSubject(), proof.getType());
-				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: key type '%s' for proof is not supported",
+							this.getSubject(), proof.getType());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
 
 				return false;
 			}
 
 			DIDDocument controllerDoc = doc.getControllerDocument(proof.getVerificationMethod().getDid());
 			if (controllerDoc == null) {
-				listener.failed(this, "Ticket %s: can not resolve the document for controller '%s' to verify the proof",
-						this.getSubject(), proof.getVerificationMethod().getDid());
-				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: can not resolve the document for controller '%s' to verify the proof",
+							this.getSubject(), proof.getVerificationMethod().getDid());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
 
 				return false;
 			}
