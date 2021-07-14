@@ -156,7 +156,39 @@ public class VerifiablePresentationTest {
 		assertEquals(normalizedJson, vp.toString(true));
 	}
 
-	@Test
+    @ParameterizedTest
+    @CsvSource({
+    	"1,user1,empty",
+    	"1,user1,nonempty",
+    	"2,user1,empty",
+    	"2,user1,nonempty",
+    	"2,user1,optionalattrs",
+    	"2,foobar,empty",
+    	"2,foobar,nonempty",
+    	"2,foobar,optionalattrs"
+    })
+	public void testGenuineAndValidWithListener(int version, String did, String presentation)
+			throws DIDException, IOException {
+    	TestData.CompatibleData cd = testData.getCompatibleData(version);
+    	// For integrity check
+    	cd.loadAll();
+
+	   	VerificationEventListener listener = VerificationEventListener.getDefault("  ", "- ", "* ");
+
+		VerifiablePresentation vp = cd.getPresentation(did, presentation);
+
+		assertNotNull(vp);
+
+		assertTrue(vp.isGenuine(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
+
+		assertTrue(vp.isValid(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
+	}
+
+    @Test
 	public void testBuildNonempty() throws DIDException, IOException {
 		TestData.InstantData td = testData.getInstantData();
 		DIDDocument doc = td.getUser1Document();

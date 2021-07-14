@@ -2356,17 +2356,21 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		if (hasController()) {
 			for (DIDDocument doc : controllerDocs.values()) {
 				if (doc.isDeactivated()) {
-					listener.failed(this, "%s: controller '%s' is deactivated",
-							getSubject(), doc.getSubject());
-					listener.failed(this, "%s: is invalid", getSubject());
+					if (listener != null) {
+						listener.failed(this, "%s: controller '%s' is deactivated",
+								getSubject(), doc.getSubject());
+						listener.failed(this, "%s: is invalid", getSubject());
+					}
 
 					return false;
 				}
 
 				if (!doc.isGenuine(listener)) {
-					listener.failed(this, "%s: controller '%s' is not genuine",
-							getSubject(), doc.getSubject());
-					listener.failed(this, "%s: is invalid", getSubject());
+					if (listener != null) {
+						listener.failed(this, "%s: controller '%s' is not genuine",
+								getSubject(), doc.getSubject());
+						listener.failed(this, "%s: is invalid", getSubject());
+					}
 
 					return false;
 				}

@@ -294,6 +294,35 @@ public class VerifiableCredentialTest {
     	"2,foobar,license",
     	"2,foobar,services",
     	"2,foo,email"})
+	public void testGenuineAndValidWithListener(int version, String did, String vc)
+			throws DIDException, IOException {
+	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	   	cd.loadAll();
+
+	   	VerificationEventListener listener = VerificationEventListener.getDefault("  ", "- ", "* ");
+
+		VerifiableCredential credential = cd.getCredential(did, vc);
+
+		assertTrue(credential.isGenuine(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
+
+		assertTrue(credential.isValid(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
+	}
+
+    @ParameterizedTest
+    @CsvSource({
+    	"1,user1,twitter",
+    	"1,user1,passport",
+    	"1,user1,json",
+    	"2,user1,twitter",
+    	"2,user1,passport",
+    	"2,user1,json",
+    	"2,foobar,license",
+    	"2,foobar,services",
+    	"2,foo,email"})
     public void testDeclareCrendential(int version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);

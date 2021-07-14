@@ -2294,6 +2294,11 @@ public class DIDDocumentTest {
     	"1,user1",
     	"1,user2",
     	"1,user3",
+    	"2,issuer",
+    	"2,user1",
+    	"2,user2",
+    	"2,user3",
+    	"2,user4",
     	"2,examplecorp",
     	"2,foobar",
     	"2,foo",
@@ -2329,6 +2334,66 @@ public class DIDDocumentTest {
 			assertEquals(compactJson, normalized.toString(false));
 			assertEquals(compactJson, doc.toString(false));
 		}
+	}
+
+    @ParameterizedTest
+    @CsvSource({
+    	"1,issuer",
+    	"1,user1",
+    	"1,user2",
+    	"1,user3",
+    	"2,issuer",
+    	"2,user1",
+    	"2,user2",
+    	"2,user3",
+    	"2,user4",
+    	"2,examplecorp",
+    	"2,foobar",
+    	"2,foo",
+    	"2,bar",
+    	"2,baz"
+    })
+	public void testGenuineAndValidWithListener(int version, String did)
+			throws DIDException, IOException {
+    	TestData.CompatibleData cd = testData.getCompatibleData(version);
+    	cd.loadAll();
+
+    	VerificationEventListener listener = VerificationEventListener.getDefault("  ", "- ", "* ");
+
+    	String compactJson = cd.getDocumentJson(did, "compact");
+		DIDDocument compact = DIDDocument.parse(compactJson);
+		assertNotNull(compact);
+
+		assertTrue(compact.isGenuine(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
+
+		assertTrue(compact.isValid(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
+
+	   	String normalizedJson = cd.getDocumentJson(did, "normalized");
+		DIDDocument normalized = DIDDocument.parse(normalizedJson);
+		assertNotNull(normalized);
+
+		assertTrue(normalized.isGenuine(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
+
+		assertTrue(normalized.isValid(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
+
+		DIDDocument doc = cd.getDocument(did);
+		assertNotNull(doc);
+
+		assertTrue(doc.isGenuine(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
+
+		assertTrue(doc.isValid(listener));
+		assertTrue(listener.toString().startsWith("  - "));
+		listener.reset();
 	}
 
 	@Test

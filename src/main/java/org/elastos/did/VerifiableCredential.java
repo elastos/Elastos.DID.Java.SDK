@@ -729,16 +729,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		if (!isSelfProclaimed()) {
 			DIDDocument controllerDoc = subject.id.resolve();
-			if (controllerDoc == null) {
-				if (listener != null) {
-					listener.failed(this, "VC %s: can not resolve the holder's document", getId());
-					listener.failed(this, "VC %s: is not genuine", getId());
-				}
-
-				return false;
-			}
-
-			if (!controllerDoc.isGenuine(listener)) {
+			if (controllerDoc != null && !controllerDoc.isGenuine(listener)) {
 				if (listener != null) {
 					listener.failed(this, "VC %s: holder's document is not genuine", getId());
 					listener.failed(this, "VC %s: is not genuine", getId());
@@ -913,16 +904,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		if (!isSelfProclaimed()) {
 			DIDDocument controllerDoc = subject.id.resolve();
-			if (controllerDoc == null) {
-				if (listener != null) {
-					listener.failed(this, "VC %s: can not resolve the holder's document", getId());
-					listener.failed(this, "VC %s: is invalid", getId());
-				}
-
-				return false;
-			}
-
-			if (!controllerDoc.isValid(listener)) {
+			if (controllerDoc != null && !controllerDoc.isValid(listener)) {
 				if (listener != null) {
 					listener.failed(this, "VC %s: holder's document is invalid", getId());
 					listener.failed(this, "VC %s: is invalid", getId());
