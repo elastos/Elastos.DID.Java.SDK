@@ -25,131 +25,130 @@ package org.elastos.did;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-
-import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.MalformedDIDException;
 import org.elastos.did.utils.DIDTestExtension;
-import org.elastos.did.utils.TestData;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @ExtendWith(DIDTestExtension.class)
 public class DIDTest {
-	private static final String testMethodSpecificID = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-	private static final String testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-
-	private DID did;
-	private TestData testData;
-
-    @BeforeEach
-    public void beforeEach() throws DIDException {
-    	testData = new TestData();
-    	did = new DID(testDID);
-    }
-
-    @AfterEach
-    public void afterEach() {
-    	testData.cleanup();
-    }
-
-	@Test
-	public void testConstructor() throws MalformedDIDException {
-		DID did = new DID(testDID);
-		assertEquals(testDID, did.toString());
-
-		did = new DID("did:elastos:1234567890");
-		assertEquals("did:elastos:1234567890", did.toString());
-	}
-
-	@Test
-	public void testConstructorError1() {
-		assertThrows(MalformedDIDException.class, () -> {
-			new DID("id:elastos:1234567890");
-		});
-	}
-
-	@Test
-	public void testConstructorError2() {
-		assertThrows(MalformedDIDException.class, () -> {
-			new DID("did:example:1234567890");
-		});
-	}
-
-	@Test
-	public void testConstructorError3() {
-		assertThrows(MalformedDIDException.class, () -> {
-			new DID("did:elastos:");
-		});
-	}
-
-	@Test
-	public void testGetMethod()  {
-		assertEquals(DID.METHOD, did.getMethod());
-	}
-
-	@Test
-	public void testGetMethodSpecificId() {
-		assertEquals(testMethodSpecificID, did.getMethodSpecificId());
-	}
-
-	@Test
-	public void testToString() {
-		assertEquals(testDID, did.toString());
-	}
-
-	@Test
-	public void testHashCode() throws MalformedDIDException {
-		DID other = new DID(testDID);
-		assertEquals(did.hashCode(), other.hashCode());
-
-		other = new DID("did:elastos:1234567890");
-		assertNotEquals(did.hashCode(), other.hashCode());
-	}
-
 	@SuppressWarnings("unlikely-arg-type")
-	@Test
-	public void testEquals() throws MalformedDIDException {
-		DID other = new DID(testDID);
-		assertTrue(did.equals(other));
-		assertTrue(did.equals(testDID));
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN",
+			"     did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN",
+			"    \n\t  did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN",
+			"      did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN        ",
+			"    \n \t  did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN     ",
+			"\n\t     did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN \t  \n  ",
+			"\t \n did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN     \n   \t",
+			" \n \t\t did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN\t     \n   \t  ",
+	})
+	public void testDid(String spec) throws MalformedDIDException {
+		String didString = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
+		String methodSpecificId = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
 
-		other = new DID("did:elastos:1234567890");
-		assertFalse(did.equals(other));
-		assertFalse(did.equals("did:elastos:1234567890"));
+		// parse
+		DID did = new DID(spec);
+		assertEquals(DID.METHOD, did.getMethod());
+		assertEquals(methodSpecificId, did.getMethodSpecificId());
+		assertEquals(didString, did.toString());
+
+
+		DID ref = new DID(DID.METHOD, methodSpecificId);
+		DID dif = new DID(DID.METHOD, "abc");
+
+		// equals
+		assertTrue(did.equals(didString));
+		assertTrue(did.equals(ref));
+		assertFalse(did.equals(dif));
+
+		// hash code
+		assertEquals(ref.hashCode(), did.hashCode());
+		assertNotEquals(dif.hashCode(), did.hashCode());
+	}
+
+	@ParameterizedTest
+	@CsvSource({
+			"did:elastos:ic-J4_z2D.ULrHEzYSvjKNJpKyhqFDxvYV7pN, ic-J4_z2D.ULrHEzYSvjKNJpKyhqFDxvYV7pN",
+			"did:elastos:icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-, icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-",
+			"did:elastos:icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_, icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_",
+			"did:elastos:icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_., icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_.",
+			"did:elastos:icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_.-, icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_.-"
+	 })
+	public void testParseDidWithSpecialChars(String spec, String methodSpecificId) throws MalformedDIDException {
+		DID did = new DID(spec);
+		assertEquals(DID.METHOD, did.getMethod());
+		assertEquals(methodSpecificId, did.getMethodSpecificId());
+		assertEquals(spec, did.toString());
+	}
+
+	@ParameterizedTest
+	@CsvSource(value = {
+			"did1:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid DID schema: 'did1', at: 0",
+			"d-i_d:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid DID schema: 'd-i_d', at: 0",
+			"d-i.d:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid DID schema: 'd-i.d', at: 0",
+			"foo:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid DID schema: 'foo', at: 0",
+			"foo:bar:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid DID schema: 'foo', at: 0",
+			"did:bar:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Unknown DID method: 'bar', at: 4",
+			"did:elastos-:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Unknown DID method: 'elastos-', at: 4",
+			"did:e-l.a_stos-:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Unknown DID method: 'e-l.a_stos-', at: 4",
+			"-did:elastos:icJ4z2%DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 0",
+			".did:elastos:icJ4z2%DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 0",
+			"_did:elastos:icJ4z2%DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 0",
+			"did :elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 3",
+			"did: elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 4",
+			"did:-elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 4",
+			"did:_elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 4",
+			"did:.elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 4",
+			"did:*elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 4",
+			"did:/elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 4",
+			"did:ela*stos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 7",
+			"did:elastos\t:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 11",
+			"did:elastos: icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 12",
+			"did:elastos:-icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 12",
+			"did:elastos:_icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 12",
+			"did:elastos:.icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 12",
+			"did:elastos:icJ4z2%DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid char at: 18",
+			"did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN$ | Invalid char at: 46",
+			":elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Invalid DID schema: '', at: 0",
+			"did::icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN | Unknown DID method: '', at: 4",
+			"did:elastos: | Missing id string at: 12",
+			"did:elastos | Missing id string at: 11",
+			"did:elastos:abc:  |  Invalid char at: 15"
+	}, delimiter = '|')
+	public void testParseWrongDid(String spec, String error) {
+		MalformedDIDException e = assertThrows(MalformedDIDException.class,
+				() -> { new DID(spec); });
+
+		assertEquals(error, e.getMessage());
 	}
 
 	@Test
-	public void testResolveLocal()  throws DIDException, IOException {
-		String json = "{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKey\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"type\":\"ECDSAsecp256r1\",\"controller\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKeyBase58\":\"21YM84C9hbap4GfFSB3QbjauUfhAN4ETKg2mn4bSqx4Kp\"}],\"authentication\":[\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\"],\"verifiableCredential\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#name\",\"type\":[\"BasicProfileCredential\",\"SelfProclaimedCredential\"],\"issuer\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"issuanceDate\":\"2020-07-01T00:46:40Z\",\"expirationDate\":\"2025-06-30T00:46:40Z\",\"credentialSubject\":{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"name\":\"KP Test\"},\"proof\":{\"type\":\"ECDSAsecp256r1\",\"verificationMethod\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signature\":\"jQ1OGwpkYqjxooyaPseqyr_1MncOZDrMS_SvwYzqkCHVrRfjv_b7qfGCjxy7Gbx-LS3bvxZKeMxU1B-k3Ysb3A\"}}],\"expires\":\"2025-07-01T00:46:40Z\",\"proof\":{\"type\":\"ECDSAsecp256r1\",\"created\":\"2020-07-01T00:47:20Z\",\"creator\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signatureValue\":\"TOpNt-pWeQDJFaS5EkpMOuCqnZKhPCizf7LYQQDBrNLVIZ_7AR73m-KJk7Aja0wmZWXd7S4n7SC2W4ZQayJlMA\"}}";
-		DID did = new DID("did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab");
+	public void testParseWrongDidWithPadding() {
+		MalformedDIDException e = assertThrows(MalformedDIDException.class,
+				() -> { new DID("   d-i.d:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN"); });
 
-		DIDDocument doc = did.resolve();
-		assertNull(doc);
+		assertEquals("Invalid DID schema: 'd-i.d', at: 3", e.getMessage());
+	}
 
-		DIDBackend.getInstance().setResolveHandle((d) -> {
-			try {
-				if (d.equals(did))
-					return DIDDocument.parse(json);
-			} catch (Exception e) {
-			}
+	@Test
+	public void testParseEmptyAndNull() {
+		assertThrows(IllegalArgumentException.class,
+				() -> { new DID(null); });
 
-			return null;
-		});
+		assertThrows(IllegalArgumentException.class,
+				() -> { new DID(""); });
 
-		doc = did.resolve();
-		assertNotNull(doc);
-		assertEquals(did, doc.getSubject());
+		MalformedDIDException e = assertThrows(MalformedDIDException.class,
+				() -> { new DID("		   "); });
 
-		DIDBackend.getInstance().setResolveHandle(null);
-		doc = did.resolve();
-		assertNull(doc);
+		assertEquals("empty DID string", e.getMessage());
 	}
 }
