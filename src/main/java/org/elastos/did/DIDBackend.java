@@ -652,7 +652,7 @@ public class DIDBackend {
 		if (adapter == null)
 			adapter = getAdapter();
 
-		adapter.createIdTransaction(payload, payload);
+		adapter.createIdTransaction(payload, null);
 
 		log.info("ID transaction complete.");
 	}
