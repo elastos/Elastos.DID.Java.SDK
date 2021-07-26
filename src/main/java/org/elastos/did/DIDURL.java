@@ -124,11 +124,11 @@ public class DIDURL implements Comparable<DIDURL> {
 	private DIDURL() {
 	}
 
-	private DIDURL deepClone() {
+	private DIDURL deepClone(boolean readonly) {
 		DIDURL result = new DIDURL();
 		result.did = this.did;
 		result.path = this.path;
-		result.query = this.query.isEmpty() ? Collections.emptyMap() :
+		result.query = (this.query.isEmpty() && readonly) ? Collections.emptyMap() :
 				new LinkedHashMap<String, String>(this.query);
 		result.queryString = this.queryString;
 		result.fragment = this.fragment;
@@ -674,7 +674,7 @@ public class DIDURL implements Comparable<DIDURL> {
 		 * @param url a DIDURL object
 		 */
 		public Builder(DIDURL url) {
-			this.url = url.deepClone();
+			this.url = url.deepClone(false);
 		}
 
 		/**
@@ -794,7 +794,7 @@ public class DIDURL implements Comparable<DIDURL> {
 		 * @return a DIDURL object
 		 */
 		public DIDURL build() {
-			return url.deepClone();
+			return url.deepClone(true);
 		}
 	}
 }
