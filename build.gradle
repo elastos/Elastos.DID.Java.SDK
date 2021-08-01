@@ -7,71 +7,71 @@
  */
 
 buildscript {
-    repositories {
-        google()
-	    mavenLocal()
-    }
+	repositories {
+		google()
+		mavenLocal()
+	}
 }
 
 plugins {
-    // Apply the java-library plugin to add support for Java Library
-    id 'java-library'
-    id 'maven-publish'
+	// Apply the java-library plugin to add support for Java Library
+	id 'java-library'
+	id 'maven-publish'
 }
 
 repositories {
-    // Use jcenter for resolving your dependencies.
-    // You can declare any Maven/Ivy/file repository here.
-    jcenter()
-    mavenLocal()
+	// Use jcenter for resolving your dependencies.
+	// You can declare any Maven/Ivy/file repository here.
+	jcenter()
+	mavenLocal()
 }
 
 compileJava {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 dependencies {
-    implementation 'com.google.guava:guava:26.0-jre'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.11.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.0'
-    implementation 'com.madgag.spongycastle:core:1.58.0.0'
-    implementation 'com.madgag.spongycastle:prov:1.58.0.0'
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.0'
-    implementation 'io.jsonwebtoken:jjwt-impl:0.11.0'
-    implementation 'io.jsonwebtoken:jjwt-jackson:0.11.0'
-    implementation 'org.slf4j:slf4j-api:1.7.30'
-    implementation 'info.picocli:picocli:4.5.2'
+	implementation 'com.google.guava:guava:26.0-jre'
+	implementation 'com.fasterxml.jackson.core:jackson-core:2.11.0'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.0'
+	implementation 'com.madgag.spongycastle:core:1.58.0.0'
+	implementation 'com.madgag.spongycastle:prov:1.58.0.0'
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.0'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.0'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.0'
+	implementation 'org.slf4j:slf4j-api:1.7.30'
+	implementation 'info.picocli:picocli:4.5.2'
 	implementation 'ch.qos.logback:logback-classic:1.2.3'
 
-    // Use JUnit test framework
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
+	// Use JUnit test framework
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.7.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
 	testImplementation 'org.web3j:core:5.0.0'
 	testImplementation 'org.web3j:abi:5.0.0'
-    	
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter:5.7.0'
+
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter:5.7.0'
 }
 
 jar {
-    manifest {
-        attributes "Main-Class": "org.elastos.did.util.Main"
-    }
+	manifest {
+		attributes "Main-Class": "org.elastos.did.util.Main"
+	}
 }
 
-task didutil(type: Jar) {
-    manifest {
-        attributes "Main-Class": "org.elastos.did.util.Main"
-    }
-    
-    archiveBaseName = 'did'
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
+task didutils(type: Jar) {
+	manifest {
+		attributes "Main-Class": "org.elastos.did.util.DIDUtils"
+	}
+
+	archiveBaseName = 'didutils'
+	from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+	with jar
 }
 
 javadoc {
-    options.setLocale('en_US')
-    options.showFromPublic()
+	options.setLocale('en_US')
+	options.showFromPublic()
 	options.links 'https://docs.oracle.com/en/java/javase/11/docs/api/'
 	exclude 'org/bitcoinj/**'
 	exclude 'org/elastos/did/crypto'
@@ -80,54 +80,54 @@ javadoc {
 }
 
 test {
-    useJUnitPlatform()
+	useJUnitPlatform()
 
-    testLogging {
-        outputs.upToDateWhen {false}
-        showStandardStreams = true
-    }
+	testLogging {
+		outputs.upToDateWhen {false}
+		showStandardStreams = true
+	}
 }
 
 publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'org.elastos.did'
-            artifactId = 'didsdk'
-            //version = '1.0.0'
+	publications {
+		maven(MavenPublication) {
+			groupId = 'org.elastos.did'
+			artifactId = 'didsdk'
+			//version = '1.0.0'
 
-            from components.java
+			from components.java
 
-            pom {
-                name = 'Elastos DID SDK'
-                description = 'Elastos decentralized identity library'
-                url = 'https://www.elastos.org/'
-                licenses {
-                    license {
-                        name = 'MIT License'
-                        url = 'https://github.com/elastos/Elastos.DID.Java.SDK/blob/master/LICENSE'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'elastos'
-                        name = 'Elastos Foundation'
-                        email = 'support@elastos.org'
-                    }
-                }
-                scm {
-                    connection = 'scm:git:git://github.com/elastos/Elastos.DID.Java.SDK.git'
-                    developerConnection = 'scm:git:ssh://github.com/elastos/Elastos.DID.Java.SDK.git'
-                    url = 'http://github.com/elastos/Elastos.DID.Java.SDK'
-                }
-            }
-        }
-    }
+			pom {
+				name = 'Elastos DID SDK'
+				description = 'Elastos decentralized identity library'
+				url = 'https://www.elastos.org/'
+				licenses {
+					license {
+						name = 'MIT License'
+						url = 'https://github.com/elastos/Elastos.DID.Java.SDK/blob/master/LICENSE'
+					}
+				}
+				developers {
+					developer {
+						id = 'elastos'
+						name = 'Elastos Foundation'
+						email = 'support@elastos.org'
+					}
+				}
+				scm {
+					connection = 'scm:git:git://github.com/elastos/Elastos.DID.Java.SDK.git'
+					developerConnection = 'scm:git:ssh://github.com/elastos/Elastos.DID.Java.SDK.git'
+					url = 'http://github.com/elastos/Elastos.DID.Java.SDK'
+				}
+			}
+		}
+	}
 
-    repositories {
-        maven {
-            def releasesRepoUrl = "$buildDir/repos/releases/$version"
-            def snapshotsRepoUrl = "$buildDir/repos/snapshots/$version"
-            url = project.hasProperty('release') ? releasesRepoUrl : snapshotsRepoUrl
-        }
-    }
+	repositories {
+		maven {
+			def releasesRepoUrl = "$buildDir/repos/releases/$version"
+			def snapshotsRepoUrl = "$buildDir/repos/snapshots/$version"
+			url = project.hasProperty('release') ? releasesRepoUrl : snapshotsRepoUrl
+		}
+	}
 }
