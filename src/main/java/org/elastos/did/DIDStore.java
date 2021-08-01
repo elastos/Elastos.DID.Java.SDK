@@ -587,7 +587,7 @@ public final class DIDStore {
 				return null;
 			} else {
 				RootIdentity identity = ids.get(0);
- 			    identity.setMetadata(loadRootIdentityMetadata(identity.getId()));
+ 				identity.setMetadata(loadRootIdentityMetadata(identity.getId()));
 				metadata.setDefaultRootIdentity(identity.getId());
 				return identity;
 			}
@@ -649,7 +649,7 @@ public final class DIDStore {
 				@Override
 				public Object call() throws DIDStorageException {
 					String encryptedKey = storage.loadRootIdentityPrivateKey(id);
-					return encryptedKey != null ? encryptedKey : NULL;			    }
+					return encryptedKey != null ? encryptedKey : NULL;				}
 			});
 
 			if (value != NULL) {
@@ -1274,11 +1274,11 @@ public final class DIDStore {
 	 * @param id the private key id
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
-	protected void storeLazyPrivateKey(DIDURL id) throws DIDStoreException {
+	private void storeLazyPrivateKey(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid private key id");
 
 		storage.storePrivateKey(id, DID_LAZY_PRIVATEKEY);
-		cache.put(Key.forDidPrivateKey(id), DID_LAZY_PRIVATEKEY);
+		cache.invalidate(Key.forDidPrivateKey(id));
 	}
 
 	/**
@@ -1472,11 +1472,109 @@ public final class DIDStore {
 	}
 
 	/**
+	 * Internal DID synchronize implementation.
 	 *
-	 * @param handle
-	 * @throws DIDResolveException
-	 * @throws DIDStoreException
+	 * @param did the DID to be synchronize
+	 * @param handle an application defined handle to process the conflict
+	 * 				 between the chain copy and the local copy
+	 * @param rootIdentity the related root identity or null if customized DID
+	 * @param index the derive index
+	 * @return true if synchronized success, false if not synchronized
+	 * @throws DIDResolveException if an error occurred when resolving DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
+	protected synchronized boolean synchronize(DID did, ConflictHandle handle,
+			String rootIdentity, int index)
+			throws DIDResolveException, DIDStoreException {
+		log.info("Synchronize {}/{}...", did.toString(),
+				(index >= 0 ? Integer.toString(index) : "n/a"));
+
+		DIDDocument resolvedDoc = did.resolve();
+		if (resolvedDoc == null) {
+			log.info("Synchronize {}/{}...not exists", did.toString(),
+					(index >= 0 ? Integer.toString(index) : "n/a"));
+			return false;
+		}
+
+		boolean isCustomizedDid = resolvedDoc.isCustomizedDid();
+
+		log.debug("Synchronize {}/{}..exists, got the on-chain copy.",
+				did.toString(), (index >= 0 ? Integer.toString(index) : "n/a"));
+		DIDDocument finalDoc = resolvedDoc;
+
+		DIDDocument localDoc = storage.loadDid(did);
+		if (localDoc != null) {
+			// Update metadata off-store, then store back
+			localDoc.setMetadata(storage.loadDidMetadata(did));
+			localDoc.getMetadata().detachStore();
+
+			// localdoc == resolveddoc || localdoc not modified since last publish
+			if (localDoc.getSignature().equals(resolvedDoc.getSignature()) ||
+					(localDoc.getMetadata().getSignature() != null &&
+					localDoc.getProof().getSignature().equals(
+							localDoc.getMetadata().getSignature()))) {
+				finalDoc.getMetadata().merge(localDoc.getMetadata());
+			} else {
+				log.debug("{} on-chain copy conflict with local copy.",
+						did.toString());
+
+				// Local copy was modified
+				finalDoc = handle.merge(resolvedDoc, localDoc);
+				if (finalDoc == null || !finalDoc.getSubject().equals(did)) {
+					localDoc.getMetadata().attachStore(this);
+					log.error("Conflict handle merge the DIDDocument error.");
+					throw new DIDStoreException("deal with local modification error.");
+				} else {
+					log.debug("Conflict handle return the final copy.");
+				}
+			}
+		}
+
+		DIDMetadata metadata = finalDoc.getMetadata();
+
+		metadata.setPublishTime(resolvedDoc.getMetadata().getPublishTime());
+		metadata.setSignature(resolvedDoc.getProof().getSignature());
+		if (resolvedDoc.getMetadata().isDeactivated())
+			metadata.setDeactivated(true);
+
+		if (!isCustomizedDid && rootIdentity != null) {
+			metadata.setRootIdentityId(rootIdentity);
+			metadata.setIndex(index);
+		}
+		metadata.attachStore(this);
+
+		if (localDoc != null)
+			localDoc.getMetadata().attachStore(this);
+
+		// Invalidate current cached items
+		cache.invalidate(Key.forDidDocument(did));
+		cache.invalidate(Key.forDidMetadata(did));
+
+		storage.storeDid(finalDoc);
+		storage.storeDidMetadata(did, metadata);
+		if (!isCustomizedDid && rootIdentity != null)
+			storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
+
+
+		List<DIDURL> vcIds = storage.listCredentials(did);
+		for (DIDURL vcId : vcIds) {
+			VerifiableCredential localVc = storage.loadCredential(vcId);
+
+			VerifiableCredential resolvedVc = VerifiableCredential.resolve(vcId, localVc.getIssuer());
+			if (resolvedVc == null)
+				continue;
+
+			resolvedVc.getMetadata().merge(localVc.getMetadata());
+
+			cache.invalidate(Key.forCredential(vcId));
+			cache.invalidate(Key.forCredentialMetadata(vcId));
+
+			storage.storeCredential(resolvedVc);
+			storage.storeCredentialMetadata(vcId, resolvedVc.getMetadata());
+		}
+
+		return true;
+	}
 
 	/**
 	 * Synchronize all RootIdentities, DIDs and credentials in this store.
@@ -1506,60 +1604,9 @@ public final class DIDStore {
 
 		List<DID> dids = storage.listDids();
 		for (DID did : dids) {
-			DIDDocument localDoc = storage.loadDid(did);
-			if (localDoc.isCustomizedDid()) {
-				DIDDocument resolvedDoc = did.resolve();
-				if (resolvedDoc == null)
-					continue;
-
-				DIDDocument finalDoc = resolvedDoc;
-
-				localDoc.getMetadata().detachStore();
-
-				if (localDoc.getSignature().equals(resolvedDoc.getSignature()) ||
-						(localDoc.getMetadata().getSignature() != null &&
-						localDoc.getProof().getSignature().equals(
-								localDoc.getMetadata().getSignature()))) {
-					finalDoc.getMetadata().merge(localDoc.getMetadata());
-				} else {
-					log.debug("{} on-chain copy conflict with local copy.",
-							did.toString());
-
-					// Local copy was modified
-					finalDoc = handle.merge(resolvedDoc, localDoc);
-					if (finalDoc == null || !finalDoc.getSubject().equals(did)) {
-						localDoc.getMetadata().attachStore(this);
-						log.error("Conflict handle merge the DIDDocument error.");
-						throw new DIDStoreException("deal with local modification error.");
-					} else {
-						log.debug("Conflict handle return the final copy.");
-					}
-				}
-
-				localDoc.getMetadata().attachStore(this);
-
-				DIDMetadata metadata = finalDoc.getMetadata();
-				metadata.setPublishTime(resolvedDoc.getMetadata().getPublishTime());
-				metadata.setSignature(resolvedDoc.getProof().getSignature());
-				if (resolvedDoc.getMetadata().isDeactivated())
-					metadata.setDeactivated(true);
-
-				metadata.attachStore(this);
-
-				storeDid(finalDoc);
-			}
-
-			List<DIDURL> vcIds = storage.listCredentials(did);
-			for (DIDURL vcId : vcIds) {
-				VerifiableCredential localVc = storage.loadCredential(vcId);
-
-				VerifiableCredential resolvedVc = VerifiableCredential.resolve(vcId, localVc.getIssuer());
-				if (resolvedVc == null)
-					continue;
-
-				resolvedVc.getMetadata().merge(localVc.getMetadata());
-				storage.storeCredential(resolvedVc);
-			}
+			DIDDocument doc = storage.loadDid(did);
+			if (doc.isCustomizedDid())
+				synchronize(did, handle, null, -1);
 		}
 	}
 
@@ -1570,7 +1617,7 @@ public final class DIDStore {
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	public void synchronize() throws DIDResolveException, DIDStoreException {
-		synchronize(null);
+		synchronize((ConflictHandle)null);
 	}
 
 	/**
@@ -1607,7 +1654,94 @@ public final class DIDStore {
 	 * @return a new CompletableStage
 	 */
 	public CompletableFuture<Void> synchronizeAsync() {
-		return synchronizeAsync(null);
+		return synchronizeAsync((ConflictHandle)null);
+	}
+
+	/**
+	 * Synchronize specific DID in this store.
+	 *
+	 * <p>
+	 * If the ConflictHandle is not set by the developers, this method will
+	 * use the default ConflictHandle implementation: if conflict between
+	 * the chain copy and the local copy, it will keep the local copy, but
+	 * update the local metadata with the chain copy.
+	 * </p>
+	 *
+	 * @param did the DID to be synchronize
+	 * @param handle an application defined handle to process the conflict
+	 * 				 between the chain copy and the local copy
+	 * @return true if synchronized success, false if not synchronized
+	 *
+	 * @throws DIDResolveException if an error occurred when resolving DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public boolean synchronize(DID did, ConflictHandle handle)
+			throws DIDResolveException, DIDStoreException {
+		checkArgument(did != null, "Invalid DID");
+
+		DIDDocument doc = loadDid(did);
+		if (doc == null)
+			return false;
+
+		String rootIdentity = null;
+		int index = -1;
+		if (!doc.isCustomizedDid()) {
+			rootIdentity = doc.getMetadata().getRootIdentityId();
+			index = doc.getMetadata().getIndex();
+		}
+
+		return synchronize(did, handle, rootIdentity, index);
+	}
+
+	/**
+	 * Synchronize specific DID in this store.
+	 *
+	 * @param did the DID to be synchronize
+	 * @return true if synchronized success, false if not synchronized
+	 *
+	 * @throws DIDResolveException if an error occurred when resolving DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public boolean synchronize(DID did)
+			throws DIDResolveException, DIDStoreException {
+		return synchronize(did, null);
+	}
+
+	/**
+	 * Synchronize specific DID in asynchronous mode.
+	 *
+	 * <p>
+	 * If the ConflictHandle is not set by the developers, this method will
+	 * use the default ConflictHandle implementation: if conflict between
+	 * the chain copy and the local copy, it will keep the local copy, but
+	 * update the local metadata with the chain copy.
+	 * </p>
+	 *
+	 * @param did the DID to be synchronize
+	 * @param handle an application defined handle to process the conflict
+	 * 				 between the chain copy and the local copy
+	 * @return a new CompletableStage
+	 */
+	public CompletableFuture<Void> synchronizeAsync(DID did, ConflictHandle handle) {
+		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				synchronize(did, handle);
+			} catch (DIDResolveException | DIDStoreException e) {
+				throw new CompletionException(e);
+			}
+		});
+
+		return future;
+	}
+
+	/**
+	 * Synchronize specific DID in asynchronous mode.
+	 *
+	 * @param did the DID to be synchronize
+	 * @return a new CompletableStage
+	 */
+	public CompletableFuture<Void> synchronizeAsync(DID did) {
+		return synchronizeAsync(did, null);
 	}
 
 	@JsonPropertyOrder({ "type", "id", "document", "credential", "privateKey",

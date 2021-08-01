@@ -239,6 +239,9 @@ public class DIDBackend {
 	 * @return the DIDBackend instance
 	 */
 	public static DIDBackend getInstance() {
+		if (instance == null)
+			throw new IllegalStateException("DIDBackend not initialized.");
+
 		return instance;
 	}
 

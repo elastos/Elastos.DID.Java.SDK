@@ -291,7 +291,7 @@ public final class RootIdentity {
 		HDKey rootPrivateKey = HDKey.deserialize(Base58.decode(extentedPrivateKey));
 
 		RootIdentity identity = new RootIdentity(rootPrivateKey);
-        String id = identity.getId();
+		String id = identity.getId();
 		identity.wipe();
 
 		return id;
@@ -571,6 +571,11 @@ public final class RootIdentity {
 			DIDDocument.Builder db = new DIDDocument.Builder(did, getStore());
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 			doc = db.seal(storepass);
+
+			doc.getMetadata().setRootIdentityId(getId());
+			doc.getMetadata().setIndex(index);
+			doc.getMetadata().attachStore(getStore());
+
 			getStore().storeDid(doc);
 
 			return doc;
@@ -672,60 +677,7 @@ public final class RootIdentity {
 			handle = DIDStore.defaultConflictHandle;
 
 		DID did = getDid(index);
-		log.info("Synchronize {}/{}...", did.toString(), index);
-
-		DIDDocument resolvedDoc = did.resolve(true);
-		if (resolvedDoc == null) {
-			log.info("Synchronize {}/{}...not exists", did.toString(), index);
-			return false;
-		}
-
-		log.debug("Synchronize {}/{}..exists, got the on-chain copy.", did.toString(), index);
-		DIDDocument finalDoc = resolvedDoc;
-		DIDDocument localDoc = getStore().loadDid(did);
-		if (localDoc != null) {
-			// Update metadata off-store, then store back
-			localDoc.getMetadata().detachStore();
-
-			// localdoc == resolveddoc || localdoc not modified since last publish
-			if (localDoc.getSignature().equals(resolvedDoc.getSignature()) ||
-					(localDoc.getMetadata().getSignature() != null &&
-					localDoc.getProof().getSignature().equals(
-							localDoc.getMetadata().getSignature()))) {
-				finalDoc.getMetadata().merge(localDoc.getMetadata());
-			} else {
-				log.debug("{} on-chain copy conflict with local copy.",
-						did.toString());
-
-				// Local copy was modified
-				finalDoc = handle.merge(resolvedDoc, localDoc);
-				if (finalDoc == null || !finalDoc.getSubject().equals(did)) {
-					localDoc.getMetadata().attachStore(getStore());
-					log.error("Conflict handle merge the DIDDocument error.");
-					throw new DIDStoreException("deal with local modification error.");
-				} else {
-					log.debug("Conflict handle return the final copy.");
-				}
-			}
-		}
-
-		DIDMetadata metadata = finalDoc.getMetadata();
-
-		metadata.setPublishTime(resolvedDoc.getMetadata().getPublishTime());
-		metadata.setSignature(resolvedDoc.getProof().getSignature());
-		if (resolvedDoc.getMetadata().isDeactivated())
-			metadata.setDeactivated(true);
-
-		metadata.setRootIdentityId(getId());
-		metadata.setIndex(index);
-		metadata.attachStore(getStore());
-
-		if (localDoc != null)
-			localDoc.getMetadata().attachStore(getStore());
-
-		getStore().storeDid(finalDoc);
-		getStore().storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
-		return true;
+		return getStore().synchronize(did, handle, getId(), index);
 	}
 
 	/**
