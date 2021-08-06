@@ -24,9 +24,12 @@ package org.elastos.did.utils;
 
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 
+import java.io.IOException;
+
 import org.elastos.did.DIDAdapter;
 import org.elastos.did.DIDBackend;
 import org.elastos.did.backend.SimulatedIDChain;
+import org.elastos.did.backend.SimulatedIDChainAdapter;
 import org.elastos.did.backend.Web3Adapter;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -57,6 +60,8 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 
 	@Override
 	public void close() throws Throwable {
+		resetData();
+
 		if (simChain != null)
 			simChain.stop();
 
@@ -76,8 +81,13 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 	}
 
 	public static void resetData() {
-		if (simChain != null)
-			simChain.reset();
+		if (adapter instanceof SimulatedIDChainAdapter) {
+			try {
+				((SimulatedIDChainAdapter)adapter).reset();
+			} catch (IOException e) {
+				throw new IllegalStateException("Can not reset the simulated ID chain.");
+			}
+		}
 	}
 
 	public static DIDAdapter getAdapter() {

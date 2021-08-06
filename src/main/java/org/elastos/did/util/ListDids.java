@@ -22,40 +22,42 @@
 
 package org.elastos.did.util;
 
-import org.slf4j.LoggerFactory;
+import java.util.List;
+import java.util.concurrent.Callable;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import picocli.CommandLine;
+import org.elastos.did.DID;
+import org.elastos.did.DIDStore;
+import org.elastos.did.exception.DIDException;
+
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
-@Command(name = "didutils", mixinStandardHelpOptions = true, version = "didutils 2.0",
-		description = "Elastos DID command line tool.",
-		subcommands = {
-			ResolveDid.class,
-			VerifyDocument.class,
-			VerifyCredential.class,
-			VerifyPresentation.class,
-			VerifyJwt.class,
-			CreateRootIdentity.class,
-			ListRootIdentities.class,
-			DeleteRootIdentity.class,
-			CreateDid.class,
-			ListDids.class,
-			DeleteDid.class,
-			DisplayDid.class,
-			PublishDid.class,
-			SimChain.class,
-			Shell.class
-		})
-public class DIDUtils {
-	public static void main(String[] args) {
-		// We use logback as the logging backend
-		Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-		root.setLevel(Level.WARN);
+@Command(name = "listdid", mixinStandardHelpOptions = true, version = "listdid 2.0",
+		description = "List the DIDs.")
+public class ListDids extends CommandBase implements Callable<Integer> {
+	@Option(names = {"-s", "--store"}, description = "DID Store path, default: ~/.elastos/did/store")
+	private String storeDir = null;
 
-		int exitCode = new CommandLine(new DIDUtils()).execute(args);
+	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
+	private boolean verbose = false;
 
-		System.exit(exitCode);
+	@Override
+	public Integer call() throws Exception {
+		try {
+			DIDStore store = openDIDStore(storeDir);
+
+			List<DID> dids = store.listDids();
+
+			System.out.format(Colorize.green("Total %d DIDs\n"), dids.size());
+			for (DID did : dids)
+				System.out.println("  " + did);
+		} catch (DIDException e) {
+			if (verbose)
+				e.printStackTrace(System.err);
+			else
+				System.err.println("Error: " + e.getMessage());
+		}
+
+		return 0;
 	}
 }

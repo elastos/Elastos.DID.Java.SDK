@@ -37,6 +37,7 @@ import org.elastos.did.exception.DIDTransactionException;
  */
 public class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 	private URL idtxEndpoint;
+	private URL resetEndpoint;
 
 	/**
 	 * Create a SimulatedIDChainAdapter instance at the endpoint.
@@ -47,6 +48,7 @@ public class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 	public SimulatedIDChainAdapter(URL endpoint) throws MalformedURLException {
 		super(new URL(endpoint, "resolve"));
 		idtxEndpoint = new URL(endpoint, "idtx");
+		resetEndpoint = new URL(endpoint, "reset");
 	}
 
 	/**
@@ -67,5 +69,11 @@ public class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 		} catch (IOException e) {
 			throw new DIDTransactionException("Create ID transaction failed.", e);
 		}
+	}
+
+	public void reset() throws IOException {
+		InputStream is = performRequest(resetEndpoint, "");
+		if (is != null)
+			is.close();
 	}
 }

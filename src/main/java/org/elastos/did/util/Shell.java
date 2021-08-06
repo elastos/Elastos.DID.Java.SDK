@@ -22,40 +22,45 @@
 
 package org.elastos.did.util;
 
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.Callable;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
-@Command(name = "didutils", mixinStandardHelpOptions = true, version = "didutils 2.0",
-		description = "Elastos DID command line tool.",
-		subcommands = {
-			ResolveDid.class,
-			VerifyDocument.class,
-			VerifyCredential.class,
-			VerifyPresentation.class,
-			VerifyJwt.class,
-			CreateRootIdentity.class,
-			ListRootIdentities.class,
-			DeleteRootIdentity.class,
-			CreateDid.class,
-			ListDids.class,
-			DeleteDid.class,
-			DisplayDid.class,
-			PublishDid.class,
-			SimChain.class,
-			Shell.class
-		})
-public class DIDUtils {
-	public static void main(String[] args) {
-		// We use logback as the logging backend
-		Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-		root.setLevel(Level.WARN);
+@Command(name = "shell", mixinStandardHelpOptions = true, version = "shell 2.0",
+		description = "Interactive shell.")
+public class Shell extends CommandBase implements Callable<Integer> {
+	@Option(names = {"-n", "--network"}, description = "Avaliable networks: mainnet testnet")
+	private String network = null;
 
-		int exitCode = new CommandLine(new DIDUtils()).execute(args);
+	@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")
+	private String local = null;
 
-		System.exit(exitCode);
+	@Override
+	public Integer call() throws Exception {
+		int exitCode = 0;
+
+		System.out.println(Shell.class.getCanonicalName());
+		setupDIDBackend(network, local);
+
+		while (true) {
+			String cmd = System.console().readLine("didshell $ ");
+			if (cmd.isEmpty())
+				continue;
+
+			if (cmd.equals("exit") || cmd.equals("quit")) {
+				exitCode = 0;
+				break;
+			}
+
+			String[] args = cmd.split("\\s+");
+			if (cmd.equals("help") || cmd.equals("?"))
+				args = new String[] {"--help"};
+
+			exitCode = new CommandLine(new DIDUtils()).execute(args);
+		}
+
+		return exitCode;
 	}
 }
