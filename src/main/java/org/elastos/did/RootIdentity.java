@@ -552,12 +552,18 @@ public final class RootIdentity {
 				throw new DIDAlreadyExistException("DID already exists in the store.");
 		}
 
-		doc = did.resolve();
-		if (doc != null) {
-			if (doc.isDeactivated())
-				throw new DIDDeactivatedException(did.toString());
+		try {
+			doc = did.resolve();
+			if (doc != null) {
+				if (doc.isDeactivated())
+					throw new DIDDeactivatedException(did.toString());
 
-			throw new DIDAlreadyExistException("DID already published.");
+				if (!overwrite)
+					throw new DIDAlreadyExistException("DID already published.");
+			}
+		} catch (DIDResolveException e) {
+			if (!overwrite)
+				throw e;
 		}
 
 
