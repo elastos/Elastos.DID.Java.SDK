@@ -3224,6 +3224,68 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		return publishAsync(ticket, (DIDURL)null, storepass, null);
 	}
 
+	// TODO: to be remove in the future
+	public void publishUntrusted(DIDURL signKey, String storepass,
+			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkIsPrimitive();
+		checkAttachedStore();
+
+		if (signKey == null && getDefaultPublicKeyId() == null)
+			throw new NoEffectiveControllerException(getSubject().toString());
+
+		log.info("Publishing untrusted DID {}...", getSubject());
+
+		if (!isGenuine()) {
+			log.error("Publish failed because document is not genuine.");
+			throw new DIDNotGenuineException(getSubject().toString());
+		}
+
+		if (isDeactivated()) {
+			log.error("Publish failed because DID is deactivated.");
+			throw new DIDDeactivatedException(getSubject().toString());
+		}
+
+		if (isExpired()) {
+			log.error("Publish failed because document is expired.");
+			throw new DIDExpiredException(getSubject().toString());
+		}
+
+		String lastTxid = null;
+		String resolvedSignature = null;
+		DIDDocument resolvedDoc = DIDBackend.getInstance().resolveUntrustedDid(getSubject(), true);
+		if (resolvedDoc != null) {
+			if (resolvedDoc.isDeactivated()) {
+				getMetadata().setDeactivated(true);
+
+				log.error("Publish failed because DID is deactivated.");
+				throw new DIDDeactivatedException(getSubject().toString());
+			}
+
+			resolvedSignature = resolvedDoc.getProof().getSignature();
+			lastTxid = resolvedDoc.getMetadata().getTransactionId();
+		}
+
+		if (signKey == null) {
+			signKey = getDefaultPublicKeyId();
+		} else {
+			if (getAuthenticationKey(signKey) == null)
+				throw new InvalidKeyException(signKey.toString());
+		}
+
+		if (lastTxid == null || lastTxid.isEmpty()) {
+			log.info("Try to publish[create] {}...", getSubject());
+			DIDBackend.getInstance().createDid(this, signKey, storepass, adapter);
+		} else {
+			log.info("Try to publish[update] {}...", getSubject());
+			DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
+		}
+
+		if (resolvedSignature != null )
+			getMetadata().setPreviousSignature(resolvedSignature);
+		getMetadata().setSignature(getProof().getSignature());
+	}
+
 	/**
 	 * Publish DID Document to the ID chain.
 	 *
