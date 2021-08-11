@@ -428,6 +428,63 @@ public class DIDBackend {
 		return doc;
 	}
 
+	// TODO: to be remove in the future
+	protected DIDDocument resolveUntrustedDid(DID did, boolean force)
+			throws DIDResolveException {
+		log.debug("Resolving untrusted DID {}...", did.toString());
+
+		if (resolveHandle != null) {
+			DIDDocument doc = resolveHandle.resolve(did);
+			if (doc != null)
+				return doc;
+		}
+
+		DIDBiography bio = resolveDidBiography(did, false, force);
+
+		DIDTransaction tx = null;
+		switch (bio.getStatus()) {
+		case VALID:
+			tx = bio.getTransaction(0);
+			break;
+
+		case DEACTIVATED:
+			if (bio.size() != 2)
+				throw new DIDResolveException("Invalid DID biography, wrong transaction count.");
+
+			tx = bio.getTransaction(0);
+			if (tx.getRequest().getOperation() != IDChainRequest.Operation.DEACTIVATE)
+				throw new DIDResolveException("Invalid DID biography, wrong status.");
+
+			DIDDocument doc = bio.getTransaction(1).getRequest().getDocument();
+			if (doc == null)
+				throw new DIDResolveException("Invalid DID biography, invalid trancations.");
+
+			tx = bio.getTransaction(1);
+			break;
+
+		case NOT_FOUND:
+			return null;
+		}
+
+		if (tx.getRequest().getOperation() != IDChainRequest.Operation.CREATE &&
+				tx.getRequest().getOperation() != IDChainRequest.Operation.UPDATE &&
+				tx.getRequest().getOperation() != IDChainRequest.Operation.TRANSFER)
+			throw new DIDResolveException("Invalid ID transaction, unknown operation.");
+
+		// NOTICE: Make a copy from DIDBackend cache.
+		// 		   Avoid share same DIDDocument instance between DIDBackend
+		//         cache and DIDStore cache.
+		DIDDocument doc = tx.getRequest().getDocument().clone();
+		DIDMetadata metadata = doc.getMetadata();
+		metadata.setTransactionId(tx.getTransactionId());
+		metadata.setSignature(doc.getProof().getSignature());
+		metadata.setPublishTime(tx.getTimestamp());
+		if (bio.getStatus() == DIDBiography.Status.DEACTIVATED)
+			metadata.setDeactivated(true);
+
+		return doc;
+	}
+
 	/**
 	 * Resolve the specific DID.
 	 *
