@@ -429,7 +429,7 @@ public class DIDBackend {
 	}
 
 	// TODO: to be remove in the future
-	protected DIDDocument resolveUntrustedDid(DID did, boolean force)
+	public DIDDocument resolveUntrustedDid(DID did, boolean force)
 			throws DIDResolveException {
 		log.debug("Resolving untrusted DID {}...", did.toString());
 
