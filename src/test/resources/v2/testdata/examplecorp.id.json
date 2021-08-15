@@ -1,30 +1,26 @@
 {
   "id" : "did:elastos:example",
   "controller" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
+  "expires" : "2026-07-13T04:35:56Z",
   "verifiableCredential" : [ {
-    "id" : "did:elastos:example#profile",
-    "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
-    "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-07-13T04:35:56Z",
-    "expirationDate" : "2026-07-13T04:35:56Z",
+    "id" : "#profile",
+    "type" : [ "SelfProclaimedCredential", "BasicProfileCredential" ],
     "credentialSubject" : {
-      "id" : "did:elastos:example",
-      "email" : "contact@example.com",
       "name" : "Example LLC",
+      "email" : "contact@example.com",
       "website" : "https://example.com/"
     },
+    "issuanceDate" : "2021-07-13T04:35:56Z",
     "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-07-13T04:35:56Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+      "created" : "2021-07-13T04:35:56Z",
       "signature" : "UHzK_Z9LizXRmFx11kmuAFoyuHSAeiGFX_WLB2iqeLJFFj1bf9hxsYCd2OxiK44tkGGexnwAZ7Ev2N1pEvPmsg"
-    }
+    },
+    "expirationDate" : "2026-07-13T04:35:56Z"
   } ],
-  "expires" : "2026-07-13T04:35:56Z",
   "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-07-13T04:35:56Z",
     "creator" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+    "created" : "2021-07-13T04:35:56Z",
     "signatureValue" : "VB4L_ZseZxhpvQJbwlqCWVuGb5_HWUISC81S3c_gs8XzeET1dml12-immNgORPa3ZoJGHLhaMtl0oAoCJtra3Q"
   }
 }
