@@ -371,8 +371,19 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		if (proof == null)
 			throw new MalformedPresentationException("Missing presentation proof");
 
-		if (proof.getVerificationMethod().getDid() == null)
-			throw new MalformedPresentationException("Invalid verification method");
+		if (holder == null) {
+			if (id != null && id.getDid() == null)
+				throw new MalformedPresentationException("Invalid presentation id");
+
+			if (proof.getVerificationMethod().getDid() == null)
+				throw new MalformedPresentationException("Invalid verification method");
+		} else {
+			if (id != null && id.getDid() == null)
+				id.setDid(holder);
+
+			if (proof.getVerificationMethod().getDid() == null)
+				proof.getVerificationMethod().setDid(holder);
+		}
 
 		Collections.sort(type);
 		_credentials = new ArrayList<VerifiableCredential>(credentials.values());
