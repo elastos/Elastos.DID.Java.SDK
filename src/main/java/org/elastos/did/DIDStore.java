@@ -2688,7 +2688,7 @@ public final class DIDStore {
 
 		List<DID> dids = listDids();
 		for (DID did : dids) {
-			ze = new ZipEntry(did.getMethodSpecificId());
+			ze = new ZipEntry("did-" + did.getMethodSpecificId());
 			out.putNextEntry(ze);
 			exportDid(did, out, password, storepass);
 			out.closeEntry();
@@ -2759,8 +2759,10 @@ public final class DIDStore {
 		while ((ze = in.getNextEntry()) != null) {
 			if (ze.getName().startsWith("rootIdentity"))
 				importRootIdentity(in, password, storepass);
-			else
+			else if (ze.getName().startsWith("did"))
 				importDid(in, password, storepass);
+			else
+				log.warn("Skip unknow export entry: " + ze.getName());
 			in.closeEntry();
 		}
 
