@@ -1,28 +1,34 @@
 {
   "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#json",
-  "type" : [ "JsonCredential", "TestCredential" ],
   "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-  "issuanceDate" : "2021-01-18T14:47:03Z",
-  "expirationDate" : "2026-01-18T14:47:03Z",
+  "type" : [ "TestCredential", "JsonCredential" ],
   "credentialSubject" : {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
+    "name" : "Jay Holtslander",
+    "alternateName" : "Jason Holtslander",
     "Description" : "Technologist",
+    "gender" : "Male",
+    "nationality" : "Canadian",
+    "worksFor" : [ {
+      "name" : "Skunkworks Creative Group Inc.",
+      "type" : "Organization",
+      "sameAs" : [ "https://twitter.com/skunkworks_ca", "https://www.facebook.com/skunkworks.ca", "https://www.linkedin.com/company/skunkworks-creative-group-inc-", "https://plus.google.com/+SkunkworksCa" ]
+    } ],
     "address" : {
-      "addressCountry" : "Canada",
+      "type" : "PostalAddress",
       "addressLocality" : "Vancouver",
       "addressRegion" : "BC",
-      "type" : "PostalAddress"
+      "addressCountry" : "Canada"
     },
     "affiliation" : [ {
       "name" : "Futurpreneur",
-      "sameAs" : [ "https://twitter.com/futurpreneur", "https://www.facebook.com/futurpreneur/", "https://www.linkedin.com/company-beta/100369/", "https://www.youtube.com/user/CYBF" ],
-      "type" : "Organization"
+      "type" : "Organization",
+      "sameAs" : [ "https://twitter.com/futurpreneur", "https://www.facebook.com/futurpreneur/", "https://www.linkedin.com/company-beta/100369/", "https://www.youtube.com/user/CYBF" ]
     } ],
-    "alternateName" : "Jason Holtslander",
     "alumniOf" : [ {
       "name" : "Vancouver Film School",
-      "sameAs" : "https://en.wikipedia.org/wiki/Vancouver_Film_School",
       "type" : "CollegeOrUniversity",
+      "sameAs" : "https://en.wikipedia.org/wiki/Vancouver_Film_School",
       "year" : 2000
     }, {
       "name" : "CodeCore Bootcamp",
@@ -30,9 +36,9 @@
     } ],
     "birthPlace" : {
       "address" : {
-        "addressCountry" : "Canada",
         "addressLocality" : "Vancouver",
         "addressRegion" : "BC",
+        "addressCountry" : "Canada",
         "type" : "PostalAddress"
       },
       "type" : "Place"
@@ -40,23 +46,16 @@
     "booleanValue" : true,
     "disambiguatingDescription" : "Co-founder of CodeCore Bootcamp",
     "doubleValue" : 9.5,
-    "gender" : "Male",
     "image" : "https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g",
     "jobTitle" : "Technical Director",
-    "name" : "Jay Holtslander",
-    "nationality" : "Canadian",
     "numberValue" : 1234,
     "sameAs" : [ "https://twitter.com/j_holtslander", "https://pinterest.com/j_holtslander", "https://instagram.com/j_holtslander", "https://www.facebook.com/jay.holtslander", "https://ca.linkedin.com/in/holtslander/en", "https://plus.google.com/+JayHoltslander", "https://www.youtube.com/user/jasonh1234", "https://github.com/JayHoltslander", "https://profiles.wordpress.org/jasonh1234", "https://angel.co/j_holtslander", "https://www.foursquare.com/user/184843", "https://jholtslander.yelp.ca", "https://codepen.io/j_holtslander/", "https://stackoverflow.com/users/751570/jay", "https://dribbble.com/j_holtslander", "http://jasonh1234.deviantart.com/", "https://www.behance.net/j_holtslander", "https://www.flickr.com/people/jasonh1234/", "https://medium.com/@j_holtslander" ],
-    "url" : "https://jay.holtslander.ca",
-    "worksFor" : [ {
-      "name" : "Skunkworks Creative Group Inc.",
-      "sameAs" : [ "https://twitter.com/skunkworks_ca", "https://www.facebook.com/skunkworks.ca", "https://www.linkedin.com/company/skunkworks-creative-group-inc-", "https://plus.google.com/+SkunkworksCa" ],
-      "type" : "Organization"
-    } ]
+    "url" : "https://jay.holtslander.ca"
   },
   "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "signature" : "OCTUCSY_GmuQhCj4vK8fApi5z6HT_mQTnvW487xxvh6snEMolMpK7hdkj_B0PL3jFRqLTSsiZTM8o74mXW9zOg"
-  }
+    "signature" : "OCTUCSY_GmuQhCj4vK8fApi5z6HT_mQTnvW487xxvh6snEMolMpK7hdkj_B0PL3jFRqLTSsiZTM8o74mXW9zOg",
+    "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary"
+  },
+  "issuanceDate" : "2021-01-18T14:47:03Z",
+  "expirationDate" : "2026-01-18T14:47:03Z"
 }

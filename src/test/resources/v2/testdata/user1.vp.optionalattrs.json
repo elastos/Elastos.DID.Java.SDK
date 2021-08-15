@@ -1,7 +1,14 @@
 {
-  "type" : [ "FooBar", "TestPresentation" ],
   "holder" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
   "created" : "2021-07-13T04:35:55Z",
+  "type" : [ "TestPresentation", "FooBar" ],
+  "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+    "realm" : "https://example.com/",
+    "nonce" : "873172f58701a9ee686f0630204fee59",
+    "signature" : "-VT73WAun0ktZ9c1lrbsoxy98kjwePXZd5qIlwcyUEhUTCCaWenLMtJHRmDIzRtsLCEloUMAI7eMkLt_a7K0WA"
+  },
   "verifiableCredential" : [ {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#email",
     "type" : [ "BasicProfileCredential", "EmailCredential", "InternetAccountCredential" ],
@@ -13,14 +20,14 @@
       "email" : "john@example.com"
     },
     "proof" : {
+      "signature" : "F-Ve6qZPGL5-wnMI6BIvyG3h4tHk6MY84Dww1HZJYlvpD1o967Ht9WpLgW0hqQJYt_skzyxy_WK-aJCHIICUtw",
       "type" : "ECDSAsecp256r1",
       "created" : "2021-07-13T04:35:55Z",
-      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "F-Ve6qZPGL5-wnMI6BIvyG3h4tHk6MY84Dww1HZJYlvpD1o967Ht9WpLgW0hqQJYt_skzyxy_WK-aJCHIICUtw"
+      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary"
     }
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#passport",
-    "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
+    "type" : [ "SelfProclaimedCredential", "BasicProfileCredential" ],
     "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
     "issuanceDate" : "2021-07-13T04:35:55Z",
     "expirationDate" : "2026-07-13T04:35:55Z",
@@ -30,31 +37,9 @@
       "passport" : "S653258Z07"
     },
     "proof" : {
-      "type" : "ECDSAsecp256r1",
       "created" : "2021-07-13T04:35:55Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
       "signature" : "WzQHUWp2IDF6-yYpdv_yaKg09amImIJXHQ8DAOiFX0gyqbb53rn64X_S-dc32sAdpwWcnLnPRoRRBCKpqsyu_w"
-    }
-  }, {
-    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#profile",
-    "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
-    "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "issuanceDate" : "2021-07-13T04:35:55Z",
-    "expirationDate" : "2026-07-13T04:35:55Z",
-    "credentialSubject" : {
-      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-      "email" : "john@example.com",
-      "gender" : "Male",
-      "language" : "English",
-      "name" : "John",
-      "nation" : "Singapore",
-      "twitter" : "@john"
-    },
-    "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-07-13T04:35:55Z",
-      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "7uWBG3Q6uHxR4YJDp1mSPCTSLqumJpoeyQRZbMfD7LK43oUijrOsfSySdsHrQWU7pdon0MN5TOw1NWv8LvFCaw"
     }
   }, {
     "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#twitter",
@@ -67,17 +52,30 @@
       "twitter" : "@john"
     },
     "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-07-13T04:35:55Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+      "created" : "2021-07-13T04:35:55Z",
       "signature" : "d2nvcOV2De5lWS59-YTgJEewfPhzgAScwovAx9WH7GBl9DM_8x2dJS0vfzOVxt-8Ah9KEq6B11b5rTcvCnB0Ig"
     }
-  } ],
-  "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "realm" : "https://example.com/",
-    "nonce" : "873172f58701a9ee686f0630204fee59",
-    "signature" : "-VT73WAun0ktZ9c1lrbsoxy98kjwePXZd5qIlwcyUEhUTCCaWenLMtJHRmDIzRtsLCEloUMAI7eMkLt_a7K0WA"
-  }
+  }, {
+    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#profile",
+    "type" : [ "SelfProclaimedCredential", "BasicProfileCredential" ],
+    "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
+    "issuanceDate" : "2021-07-13T04:35:55Z",
+    "expirationDate" : "2026-07-13T04:35:55Z",
+    "credentialSubject" : {
+      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
+      "name" : "John",
+      "gender" : "Male",
+      "language" : "English",
+      "nation" : "Singapore",
+      "email" : "john@example.com",
+      "twitter" : "@john"
+    },
+    "proof" : {
+      "type" : "ECDSAsecp256r1",
+      "created" : "2021-07-13T04:35:55Z",
+      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+      "signature" : "7uWBG3Q6uHxR4YJDp1mSPCTSLqumJpoeyQRZbMfD7LK43oUijrOsfSySdsHrQWU7pdon0MN5TOw1NWv8LvFCaw"
+    }
+  } ]
 }

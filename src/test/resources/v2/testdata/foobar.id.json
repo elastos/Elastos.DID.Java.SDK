@@ -1,62 +1,53 @@
 {
-  "id" : "did:elastos:foobar",
-  "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g", "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS" ],
-  "multisig" : "2:3",
-  "publicKey" : [ {
-    "id" : "did:elastos:foobar#key2",
-    "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:foobar",
-    "publicKeyBase58" : "mhSB8BgVRwVUXvGvsUEnu7mfNawxEVwYtM1MmfCbtENS"
-  }, {
-    "id" : "did:elastos:foobar#key3",
-    "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:foobar",
+  "authentication" : [ {
+    "id" : "#key3",
     "publicKeyBase58" : "fjVZ5bayjN1fxp4qAes6aRqKdJiDheKq9yF7wjHR37fv"
+  }, {
+    "id" : "did:elastos:foobar#key2",
+    "publicKeyBase58" : "mhSB8BgVRwVUXvGvsUEnu7mfNawxEVwYtM1MmfCbtENS",
+    "type" : "ECDSAsecp256r1",
+    "controller" : "did:elastos:foobar"
   } ],
-  "authentication" : [ "did:elastos:foobar#key2", "did:elastos:foobar#key3" ],
+  "id" : "did:elastos:foobar",
+  "controller" : [
+    "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS",
+    "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
+    "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g"
+  ],
+  "multisig" : "2:3",
   "verifiableCredential" : [ {
+    "id" : "did:elastos:foobar#profile",
+    "type" : [ "SelfProclaimedCredential", "BasicProfileCredential" ],
+    "issuanceDate" : "2021-07-13T04:35:57Z",
+    "expirationDate" : "2026-07-13T04:35:57Z",
+    "credentialSubject" : {
+      "name" : "Foo Bar Inc",
+      "email" : "contact@foobar.com",
+      "language" : "Chinese"
+    },
+    "proof" : {
+      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+      "created" : "2021-07-13T04:35:57Z",
+      "signature" : "exhyiQ1awewFgxVwv59n3bsvrZ3D8XGeBmPbpAf_F_22tOoXRWfnVBbPOJmlq87QvnTDkmB7MlGidVEZyHf-AQ"
+    }
+  }, {
     "id" : "did:elastos:foobar#email",
-    "type" : [ "BasicProfileCredential", "EmailCredential", "InternetAccountCredential" ],
+    "type" : [ "InternetAccountCredential", "EmailCredential", "BasicProfileCredential" ],
     "issuer" : "did:elastos:example",
     "issuanceDate" : "2021-07-13T04:35:57Z",
     "expirationDate" : "2026-07-13T04:35:57Z",
     "credentialSubject" : {
-      "id" : "did:elastos:foobar",
       "email" : "foobar@example.com"
     },
     "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-07-13T04:35:57Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+      "created" : "2021-07-13T04:35:57Z",
       "signature" : "vYYGCC260ZsQt-XFOnyT05c14ks3plm6mIfz5OZLf7UyPxh0mrVVfFmrpiRMqW47aLk7Jb4Ygerlv9qNkVLnHQ"
     }
-  }, {
-    "id" : "did:elastos:foobar#profile",
-    "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
-    "issuer" : "did:elastos:foobar",
-    "issuanceDate" : "2021-07-13T04:35:57Z",
-    "expirationDate" : "2026-07-13T04:35:57Z",
-    "credentialSubject" : {
-      "id" : "did:elastos:foobar",
-      "email" : "contact@foobar.com",
-      "language" : "Chinese",
-      "name" : "Foo Bar Inc"
-    },
-    "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-07-13T04:35:57Z",
-      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "exhyiQ1awewFgxVwv59n3bsvrZ3D8XGeBmPbpAf_F_22tOoXRWfnVBbPOJmlq87QvnTDkmB7MlGidVEZyHf-AQ"
-    }
   } ],
+  "expires" : "2026-07-13T04:35:56Z",
   "service" : [ {
-    "id" : "did:elastos:foobar#vault",
-    "type" : "Hive.Vault.Service",
-    "serviceEndpoint" : "https://foobar.com/vault"
-  }, {
-    "id" : "did:elastos:foobar#vcr",
-    "type" : "CredentialRepositoryService",
-    "serviceEndpoint" : "https://foobar.com/credentials",
+    "id" : "#vcr",
     "ABC" : "Helloworld",
     "BAR" : "Foobar",
     "DATE" : "2021-07-13T04:35:57Z",
@@ -79,6 +70,8 @@
     "date" : "2021-07-13T04:35:57Z",
     "foo" : 123,
     "foobar" : "lalala...",
+    "type" : "CredentialRepositoryService",
+    "serviceEndpoint" : "https://foobar.com/credentials",
     "map" : {
       "ABC" : "Helloworld",
       "BAR" : "Foobar",
@@ -91,17 +84,19 @@
       "foo" : 123,
       "foobar" : "lalala..."
     }
+  }, {
+    "id" : "did:elastos:foobar#vault",
+    "type" : "Hive.Vault.Service",
+    "serviceEndpoint" : "https://foobar.com/vault"
   } ],
-  "expires" : "2026-07-13T04:35:56Z",
   "proof" : [ {
+    "created" : "2021-07-13T04:35:57Z",
+    "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
     "type" : "ECDSAsecp256r1",
+    "signatureValue" : "pTXRoVyO-O4fiGI3GTFvt1gA_UF4axQZmy6wbHg7zFbFf2l2_CJAsBXvgsn-efCDL5VXZPGIV_auacr_KtkRig"
+  }, {
     "created" : "2021-07-13T04:35:57Z",
     "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
     "signatureValue" : "MURa9J0ZVevrfo7GFmV6dkE7aS17BIj3SYLLKjTuIQyI97uF9nk4vbpcRf_O1Xt66KJCfl7LIg-gqbJBHeyZqw"
-  }, {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-07-13T04:35:57Z",
-    "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
-    "signatureValue" : "pTXRoVyO-O4fiGI3GTFvt1gA_UF4axQZmy6wbHg7zFbFf2l2_CJAsBXvgsn-efCDL5VXZPGIV_auacr_KtkRig"
   } ]
 }

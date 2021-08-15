@@ -1,27 +1,26 @@
 {
   "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
-  "publicKey" : [ {
-    "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
+  "authentication" : [ {
     "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
-    "publicKeyBase58" : "kTYQhMtoimm9wV3vy4q9EVy4Z1WxRqxhvngztdGo1Dmc"
+    "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
+    "publicKeyBase58" : "kTYQhMtoimm9wV3vy4q9EVy4Z1WxRqxhvngztdGo1Dmc",
+    "controller" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g"
   } ],
-  "authentication" : [ "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary" ],
   "verifiableCredential" : [ {
     "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#profile",
-    "type" : [ "SelfProclaimedCredential" ],
-    "issuer" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
-    "issuanceDate" : "2021-07-13T04:35:55Z",
     "expirationDate" : "2026-07-13T04:35:55Z",
     "credentialSubject" : {
       "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+      "name" : "John",
       "email" : "john@example.com",
+      "twitter" : "@john",
       "gender" : "Male",
       "language" : "English",
-      "name" : "John",
-      "nation" : "Singapore",
-      "twitter" : "@john"
+      "nation" : "Singapore"
     },
+    "type" : [ "SelfProclaimedCredential" ],
+    "issuer" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+    "issuanceDate" : "2021-07-13T04:35:55Z",
     "proof" : {
       "type" : "ECDSAsecp256r1",
       "created" : "2021-07-13T04:35:55Z",
@@ -29,11 +28,10 @@
       "signature" : "AqCNlO4_DuIyvwAdNkg0arVjxEUuiwvJX17m7-DzCMowocBYCg2L2zrfeIbbIEz6VS11h0vg3_iOzTh5Gi9X3g"
     }
   } ],
-  "expires" : "2026-07-13T04:35:55Z",
   "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-07-13T04:35:55Z",
     "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
+    "created" : "2021-07-13T04:35:55Z",
     "signatureValue" : "Xz3JBkK7XqXXJDaWlWyGTNiegXFf0uHF-SbkX_xhYVC_u3BPkFhX9VqqdJvWClyChjO4Wn5E_hq90DMHLSUXGA"
-  }
+  },
+  "expires" : "2026-07-13T04:35:55Z"
 }

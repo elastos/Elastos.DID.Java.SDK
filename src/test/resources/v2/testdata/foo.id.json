@@ -1,17 +1,19 @@
 {
-  "id" : "did:elastos:foo",
-  "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g" ],
   "multisig" : "2:2",
+  "controller" : [
+    "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+    "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"
+  ],
   "expires" : "2026-07-13T04:35:57Z",
+  "id" : "did:elastos:foo",
   "proof" : [ {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-07-13T04:35:57Z",
-    "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "AaVXOvy_vTeaHr-eZzPro-yqWH2b0wAg4uzBPmA09JrH0HtwlustOyLdDccADf2lt-sU5FUpIl2bkids98xG9w"
-  }, {
-    "type" : "ECDSAsecp256r1",
     "created" : "2021-07-13T04:35:57Z",
     "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
     "signatureValue" : "3B9AilWvvFR0QETHi5rhaGLRRXRpJplDnthBCU0wEBoaXhSWrc7AT9V3YZndYmYoZQIBNyRgu7XuKfFuCDfzYQ"
+  } , {
+    "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+    "created" : "2021-07-13T04:35:57Z",
+    "type" : "ECDSAsecp256r1",
+    "signatureValue" : "AaVXOvy_vTeaHr-eZzPro-yqWH2b0wAg4uzBPmA09JrH0HtwlustOyLdDccADf2lt-sU5FUpIl2bkids98xG9w"
   } ]
 }

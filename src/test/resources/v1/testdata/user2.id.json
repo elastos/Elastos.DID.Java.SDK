@@ -1,38 +1,33 @@
 {
   "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
   "publicKey" : [ {
-    "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+    "id" : "#primary",
     "publicKeyBase58" : "kTYQhMtoimm9wV3vy4q9EVy4Z1WxRqxhvngztdGo1Dmc"
   } ],
   "authentication" : [ "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary" ],
   "verifiableCredential" : [ {
-    "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#profile",
+    "id" : "#profile",
     "type" : [ "SelfProclaimedCredential" ],
-    "issuer" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
     "issuanceDate" : "2021-01-18T14:47:03Z",
     "expirationDate" : "2026-01-18T14:47:03Z",
     "credentialSubject" : {
-      "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
-      "email" : "john@example.com",
-      "gender" : "Male",
-      "language" : "English",
       "name" : "John",
+      "gender" : "Male",
       "nation" : "Singapore",
+      "language" : "English",
+      "email" : "john@example.com",
       "twitter" : "@john"
     },
     "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "verificationMethod" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-      "signature" : "DOYZSH7aUU6VzAG0nhSQnLSXQhClxGblPFjRME6dgFYaVafEDWJo8fhO9IwGXfjrG8thDIHbH89uR-MBnSYa0w"
+      "signature" : "DOYZSH7aUU6VzAG0nhSQnLSXQhClxGblPFjRME6dgFYaVafEDWJo8fhO9IwGXfjrG8thDIHbH89uR-MBnSYa0w",
+      "verificationMethod" : "#primary"
     }
   } ],
   "expires" : "2026-01-18T14:47:03Z",
   "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-01-18T14:47:03Z",
     "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "signatureValue" : "8lTrzRMH3SXFr6p4XAWmtgsPFAHl_8pTW_tVcBtmj02afnVWo9XDdZdJHvmdvs3-Bigng-8aepi9S4EmXvdacw"
+    "signatureValue" : "8lTrzRMH3SXFr6p4XAWmtgsPFAHl_8pTW_tVcBtmj02afnVWo9XDdZdJHvmdvs3-Bigng-8aepi9S4EmXvdacw",
+    "created" : "2021-01-18T14:47:03Z",
+    "type" : "ECDSAsecp256r1"
   }
 }

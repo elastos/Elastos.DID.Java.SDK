@@ -1,27 +1,17 @@
 {
-  "type" : [ "FooBar", "TestPresentation" ],
   "holder" : "did:elastos:foobar",
   "created" : "2021-07-13T04:35:57Z",
+  "type" : [ "TestPresentation", "FooBar" ],
+  "proof" : {
+    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+    "signature" : "WonYk6or9BsD4pxjSty2GUSKrEt6IMBZ07tSIPEGuLMHEAw3Gvbm1gqsfTCJwVhQys5WA7SQAphRapR0KVEvHg",
+    "realm" : "https://example.com/",
+    "nonce" : "873172f58701a9ee686f0630204fee59"
+  },
   "verifiableCredential" : [ {
-    "id" : "did:elastos:foobar#email",
-    "type" : [ "BasicProfileCredential", "EmailCredential", "InternetAccountCredential" ],
     "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-07-13T04:35:57Z",
-    "expirationDate" : "2026-07-13T04:35:57Z",
-    "credentialSubject" : {
-      "id" : "did:elastos:foobar",
-      "email" : "foobar@example.com"
-    },
-    "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-07-13T04:35:57Z",
-      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "vYYGCC260ZsQt-XFOnyT05c14ks3plm6mIfz5OZLf7UyPxh0mrVVfFmrpiRMqW47aLk7Jb4Ygerlv9qNkVLnHQ"
-    }
-  }, {
     "id" : "did:elastos:foobar#license",
     "type" : [ "LicenseCredential" ],
-    "issuer" : "did:elastos:example",
     "issuanceDate" : "2021-07-13T04:35:57Z",
     "expirationDate" : "2026-07-13T04:35:57Z",
     "credentialSubject" : {
@@ -30,7 +20,6 @@
       "scope" : "Consulting"
     },
     "proof" : {
-      "type" : "ECDSAsecp256r1",
       "created" : "2021-07-13T04:35:57Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
       "signature" : "coITwAW3RtqPXubyIZy4oJeW31xWL2ZfytfNTixikk2LyNTF02AHyx_0WUn6Hp4thg5S98hyKN4CyAc1mXjTFw"
@@ -41,22 +30,36 @@
     "issuer" : "did:elastos:foobar",
     "issuanceDate" : "2021-07-13T04:35:57Z",
     "expirationDate" : "2026-07-13T04:35:57Z",
-    "credentialSubject" : {
-      "id" : "did:elastos:foobar",
-      "email" : "contact@foobar.com",
-      "language" : "Chinese",
-      "name" : "Foo Bar Inc"
-    },
     "proof" : {
       "type" : "ECDSAsecp256r1",
       "created" : "2021-07-13T04:35:57Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
       "signature" : "exhyiQ1awewFgxVwv59n3bsvrZ3D8XGeBmPbpAf_F_22tOoXRWfnVBbPOJmlq87QvnTDkmB7MlGidVEZyHf-AQ"
+    },
+    "credentialSubject" : {
+      "id" : "did:elastos:foobar",
+      "email" : "contact@foobar.com",
+      "language" : "Chinese",
+      "name" : "Foo Bar Inc"
     }
   }, {
-    "id" : "did:elastos:foobar#services",
-    "type" : [ "BasicProfileCredential", "SelfProclaimedCredential" ],
-    "issuer" : "did:elastos:foobar",
+    "id" : "#email",
+    "type" : [ "BasicProfileCredential", "EmailCredential", "InternetAccountCredential" ],
+    "issuer" : "did:elastos:example",
+    "issuanceDate" : "2021-07-13T04:35:57Z",
+    "expirationDate" : "2026-07-13T04:35:57Z",
+    "credentialSubject" : {
+      "email" : "foobar@example.com",
+      "id" : "did:elastos:foobar"
+    },
+    "proof" : {
+      "created" : "2021-07-13T04:35:57Z",
+      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+      "signature" : "vYYGCC260ZsQt-XFOnyT05c14ks3plm6mIfz5OZLf7UyPxh0mrVVfFmrpiRMqW47aLk7Jb4Ygerlv9qNkVLnHQ"
+    }
+  }, {
+    "id" : "#services",
+    "type" : [  "SelfProclaimedCredential", "BasicProfileCredential" ],
     "issuanceDate" : "2021-07-13T04:35:57Z",
     "expirationDate" : "2026-07-13T04:35:57Z",
     "credentialSubject" : {
@@ -65,17 +68,9 @@
       "consultation" : "https://foobar.com/consultation"
     },
     "proof" : {
-      "type" : "ECDSAsecp256r1",
       "created" : "2021-07-13T04:35:57Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
       "signature" : "7HFWbwQEKErM2eAQdlUtLsi5aJwSMpDqPh-CdVKv3mu6FziwWBY_USxsPMhlEaSvYD4gcyhUTCTFSU6oC0025w"
     }
-  } ],
-  "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "realm" : "https://example.com/",
-    "nonce" : "873172f58701a9ee686f0630204fee59",
-    "signature" : "WonYk6or9BsD4pxjSty2GUSKrEt6IMBZ07tSIPEGuLMHEAw3Gvbm1gqsfTCJwVhQys5WA7SQAphRapR0KVEvHg"
-  }
+  } ]
 }
