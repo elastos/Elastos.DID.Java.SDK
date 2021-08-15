@@ -254,7 +254,7 @@ public class VerifiableCredentialTest {
     	"2,foobar,license",
     	"2,foobar,services",
     	"2,foo,email"})
-	public void testParseAndSerializeJsonCredential(int version, String did, String vc)
+	public void testParseAndSerialize(int version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();

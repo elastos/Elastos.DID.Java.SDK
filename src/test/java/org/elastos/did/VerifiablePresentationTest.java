@@ -133,7 +133,7 @@ public class VerifiablePresentationTest {
     	"2,foobar,nonempty",
     	"2,foobar,optionalattrs"
     })
-	public void testParseAndSerializeNonempty(int version, String did, String presentation)
+	public void testParseAndSerialize(int version, String did, String presentation)
 			throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
     	// For integrity check

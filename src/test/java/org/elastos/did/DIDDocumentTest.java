@@ -2305,7 +2305,7 @@ public class DIDDocumentTest {
 		"2,bar",
 		"2,baz"
 	})
-	public void testParseAndSerializeDocument(int version, String did)
+	public void testParseAndSerialize(int version, String did)
 			throws DIDException, IOException {
 		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		cd.loadAll();

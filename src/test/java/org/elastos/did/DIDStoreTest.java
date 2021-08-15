@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -948,5 +949,176 @@ public class DIDStoreTest {
 		assertTrue(storeDir.exists());
 		assertTrue(restoreDir.exists());
 		assertTrue(Utils.equals(restoreDir, storeDir));
+	}
+
+	@Test
+	public void testImportCompatible() throws DIDException, IOException {
+    	testData.getRootIdentity();
+
+		URL url = this.getClass().getResource("/v2/testdata/store-export.zip");
+		File exportFile = new File(url.getPath());
+
+		File tempDir = new File(TestConfig.tempDir);
+		tempDir.mkdirs();
+		File restoreDir = new File(tempDir, "imported-store");
+		Utils.deleteFile(restoreDir);
+		DIDStore store2 = DIDStore.open(restoreDir.getAbsolutePath());
+		store2.importStore(exportFile, "password", TestConfig.storePass);
+
+		// Root identity
+		List<RootIdentity> ids = store2.listRootIdentities();
+		assertEquals(1, ids.size());
+		assertEquals("d2f3c0f07eda4e5130cbdc59962426b1", ids.get(0).getId());
+		assertEquals(5, ids.get(0).getIndex());
+
+		// DIDs
+		List<DID> dids = store2.listDids();
+		assertEquals(10, dids.size());
+
+		// DID: User1
+		DID did = new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y");
+		assertTrue(dids.contains(did));
+		DIDDocument doc = store2.loadDid(did);
+		assertNotNull(doc);
+		assertEquals("User1", doc.getMetadata().getAlias());
+		doc.publish(TestConfig.storePass);
+
+		List<String> names = new ArrayList<String>();
+		names.add("email");
+		names.add("json");
+		names.add("passport");
+		names.add("profile");
+		names.add("twitter");
+
+		List<DIDURL> vcIds = store2.listCredentials(did);
+		assertEquals(names.size(), vcIds.size());
+		for (DIDURL id : vcIds) {
+			VerifiableCredential vc = store2.loadCredential(id);
+			assertNotNull(vc);
+			names.remove(vc.getId().getFragment());
+		}
+		assertEquals(0, names.size());
+
+		// DID: User2
+		did = new DID("did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g");
+		assertTrue(dids.contains(did));
+		doc = store2.loadDid(did);
+		assertNotNull(doc);
+		assertEquals("User2", doc.getMetadata().getAlias());
+		doc.publish(TestConfig.storePass);
+
+		vcIds = store2.listCredentials(did);
+		assertEquals(1, vcIds.size());
+		assertEquals("profile", vcIds.get(0).getFragment());
+		VerifiableCredential vc = store2.loadCredential(vcIds.get(0));
+		assertNotNull(vc);
+
+		// DID: User3
+		did = new DID("did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS");
+		assertTrue(dids.contains(did));
+		doc = store2.loadDid(did);
+		assertNotNull(doc);
+		assertEquals("User3", doc.getMetadata().getAlias());
+		doc.publish(TestConfig.storePass);
+
+		vcIds = store2.listCredentials(did);
+		assertEquals(0, vcIds.size());
+
+		// DID: User4
+		did = new DID("did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d");
+		assertTrue(dids.contains(did));
+		doc = store2.loadDid(did);
+		assertNotNull(doc);
+		assertEquals("User4", doc.getMetadata().getAlias());
+		doc.publish(TestConfig.storePass);
+
+		vcIds = store2.listCredentials(did);
+		assertEquals(0, vcIds.size());
+
+		// DID: Issuer
+		did = new DID("did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj");
+		assertTrue(dids.contains(did));
+		doc = store2.loadDid(did);
+		assertNotNull(doc);
+		assertEquals("Issuer", doc.getMetadata().getAlias());
+		doc.publish(TestConfig.storePass);
+
+		vcIds = store2.listCredentials(did);
+		assertEquals(1, vcIds.size());
+		assertEquals("profile", vcIds.get(0).getFragment());
+		vc = store2.loadCredential(vcIds.get(0));
+		assertNotNull(vc);
+
+		// DID: Example
+		did = new DID("did:elastos:example");
+		assertTrue(dids.contains(did));
+		doc = store2.loadDid(did);
+		assertNotNull(doc);
+		doc.publish(TestConfig.storePass);
+
+		vcIds = store2.listCredentials(did);
+		assertEquals(1, vcIds.size());
+		assertEquals("profile", vcIds.get(0).getFragment());
+		vc = store2.loadCredential(vcIds.get(0));
+		assertNotNull(vc);
+
+		// DID: Foo
+		did = new DID("did:elastos:foo");
+		assertTrue(dids.contains(did));
+		doc = store2.loadDid(did);
+		assertNotNull(doc);
+		doc.setEffectiveController(new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"));
+		doc.publish(TestConfig.storePass);
+
+		vcIds = store2.listCredentials(did);
+		assertEquals(1, vcIds.size());
+		assertEquals("email", vcIds.get(0).getFragment());
+		vc = store2.loadCredential(vcIds.get(0));
+		assertNotNull(vc);
+
+		// DID: FooBar
+		did = new DID("did:elastos:foobar");
+		assertTrue(dids.contains(did));
+		doc = store2.loadDid(did);
+		assertNotNull(doc);
+		doc.setEffectiveController(new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"));
+		doc.publish(TestConfig.storePass);
+
+		names.clear();
+		names.add("email");
+		names.add("license");
+		names.add("profile");
+		names.add("services");
+
+		vcIds = store2.listCredentials(did);
+		assertEquals(names.size(), vcIds.size());
+		for (DIDURL id : vcIds) {
+			vc = store2.loadCredential(id);
+			assertNotNull(vc);
+			names.remove(vc.getId().getFragment());
+		}
+		assertEquals(0, names.size());
+
+		// DID: Bar
+		did = new DID("did:elastos:bar");
+		assertTrue(dids.contains(did));
+		doc = store2.loadDid(did);
+		assertNotNull(doc);
+		doc.setEffectiveController(new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"));
+		doc.publish(TestConfig.storePass);
+
+		vcIds = store2.listCredentials(did);
+		assertEquals(0, vcIds.size());
+
+		// DID: Baz
+		did = new DID("did:elastos:baz");
+		assertTrue(dids.contains(did));
+		doc = store2.loadDid(did);
+		assertNotNull(doc);
+		doc.setEffectiveController(new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"));
+		doc.publish(TestConfig.storePass);
+
+		vcIds = store2.listCredentials(did);
+		assertEquals(0, vcIds.size());
 	}
 }
