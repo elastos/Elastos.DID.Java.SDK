@@ -886,6 +886,13 @@ public class TestDataGenerator {
 		System.out.println("OK");
 	}
 
+	private void createStoreExport() throws IOException, DIDException {
+		File exportFile = new File(testDataDir.getPath()
+				+ File.separator + "store-export.zip");
+
+		store.exportStore(exportFile, "password", TestConfig.storePass);
+	}
+
 	public void createTestFiles() throws IOException, DIDException {
 		init(TestConfig.tempDir + File.separator + "DIDTestFiles.v2");
 		createTestIssuer();
@@ -898,6 +905,7 @@ public class TestDataGenerator {
 		createFoo();
 		createBar();
 		createBaz();
+		createStoreExport();
 		cleanup();
 	}
 
