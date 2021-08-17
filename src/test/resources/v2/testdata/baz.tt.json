@@ -1,1 +1,10 @@
-{"id":"did:elastos:baz","to":"did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d","txid":"f54c02fd7dcdd2be48a6353998a04811","proof":{"type":"ECDSAsecp256r1","created":"2021-07-13T04:35:58Z","verificationMethod":"did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary","signature":"Qqn3qgAdULsXKCe8smvrLwfR4J5-rEtWKa4Q6Oy8grnkMLS2meWSte4YNQgOUVcfgj_z2gTa7uesrMuhIE4TpQ"}}
+{
+  "to": "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d",
+  "id": "did:elastos:baz",
+  "proof": {
+    "verificationMethod": "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
+    "created": "2021-07-13T04:35:58Z",
+    "signature": "Qqn3qgAdULsXKCe8smvrLwfR4J5-rEtWKa4Q6Oy8grnkMLS2meWSte4YNQgOUVcfgj_z2gTa7uesrMuhIE4TpQ"
+  },
+  "txid": "f54c02fd7dcdd2be48a6353998a04811"
+}

@@ -206,6 +206,13 @@ public final class TestData {
 			return new File(dataPath, fileName.toString());
 		}
 
+		private File getTransferTicketFile(String name) {
+			if (version == 1)
+				return null;
+
+			return new File(dataPath, name + ".tt.json");
+		}
+
 		private String loadText(File file) throws IOException {
 			StringBuilder text = new StringBuilder();
 			char[] buffer = new char[1024];
@@ -356,6 +363,22 @@ public final class TestData {
 			String text = loadText(file);
 			data.put(key, text);
 			return text;
+		}
+
+		public TransferTicket getTransferTicket(String did)
+				throws DIDException, IOException {
+			if (version == 1)
+				throw new IOException("Not exists");
+
+			String key = "res:tt:" + did;
+			if (data.containsKey(key))
+				return (TransferTicket)data.get(key);
+
+			// load the presentation
+			TransferTicket tt = TransferTicket.parse(getTransferTicketFile(did));
+
+			data.put(key, tt);
+			return tt;
 		}
 
 		public File getStoreDir() {
