@@ -26,9 +26,5 @@ local.properties
 # Locally stored "Eclipse launch configurations"
 *.launch
 
-# ANTLR ignores
-*.interp
-*.tokens
-
 # Visual Studio Code
 .vscode
