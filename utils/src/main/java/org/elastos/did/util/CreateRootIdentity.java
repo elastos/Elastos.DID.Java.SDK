@@ -47,8 +47,8 @@ public class CreateRootIdentity extends CommandBase implements Callable<Integer>
 	@Option(names = {"-n", "--new"}, description = "Create new from mnemonic")
 	private Boolean create = false;
 
-	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Override
 	public Integer call() throws Exception {
@@ -73,7 +73,7 @@ public class CreateRootIdentity extends CommandBase implements Callable<Integer>
 			RootIdentity id = RootIdentity.create(mnemonic, passphrase, force, store, password);
 			System.out.println(Colorize.green("Identity " + id.getId() + " created."));
 		} catch (DIDException e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());

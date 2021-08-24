@@ -42,8 +42,8 @@ public class SimChain implements Callable<Integer> {
 	@Option(names = {"-p", "--port"}, description = "Server port, default 9123.")
 	private int port = 9123;
 
-	@Option(names = {"-e", "--verbose"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Option(names = {"-l", "--loglevel"}, description = "Log level, default is info(trace, debug, info, warn, error).")
 	private String level = "info";
@@ -65,7 +65,7 @@ public class SimChain implements Callable<Integer> {
 
 			simChain.run();
 		} catch(Exception e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());

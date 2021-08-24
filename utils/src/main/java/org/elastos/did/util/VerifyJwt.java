@@ -52,8 +52,8 @@ public class VerifyJwt extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
 	private boolean compact = false;
 
-	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Parameters(paramLabel = "JWT", index = "0", description = "The JWT token filename.")
 	private String jwtFile;
@@ -80,7 +80,7 @@ public class VerifyJwt extends CommandBase implements Callable<Integer> {
 				System.out.println(parts[2]);
 			}
 		} catch(DIDException e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());

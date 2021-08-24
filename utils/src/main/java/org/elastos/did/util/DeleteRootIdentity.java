@@ -37,8 +37,8 @@ public class DeleteRootIdentity extends CommandBase implements Callable<Integer>
 	@Option(names = {"-s", "--store"}, description = "DID Store path, default: ~/.elastos/did/store")
 	private String storeDir = null;
 
-	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Parameters(paramLabel = "ID", index = "0", description = "The root identity to be delete from the store.")
 	private String id;
@@ -55,7 +55,7 @@ public class DeleteRootIdentity extends CommandBase implements Callable<Integer>
 			else
 				System.out.format(Colorize.red("RootIdentity %s not exists\n"), id);
 		} catch (DIDException e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());

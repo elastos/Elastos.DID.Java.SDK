@@ -48,8 +48,8 @@ public class ResolveDid extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
 	private boolean compact = false;
 
-	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Option(names = {"-o", "--out"}, description = "Output file, default is STDOUT.")
 	private String outputFile;
@@ -88,7 +88,7 @@ public class ResolveDid extends CommandBase implements Callable<Integer> {
 					out.close();
 			}
 		} catch(DIDException e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());
