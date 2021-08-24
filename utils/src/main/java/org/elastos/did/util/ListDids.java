@@ -38,8 +38,8 @@ public class ListDids extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-s", "--store"}, description = "DID Store path, default: ~/.elastos/did/store")
 	private String storeDir = null;
 
-	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Override
 	public Integer call() throws Exception {
@@ -52,7 +52,7 @@ public class ListDids extends CommandBase implements Callable<Integer> {
 			for (DID did : dids)
 				System.out.println("  " + did);
 		} catch (DIDException e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());

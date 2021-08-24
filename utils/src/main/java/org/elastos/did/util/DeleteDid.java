@@ -38,8 +38,8 @@ public class DeleteDid extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-s", "--store"}, description = "DID Store path, default: ~/.elastos/did/store")
 	private String storeDir = null;
 
-	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Parameters(paramLabel = "DID", index = "0", description = "The DID to be delete from the store.")
 	private String did;
@@ -57,7 +57,7 @@ public class DeleteDid extends CommandBase implements Callable<Integer> {
 			else
 				System.out.format(Colorize.red("DID %s not exists\n"), did);
 		} catch (DIDException e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());

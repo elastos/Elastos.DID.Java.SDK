@@ -59,8 +59,8 @@ public class Recover extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-p", "--password"}, required = true, description = "Password for the DID store")
 	private String password = null;
 
-	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	private static final int NONE = 0;
 	private static final int INTERACTIVE = 1;
@@ -140,7 +140,7 @@ public class Recover extends CommandBase implements Callable<Integer> {
 							System.out.println(Colorize.green("RECOVERED"));
 						} catch (Exception ex) {
 							System.out.println(Colorize.red("FAILED"));
-							if (verbose)
+							if (verboseErrors)
 								ex.printStackTrace(System.err);
 						}
 					} else {
@@ -156,7 +156,7 @@ public class Recover extends CommandBase implements Callable<Integer> {
 				index++;
 			}
 		} catch (DIDException e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());

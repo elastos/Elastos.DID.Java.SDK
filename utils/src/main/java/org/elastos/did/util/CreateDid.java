@@ -50,8 +50,8 @@ public class CreateDid extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-p", "--password"}, required = true, description = "Password for the DID store")
 	private String password = null;
 
-	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Override
 	public Integer call() throws Exception {
@@ -83,7 +83,7 @@ public class CreateDid extends CommandBase implements Callable<Integer> {
 			System.out.println("\nDID document:");
 			printJson(System.out, false, doc.serialize(true));
 		} catch (DIDException e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());

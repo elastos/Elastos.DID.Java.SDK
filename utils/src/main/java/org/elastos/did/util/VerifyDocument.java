@@ -44,8 +44,8 @@ public class VerifyDocument extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")
 	private String local = null;
 
-	@Option(names = {"-e", "--verbase"}, description = "Verbose error output, default false.")
-	private boolean verbose = false;
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Parameters(paramLabel = "DOCUMENT", index = "0", description = "The DID document filename.")
 	private String documentFile;
@@ -63,7 +63,7 @@ public class VerifyDocument extends CommandBase implements Callable<Integer> {
 			else
 				System.out.println(Colorize.red("Verifing the document...FAILED"));
 		} catch(DIDException e) {
-			if (verbose)
+			if (verboseErrors)
 				e.printStackTrace(System.err);
 			else
 				System.err.println("Error: " + e.getMessage());
