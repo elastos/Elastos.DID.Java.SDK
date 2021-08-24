@@ -6,5 +6,10 @@
  * Detailed information about configuring a multi-project build in Gradle can be found
  * in the user guide at https://docs.gradle.org/5.0/userguide/multi_project_builds.html
  */
+include 'sdk'
+include 'utils'
 
-rootProject.name = 'DID Java SDK'
+rootProject.name = 'Elastos-DID'
+
+project(":sdk").name = 'Elastos-DID-SDK'
+project(":utils").name = 'Elastos-DID-Utils'
