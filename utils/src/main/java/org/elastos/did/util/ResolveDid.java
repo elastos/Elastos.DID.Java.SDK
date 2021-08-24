@@ -22,11 +22,14 @@
 
 package org.elastos.did.util;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.concurrent.Callable;
 
 import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
+import org.elastos.did.backend.DIDBiography;
+import org.elastos.did.backend.DIDTransaction;
 import org.elastos.did.exception.DIDException;
 
 import picocli.CommandLine.Command;
@@ -42,17 +45,20 @@ public class ResolveDid extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
 	private boolean force = false;
 
+	@Option(names = {"-b", "--biography"}, description = "Resolve DID biography from ID sidechain.")
+	private boolean biography = false;
+
 	@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")
 	private String local = null;
 
 	@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
 	private boolean compact = false;
 
-	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
-	private boolean verboseErrors = false;
-
 	@Option(names = {"-o", "--out"}, description = "Output file, default is STDOUT.")
 	private String outputFile;
+
+	@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+	private boolean verboseErrors = false;
 
 	@Parameters(paramLabel = "DID", index = "0", description = "The target DID.")
 	private String didstr;
@@ -62,31 +68,11 @@ public class ResolveDid extends CommandBase implements Callable<Integer> {
 		try {
 			setupDIDBackend(network, local);
 
-			DID did = new DID(didstr);
+			if (biography)
+				resolveBiography();
+			else
+				resolveDid();
 
-			System.out.format("Resolving DID %s...", did);
-			DIDDocument doc = did.resolve(force);
-			if (doc == null) {
-				System.out.format(Colorize.red("\rResolving DID %s...NOT exists.\n"), did);
-			} else {
-				System.out.format(Colorize.green("\rResolving DID %s...OK.\n"), did);
-				System.out.println("Verifing the document...");
-				boolean valid = doc.isValid(new ConsoleVerificationEventListener());
-				if (valid)
-					System.out.println(Colorize.green("Verifing the document...OK"));
-				else
-					System.out.println(Colorize.red("Verifing the document...FAILED"));
-
-				System.out.println("\nDID document:");
-				PrintStream out = System.out;
-				if (outputFile != null)
-					out = new PrintStream(outputFile);
-
-				printJson(out, compact, doc.serialize(true));
-
-				if (outputFile != null)
-					out.close();
-			}
 		} catch(DIDException e) {
 			if (verboseErrors)
 				e.printStackTrace(System.err);
@@ -97,4 +83,56 @@ public class ResolveDid extends CommandBase implements Callable<Integer> {
 		return 0;
 	}
 
+	private void resolveDid() throws DIDException, IOException {
+		DID did = new DID(didstr);
+
+		System.out.format("Resolving DID %s...", did);
+		DIDDocument doc = did.resolve(force);
+		if (doc == null) {
+			System.out.format(Colorize.red("\rResolving DID %s...NOT exists.\n"), did);
+		} else {
+			System.out.format(Colorize.green("\rResolving DID %s...OK.\n"), did);
+			System.out.println("Verifing the document...");
+			boolean valid = doc.isValid(new ConsoleVerificationEventListener());
+			if (valid)
+				System.out.println(Colorize.green("Verifing the document...OK"));
+			else
+				System.out.println(Colorize.red("Verifing the document...FAILED"));
+
+			System.out.println("\nDID document:");
+			PrintStream out = System.out;
+			if (outputFile != null)
+				out = new PrintStream(outputFile);
+
+			printJson(out, compact, doc.serialize(true));
+
+			if (outputFile != null)
+				out.close();
+		}
+	}
+
+	private void resolveBiography() throws DIDException, IOException {
+		DID did = new DID(didstr);
+
+		System.out.format("Resolving DID biography %s...", did);
+		DIDBiography bio = did.resolveBiography();
+		if (bio == null) {
+			System.out.format(Colorize.red("\rResolving DID %s...NOT exists.\n"), did);
+		} else {
+			System.out.format(Colorize.green("\rResolving DID biography %s...OK\n"), did);
+
+			PrintStream out = System.out;
+			if (outputFile != null)
+				out = new PrintStream(outputFile);
+
+			out.format("DID status: %s\n\n", bio.getStatus().toString());
+			for (DIDTransaction tx : bio.getAllTransactions()) {
+				printJson(out, compact, tx.serialize(true));
+				out.println();
+			}
+
+			if (outputFile != null)
+				out.close();
+		}
+	}
 }
