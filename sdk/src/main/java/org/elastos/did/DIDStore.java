@@ -1764,6 +1764,7 @@ public final class DIDStore {
 		private String fingerprint;
 
 		@JsonPropertyOrder({ "content", "metadata" })
+		@JsonInclude(Include.NON_NULL)
 		static class Document {
 			@JsonProperty("content")
 			private DIDDocument content;
@@ -1779,6 +1780,7 @@ public final class DIDStore {
 		}
 
 		@JsonPropertyOrder({ "content", "metadata" })
+		@JsonInclude(Include.NON_NULL)
 		static class Credential {
 			@JsonProperty("content")
 			private VerifiableCredential content;
