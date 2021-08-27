@@ -27,15 +27,23 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDTransactionException;
 import org.elastos.did.exception.NetworkException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * The default DIDAdapter implementation for the Elastos ID chain.
@@ -47,12 +55,63 @@ import org.slf4j.LoggerFactory;
  * </p>
  */
 public class DefaultDIDAdapter implements DIDAdapter {
-	private static final String MAINNET_RESOLVER = "https://api.elastos.io/eid";
-	private static final String TESTNET_RESOLVER = "https://api-testnet.elastos.io/eid";
+	private static final String[] MAINNET_RESOLVERS = {
+			"https://api.elastos.io/eid",
+			"https://api.trinity-tech.cn/eid"
+	};
+
+	private static final String[] TESTNET_RESOLVERS = {
+			"https://api-testnet.elastos.io/eid",
+			"https://api-testnet.trinity-tech.cn/eid",
+	};
 
 	private URL resolver;
 
 	private static final Logger log = LoggerFactory.getLogger(DefaultDIDAdapter.class);
+
+	static class CheckResult implements Comparable<CheckResult> {
+		private static final BigInteger MAX_DIFF = BigInteger.valueOf(10);
+
+		public URL endpoint;
+		public int latency;
+		public BigInteger lastBlock;
+
+		public CheckResult(URL endpoint, int latency, BigInteger lastBlock) {
+			this.endpoint = endpoint;
+			this.latency = latency;
+			this.lastBlock = lastBlock;
+		}
+
+		public CheckResult(URL endpoint) {
+			this(endpoint, -1, null);
+		}
+
+		@Override
+		public int compareTo(CheckResult o) {
+			if (o == null)
+				return -1;
+
+			if (o.latency < 0 && this.latency < 0)
+				return 0;
+
+			if (o.latency < 0 || this.latency < 0)
+				return this.latency < 0 ? 1 : -1;
+
+			BigInteger diff = o.lastBlock.subtract(this.lastBlock);
+			if (diff.abs().compareTo(MAX_DIFF) > 0)
+				return diff.signum();
+
+			if (this.latency == o.latency) {
+				return diff.signum();
+			} else {
+				return this.latency - o.latency;
+			}
+		}
+
+		public boolean available() {
+			return this.latency >= 0;
+		}
+	}
 
 	/**
 	 * Create a DefaultDIDAdapter instance with given resolver endpoint.
@@ -61,14 +120,20 @@ public class DefaultDIDAdapter implements DIDAdapter {
 	 */
 	public DefaultDIDAdapter(String resolver) {
 		checkArgument(resolver != null && !resolver.isEmpty(), "Invalid resolver URL");
+		String[] endpoints = null;
 
 		switch (resolver.toLowerCase()) {
 		case "mainnet":
-			resolver = MAINNET_RESOLVER;
+			resolver = MAINNET_RESOLVERS[0];
+			endpoints = MAINNET_RESOLVERS;
 			break;
 
 		case "testnet":
-			resolver = TESTNET_RESOLVER;
+			resolver = TESTNET_RESOLVERS[0];
+			endpoints = TESTNET_RESOLVERS;
+			break;
+
+		default:
 			break;
 		}
 
@@ -76,6 +141,74 @@ public class DefaultDIDAdapter implements DIDAdapter {
 			this.resolver = new URL(resolver);
 		} catch (MalformedURLException e) {
 			throw new IllegalArgumentException("Invalid resolver URL", e);
+		}
+
+		if (endpoints != null)
+			checkNetwork(endpoints);
+	}
+
+	private CheckResult checkEndpoint(URL endpoint) {
+		log.info("Checking the resolver {}...", endpoint);
+
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json = mapper.createObjectNode();
+		long id = System.currentTimeMillis();
+		json.put("id", id);
+		json.put("jsonrpc", "2.0");
+		json.put("method", "eth_blockNumber");
+		try {
+			String body = mapper.writeValueAsString(json);
+			long start = System.currentTimeMillis();
+			InputStream is = this.performRequest(endpoint, body);
+			int latency = (int)(System.currentTimeMillis() - start);
+			JsonNode result = mapper.readTree(is);
+			if (result.get("id").asLong() != id)
+				throw new IOException("Invalid JSON RPC id.");
+
+			String n = result.get("result").asText();
+			if (n.startsWith("0x"))
+				n = n.substring(2);
+			BigInteger blockNumber = new BigInteger(n, 16);
+
+			log.info("Checking the resolver {}...latency: {}, lastBlock: {}",
+					endpoint, latency, n);
+			return new CheckResult(endpoint, latency, blockNumber);
+		} catch (Exception e) {
+			log.info("Checking the resolver {}...error", endpoint);
+			return new CheckResult(endpoint);
+		}
+	}
+
+	private void checkNetwork(String[] endpoints) {
+		List<CompletableFuture<CheckResult>> futures = new ArrayList<CompletableFuture<CheckResult>>(endpoints.length);
+
+		for (String endpoint : endpoints) {
+			try {
+				URL url = new URL(endpoint);
+				futures.add(CompletableFuture.supplyAsync(() -> {
+					return checkEndpoint(url);
+				}));
+			} catch (MalformedURLException ignore) {
+			}
+		}
+
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		List<CheckResult> results = new ArrayList<CheckResult>(futures.size());
+		for (CompletableFuture<CheckResult> future : futures) {
+			try {
+				results.add(future.get());
+			} catch (Exception ignore) {
+			}
+		}
+
+		if (results.size() > 0) {
+			results.sort(null);
+
+			CheckResult best = results.get(0);
+			if (best.available()) {
+				this.resolver = best.endpoint;
+				log.info("Update resolver to {}", resolver.toString());
+			}
 		}
 	}
 
