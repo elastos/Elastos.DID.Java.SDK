@@ -2020,6 +2020,9 @@ public final class DIDStore {
 		if (storage.containsPrivateKeys(did)) {
 			List<PublicKey> pks = doc.getPublicKeys();
 			for (PublicKey pk : pks) {
+				if (!pk.getController().equals(did))
+					continue;
+
 				DIDURL id = pk.getId();
 				String key = storage.loadPrivateKey(id);
 				if (key != null) {
