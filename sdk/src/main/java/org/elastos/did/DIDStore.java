@@ -70,6 +70,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
@@ -2318,8 +2320,10 @@ public final class DIDStore {
 		@JsonProperty("publicKey")
 		private String publicKey;
 		@JsonProperty("index")
+		@JsonSerialize(using = ToStringSerializer.class)
 		private int index;
 		@JsonProperty("default")
+		@JsonSerialize(using = ToStringSerializer.class)
 		@JsonInclude(Include.NON_NULL)
 		private Boolean isDefault;
 		@JsonProperty("created")
