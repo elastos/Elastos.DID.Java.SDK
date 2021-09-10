@@ -33,6 +33,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.elastos.did.exception.DIDResolveException;
@@ -159,7 +160,7 @@ public class DefaultDIDAdapter implements DIDAdapter {
 		try {
 			String body = mapper.writeValueAsString(json);
 			long start = System.currentTimeMillis();
-			InputStream is = this.performRequest(endpoint, body);
+			InputStream is = httpPost(endpoint, body);
 			int latency = (int)(System.currentTimeMillis() - start);
 			JsonNode result = mapper.readTree(is);
 			if (result.get("id").asLong() != id)
@@ -230,19 +231,96 @@ public class DefaultDIDAdapter implements DIDAdapter {
 	 * @return an input stream object of the response body
 	 * @throws IOException if an error occurred when processing the request
 	 */
-	protected InputStream performRequest(URL url, String body) throws IOException {
+	protected InputStream httpPost(URL url, String body) throws IOException {
+		return httpPost(url, null, body);
+	}
+
+	/**
+	 * Perform a HTTP POST request with given request body to the url.
+	 *
+	 * @param url the target HTTP endpoint
+	 * @param headers the customized request headers
+	 * @param body the request body
+	 * @return an input stream object of the response body
+	 * @throws IOException if an error occurred when processing the request
+	 */
+	protected InputStream httpPost(URL url, Map<String, String> headers, String body)
+			throws IOException {
 		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 		connection.setRequestMethod("POST");
-		connection.setRequestProperty("User-Agent",
-				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
-		connection.setRequestProperty("Content-Type", "application/json");
-		connection.setRequestProperty("Accept", "application/json");
+
+		if (headers == null || !headers.containsKey("User-Agent"))
+			connection.setRequestProperty("User-Agent",
+					"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+
+		if (headers == null || !headers.containsKey("Content-Type"))
+			connection.setRequestProperty("Content-Type", "application/json");
+
+		if (headers == null || !headers.containsKey("Accept"))
+			connection.setRequestProperty("Accept", "*/*");
+
+		if (headers != null) {
+			for (Map.Entry<String, String> header : headers.entrySet())
+				connection.addRequestProperty(header.getKey(), header.getValue());
+		}
+
 		connection.setDoOutput(true);
 		connection.connect();
 
 		OutputStream os = connection.getOutputStream();
 		os.write(body.getBytes());
 		os.close();
+
+		int code = connection.getResponseCode();
+		if (code < 200 || code > 299) {
+			log.error("HTTP request error, status: {}, message: {}",
+					code, connection.getResponseMessage());
+			throw new IOException("HTTP error with status: " + code);
+		}
+
+		return connection.getInputStream();
+	}
+
+	/**
+	 * Perform a HTTP GET request to the url.
+	 *
+	 * @param url the target HTTP endpoint
+	 * @return an input stream object of the response body
+	 * @throws IOException if an error occurred when processing the request
+	 */
+	protected InputStream httpGet(URL url) throws IOException {
+		return httpGet(url, null);
+	}
+
+	/**
+	 * Perform a HTTP GET request to the url.
+	 *
+	 * @param url the target HTTP endpoint
+	 * @param headers the customized request headers
+	 * @return an input stream object of the response body
+	 * @throws IOException if an error occurred when processing the request
+	 */
+	protected InputStream httpGet(URL url, Map<String, String> headers)
+			throws IOException {
+		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+		connection.setRequestMethod("GET");
+
+		if (headers == null || !headers.containsKey("User-Agent"))
+			connection.setRequestProperty("User-Agent",
+					"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+
+		if (headers == null || !headers.containsKey("Content-Type"))
+			connection.setRequestProperty("Content-Type", "application/json");
+
+		if (headers == null || !headers.containsKey("Accept"))
+			connection.setRequestProperty("Accept", "*/*");
+
+		if (headers != null) {
+			for (Map.Entry<String, String> header : headers.entrySet())
+				connection.addRequestProperty(header.getKey(), header.getValue());
+		}
+
+		connection.connect();
 
 		int code = connection.getResponseCode();
 		if (code < 200 || code > 299) {
@@ -262,7 +340,7 @@ public class DefaultDIDAdapter implements DIDAdapter {
 		checkArgument(request != null && !request.isEmpty(), "Invalid request");
 
 		try {
-			return performRequest(resolver, request);
+			return httpPost(resolver, request);
 		} catch (IOException e) {
 			throw new NetworkException("Network error.", e);
 		}

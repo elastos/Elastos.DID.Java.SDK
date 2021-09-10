@@ -35,11 +35,9 @@ import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDBackend.LocalResolveHandle;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
-import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.VerificationEventListener;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
-import org.elastos.did.exception.DIDTransactionException;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -146,19 +144,7 @@ public abstract class CommandBase {
 		if (network == null || network.isEmpty())
 			network = "mainnet";
 
-		DIDBackend.initialize(new DefaultDIDAdapter(network) {
-			@Override
-			public void createIdTransaction(String payload, String memo)
-					throws DIDTransactionException {
-				System.out.println("ID transaction payload:");
-				try {
-					printJson(System.out, false, payload);
-				} catch (IOException e) {
-					throw new DIDTransactionException(e);
-				}
-			}
-		});
-
+		DIDBackend.initialize(new AssistDIDAdapter(network));
 		DIDBackend.getInstance().setResolveHandle(new MyResolveHandle(localResolveFolder));
 	}
 
@@ -185,7 +171,7 @@ public abstract class CommandBase {
 		return store;
 	}
 
-	protected void printJson(PrintStream out, boolean compact, String json) throws IOException {
+	protected static void printJson(PrintStream out, boolean compact, String json) throws IOException {
 		if (!compact) {
 			JsonFactory jsonFactory = new JsonFactory();
 			jsonFactory.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
