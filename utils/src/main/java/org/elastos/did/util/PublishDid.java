@@ -39,6 +39,9 @@ public class PublishDid extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-s", "--store"}, description = "DID Store path, default: ~/.elastos/did/store")
 	private String storeDir = null;
 
+	@Option(names = {"-n", "--network"}, description = "Avaliable networks: mainnet testnet")
+	private String network = null;
+
 	@Option(names = {"-p", "--password"}, required = true, description = "Password for the DID store")
 	private String password = null;
 
@@ -51,6 +54,7 @@ public class PublishDid extends CommandBase implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 		try {
+			this.setupDIDBackend(network, null);
 			DIDStore store = openDIDStore(storeDir);
 
 			DID _did = new DID(did);

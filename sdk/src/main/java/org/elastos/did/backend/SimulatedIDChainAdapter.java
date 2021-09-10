@@ -63,7 +63,7 @@ public class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 		checkArgument(payload != null && !payload.isEmpty(), "Invalid payload");
 
 		try {
-			InputStream is = performRequest(idtxEndpoint, payload);
+			InputStream is = httpPost(idtxEndpoint, payload);
 			if (is != null)
 				is.close();
 		} catch (IOException e) {
@@ -72,7 +72,7 @@ public class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 	}
 
 	public void reset() throws IOException {
-		InputStream is = performRequest(resetEndpoint, "");
+		InputStream is = httpPost(resetEndpoint, "");
 		if (is != null)
 			is.close();
 	}

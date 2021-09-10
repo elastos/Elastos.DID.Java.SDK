@@ -1520,6 +1520,9 @@ public final class DIDStore {
 				log.debug("{} on-chain copy conflict with local copy.",
 						did.toString());
 
+				if (handle == null)
+					handle = defaultConflictHandle;
+
 				// Local copy was modified
 				finalDoc = handle.merge(resolvedDoc, localDoc);
 				if (finalDoc == null || !finalDoc.getSubject().equals(did)) {
