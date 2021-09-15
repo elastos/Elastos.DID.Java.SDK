@@ -60,6 +60,7 @@ public class Web3Adapter extends DefaultDIDAdapter {
 
 	private String contractAddress;
 
+	private String rpcEndpoint;
 	private Web3j web3j;
 	private Credentials account;
 	private String lastTxHash;
@@ -72,6 +73,7 @@ public class Web3Adapter extends DefaultDIDAdapter {
 	}
 
 	private void initWeb3j(String rpcEndpoint, String walletFile, String walletPassword) {
+		this.rpcEndpoint = rpcEndpoint;
 		web3j = Web3j.build(new HttpService(rpcEndpoint));
 		try {
 			account = WalletUtils.loadCredentials(walletPassword, walletFile);
@@ -109,6 +111,7 @@ public class Web3Adapter extends DefaultDIDAdapter {
 			BigInteger gasPrice = new BigInteger("1000000000000");
 			BigInteger gasLimit = new BigInteger("3000000");
 
+			log.info("Creating transaction via {}", rpcEndpoint);
 			TransactionManager txManager = new RawTransactionManager(web3j, account);
 			EthSendTransaction ethSendTx = txManager.sendTransaction(
 					gasPrice,
@@ -117,25 +120,34 @@ public class Web3Adapter extends DefaultDIDAdapter {
 				    encodedContract,
 				    BigInteger.ZERO);
 
-			if (ethSendTx.hasError())
+			if (ethSendTx.hasError()) {
+				log.error("Create transaction failed: " + ethSendTx.getError().getMessage());
 				throw new DIDTransactionException("Error send transaction: " +
 						ethSendTx.getError().getMessage());
+			}
 
 			String txHash = ethSendTx.getTransactionHash();
+			log.info("Create transaction succeed, tx hash: " + txHash);
 
 			int waitBlocks = MAX_WAIT_BLOCKS;
 			while (true) {
 				EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).sendAsync().get();
-				if (receipt.hasError())
+				if (receipt.hasError()) {
+					log.error("Transaction receipt return error: ", receipt.getError().getMessage());
 					throw new DIDTransactionException("Error transaction response: " +
 							receipt.getError().getMessage());
+				}
 
 				if (!receipt.getTransactionReceipt().isPresent()) {
-					if (waitBlocks-- == 0)
+					if (waitBlocks-- == 0) {
+						log.error("Get transaction receipt timeout.");
 						throw new DIDTransactionException("Create transaction timeout.");
+					}
 
+					log.error("Retry to get transaction receipt...");
 					Thread.sleep(5000);
 				} else {
+					log.info("Transaction block number: {}", receipt.getResult().getBlockNumberRaw());
 					break;
 				}
 			}

@@ -340,6 +340,7 @@ public class DefaultDIDAdapter implements DIDAdapter {
 		checkArgument(request != null && !request.isEmpty(), "Invalid request");
 
 		try {
+			log.debug("Resolving via {}", resolver.toString());
 			return httpPost(resolver, request);
 		} catch (IOException e) {
 			throw new NetworkException("Network error.", e);
