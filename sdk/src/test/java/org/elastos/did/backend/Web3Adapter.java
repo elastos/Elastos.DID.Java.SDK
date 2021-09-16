@@ -144,7 +144,7 @@ public class Web3Adapter extends DefaultDIDAdapter {
 						throw new DIDTransactionException("Create transaction timeout.");
 					}
 
-					log.error("Retry to get transaction receipt...");
+					log.info("Retry to get transaction receipt...");
 					Thread.sleep(5000);
 				} else {
 					log.info("Transaction block number: {}", receipt.getResult().getBlockNumberRaw());
