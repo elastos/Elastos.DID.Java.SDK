@@ -107,7 +107,7 @@ public class CredentialList extends ResolveResult<CredentialList>
 	/**
 	 * Appends the specified credential id to the end of this list object.
 	 *
-	 * @param tx the credential id to be add
+	 * @param id the credential id to be add
 	 */
 	protected synchronized void addCredentialId(DIDURL id) {
 		if (credentialIds == null)

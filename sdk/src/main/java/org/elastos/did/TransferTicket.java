@@ -191,7 +191,7 @@ public class TransferTicket extends DIDEntity<TransferTicket> {
 	/**
 	 * Create a TransferTicket for the target DID.
 	 *
-	 * @param did the target did document object
+	 * @param target the target did document object
 	 * @param to (one of) the new owner's DID
 	 * @throws DIDResolveException if an error occurred when resolving the DIDs
 	 */

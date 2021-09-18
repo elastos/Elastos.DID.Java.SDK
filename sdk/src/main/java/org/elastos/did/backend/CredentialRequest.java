@@ -31,7 +31,6 @@ import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDStoreException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
-import org.elastos.did.exception.MalformedIDChainTransactionException;
 import org.elastos.did.exception.UnknownInternalException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -187,7 +186,7 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * Check the validity of the object and normalize the object after
 	 * deserialized the CredentialRequest object from JSON.
 	 *
-	 * @throws MalformedIDChainTransactionException if the object is invalid
+	 * @throws MalformedIDChainRequestException if the object is invalid
 	 */
 	@Override
 	protected void sanitize() throws MalformedIDChainRequestException {

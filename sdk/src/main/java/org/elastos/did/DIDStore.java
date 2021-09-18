@@ -521,7 +521,6 @@ public final class DIDStore {
 	 * only).
 	 *
 	 * @param identity an RootIdentity object
-	 * @param storepass the password for this DID store
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected void storeRootIdentity(RootIdentity identity)
