@@ -1547,6 +1547,7 @@ public final class DIDStore {
 			metadata.setIndex(index);
 		}
 		metadata.attachStore(this);
+		finalDoc.setMetadata(metadata);
 
 		if (localDoc != null)
 			localDoc.getMetadata().attachStore(this);
@@ -1557,9 +1558,12 @@ public final class DIDStore {
 
 		storage.storeDid(finalDoc);
 		storage.storeDidMetadata(did, metadata);
+
+		for (VerifiableCredential vc : finalDoc.getCredentials())
+			storage.storeCredential(vc);
+
 		if (!isCustomizedDid && rootIdentity != null)
 			storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
-
 
 		List<DIDURL> vcIds = storage.listCredentials(did);
 		for (DIDURL vcId : vcIds) {
