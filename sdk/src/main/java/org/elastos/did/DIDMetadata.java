@@ -73,7 +73,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	/**
 	 * Set the DID of this metadata object.
 	 *
-	 * @param id a credential id
+	 * @param did the did object that related with this metadata object
 	 */
 	protected void setDid(DID did) {
 		this.did = did;
@@ -102,7 +102,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	/**
 	 * Set the derived index if the DID is derived from a root identity.
 	 *
-	 * @param id a derive index
+	 * @param index the derive index
 	 */
 	protected void setIndex(int index) {
 		put(INDEX, index);
@@ -111,7 +111,7 @@ public class DIDMetadata extends AbstractMetadata implements Cloneable {
 	/**
 	 * Get the derived index only if the DID is derived from a root identity.
 	 *
-	 * @param id a derive index
+	 * @return the derive index
 	 */
 	protected int getIndex() {
 		return getInteger(INDEX, -1);

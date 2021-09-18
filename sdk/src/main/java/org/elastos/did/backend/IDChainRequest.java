@@ -34,7 +34,6 @@ import org.elastos.did.crypto.Base64;
 import org.elastos.did.exception.DIDResolveException;
 import org.elastos.did.exception.DIDSyntaxException;
 import org.elastos.did.exception.MalformedIDChainRequestException;
-import org.elastos.did.exception.MalformedResolveResultException;
 import org.elastos.did.exception.MalformedTransferTicketException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -462,7 +461,7 @@ public abstract class IDChainRequest<T> extends DIDEntity<T> {
 	/**
 	 * Post sanitize routine after deserialization.
 	 *
-	 * @throws MalformedResolveResultException if the IDChainRequest
+	 * @throws MalformedIDChainRequestException if the IDChainRequest
 	 * 		   object is invalid
 	 */
 	@Override
