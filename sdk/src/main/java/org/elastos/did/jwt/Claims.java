@@ -54,7 +54,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * claims.{@link Map#put(Object, Object) put}("someKey", "someValue");
  * </pre>
  *
- * <h3>Creation</h3>
+ * <h2>Creation</h2>
  *
  * <p>
  * It is easiest to create a {@code Claims} instance by calling one of the

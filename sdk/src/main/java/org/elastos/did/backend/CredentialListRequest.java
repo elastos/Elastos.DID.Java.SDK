@@ -38,6 +38,9 @@ public class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 	protected static final String PARAMETER_SKIP = "skip";
 	protected static final String PARAMETER_LIMIT = "limit";
 
+	/**
+	 * The resolve method name.
+	 */
 	public static final String METHOD_NAME = "did_listCredentials";
 
 	/**

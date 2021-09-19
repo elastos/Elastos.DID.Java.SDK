@@ -3224,6 +3224,17 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		return publishAsync(ticket, (DIDURL)null, storepass, null);
 	}
 
+	/**
+	 * Publish a DID transfer transaction for current DIDDocument,
+	 * internal use only.
+	 *
+	 * @param signKey the key to sign the transaction
+	 * @param storepass the password for the DIDStore
+	 * @param adapter an optional DIDTransactionAdapter, if null the method will
+	 * 		  use the default adapter from the DIDBackend
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 * @throws DIDBackendException if an error occurred when publishing the transaction
+	 */
 	// TODO: to be remove in the future
 	public void publishUntrusted(DIDURL signKey, String storepass,
 			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {

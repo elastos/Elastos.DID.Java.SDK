@@ -686,7 +686,7 @@ public class JwtBuilder {
 	 * within that length. However, NOTE:
 	 * </p>
 	 *
-	 * <h3>Compatibility Warning</h3>
+	 * <h4>Compatibility Warning</h4>
 	 *
 	 * <p>
 	 * The JWT family of specifications defines compression only for JWE (Json

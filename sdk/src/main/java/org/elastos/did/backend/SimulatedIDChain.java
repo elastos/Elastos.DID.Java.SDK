@@ -122,9 +122,14 @@ import com.sun.net.httpserver.HttpServer;
  * </pre>
  */
 public class SimulatedIDChain {
-	// For mini HTTP server
-	protected static final String DEFAULT_HOST = "localhost";
-	protected static final int DEFAULT_PORT = 9123;
+	/**
+	 * Default listen host for the HTTP server.
+	 */
+	public static final String DEFAULT_HOST = "localhost";
+	/**
+	 * Default listen port for the HTTP server.
+	 */
+	public static final int DEFAULT_PORT = 9123;
 
 	private String host;
 	private int port;

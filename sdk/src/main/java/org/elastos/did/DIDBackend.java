@@ -428,6 +428,15 @@ public class DIDBackend {
 		return doc;
 	}
 
+	/**
+	 * Resolve the specific DID in untrusted mode, internal use only.
+	 *
+	 * @param did the DID object to be resolve
+	 * @param force ignore the local cache and resolve from the ID chain if true;
+	 * 		  		try to use cache first if false.
+	 * @return the DIDDocument object
+	 * @throws DIDResolveException if an error occurred when resolving DID
+	 */
 	// TODO: to be remove in the future
 	public DIDDocument resolveUntrustedDid(DID did, boolean force)
 			throws DIDResolveException {
@@ -686,7 +695,7 @@ public class DIDBackend {
 	 * @param limit set the limit of credentials returned in the request
 	 * 		  (useful for pagination).
 	 * @return an array of DIDURL denoting the credentials
-	 * @throws DIDResolveException
+	 * @throws DIDResolveException if an error occurred when listing the credentials
 	 */
 	protected List<DIDURL> listCredentials(DID did, int skip, int limit)
 			throws DIDResolveException {
