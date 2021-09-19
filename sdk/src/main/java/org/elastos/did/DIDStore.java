@@ -749,6 +749,7 @@ public final class DIDStore {
 	 * Read the RootIdentity metadata from this store.
 	 *
 	 * @param id the id of the RootIdentity object
+	 * @return the RootIdentity.Metadata object
 	 * @throws DIDStoreException if an error occurred when accessing the store
 	 */
 	protected RootIdentity.Metadata loadRootIdentityMetadata(String id)

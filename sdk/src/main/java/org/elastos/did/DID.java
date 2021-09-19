@@ -61,6 +61,9 @@ public class DID implements Comparable<DID> {
 	 * The default method name for Elastos DID method.
 	 */
 	public final static String SCHEMA = "did";
+	/**
+	 * The Elastos DID method name.
+	 */
 	public final static String METHOD = "elastos";
 
 	private String method;
@@ -101,6 +104,17 @@ public class DID implements Comparable<DID> {
 		parser.parse(did);
 	}
 
+	/**
+	 * Create a DID object from the given string. The method will parse the
+	 * DID method and the method specific id from the string.
+	 *
+	 * @param did an identifier string.
+	 * 			  e.g. "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN"
+	 * @param start the did start offset
+	 * @param limit the did end offset
+	 * @throws MalformedDIDException if the given identifier not compliant
+	 * 				with the DID method specification
+	 */
 	protected DID(String did, int start, int limit) throws MalformedDIDException {
 		checkArgument(did != null && !did.isEmpty(), "Invalid DID string");
 		checkArgument(start < limit, "Invalid offsets");

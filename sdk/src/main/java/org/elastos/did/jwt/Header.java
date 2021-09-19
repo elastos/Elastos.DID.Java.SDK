@@ -48,7 +48,7 @@ import io.jsonwebtoken.Jwts;
  * header.{@link Map#put(Object, Object) put}("headerParamName", "headerParamValue");
  * </pre>
  *
- * <h3>Creation</h3>
+ * <h2>Creation</h2>
  *
  * <p>It is easiest to create a {@code Header} instance by calling one of the
  * {@link Jwts#header() JWTs.header()} factory methods.</p>

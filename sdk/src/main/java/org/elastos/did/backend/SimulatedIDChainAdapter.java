@@ -71,6 +71,12 @@ public class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 		}
 	}
 
+	/**
+	 * Reset the simulated ID chain to the initial state, all transaction
+	 * data will be clear.
+	 *
+	 * @throws IOException an error occurred
+	 */
 	public void reset() throws IOException {
 		InputStream is = httpPost(resetEndpoint, "");
 		if (is != null)

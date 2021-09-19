@@ -47,7 +47,13 @@ public class CredentialList extends ResolveResult<CredentialList>
 	protected static final String DID = "did";
 	protected static final String CREDENTIALS = "credentials";
 
+	/**
+	 * Default page size.
+	 */
 	public static final int DEFAULT_SIZE = 128;
+	/**
+	 * Maximum page size.
+	 */
 	public static final int MAX_SIZE = 512;
 
 	@JsonProperty(DID)
