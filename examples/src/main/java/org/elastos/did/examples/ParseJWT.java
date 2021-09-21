@@ -1,7 +1,5 @@
 package org.elastos.did.examples;
 
-import java.io.File;
-
 import org.elastos.did.DIDBackend;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.jwt.Claims;
@@ -33,13 +31,9 @@ public class ParseJWT {
 
 
 	public static void main(String[] args) throws Exception {
-		// Get DID resolve cache dir.
-		final String cacheDir = System.getProperty("user.home") + File.separator + ".cache"
-				+ File.separator + "elastos.did";
-
 		// Initializa the DID backend globally.
-		// DIDBackend.initialize("http://did1rpc.longrunweather.com:18080", cacheDir);
-		DIDBackend.initialize("http://api.elastos.io:22606", cacheDir);
+		DIDBackend.initialize(new AssistDIDAdapter("testnet"));
+
 		String token = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTU5MDM1MjUsImV4cCI6MTU5NTk4OTkyNSwiaXNzIjoiZGlkOmVsYXN0b3M6aVlwUU13aGVEeHlTcWl2b2NTSmFvcHJjb0RUcVFzRFlBdSIsImNvbW1hbmQiOiJ2b3RlZm9ycHJvcG9zYWwiLCJkYXRhIjp7InByb3Bvc2FsSGFzaCI6ImY0MTRkMjUzODY0NDQ2NDNiYTE2NzZlYmZjZjU0ODJjNmZlYjNkMDI1OTlmNjE0NTJlYTYwMDg5OWQ4ZDdiZWUifX0.AsKlYyG3RyMBXBiDWkjZ4etbhCNjEp9MKIy8ySW2rBvCD9xFUiKUrjbsB4V0YI7eV47aqso4y8OdSXxc9yfoCw";
 		printJwt(token);
 

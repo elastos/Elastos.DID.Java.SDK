@@ -6,6 +6,7 @@ import java.util.List;
 import org.elastos.did.DID;
 import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDStore;
+import org.elastos.did.RootIdentity;
 import org.elastos.did.exception.DIDException;
 
 public class RestoreFromMnemonic {
@@ -24,28 +25,19 @@ public class RestoreFromMnemonic {
 		String passphrase = "secret";
 		String storepass = "passwd";
 
-		// Get DID resolve cache dir.
-		final String cacheDir = System.getProperty("user.home") + File.separator + ".cache"
-				+ File.separator + "elastos.did";
-
 		// Initializa the DID backend globally.
-		DIDBackend.initialize("http://api.elastos.io:21606", cacheDir);
+		DIDBackend.initialize(new AssistDIDAdapter("testnet"));
 
 		final String storePath = System.getProperty("java.io.tmpdir")
 				+ File.separator + "recovery.store";
 		deleteFile(new File(storePath));
 
-		// Create a fake adapter, just print the tx payload to console.
-		DIDStore store = DIDStore.open("filesystem", storePath, (payload, memo) -> {
-			System.out.println("Create ID transaction with:");
-			System.out.println("  Payload = " + payload);
-		});
+		DIDStore store = DIDStore.open(storePath);
 
-		store.initPrivateIdentity(null, mnemonic, passphrase, storepass);
+		RootIdentity id = RootIdentity.create(mnemonic, passphrase, store, storepass);
+		id.synchronize();
 
-		store.synchronize(storepass);
-
-		List<DID> dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
+		List<DID> dids = store.listDids();
 		if (dids.size() > 0) {
 			for (DID did : dids) {
 				System.out.println(did);

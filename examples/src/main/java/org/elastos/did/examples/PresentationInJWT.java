@@ -25,6 +25,7 @@ package org.elastos.did.examples;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,19 +36,22 @@ import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.Issuer;
 import org.elastos.did.Mnemonic;
+import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
-import org.elastos.did.backend.DummyBackend;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.jwt.Claims;
+import org.elastos.did.jwt.Header;
+import org.elastos.did.jwt.Jws;
+import org.elastos.did.jwt.JwsSignatureException;
+import org.elastos.did.jwt.JwtParser;
+import org.elastos.did.jwt.JwtParserBuilder;
 
-public class CreatePresentation {
-	// DummyBackend only for demo and testing.
-	private static DummyBackend adapter;
-
+public class PresentationInJWT {
 	public static class Entity {
 		// Mnemonic passphrase and the store password should set by the end user.
 		private final static String passphrase = "mypassphrase";
-		private final static String storepass = "password";
+		private final static String storepass = "mypassword";
 
 		private String name;
 		private DIDStore store;
@@ -64,11 +68,10 @@ public class CreatePresentation {
 			final String storePath = System.getProperty("java.io.tmpdir")
 					+ File.separator + name + ".store";
 
-			// Create a fake adapter, just print the tx payload to console.
-			store = DIDStore.open("filesystem", storePath, adapter);
+			store = DIDStore.open(storePath);
 
 			// Check the store whether contains the root private identity.
-			if (store.containsPrivateIdentity())
+			if (store.containsRootIdentities())
 				return; // Already exists
 
 			// Create a mnemonic use default language(English).
@@ -81,31 +84,28 @@ public class CreatePresentation {
 			System.out.println("  Store password: " + storepass);
 
 			// Initialize the root identity.
-			store.initPrivateIdentity(null, mnemonic, passphrase, storepass);
+			RootIdentity.create(mnemonic, passphrase, store, storepass);
 		}
 
 		protected void initDid() throws DIDException {
 			// Check the DID store already contains owner's DID(with private key).
-			List<DID> dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
-			if (dids.size() > 0) {
-				for (DID did : dids) {
-					if (did.getMetadata().getAlias().equals("me")) {
-						// Already create my DID.
-						System.out.format("[%s] My DID: %s%n", name, did);
-						this.did = did;
-
-						// This only for dummy backend.
-						// normally don't need this on ID sidechain.
-						store.publishDid(did, storepass);
-						return;
-					}
+			List<DID> dids = store.listDids((did) -> {
+				try {
+					return (store.containsPrivateKeys(did) && did.getMetadata().getAlias().equals("me"));
+				} catch (DIDException e) {
+					return false;
 				}
+			});
+
+			if (dids.size() > 0) {
+				return; // Already create my DID.
 			}
 
-			DIDDocument doc = store.newDid("me", storepass);
-			this.did = doc.getSubject();
-			System.out.format("[%s] My new DID created: %s%n", name, did);
-			store.publishDid(did, storepass);
+			RootIdentity id = store.loadRootIdentity();
+			DIDDocument doc = id.newDid(storepass);
+			doc.getMetadata().setAlias("me");
+			System.out.println("My new DID created: " + doc.getSubject());
+			doc.publish(storepass);
 		}
 
 		protected DIDStore getDIDStore() {
@@ -205,21 +205,10 @@ public class CreatePresentation {
 		}
 	}
 
-	private static void initDIDBackend() throws DIDException {
-		// Get DID resolve cache dir.
-		final String cacheDir = System.getProperty("user.home") + File.separator + ".cache"
-				+ File.separator + "elastos.did";
-
-		// Dummy adapter for easy to use
-		adapter = new DummyBackend();
-
-		// Initializa the DID backend globally.
-		DIDBackend.initialize(adapter, cacheDir);
-	}
-
 	public static void main(String args[]) {
 		try {
-			initDIDBackend();
+			// Initializa the DID backend globally.
+			DIDBackend.initialize(new AssistDIDAdapter("testnet"));
 
 			University university = new University("Elastos");
 			Student student = new Student("John Smith", "Male", "johnsmith@example.org");
@@ -245,7 +234,54 @@ public class CreatePresentation {
 			System.out.println("  " + vp);
 			System.out.println("  Genuine: " + vp.isGenuine());
 			System.out.println("  Valid: " + vp.isValid());
-		} catch (DIDException e) {
+
+			Calendar cal = Calendar.getInstance();
+			cal.set(Calendar.MILLISECOND, 0);
+			Date iat = cal.getTime();
+			Date nbf = cal.getTime();
+			cal.add(Calendar.MONTH, 3);
+			Date exp = cal.getTime();
+
+			// Create JWT token with presentation.
+			String token = student.getDocument().jwtBuilder()
+					.addHeader(Header.TYPE, Header.JWT_TYPE)
+					.setId("test00000000")
+					.setAudience(university.getDid().toString())
+					.setIssuedAt(iat)
+					.setNotBefore(nbf)
+					.setExpiration(exp)
+					.claimWithJson("presentation", vp.toString())
+					.sign(student.getStorePassword())
+					.compact();
+
+			System.out.println("JWT Token:");
+			System.out.println("  " + token);
+
+			// Verify the token automatically
+			JwtParser jp = new JwtParserBuilder().build();
+			Jws<Claims> jwt = jp.parseClaimsJws(token);
+
+			// Get claims from the token
+			String preJson = jwt.getBody().getAsJson("presentation");
+			vp = VerifiablePresentation.parse(preJson);
+			System.out.println("Presentation from JWT:");
+			System.out.println("  " + vp);
+			System.out.println("  Genuine: " + vp.isGenuine());
+			System.out.println("  Valid: " + vp.isValid());
+
+			// Verify the token based on a DID
+			// This will success, because the JWT was signed by the student
+			jp = student.getDocument().jwtParserBuilder().build();
+			jwt = jp.parseClaimsJws(token);
+
+			// This will failed, because the JWT was signed by the student not by the university
+			jp = university.getDocument().jwtParserBuilder().build();
+			try {
+				jwt = jp.parseClaimsJws(token);
+			} catch (JwsSignatureException e) {
+				// Should be here.
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

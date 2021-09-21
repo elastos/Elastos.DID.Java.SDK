@@ -23,6 +23,7 @@
 package org.elastos.did.examples;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -34,18 +35,16 @@ import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.Issuer;
 import org.elastos.did.Mnemonic;
+import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
-import org.elastos.did.backend.DummyBackend;
+import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.exception.DIDException;
 
-public class IssueCredential {
-	// DummyBackend only for demo and testing.
-	private static DummyBackend adapter;
-
+public class CreatePresentation {
 	public static class Entity {
 		// Mnemonic passphrase and the store password should set by the end user.
 		private final static String passphrase = "mypassphrase";
-		private final static String storepass = "password";
+		private final static String storepass = "mypassword";
 
 		private String name;
 		private DIDStore store;
@@ -62,11 +61,10 @@ public class IssueCredential {
 			final String storePath = System.getProperty("java.io.tmpdir")
 					+ File.separator + name + ".store";
 
-			// Create a fake adapter, just print the tx payload to console.
-			store = DIDStore.open("filesystem", storePath, adapter);
+			store = DIDStore.open(storePath);
 
 			// Check the store whether contains the root private identity.
-			if (store.containsPrivateIdentity())
+			if (store.containsRootIdentities())
 				return; // Already exists
 
 			// Create a mnemonic use default language(English).
@@ -79,31 +77,32 @@ public class IssueCredential {
 			System.out.println("  Store password: " + storepass);
 
 			// Initialize the root identity.
-			store.initPrivateIdentity(null, mnemonic, passphrase, storepass);
+			RootIdentity.create(mnemonic, passphrase, store, storepass);
 		}
 
 		protected void initDid() throws DIDException {
 			// Check the DID store already contains owner's DID(with private key).
-			List<DID> dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
-			if (dids.size() > 0) {
-				for (DID did : dids) {
-					if (did.getMetadata().getAlias().equals("me")) {
-						// Already create my DID.
-						System.out.format("[%s] My DID: %s%n", name, did);
-						this.did = did;
-
-						// This only for dummy backend.
-						// normally don't need this on ID sidechain.
-						store.publishDid(did, storepass);
-						return;
-					}
+			List<DID> dids = store.listDids((did) -> {
+				try {
+					return (store.containsPrivateKeys(did) && did.getMetadata().getAlias().equals("me"));
+				} catch (DIDException e) {
+					return false;
 				}
+			});
+
+			if (dids.size() > 0) {
+				return; // Already create my DID.
 			}
 
-			DIDDocument doc = store.newDid("me", storepass);
-			this.did = doc.getSubject();
-			System.out.format("[%s] My new DID created: %s%n", name, did);
-			store.publishDid(did, storepass);
+			RootIdentity id = store.loadRootIdentity();
+			DIDDocument doc = id.newDid(storepass);
+			doc.getMetadata().setAlias("me");
+			System.out.println("My new DID created: " + doc.getSubject());
+			doc.publish(storepass);
+		}
+
+		protected DIDStore getDIDStore() {
+			return store;
 		}
 
 		public DID getDid() {
@@ -154,37 +153,80 @@ public class IssueCredential {
 	}
 
 	public static class Student extends Entity {
-		public Student(String name) throws DIDException {
+		private String gender;
+		private String email;
+		private List<VerifiableCredential> vcs;
+
+		public Student(String name, String gender, String email) throws DIDException {
 			super(name);
+			this.gender = gender;
+			this.email = email;
+
+			this.vcs = new ArrayList<VerifiableCredential>(4);
 		}
-	}
 
-	private static void initDIDBackend() throws DIDException {
-		// Get DID resolve cache dir.
-		final String cacheDir = System.getProperty("user.home") + File.separator + ".cache"
-				+ File.separator + "elastos.did";
+		public VerifiableCredential createSelfProclaimedCredential() throws DIDException {
+			Map<String, Object> subject = new HashMap<String, Object>();
+			subject.put("name", getName());
+			subject.put("gender", gender);
+			subject.put("email", email);
 
-		// Dummy adapter for easy to use
-		adapter = new DummyBackend();
+			Calendar exp = Calendar.getInstance();
+			exp.add(Calendar.YEAR, 1);
 
-		// Initializa the DID backend globally.
-		DIDBackend.initialize(adapter, cacheDir);
+			VerifiableCredential.Builder cb = new Issuer(getDocument()).issueFor(getDid());
+			VerifiableCredential vc = cb.id("profile")
+				.type("ProfileCredential", "SelfProclaimedCredential")
+				.properties(subject)
+				.expirationDate(exp.getTime())
+				.seal(getStorePassword());
+
+			return vc;
+		}
+
+		public void addCredential(VerifiableCredential vc) {
+			vcs.add(vc);
+		}
+
+		public VerifiablePresentation createPresentation(String realm, String nonce) throws DIDException {
+			VerifiablePresentation.Builder vpb = VerifiablePresentation.createFor(getDid(), getDIDStore());
+
+			return vpb.credentials(vcs.toArray(new VerifiableCredential[vcs.size()]))
+				.realm(realm)
+				.nonce(nonce)
+				.seal(getStorePassword());
+		}
 	}
 
 	public static void main(String args[]) {
 		try {
-			initDIDBackend();
+			// Initializa the DID backend globally.
+			DIDBackend.initialize(new AssistDIDAdapter("testnet"));
 
 			University university = new University("Elastos");
-			Student student = new Student("John Smith");
+			Student student = new Student("John Smith", "Male", "johnsmith@example.org");
 
 			VerifiableCredential vc = university.issueDiplomaFor(student);
 			System.out.println("The diploma credential:");
 			System.out.println("  " + vc);
-
 			System.out.println("  Genuine: " + vc.isGenuine());
 			System.out.println("  Expired: " + vc.isExpired());
 			System.out.println("  Valid: " + vc.isValid());
+			student.addCredential(vc);
+
+			vc = student.createSelfProclaimedCredential();
+			System.out.println("The profile credential:");
+			System.out.println("  " + vc);
+			System.out.println("  Genuine: " + vc.isGenuine());
+			System.out.println("  Expired: " + vc.isExpired());
+			System.out.println("  Valid: " + vc.isValid());
+			student.addCredential(vc);
+
+			VerifiablePresentation vp = student.createPresentation("test", "873172f58701a9ee686f0630204fee59");
+			System.out.println("The verifiable presentation:");
+			System.out.println("  " + vp);
+			System.out.println("  Genuine: " + vp.isGenuine());
+			System.out.println("  Valid: " + vp.isValid());
 		} catch (DIDException e) {
 			e.printStackTrace();
 		}
