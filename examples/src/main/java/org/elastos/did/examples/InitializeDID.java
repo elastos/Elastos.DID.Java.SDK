@@ -30,36 +30,24 @@ import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.Mnemonic;
+import org.elastos.did.RootIdentity;
 import org.elastos.did.exception.DIDException;
 
 public class InitializeDID {
 	// Mnemonic passphrase and the store password should set by the end user.
 	private final static String passphrase = "mypassphrase";
-	private final static String storepass = "password";
+	private final static String storepass = "mypassword";
 
 	private DIDStore store;
-
-	private void initDIDBackend() throws DIDException {
-		// Get DID resolve cache dir.
-		final String cacheDir = System.getProperty("user.home") + File.separator + ".cache"
-				+ File.separator + "elastos.did";
-
-		// Initializa the DID backend globally.
-		DIDBackend.initialize("http://api.elastos.io:20606", cacheDir);
-	}
 
 	private void initPrivateIdentity() throws DIDException {
 		final String storePath = System.getProperty("java.io.tmpdir")
 				+ File.separator + "exampleStore";
 
-		// Create a fake adapter, just print the tx payload to console.
-		store = DIDStore.open("filesystem", storePath, (payload, memo) -> {
-			System.out.println("Create ID transaction with:");
-			System.out.println("  Payload = " + payload);
-		});
+		store = DIDStore.open(storePath);
 
 		// Check the store whether contains the root private identity.
-		if (store.containsPrivateIdentity())
+		if (store.containsRootIdentities())
 			return; // Already exists
 
 		// Create a mnemonic use default language(English).
@@ -72,31 +60,37 @@ public class InitializeDID {
 		System.out.println("  Store password: " + storepass);
 
 		// Initialize the root identity.
-		store.initPrivateIdentity(null, mnemonic, passphrase, storepass);
+		RootIdentity.create(mnemonic, passphrase, store, storepass);
 	}
 
 	private void initDid() throws DIDException {
 		// Check the DID store already contains owner's DID(with private key).
-		List<DID> dids = store.listDids(DIDStore.DID_HAS_PRIVATEKEY);
-		if (dids.size() > 0) {
-			for (DID did : dids) {
-				if (did.getMetadata().getAlias().equals("me")) {
-					System.out.println("My DID: " + did);
-					return; // Already create my DID.
-				}
+		List<DID> dids = store.listDids((did) -> {
+			try {
+				return (store.containsPrivateKeys(did) && did.getMetadata().getAlias().equals("me"));
+			} catch (DIDException e) {
+				return false;
 			}
+		});
+
+		if (dids.size() > 0) {
+			return; // Already create my DID.
 		}
 
-		DIDDocument doc = store.newDid("me", storepass);
+		RootIdentity id = store.loadRootIdentity();
+		DIDDocument doc = id.newDid(storepass);
+		doc.getMetadata().setAlias("me");
 		System.out.println("My new DID created: " + doc.getSubject());
-		store.publishDid(doc.getSubject(), storepass);
+		doc.publish(storepass);
 	}
 
 	public static void main(String args[]) {
 		InitializeDID example = new InitializeDID();
 
 		try {
-			example.initDIDBackend();
+			// Initializa the DID backend globally.
+			DIDBackend.initialize(new AssistDIDAdapter("testnet"));
+
 			example.initPrivateIdentity();
 			example.initDid();
 		} catch (DIDException e) {
