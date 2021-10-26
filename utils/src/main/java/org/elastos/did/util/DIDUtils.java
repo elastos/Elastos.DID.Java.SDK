@@ -47,7 +47,8 @@ import picocli.CommandLine.Command;
 			PublishDid.class,
 			Recover.class,
 			SimChain.class,
-			Shell.class
+			Jsonld.class,
+			Shell.class,
 		})
 public class DIDUtils {
 	public static void main(String[] args) {

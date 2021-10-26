@@ -18,11 +18,15 @@ compileJava {
 
 dependencies {
 	implementation project(':Elastos-DID-SDK')
+	// Jackson JSON library
 	implementation 'com.fasterxml.jackson.core:jackson-core:2.11.0'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.0'
-	implementation 'info.picocli:picocli:4.5.2'
+	// Titanium JSON-LD library
+	implementation 'org.glassfish:jakarta.json:2.0.1'
+	implementation 'com.apicatalog:titanium-json-ld:1.1.0'
+	
 	implementation 'ch.qos.logback:logback-classic:1.2.3'
-
+	implementation 'info.picocli:picocli:4.5.2'
 }
 
 jar {
