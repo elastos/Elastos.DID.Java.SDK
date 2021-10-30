@@ -1,0 +1,8 @@
+{
+    "https://elastos.org/did/v1": "did/v1",
+    "https://elastos.org/credentials/v1": "credentials/v1",
+    "https://elastos.org/credentials/profile/v1": "credentials/profile/v1",
+    "https://elastos.org/credentials/wallet/v1": "credentials/wallet/v1",
+    "https://elastos.org/credentials/social/v1": "credentials/social/v1",
+    "https://elastos.org/credentials/email/v1": "credentials/email/v1"
+}
