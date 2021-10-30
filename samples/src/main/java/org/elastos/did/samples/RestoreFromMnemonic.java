@@ -1,4 +1,4 @@
-package org.elastos.did.examples;
+package org.elastos.did.samples;
 
 import java.io.File;
 import java.util.List;
