@@ -8,10 +8,10 @@
  */
 include 'sdk'
 include 'utils'
-include 'examples'
+include 'samples'
 
 rootProject.name = 'Elastos-DID'
 
 project(":sdk").name = 'Elastos-DID-SDK'
 project(":utils").name = 'Elastos-DID-Utils'
-project(":examples").name = 'Elastos-DID-Examples'
+project(":samples").name = 'Elastos-DID-Samples'

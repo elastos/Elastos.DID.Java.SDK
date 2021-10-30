@@ -20,11 +20,12 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.examples;
+package org.elastos.did.samples;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +40,14 @@ import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.exception.DIDException;
+import org.elastos.did.jwt.Claims;
+import org.elastos.did.jwt.Header;
+import org.elastos.did.jwt.Jws;
+import org.elastos.did.jwt.JwsSignatureException;
+import org.elastos.did.jwt.JwtParser;
+import org.elastos.did.jwt.JwtParserBuilder;
 
-public class CreatePresentation {
+public class PresentationInJWT {
 	public static class Entity {
 		// Mnemonic passphrase and the store password should set by the end user.
 		private final static String passphrase = "mypassphrase";
@@ -227,7 +234,54 @@ public class CreatePresentation {
 			System.out.println("  " + vp);
 			System.out.println("  Genuine: " + vp.isGenuine());
 			System.out.println("  Valid: " + vp.isValid());
-		} catch (DIDException e) {
+
+			Calendar cal = Calendar.getInstance();
+			cal.set(Calendar.MILLISECOND, 0);
+			Date iat = cal.getTime();
+			Date nbf = cal.getTime();
+			cal.add(Calendar.MONTH, 3);
+			Date exp = cal.getTime();
+
+			// Create JWT token with presentation.
+			String token = student.getDocument().jwtBuilder()
+					.addHeader(Header.TYPE, Header.JWT_TYPE)
+					.setId("test00000000")
+					.setAudience(university.getDid().toString())
+					.setIssuedAt(iat)
+					.setNotBefore(nbf)
+					.setExpiration(exp)
+					.claimWithJson("presentation", vp.toString())
+					.sign(student.getStorePassword())
+					.compact();
+
+			System.out.println("JWT Token:");
+			System.out.println("  " + token);
+
+			// Verify the token automatically
+			JwtParser jp = new JwtParserBuilder().build();
+			Jws<Claims> jwt = jp.parseClaimsJws(token);
+
+			// Get claims from the token
+			String preJson = jwt.getBody().getAsJson("presentation");
+			vp = VerifiablePresentation.parse(preJson);
+			System.out.println("Presentation from JWT:");
+			System.out.println("  " + vp);
+			System.out.println("  Genuine: " + vp.isGenuine());
+			System.out.println("  Valid: " + vp.isValid());
+
+			// Verify the token based on a DID
+			// This will success, because the JWT was signed by the student
+			jp = student.getDocument().jwtParserBuilder().build();
+			jwt = jp.parseClaimsJws(token);
+
+			// This will failed, because the JWT was signed by the student not by the university
+			jp = university.getDocument().jwtParserBuilder().build();
+			try {
+				jwt = jp.parseClaimsJws(token);
+			} catch (JwsSignatureException e) {
+				// Should be here.
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

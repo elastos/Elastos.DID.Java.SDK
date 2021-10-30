@@ -1,4 +1,4 @@
-package org.elastos.did.examples;
+package org.elastos.did.samples;
 
 import org.elastos.did.DIDBackend;
 import org.elastos.did.crypto.Base64;
