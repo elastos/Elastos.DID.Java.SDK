@@ -224,6 +224,14 @@ public interface DIDStorage {
 	public List<DID> listDids() throws DIDStorageException;
 
 	/**
+	 * Check if this storage contains DIDs.
+	 *
+	 * @return true if the store contains DIDs, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public boolean containsDids() throws DIDStoreException;
+
+	/**
 	 * Save the credential's metadata to this storage.
 	 *
 	 * @param id the id of the credential
