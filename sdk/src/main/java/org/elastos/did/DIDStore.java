@@ -855,6 +855,16 @@ public final class DIDStore {
 	}
 
 	/**
+	 * Check if this store contains DIDs.
+	 *
+	 * @return true if the store contains DIDs, false otherwise
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public boolean containsDids() throws DIDStoreException {
+		return storage.containsDids();
+	}
+
+	/**
 	 * Save the DID Metadata to this store.
 	 *
 	 * @param did the owner of the metadata object

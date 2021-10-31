@@ -592,6 +592,20 @@ class FileSystemStorage implements DIDStorage {
 		return dids;
 	}
 
+	@Override
+	public boolean containsDids() {
+		File dir = getDir(currentDataDir, DID_DIR);
+		if (!dir.exists())
+			return false;
+
+		File[] children = dir.listFiles((file) -> {
+			return file.isDirectory();
+		});
+
+		return children == null ? false : children.length > 0;
+	}
+
+
 	private File getCredentialFile(DIDURL id, boolean create) {
 		return getFile(create, currentDataDir, DID_DIR, id.getDid().getMethodSpecificId(),
 				CREDENTIALS_DIR, toPath(id), CREDENTIAL_FILE);
