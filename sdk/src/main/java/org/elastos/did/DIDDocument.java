@@ -23,11 +23,13 @@
 package org.elastos.did;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -114,7 +116,8 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
  * <a href="https://github.com/elastos/Elastos.DID.Method">Elastos DID Method Specification</a>.
  * </p>
  */
-@JsonPropertyOrder({ DIDDocument.ID,
+@JsonPropertyOrder({ DIDDocument.CONTEXT,
+	DIDDocument.ID,
 	DIDDocument.CONTROLLER,
 	DIDDocument.MULTI_SIGNATURE,
 	DIDDocument.PUBLICKEY,
@@ -125,6 +128,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 	DIDDocument.EXPIRES,
 	DIDDocument.PROOF })
 public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
+	protected final static String CONTEXT = "@context";
 	protected final static String ID = "id";
 	protected final static String PUBLICKEY = "publicKey";
 	protected final static String TYPE = "type";
@@ -141,6 +145,14 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	protected final static String CREATOR = "creator";
 	protected final static String CREATED = "created";
 	protected final static String SIGNATURE_VALUE = "signatureValue";
+
+	public final static String W3C_DID_CONTEXT = "https://www.w3.org/ns/did/v1";
+	public final static String ELASTOS_DID_CONTEXT = "https://elastos.org/did/v1";
+	public final static String W3ID_SECURITY_CONTEXT = "https://w3id.org/security/v1";
+
+	@JsonProperty(CONTEXT)
+	@JsonInclude(Include.NON_EMPTY)
+	List<String> context;
 
 	@JsonProperty(ID)
 	private DID subject;
@@ -820,6 +832,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 * @param withProof copy with the proof or not
 	 */
 	private DIDDocument(DIDDocument doc, boolean withProof) {
+		this.context = doc.context;
 		this.subject = doc.subject;
 		this.controllers = doc.controllers;
 		this.controllerDocs = doc.controllerDocs;
@@ -2396,6 +2409,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	public DIDDocument clone() {
 		DIDDocument doc = new DIDDocument(subject);
 
+		doc.context = context;
 		doc.controllers = controllers;
 		doc.controllerDocs = controllerDocs;
 		doc.effectiveController = effectiveController;
@@ -2423,6 +2437,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	private DIDDocument copy() {
 		DIDDocument doc = new DIDDocument(subject);
 
+		doc.context = context == null ? null : new ArrayList<String>(context);
 		doc.controllers = new ArrayList<DID>(controllers);
 		doc.controllerDocs = new HashMap<DID, DIDDocument>(controllerDocs);
 		if (this.multisig != null)
@@ -4316,6 +4331,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		 */
 		protected Builder(DID did, DIDStore store) {
 			this.document = new DIDDocument(did);
+			if (Features.isEnabledJsonLdContext())
+				addDefaultContexts();
+
 			DIDMetadata metadata = new DIDMetadata(did, store);
 			this.document.setMetadata(metadata);
 		}
@@ -4329,6 +4347,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		 */
 		protected Builder(DID did, DIDDocument controller, DIDStore store) {
 			this.document = new DIDDocument(did);
+			if (Features.isEnabledJsonLdContext())
+				addDefaultContexts();
 
 			this.document.controllers = new ArrayList<DID>();
 			this.document.controllerDocs = new HashMap<DID, DIDDocument>();
@@ -4390,6 +4410,57 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		private void checkIsCustomized() throws NotCustomizedDIDException {
 			if (!document.isCustomizedDid())
 				throw new NotCustomizedDIDException(document.getSubject().toString());
+		}
+
+		/**
+		 * Add the default DID contexts(include W3C and Elastos DID contexts).
+		 *
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder addDefaultContexts() {
+			checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+
+			if (document.context == null)
+				document.context = new ArrayList<String>();
+
+			if (!document.context.contains(W3C_DID_CONTEXT))
+				document.context.add(W3C_DID_CONTEXT);
+
+			if (!document.context.contains(ELASTOS_DID_CONTEXT))
+				document.context.add(ELASTOS_DID_CONTEXT);
+
+			if (!document.context.contains(W3ID_SECURITY_CONTEXT))
+				document.context.add(W3ID_SECURITY_CONTEXT);
+
+			return this;
+		}
+
+		/**
+		 * Add a new context to the document.
+		 *
+		 * @param uri URI for the new context
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder addContext(String uri) {
+			checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+
+			if (document.context == null)
+				document.context = new ArrayList<String>();
+
+			if (!document.context.contains(uri))
+				document.context.add(uri);
+
+			return this;
+		}
+
+		/**
+		 * Add a new context to the document.
+		 *
+		 * @param uri URI for the new context
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder addContext(URI uri) {
+			return addContext(uri.toString());
 		}
 
 		/**
@@ -5094,15 +5165,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 
 			Issuer issuer = new Issuer(document);
 			VerifiableCredential.Builder cb = issuer.issueFor(document.getSubject());
-			if (types == null)
-				types = new String[]{ "SelfProclaimedCredential" };
 
 			if (expirationDate == null)
 				expirationDate = document.getExpires();
 
 			try {
 				VerifiableCredential vc = cb.id(canonicalId(id))
-						.type(types)
+						.types(types)
 						.properties(subject)
 						.expirationDate(expirationDate)
 						.seal(storepass);
@@ -5243,15 +5312,13 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 
 			Issuer issuer = new Issuer(document);
 			VerifiableCredential.Builder cb = issuer.issueFor(document.getSubject());
-			if (types == null)
-				types = new String[]{ "SelfProclaimedCredential" };
 
 			if (expirationDate == null)
 				expirationDate = document.expires;
 
 			try {
 				VerifiableCredential vc = cb.id(canonicalId(id))
-						.type(types)
+						.types(types)
 						.properties(jsonSubject)
 						.expirationDate(expirationDate)
 						.seal(storepass);

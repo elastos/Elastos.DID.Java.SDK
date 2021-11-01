@@ -68,9 +68,9 @@ public class VerifiableCredentialTest {
     	testData.cleanup();
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testKycCredential(int version) throws DIDException, IOException {
+	@ParameterizedTest
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testKycCredential(String version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
     	DIDDocument issuer = cd.getDocument("issuer");
@@ -80,8 +80,13 @@ public class VerifiableCredentialTest {
 
 		assertEquals(new DIDURL(user.getSubject(), "#twitter"), vc.getId());
 
-		assertTrue(vc.getType().contains("InternetAccountCredential"));
-		assertTrue(vc.getType().contains("TwitterCredential"));
+		if (Float.valueOf(version) < 2.0) {
+			assertTrue(vc.getType().contains("InternetAccountCredential"));
+			assertTrue(vc.getType().contains("TwitterCredential"));
+		} else {
+			assertTrue(vc.getType().contains("VerifiableCredential"));
+			assertTrue(vc.getType().contains("SocialCredential"));
+		}
 
 		assertEquals(issuer.getSubject(), vc.getIssuer());
 		assertEquals(user.getSubject(), vc.getSubject().getId());
@@ -97,9 +102,9 @@ public class VerifiableCredentialTest {
 		assertTrue(vc.isValid());
 	}
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testSelfProclaimedCredential(int version) throws DIDException, IOException {
+	@ParameterizedTest
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testSelfProclaimedCredential(String version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
     	DIDDocument user = cd.getDocument("user1");
@@ -107,14 +112,24 @@ public class VerifiableCredentialTest {
 
 		assertEquals(new DIDURL(user.getSubject(), "#passport"), vc.getId());
 
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
-		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
+		if (Float.valueOf(version) < 2.0) {
+			assertTrue(vc.getType().contains("BasicProfileCredential"));
+			assertTrue(vc.getType().contains("SelfProclaimedCredential"));
+		} else {
+			assertTrue(vc.getType().contains("VerifiableCredential"));
+			assertTrue(vc.getType().contains("SelfProclaimedCredential"));
+		}
 
 		assertEquals(user.getSubject(), vc.getIssuer());
 		assertEquals(user.getSubject(), vc.getSubject().getId());
 
-		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
-		assertEquals("S653258Z07", vc.getSubject().getProperty("passport"));
+		if (Float.valueOf(version) < 2.0) {
+			assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+			assertEquals("S653258Z07", vc.getSubject().getProperty("passport"));
+		} else {
+			assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
+			assertEquals("S653258Z07", vc.getSubject().getProperty("passport"));
+		}
 
 		assertNotNull(vc.getIssuanceDate());
 		assertNotNull(vc.getExpirationDate());
@@ -125,9 +140,9 @@ public class VerifiableCredentialTest {
 		assertTrue(vc.isValid());
 	}
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testJsonCredential(int version) throws DIDException, IOException {
+	@ParameterizedTest
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testJsonCredential(String version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
     	DIDDocument issuer = cd.getDocument("issuer");
@@ -136,8 +151,13 @@ public class VerifiableCredentialTest {
 
 		assertEquals(new DIDURL(user.getSubject(), "#json"), vc.getId());
 
-		assertTrue(vc.getType().contains("JsonCredential"));
-		assertTrue(vc.getType().contains("TestCredential"));
+		if (Float.valueOf(version) < 2.0) {
+			assertTrue(vc.getType().contains("JsonCredential"));
+			assertTrue(vc.getType().contains("TestCredential"));
+		} else {
+			assertTrue(vc.getType().contains("VerifiableCredential"));
+			assertFalse(vc.getType().contains("NonExistsType"));
+		}
 
 		assertEquals(issuer.getSubject(), vc.getIssuer());
 		assertEquals(user.getSubject(), vc.getSubject().getId());
@@ -155,9 +175,10 @@ public class VerifiableCredentialTest {
 		assertTrue(vc.isValid());
 	}
 
-    @Test
-    public void testKycCredentialToCid() throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+    public void testKycCredentialToCid(String version) throws DIDException, IOException {
+    	TestData.CompatibleData cd = testData.getCompatibleData(version);
     	cd.loadAll();
 
     	DIDDocument issuer = cd.getDocument("issuer");
@@ -167,7 +188,7 @@ public class VerifiableCredentialTest {
 
 		assertEquals(new DIDURL(foo.getSubject(), "#email"), vc.getId());
 
-		assertTrue(vc.getType().contains("InternetAccountCredential"));
+		assertTrue(vc.getType().contains("EmailCredential"));
 		assertFalse(vc.getType().contains("ProfileCredential"));
 
 		assertEquals(issuer.getSubject(), vc.getIssuer());
@@ -184,9 +205,10 @@ public class VerifiableCredentialTest {
 		assertTrue(vc.isValid());
     }
 
-    @Test
-    public void testKycCredentialFromCid() throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+    public void testKycCredentialFromCid(String version) throws DIDException, IOException {
+    	TestData.CompatibleData cd = testData.getCompatibleData(version);
     	cd.loadAll();
 
     	DIDDocument exampleCorp = cd.getDocument("examplecorp");
@@ -214,9 +236,10 @@ public class VerifiableCredentialTest {
 		assertTrue(vc.isValid());
     }
 
-    @Test
-    public void testSelfProclaimedCredentialFromCid() throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+    public void testSelfProclaimedCredentialFromCid(String version) throws DIDException, IOException {
+    	TestData.CompatibleData cd = testData.getCompatibleData(version);
     	cd.loadAll();
 
     	DIDDocument foobar = cd.getDocument("foobar");
@@ -226,7 +249,7 @@ public class VerifiableCredentialTest {
 		assertEquals(new DIDURL(foobar.getSubject(), "#services"), vc.getId());
 
 		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
+		assertTrue(vc.getType().contains("VerifiableCredential"));
 
 		assertEquals(foobar.getSubject(), vc.getIssuer());
 		assertEquals(foobar.getSubject(), vc.getSubject().getId());
@@ -253,8 +276,14 @@ public class VerifiableCredentialTest {
     	"2,user1,json",
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-	public void testParseAndSerialize(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,user1,twitter",
+		"2.2,user1,passport",
+		"2.2,user1,json",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+	public void testParseAndSerialize(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -293,8 +322,14 @@ public class VerifiableCredentialTest {
     	"2,user1,json",
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-	public void testGenuineAndValidWithListener(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,user1,twitter",
+		"2.2,user1,passport",
+		"2.2,user1,json",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+	public void testGenuineAndValidWithListener(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -322,8 +357,14 @@ public class VerifiableCredentialTest {
     	"2,user1,json",
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-    public void testDeclareCrendential(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,user1,twitter",
+		"2.2,user1,passport",
+		"2.2,user1,json",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+    public void testDeclareCrendential(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -358,8 +399,11 @@ public class VerifiableCredentialTest {
 		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(0).getRequest().getOperation());
     }
 
-    @Test
-    public void testDeclareCrendentials() throws DIDException {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void testDeclareCrendentials(boolean contextEnabled) throws DIDException {
+    	Features.enableJsonLdContext(contextEnabled);
+
 	   	TestData.InstantData sd = testData.getInstantData();
 
 	   	String[][] vcds = {
@@ -414,8 +458,14 @@ public class VerifiableCredentialTest {
     	"2,user1,json",
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-    public void testRevokeCrendential(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,user1,twitter",
+		"2.2,user1,passport",
+		"2.2,user1,json",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+    public void testRevokeCrendential(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -478,8 +528,14 @@ public class VerifiableCredentialTest {
     	"2,user1,json",
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-    public void testIllegalRevoke(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,user1,twitter",
+		"2.2,user1,passport",
+		"2.2,user1,json",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+    public void testIllegalRevoke(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -539,8 +595,11 @@ public class VerifiableCredentialTest {
     @CsvSource({
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-    public void testRevokeCrendentialWithDifferentKey(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+	public void testRevokeCrendentialWithDifferentKey(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -609,8 +668,14 @@ public class VerifiableCredentialTest {
     	"2,user1,json",
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-    public void testDeclareAfterDeclare(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,user1,twitter",
+		"2.2,user1,passport",
+		"2.2,user1,json",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+    public void testDeclareAfterDeclare(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -655,8 +720,14 @@ public class VerifiableCredentialTest {
     	"2,user1,json",
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-    public void testDeclareAfterRevoke(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,user1,twitter",
+		"2.2,user1,passport",
+		"2.2,user1,json",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+    public void testDeclareAfterRevoke(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -697,8 +768,11 @@ public class VerifiableCredentialTest {
     @CsvSource({
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-    public void testDeclareAfterRevokeWithDifferentKey(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+    public void testDeclareAfterRevokeWithDifferentKey(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -751,8 +825,14 @@ public class VerifiableCredentialTest {
     	"2,user1,json",
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-    public void testDeclareAfterRevokeByIssuer(int version, String did, String vc)
+    	"2,foo,email",
+		"2.2,user1,twitter",
+		"2.2,user1,passport",
+		"2.2,user1,json",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+    public void testDeclareAfterRevokeByIssuer(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
@@ -807,8 +887,14 @@ public class VerifiableCredentialTest {
     	"2,user1,json",
     	"2,foobar,license",
     	"2,foobar,services",
-    	"2,foo,email"})
-    public void testDeclareAfterInvalidRevoke(int version, String did, String vc)
+    	"2,foo,email",
+	   	"2.2,user1,twitter",
+		"2.2,user1,passport",
+		"2.2,user1,json",
+		"2.2,foobar,license",
+		"2.2,foobar,services",
+		"2.2,foo,email"})
+   public void testDeclareAfterInvalidRevoke(String version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	TestData.InstantData sd = testData.getInstantData();
@@ -871,8 +957,11 @@ public class VerifiableCredentialTest {
 		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(1).getRequest().getOperation());
     }
 
-    @Test
-    public void testListCrendentials() throws DIDException {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void testListCrendentials(boolean contextEnabled) throws DIDException {
+    	Features.enableJsonLdContext(contextEnabled);
+
 	   	TestData.InstantData sd = testData.getInstantData();
 
 	   	String[][] vcds = {
@@ -882,7 +971,7 @@ public class VerifiableCredentialTest {
 	   			{ "user1", "jobposition" },
 	   			{ "foobar", "license" },
 	   			{ "foobar", "services" },
-	   			{ "foo" , "email" }
+	   			{ "foo", "email" }
 	   	};
 
 	   	for (String[] vcd : vcds) {
@@ -1040,7 +1129,7 @@ public class VerifiableCredentialTest {
 
     		VerifiableCredential vc = selfIssuer.issueFor(did)
     				.id("#test" + i)
-    				.type("SelfProclaimedCredential")
+					.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
     				.property("index", Integer.valueOf(i))
     				.seal(TestConfig.storePass);
 

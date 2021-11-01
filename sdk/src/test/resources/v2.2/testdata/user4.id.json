@@ -1,0 +1,18 @@
+{
+  "@context" : [ "https://www.w3.org/ns/did/v1", "https://elastos.org/did/v1", "https://w3id.org/security/v1" ],
+  "id" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d",
+  "publicKey" : [ {
+    "id" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d#primary",
+    "type" : "ECDSAsecp256r1",
+    "controller" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d",
+    "publicKeyBase58" : "eorUr7Ek4XG1tjiqtioPDHMC2BDR7sKyVqaXc2Euiikd"
+  } ],
+  "authentication" : [ "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d#primary" ],
+  "expires" : "2026-11-02T13:37:10Z",
+  "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:37:10Z",
+    "creator" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d#primary",
+    "signatureValue" : "bIvPzy5IUwU6ydoDbNNChnJPEvyZStZ-OjM_xkI1L4Y01td8L7A9S42TJaa6CcJmU4C_NcrxeGWbS9zhLhPRrw"
+  }
+}

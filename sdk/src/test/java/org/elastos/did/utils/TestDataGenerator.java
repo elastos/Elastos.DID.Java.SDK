@@ -35,6 +35,7 @@ import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.DIDURL;
+import org.elastos.did.Features;
 import org.elastos.did.Issuer;
 import org.elastos.did.RootIdentity;
 import org.elastos.did.TransferTicket;
@@ -98,12 +99,14 @@ public class TestDataGenerator {
 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("name", "Test Issuer");
-		props.put("nation", "Singapore");
-		props.put("language", "English");
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
 		props.put("email", "issuer@example.com");
 
 		VerifiableCredential vc = cb.id("#profile")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+				.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+				.type("https://elastos.org/credentials/email/v1#EmailCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -197,13 +200,15 @@ public class TestDataGenerator {
 		props = new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
-		props.put("nation", "Singapore");
-		props.put("language", "English");
+		props.put("nationality", "Singapore");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
 		VerifiableCredential vcProfile = cb.id("#profile")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
+				.type("https://elastos.org/credentials/profile/v1#ProfileCredential")
+				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.type("SocialCredential", "https://elastos.org/credentials/social/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -214,8 +219,7 @@ public class TestDataGenerator {
 		props.put("email", "john@example.com");
 
 		VerifiableCredential vcEmail = cb.id("#email")
-				.type("BasicProfileCredential",
-						"InternetAccountCredential", "EmailCredential")
+				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -249,11 +253,11 @@ public class TestDataGenerator {
 		cb = selfIssuer.issueFor(doc.getSubject());
 
 		props.clear();
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("passport", "S653258Z07");
 
 		VerifiableCredential vcPassport = cb.id(id)
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		vcPassport.getMetadata().setAlias("Passport");
@@ -281,7 +285,7 @@ public class TestDataGenerator {
 		props.put("twitter", "@john");
 
 		VerifiableCredential vcTwitter = cb.id(id)
-				.type("InternetAccountCredential", "TwitterCredential")
+				.type("SocialCredential", "https://elastos.org/credentials/social/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		vcTwitter.getMetadata().setAlias("Twitter");
@@ -308,7 +312,6 @@ public class TestDataGenerator {
 		String jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
 		VerifiableCredential vcJson = cb.id(id)
-				.type("TestCredential", "JsonCredential")
 				.properties(jsonProps)
 				.seal(TestConfig.storePass);
 		vcJson.getMetadata().setAlias("json");
@@ -363,7 +366,7 @@ public class TestDataGenerator {
 		pb = VerifiablePresentation.createFor(
 				doc.getSubject(), store);
 
-		vp = pb.type("TestPresentation", "FooBar")
+		vp = pb.type("TestPresentation", "https://ttech.io/credentials/v1")
 				.credentials(vcProfile, vcEmail)
 				.credentials(vcPassport)
 				.credentials(vcTwitter)
@@ -395,12 +398,18 @@ public class TestDataGenerator {
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
-		props.put("nation", "Singapore");
-		props.put("language", "English");
+		props.put("nationality", "Singapore");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
-		db.addCredential("#profile", props, TestConfig.storePass);
+		String[] types = {
+			"https://elastos.org/credentials/v1#SelfProclaimedCredential",
+			"https://elastos.org/credentials/profile/v1#ProfileCredential",
+			"https://elastos.org/credentials/email/v1#EmailCredential",
+			"https://elastos.org/credentials/social/v1#SocialCredential"
+		};
+
+		db.addCredential("#profile", types, props, TestConfig.storePass);
 		doc = db.seal(TestConfig.storePass);
 		store.storeDid(doc);
 		doc.publish(TestConfig.storePass);
@@ -492,11 +501,13 @@ public class TestDataGenerator {
 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("name", "Example LLC");
-		props.put("website", "https://example.com/");
+		props.put("url", "https://example.com/");
 		props.put("email", "contact@example.com");
 
 		VerifiableCredential vc = cb.id("#profile")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+				.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -584,11 +595,13 @@ public class TestDataGenerator {
 
 		props = new HashMap<String, Object>();
 		props.put("name", "Foo Bar Inc");
-		props.put("language", "Chinese");
+		props.put("nationality", "China");
 		props.put("email", "contact@foobar.com");
 
 		VerifiableCredential vcProfile = cb.id("#profile")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+				.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -599,8 +612,7 @@ public class TestDataGenerator {
 		props.put("email", "foobar@example.com");
 
 		VerifiableCredential vcEmail = cb.id("#email")
-				.type("BasicProfileCredential",
-						"InternetAccountCredential", "EmailCredential")
+				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -634,7 +646,7 @@ public class TestDataGenerator {
 		props.put("Outsourceing", "https://foobar.com/outsourcing");
 
 		VerifiableCredential vcServices = cb.id(id)
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		store.storeCredential(vcServices);
@@ -661,7 +673,7 @@ public class TestDataGenerator {
 		props.put("scope", "Consulting");
 
 		VerifiableCredential vcLicense = cb.id(id)
-				.type("LicenseCredential")
+				.type("LicenseCredential", "https://example.com/credentials/license/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		store.storeCredential(vcLicense);
@@ -714,7 +726,7 @@ public class TestDataGenerator {
 		pb = VerifiablePresentation.createFor(
 				doc.getSubject(), signKey, store);
 
-		vp = pb.type("TestPresentation", "FooBar")
+		vp = pb.type("TestPresentation", "https://ttech.io/credentials/v1")
 				.credentials(vcProfile, vcEmail)
 				.credentials(vcServices)
 				.credentials(vcLicense)
@@ -792,7 +804,7 @@ public class TestDataGenerator {
 		props.put("email", "foo@example.com");
 
 		VerifiableCredential vc = cb.id(id)
-				.type("InternetAccountCredential")
+				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		store.storeCredential(vc);
@@ -894,6 +906,8 @@ public class TestDataGenerator {
 	}
 
 	public void createTestFiles() throws IOException, DIDException {
+		Features.enableJsonLdContext(false);
+
 		init(TestConfig.tempDir + File.separator + "DIDTestFiles.v2");
 		createTestIssuer();
 		createTestUser1();

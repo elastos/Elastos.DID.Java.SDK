@@ -1,0 +1,40 @@
+{
+  "@context" : [ "https://www.w3.org/ns/did/v1", "https://elastos.org/did/v1", "https://w3id.org/security/v1" ],
+  "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+  "publicKey" : [ {
+    "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
+    "type" : "ECDSAsecp256r1",
+    "controller" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+    "publicKeyBase58" : "kTYQhMtoimm9wV3vy4q9EVy4Z1WxRqxhvngztdGo1Dmc"
+  } ],
+  "authentication" : [ "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary" ],
+  "verifiableCredential" : [ {
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1", "https://elastos.org/credentials/profile/v1", "https://elastos.org/credentials/email/v1", "https://elastos.org/credentials/social/v1" ],
+    "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#profile",
+    "type" : [ "EmailCredential", "ProfileCredential", "SelfProclaimedCredential", "SocialCredential", "VerifiableCredential" ],
+    "issuer" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+    "issuanceDate" : "2021-11-02T13:37:09Z",
+    "expirationDate" : "2026-11-02T13:37:09Z",
+    "credentialSubject" : {
+      "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+      "email" : "john@example.com",
+      "gender" : "Male",
+      "name" : "John",
+      "nationality" : "Singapore",
+      "twitter" : "@john"
+    },
+    "proof" : {
+      "type" : "ECDSAsecp256r1",
+      "created" : "2021-11-02T13:37:09Z",
+      "verificationMethod" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
+      "signature" : "cc2ExDZEYuKhGgOanWlmLFLuTR_XCplvkEnOW1FvxO2nXFjgUDveCYwZuMxbO7zYWfHtY54ZMb9cjj9F-TGJRg"
+    }
+  } ],
+  "expires" : "2026-11-02T13:37:09Z",
+  "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:37:09Z",
+    "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
+    "signatureValue" : "lXeq4CUxcC-z0g-hnZX2lFD76DrZjEKwfpdQKFQZXXGxoQmYWhtV3kDzqtTU9nOan35-Xe0NdMmCBdhfJXXmpQ"
+  }
+}

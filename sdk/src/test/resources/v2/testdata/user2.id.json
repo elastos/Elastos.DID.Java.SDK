@@ -1,37 +1,38 @@
 {
   "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
-  "authentication" : [ {
-    "type" : "ECDSAsecp256r1",
+  "publicKey" : [ {
     "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "publicKeyBase58" : "kTYQhMtoimm9wV3vy4q9EVy4Z1WxRqxhvngztdGo1Dmc",
-    "controller" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g"
+    "type" : "ECDSAsecp256r1",
+    "controller" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+    "publicKeyBase58" : "kTYQhMtoimm9wV3vy4q9EVy4Z1WxRqxhvngztdGo1Dmc"
   } ],
+  "authentication" : [ "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary" ],
   "verifiableCredential" : [ {
     "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#profile",
-    "expirationDate" : "2026-07-13T04:35:55Z",
+    "type" : [ "EmailCredential", "ProfileCredential", "SelfProclaimedCredential", "SocialCredential", "VerifiableCredential" ],
+    "issuer" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
+    "issuanceDate" : "2021-11-02T13:38:01Z",
+    "expirationDate" : "2026-11-02T13:38:01Z",
     "credentialSubject" : {
       "id" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
-      "name" : "John",
       "email" : "john@example.com",
-      "twitter" : "@john",
       "gender" : "Male",
-      "language" : "English",
-      "nation" : "Singapore"
+      "name" : "John",
+      "nationality" : "Singapore",
+      "twitter" : "@john"
     },
-    "type" : [ "SelfProclaimedCredential" ],
-    "issuer" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g",
-    "issuanceDate" : "2021-07-13T04:35:55Z",
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-07-13T04:35:55Z",
+      "created" : "2021-11-02T13:38:01Z",
       "verificationMethod" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-      "signature" : "AqCNlO4_DuIyvwAdNkg0arVjxEUuiwvJX17m7-DzCMowocBYCg2L2zrfeIbbIEz6VS11h0vg3_iOzTh5Gi9X3g"
+      "signature" : "q-sVYNovf4i-vFX0gK8sZMzWK9RwCz6qJJmR20yvSdrZQ5S0AsHgk8uqmcKxN8Ae86pUPj3_SYUkGxJBA_8IBQ"
     }
   } ],
+  "expires" : "2026-11-02T13:38:01Z",
   "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:38:01Z",
     "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "created" : "2021-07-13T04:35:55Z",
-    "signatureValue" : "Xz3JBkK7XqXXJDaWlWyGTNiegXFf0uHF-SbkX_xhYVC_u3BPkFhX9VqqdJvWClyChjO4Wn5E_hq90DMHLSUXGA"
-  },
-  "expires" : "2026-07-13T04:35:55Z"
+    "signatureValue" : "T8PKz-9_Qd-v7IM5368vnhFrOj518zBbyVEL7CFQojoE35J9I4gMDFDyz7GmboZIBtROuN8LcNzZTn0fFKJADw"
+  }
 }

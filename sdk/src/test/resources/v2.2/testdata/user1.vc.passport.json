@@ -1,0 +1,19 @@
+{
+  "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1" ],
+  "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#passport",
+  "type" : [ "SelfProclaimedCredential", "VerifiableCredential" ],
+  "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
+  "issuanceDate" : "2021-11-02T13:37:09Z",
+  "expirationDate" : "2026-11-02T13:37:09Z",
+  "credentialSubject" : {
+    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
+    "nationality" : "Singapore",
+    "passport" : "S653258Z07"
+  },
+  "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:37:09Z",
+    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+    "signature" : "ixNUVBQCx6Feo0YmMF6vBukMOXfSwcyCJVdPeeCWSzwgJWwOYpDmQJSaI9flXZijI7fRxNB_0_biaQXa4UrdrA"
+  }
+}

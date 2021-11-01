@@ -150,7 +150,7 @@ public class PresentationInJWT {
 
 			VerifiableCredential.Builder cb = issuer.issueFor(student.getDid());
 			VerifiableCredential vc = cb.id("diploma")
-				.type("DiplomaCredential")
+				.type("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
 				.properties(subject)
 				.expirationDate(exp.getTime())
 				.seal(getStorePassword());
@@ -183,7 +183,9 @@ public class PresentationInJWT {
 
 			VerifiableCredential.Builder cb = new Issuer(getDocument()).issueFor(getDid());
 			VerifiableCredential vc = cb.id("profile")
-				.type("ProfileCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+				.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 				.properties(subject)
 				.expirationDate(exp.getTime())
 				.seal(getStorePassword());

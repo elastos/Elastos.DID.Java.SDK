@@ -28,8 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -89,7 +89,8 @@ import com.fasterxml.jackson.databind.ser.PropertyWriter;
  * specification.
  * </p>
  */
-@JsonPropertyOrder({ VerifiableCredential.ID,
+@JsonPropertyOrder({ VerifiableCredential.CONTEXT,
+	VerifiableCredential.ID,
 	VerifiableCredential.TYPE,
 	VerifiableCredential.ISSUER,
 	VerifiableCredential.ISSUANCE_DATE,
@@ -98,6 +99,7 @@ import com.fasterxml.jackson.databind.ser.PropertyWriter;
 	VerifiableCredential.PROOF })
 @JsonFilter("credentialFilter")
 public class VerifiableCredential extends DIDEntity<VerifiableCredential> implements DIDObject {
+	protected final static String CONTEXT = "@context";
 	protected final static String ID = "id";
 	protected final static String TYPE = "type";
 	protected final static String ISSUER = "issuer";
@@ -109,8 +111,15 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	protected final static String CREATED = "created";
 	protected final static String SIGNATURE = "signature";
 
+    public final static String W3C_CREDENTIAL_CONTEXT = "https://www.w3.org/2018/credentials/v1";
+    public final static String ELASTOS_CREDENTIAL_CONTEXT = "https://elastos.org/credentials/v1";
+    public final static String DEFAULT_CREDENTIAL_TYPE = "VerifiableCredential";
+
 	private static final Logger log = LoggerFactory.getLogger(VerifiableCredential.class);
 
+	@JsonProperty(CONTEXT)
+	@JsonInclude(Include.NON_EMPTY)
+	List<String> context;
 	@JsonProperty(ID)
 	private DIDURL id;
 	@JsonProperty(TYPE)
@@ -361,6 +370,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param vc the source credential object
 	 */
 	private VerifiableCredential(VerifiableCredential vc, boolean withProof) {
+		this.context = vc.context;
 		this.id = vc.id;
 		this.type = vc.type;
 		this.issuer = vc.issuer;
@@ -2792,6 +2802,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			credential = new VerifiableCredential();
 			credential.issuer = issuer.getDid();
 			credential.subject = new Subject(target);
+
+			setDefaultType();
 		}
 
 		private void checkNotSealed() throws AlreadySealedException {
@@ -2827,18 +2839,164 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return id(DIDURL.valueOf(target, id));
 		}
 
-		/**
-		 * Set Credential types.
-		 *
-		 * @param types the set of types
-		 * @return the Builder object
-		 */
-		public Builder type(String ... types) {
+		protected void setDefaultType() {
 			checkNotSealed();
-			checkArgument(types != null && types.length > 0, "Invalid types");
 
-			credential.type = new ArrayList<String>(Arrays.asList(types));
-			Collections.sort(credential.type);
+			if (Features.isEnabledJsonLdContext()) {
+				if (credential.context == null)
+					credential.context = new ArrayList<String>();
+
+				if (!credential.context.contains(VerifiableCredential.W3C_CREDENTIAL_CONTEXT))
+					credential.context.add(VerifiableCredential.W3C_CREDENTIAL_CONTEXT);
+
+				if (!credential.context.contains(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT))
+					credential.context.add(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT);
+			}
+
+			if (credential.type == null)
+				credential.type = new ArrayList<String>();
+
+			if (!credential.type.contains(DEFAULT_CREDENTIAL_TYPE))
+				credential.type.add(DEFAULT_CREDENTIAL_TYPE);
+		}
+
+		/**
+		 * Add a new credential type.
+		 *
+		 * @param type the type name
+		 * @param context the JSON-LD context for type, or null if not
+		 * 		  enabled the JSON-LD feature
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder type(String type, String context) {
+			checkNotSealed();
+			checkArgument(type != null && !type.isEmpty(), "Invalid type: " + String.valueOf(type));
+
+			if (Features.isEnabledJsonLdContext()) {
+				checkArgument(context != null && !context.isEmpty(), "Invalid context: " + String.valueOf(context));
+
+				if (credential.context == null)
+					credential.context = new ArrayList<String>();
+
+				if (!credential.context.contains(context))
+					credential.context.add(context);
+			}
+
+			if (credential.type == null)
+				credential.type = new ArrayList<String>();
+
+			if (!credential.type.contains(type))
+				credential.type.add(type);
+
+			return this;
+		}
+
+		/**
+		 * Add a new credential type.
+		 *
+		 * @param type the type name
+		 * @param context the JSON-LD context for type, or null if not
+		 * 		  enabled the JSON-LD feature
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder type(String type, URI context) {
+			return type(type, context != null ? context.toString() : null);
+		}
+
+		/**
+		 * Add a new credential type.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param type the type name
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder type(String type) {
+			checkNotSealed();
+			checkArgument(type != null && !type.isEmpty(), "Invalid type: " + String.valueOf(type));
+
+			if (type.indexOf('#') < 0)
+				return type(type, (String)null);
+			else {
+				String[] context_type = type.split("#", 2);
+				return type(context_type[1], context_type[0]);
+			}
+		}
+
+		/**
+		 * Add a new credential type.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param type the type name
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder type(URI type) {
+			checkNotSealed();
+			checkArgument(type != null, "Invalid type: " + String.valueOf(type));
+
+			return type(type.toString());
+		}
+
+		/**
+		 * Add new credential type.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param types the type names
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder types(String ... types) {
+			if (types == null || types.length == 0)
+				return this;
+
+			checkNotSealed();
+			for (String t : types)
+				type(t);
+
+			return this;
+		}
+
+		/**
+		 * Add new credential types.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param types the type names
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder types(URI ... types) {
+			if (types == null || types.length == 0)
+				return this;
+
+			checkNotSealed();
+			for (URI t : types)
+				type(t);
+
 			return this;
 		}
 
@@ -2941,6 +3099,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 			if (credential.type == null || credential.type.isEmpty())
 				throw new MalformedCredentialException("Missing credential type");
+
+			Collections.sort(credential.type);
 
 			Calendar cal = Calendar.getInstance(Constants.UTC);
 			credential.issuanceDate = cal.getTime();

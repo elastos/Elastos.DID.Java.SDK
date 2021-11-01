@@ -445,13 +445,16 @@ public class IDChainOperationsTest {
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("language", "English");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
 		VerifiableCredential vc = cb.id("#profile")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+				.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.type("SocialCredential", "https://elastos.org/credentials/social/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		assertNotNull(vc);
@@ -500,11 +503,11 @@ public class IDChainOperationsTest {
 		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
 
 		Map<String, Object> props= new HashMap<String, Object>();
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("passport", "S653258Z07");
 
 		VerifiableCredential vc = cb.id("#passport")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		assertNotNull(vc);
@@ -580,7 +583,7 @@ public class IDChainOperationsTest {
 		props.put("Zoo", "Zoo");
 
 		VerifiableCredential vc = cb.id("#test")
-				.type("TestCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		assertNotNull(vc);
@@ -646,13 +649,16 @@ public class IDChainOperationsTest {
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("language", "English");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
 		VerifiableCredential vc = cb.id("#profile")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+				.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.type("SocialCredential", "https://elastos.org/credentials/social/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		assertNotNull(vc);
@@ -706,11 +712,11 @@ public class IDChainOperationsTest {
 		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
 
 		Map<String, Object> props= new HashMap<String, Object>();
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("passport", "S653258Z07");
 
 		VerifiableCredential vc = cb.id("#passport")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		assertNotNull(vc);
@@ -771,7 +777,7 @@ public class IDChainOperationsTest {
 		props.put("Zoo", "Zoo");
 
 		VerifiableCredential vc = cb.id("#test")
-				.type("TestCredential", "SelfProclaimedCredential")
+				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		assertNotNull(vc);
@@ -858,7 +864,7 @@ public class IDChainOperationsTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(did);
 		VerifiableCredential vc = cb.id("#selfCredential")
-			.type("BasicProfileCredential")
+			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 		assertEquals("John", vc.getSubject().getProperty("name"));

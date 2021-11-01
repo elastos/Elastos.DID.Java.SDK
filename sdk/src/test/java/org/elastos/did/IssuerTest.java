@@ -106,8 +106,7 @@ public class IssuerTest {
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
-		props.put("nation", "Singapore");
-		props.put("language", "English");
+		props.put("nationality", "Singapore");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
@@ -115,7 +114,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
 		VerifiableCredential vc = cb.id("#testCredential")
-			.type("BasicProfileCredential", "InternetAccountCredential")
+			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+			.type("SocialCredential", "https://elastos.org/credentials/social/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -123,8 +124,10 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
-		assertTrue(vc.getType().contains("InternetAccountCredential"));
+		assertTrue(vc.getType().contains("ProfileCredential"));
+		assertTrue(vc.getType().contains("EmailCredential"));
+		assertTrue(vc.getType().contains("SocialCredential"));
+		assertTrue(vc.getType().contains("VerifiableCredential"));
 		assertFalse(vc.getType().contains("SelfProclaimedCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
@@ -132,8 +135,7 @@ public class IssuerTest {
 
 		assertEquals("John", vc.getSubject().getProperty("name"));
 		assertEquals("Male", vc.getSubject().getProperty("gender"));
-		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
-		assertEquals("English", vc.getSubject().getProperty("language"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
 		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
 		assertEquals("@john", vc.getSubject().getProperty("twitter"));
 
@@ -146,7 +148,7 @@ public class IssuerTest {
 	public void IssueSelfProclaimedCredentialTest() throws DIDException, IOException {
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Testing Issuer");
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("language", "English");
 		props.put("email", "issuer@example.com");
 
@@ -154,7 +156,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
 		VerifiableCredential vc = cb.id("#myCredential")
-			.type("BasicProfileCredential", "SelfProclaimedCredential")
+			.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -162,15 +166,15 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
+		assertTrue(vc.getType().contains("ProfileCredential"));
 		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
-		assertFalse(vc.getType().contains("InternetAccountCredential"));
+		assertTrue(vc.getType().contains("EmailCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());
 
 		assertEquals("Testing Issuer", vc.getSubject().getProperty("name"));
-		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
 		assertEquals("English", vc.getSubject().getProperty("language"));
 		assertEquals("issuer@example.com", vc.getSubject().getProperty("email"));
 
@@ -186,7 +190,7 @@ public class IssuerTest {
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("language", "English");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
@@ -195,7 +199,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
 		VerifiableCredential vc = cb.id("#testCredential")
-			.type("BasicProfileCredential", "InternetAccountCredential")
+			.type("SocialCredential", "https://elastos.org/credentials/social/v1")
+			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -203,8 +209,8 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
-		assertTrue(vc.getType().contains("InternetAccountCredential"));
+		assertTrue(vc.getType().contains("ProfileCredential"));
+		assertTrue(vc.getType().contains("SocialCredential"));
 		assertFalse(vc.getType().contains("SelfProclaimedCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
@@ -212,7 +218,7 @@ public class IssuerTest {
 
 		assertEquals("John", vc.getSubject().getProperty("name"));
 		assertEquals("Male", vc.getSubject().getProperty("gender"));
-		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
 		assertEquals("English", vc.getSubject().getProperty("language"));
 		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
 		assertEquals("@john", vc.getSubject().getProperty("twitter"));
@@ -229,7 +235,7 @@ public class IssuerTest {
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("language", "English");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
@@ -238,7 +244,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
 		VerifiableCredential vc = cb.id("#testCredential")
-			.type("BasicProfileCredential", "InternetAccountCredential")
+			.type("SocialCredential", "https://elastos.org/credentials/social/v1")
+			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -246,8 +254,8 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
-		assertTrue(vc.getType().contains("InternetAccountCredential"));
+		assertTrue(vc.getType().contains("ProfileCredential"));
+		assertTrue(vc.getType().contains("EmailCredential"));
 		assertFalse(vc.getType().contains("SelfProclaimedCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
@@ -255,7 +263,7 @@ public class IssuerTest {
 
 		assertEquals("John", vc.getSubject().getProperty("name"));
 		assertEquals("Male", vc.getSubject().getProperty("gender"));
-		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
 		assertEquals("English", vc.getSubject().getProperty("language"));
 		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
 		assertEquals("@john", vc.getSubject().getProperty("twitter"));
@@ -271,7 +279,7 @@ public class IssuerTest {
 
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Testing Issuer");
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("language", "English");
 		props.put("email", "issuer@example.com");
 
@@ -279,7 +287,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
 		VerifiableCredential vc = cb.id("#myCredential")
-			.type("BasicProfileCredential", "SelfProclaimedCredential")
+			.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -287,15 +297,15 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
 		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
+		assertTrue(vc.getType().contains("ProfileCredential"));
 		assertFalse(vc.getType().contains("InternetAccountCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());
 		assertEquals(issuerDoc.getSubject(), vc.getSubject().getId());
 
 		assertEquals("Testing Issuer", vc.getSubject().getProperty("name"));
-		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
+		assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
 		assertEquals("English", vc.getSubject().getProperty("language"));
 		assertEquals("issuer@example.com", vc.getSubject().getProperty("email"));
 
@@ -313,7 +323,8 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
 		VerifiableCredential vc = cb.id("#myCredential")
-			.type("BasicProfileCredential", "SelfProclaimedCredential")
+			.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -321,8 +332,8 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
-		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
+		assertTrue(vc.getType().contains("ProfileCredential"));
+		assertTrue(vc.getType().contains("ProfileCredential"));
 		assertFalse(vc.getType().contains("InternetAccountCredential"));
 
 		assertEquals(issuerDoc.getSubject(), vc.getIssuer());

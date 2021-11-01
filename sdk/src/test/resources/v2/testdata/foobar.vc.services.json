@@ -1,16 +1,18 @@
 {
-  "id" : "#services",
-  "expirationDate" : "2026-07-13T04:35:57Z",
-  "type" : [ "SelfProclaimedCredential", "BasicProfileCredential" ],
-  "issuanceDate" : "2021-07-13T04:35:57Z",
+  "id" : "did:elastos:foobar#services",
+  "type" : [ "SelfProclaimedCredential", "VerifiableCredential" ],
+  "issuer" : "did:elastos:foobar",
+  "issuanceDate" : "2021-11-02T13:38:02Z",
+  "expirationDate" : "2026-11-02T13:38:02Z",
   "credentialSubject" : {
-    "consultation" : "https://foobar.com/consultation",
     "id" : "did:elastos:foobar",
-    "Outsourceing" : "https://foobar.com/outsourcing"
+    "Outsourceing" : "https://foobar.com/outsourcing",
+    "consultation" : "https://foobar.com/consultation"
   },
   "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:38:02Z",
     "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "created" : "2021-07-13T04:35:57Z",
-    "signature" : "7HFWbwQEKErM2eAQdlUtLsi5aJwSMpDqPh-CdVKv3mu6FziwWBY_USxsPMhlEaSvYD4gcyhUTCTFSU6oC0025w"
+    "signature" : "xN4LK3RmFcaDC3x9DEzI_HZEgB8mW_EjQ2upgVMWzQT0Xs2IAhnc7xhtJIW7HdA7TF9Pj1gFA8bQ1l_kEpx6EQ"
   }
 }

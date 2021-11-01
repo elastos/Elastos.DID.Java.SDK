@@ -1,10 +1,1 @@
-{
-  "to": "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d",
-  "id": "did:elastos:baz",
-  "proof": {
-    "verificationMethod": "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "created": "2021-07-13T04:35:58Z",
-    "signature": "Qqn3qgAdULsXKCe8smvrLwfR4J5-rEtWKa4Q6Oy8grnkMLS2meWSte4YNQgOUVcfgj_z2gTa7uesrMuhIE4TpQ"
-  },
-  "txid": "f54c02fd7dcdd2be48a6353998a04811"
-}
+{"id":"did:elastos:baz","to":"did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d","txid":"6dbb3e399f2a45e04f1ddf6401f0e6a6","proof":{"type":"ECDSAsecp256r1","created":"2021-11-02T13:38:03Z","verificationMethod":"did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary","signature":"Gor74MFLhygtSIfRTitGzgSxLYb5ZdAKyEES5eNvFMwNgT88ejvOWR2w_NKoICah4CK5scIKRNI_ywBVU1Tg2A"}}

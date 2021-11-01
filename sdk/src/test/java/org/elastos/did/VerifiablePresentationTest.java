@@ -36,7 +36,6 @@ import org.elastos.did.utils.TestConfig;
 import org.elastos.did.utils.TestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -58,9 +57,9 @@ public class VerifiablePresentationTest {
     	testData.cleanup();
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testReadPresentationNonempty(int version) throws DIDException, IOException {
+	@ParameterizedTest
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testReadPresentationNonempty(String version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
     	// For integrity check
@@ -68,7 +67,7 @@ public class VerifiablePresentationTest {
 		DIDDocument user = cd.getDocument("user1");
 		VerifiablePresentation vp = cd.getPresentation("user1", "nonempty");
 
-		if (version == 1)
+		if (Float.valueOf(version) < 2.0)
 			assertNull(vp.getId());
 		else
 			assertNotNull(vp.getId());
@@ -97,9 +96,9 @@ public class VerifiablePresentationTest {
 		assertTrue(vp.isValid());
 	}
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testReadPresentationEmpty(int version) throws DIDException, IOException {
+	@ParameterizedTest
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testReadPresentationEmpty(String version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
 
     	// For integrity check
@@ -107,7 +106,7 @@ public class VerifiablePresentationTest {
 		DIDDocument user = cd.getDocument("user1");
 		VerifiablePresentation vp = cd.getPresentation("user1", "empty");
 
-		if (version == 1)
+		if (Float.valueOf(version) < 2.0)
 			assertNull(vp.getId());
 		else
 			assertNotNull(vp.getId());
@@ -131,9 +130,15 @@ public class VerifiablePresentationTest {
     	"2,user1,optionalattrs",
     	"2,foobar,empty",
     	"2,foobar,nonempty",
-    	"2,foobar,optionalattrs"
+    	"2,foobar,optionalattrs",
+    	"2.2,user1,empty",
+    	"2.2,user1,nonempty",
+    	"2.2,user1,optionalattrs",
+    	"2.2,foobar,empty",
+    	"2.2,foobar,nonempty",
+    	"2.2,foobar,optionalattrs"
     })
-	public void testParseAndSerialize(int version, String did, String presentation)
+	public void testParseAndSerialize(String version, String did, String presentation)
 			throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
     	// For integrity check
@@ -165,9 +170,15 @@ public class VerifiablePresentationTest {
     	"2,user1,optionalattrs",
     	"2,foobar,empty",
     	"2,foobar,nonempty",
-    	"2,foobar,optionalattrs"
+    	"2,foobar,optionalattrs",
+    	"2.2,user1,empty",
+    	"2.2,user1,nonempty",
+    	"2.2,user1,optionalattrs",
+    	"2.2,foobar,empty",
+    	"2.2,foobar,nonempty",
+    	"2.2,foobar,optionalattrs"
     })
-	public void testGenuineAndValidWithListener(int version, String did, String presentation)
+	public void testGenuineAndValidWithListener(String version, String did, String presentation)
 			throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
     	// For integrity check
@@ -188,8 +199,11 @@ public class VerifiablePresentationTest {
 		listener.reset();
 	}
 
-    @Test
-	public void testBuildNonempty() throws DIDException, IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+	public void testBuildNonempty(boolean contextEnabled) throws DIDException, IOException {
+       	Features.enableJsonLdContext(contextEnabled);
+
 		TestData.InstantData td = testData.getInstantData();
 		DIDDocument doc = td.getUser1Document();
 
@@ -233,8 +247,11 @@ public class VerifiablePresentationTest {
 		assertTrue(vp.isValid());
 	}
 
-	@Test
-	public void testBuildNonemptyWithOptionalAttrs() throws DIDException, IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+	public void testBuildNonemptyWithOptionalAttrs(boolean contextEnabled) throws DIDException, IOException {
+       	Features.enableJsonLdContext(contextEnabled);
+
 		TestData.InstantData td = testData.getInstantData();
 		DIDDocument doc = td.getUser1Document();
 
@@ -243,7 +260,7 @@ public class VerifiablePresentationTest {
 
 		VerifiablePresentation vp = pb
 				.id("#test-vp")
-				.type("Trail", "TestPresentation")
+				.type("TestPresentation", "https://example.com/credential/v1")
 				.credentials(doc.getCredential("#profile"))
 				.credentials(doc.getCredential("#email"))
 				.credentials(td.getUser1TwitterCredential())
@@ -257,7 +274,7 @@ public class VerifiablePresentationTest {
 		assertEquals(new DIDURL(doc.getSubject(), "#test-vp"), vp.getId());
 		assertEquals(2, vp.getType().size());
 		assertEquals("TestPresentation", vp.getType().get(0));
-		assertEquals("Trail", vp.getType().get(1));
+		assertEquals("VerifiablePresentation", vp.getType().get(1));
 		assertEquals(doc.getSubject(), vp.getHolder());
 
 		assertEquals(4, vp.getCredentialCount());
@@ -281,9 +298,12 @@ public class VerifiablePresentationTest {
 		assertTrue(vp.isValid());
 	}
 
-	@Test
-	public void testBuildEmpty() throws DIDException, IOException {
-		DIDDocument doc = testData.getInstantData().getUser1Document();
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+	public void testBuildEmpty(boolean contextEnabled) throws DIDException, IOException {
+       	Features.enableJsonLdContext(contextEnabled);
+
+  		DIDDocument doc = testData.getInstantData().getUser1Document();
 
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
 				doc.getSubject(), store);
@@ -307,8 +327,11 @@ public class VerifiablePresentationTest {
 		assertTrue(vp.isValid());
 	}
 
-	@Test
-	public void testBuildEmptyWithOptionsAttrs() throws DIDException, IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+	public void testBuildEmptyWithOptionsAttrs(boolean contextEnabled) throws DIDException, IOException {
+       	Features.enableJsonLdContext(contextEnabled);
+
 		DIDDocument doc = testData.getInstantData().getUser1Document();
 
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
@@ -316,7 +339,8 @@ public class VerifiablePresentationTest {
 
 		VerifiablePresentation vp = pb
 				.id("#test-vp")
-				.type("HelloWorld", "FooBar", "Baz")
+				.type("TestPresentation", "https://example.com/credential/v1")
+				.type("SessionPresentation", "https://session.com/credential/v1")
 				.realm("https://example.com/")
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
@@ -325,9 +349,9 @@ public class VerifiablePresentationTest {
 
 		assertEquals(new DIDURL(doc.getSubject(), "#test-vp"), vp.getId());
 		assertEquals(3, vp.getType().size());
-		assertEquals("Baz", vp.getType().get(0));
-		assertEquals("FooBar", vp.getType().get(1));
-		assertEquals("HelloWorld", vp.getType().get(2));
+		assertEquals("SessionPresentation", vp.getType().get(0));
+		assertEquals("TestPresentation", vp.getType().get(1));
+		assertEquals("VerifiablePresentation", vp.getType().get(2));
 		assertEquals(doc.getSubject(), vp.getHolder());
 
 		assertEquals(0, vp.getCredentialCount());

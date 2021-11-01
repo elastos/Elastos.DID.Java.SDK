@@ -28,8 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -68,7 +68,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * This also helps prevent a verifier from reusing a verifiable presentation as
  * their own.
  */
-@JsonPropertyOrder({ VerifiablePresentation.ID,
+@JsonPropertyOrder({ VerifiablePresentation.CONTEXT,
+	VerifiablePresentation.ID,
 	VerifiablePresentation.TYPE,
 	VerifiablePresentation.HOLDER,
 	VerifiablePresentation.CREATED,
@@ -80,6 +81,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 */
 	public final static String DEFAULT_PRESENTATION_TYPE = "VerifiablePresentation";
 
+	protected final static String CONTEXT = "@context";
 	protected final static String ID = "id";
 	protected final static String TYPE = "type";
 	protected final static String HOLDER = "holder";
@@ -91,6 +93,9 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	protected final static String VERIFICATION_METHOD = "verificationMethod";
 	protected final static String SIGNATURE = "signature";
 
+	@JsonProperty(CONTEXT)
+	@JsonInclude(Include.NON_EMPTY)
+	List<String> context;
 	@JsonProperty(ID)
 	@JsonInclude(Include.NON_NULL)
 	private DIDURL id;
@@ -102,6 +107,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	@JsonInclude(Include.NON_NULL)
 	private DID holder;
 	@JsonProperty(CREATED)
+	@JsonInclude(Include.NON_NULL)
 	private Date created;
 	@JsonProperty(VERIFIABLE_CREDENTIAL)
 	private List<VerifiableCredential> _credentials;
@@ -116,10 +122,13 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * The default proof type is ECDSAsecp256r1.
 	 */
-	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, REALM, NONCE, SIGNATURE })
+	@JsonPropertyOrder({ TYPE, CREATED, VERIFICATION_METHOD, REALM, NONCE, SIGNATURE })
 	static public class Proof {
 		@JsonProperty(TYPE)
 		private String type;
+		@JsonProperty(CREATED)
+		@JsonInclude(Include.NON_NULL)
+		private Date created;
 		@JsonProperty(VERIFICATION_METHOD)
 		@JsonSerialize(using = DIDURL.NormalizedSerializer.class)
 		private DIDURL verificationMethod;
@@ -234,6 +243,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @param vp the source VerifiablePresentation object
 	 */
 	private VerifiablePresentation(VerifiablePresentation vp, boolean withProof) {
+		this.context = vp.context;
 		this.id = vp.id;
 		this.type = vp.type;
 		this.holder = vp.holder;
@@ -881,6 +891,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			this.holder = holder;
 			this.signKey = signKey;
 			this.presentation = new VerifiablePresentation(holder.getSubject());
+
+			setDefaultType();
 		}
 
 		private void checkNotSealed() throws AlreadySealedException{
@@ -913,17 +925,164 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			return id(DIDURL.valueOf(holder.getSubject(), id));
 		}
 
+		private void setDefaultType() {
+			checkNotSealed();
+
+			if (Features.isEnabledJsonLdContext()) {
+				if (presentation.context == null)
+					presentation.context = new ArrayList<String>();
+
+				if (!presentation.context.contains(VerifiableCredential.W3C_CREDENTIAL_CONTEXT))
+					presentation.context.add(VerifiableCredential.W3C_CREDENTIAL_CONTEXT);
+
+				if (!presentation.context.contains(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT))
+					presentation.context.add(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT);
+			}
+
+			if (presentation.type == null)
+				presentation.type = new ArrayList<String>();
+
+			if (!presentation.type.contains(DEFAULT_PRESENTATION_TYPE))
+				presentation.type.add(DEFAULT_PRESENTATION_TYPE);
+		}
+
 		/**
-		 * Set credential types.
+		 * Add a new presentation type.
 		 *
-		 * @param types the type strings
+		 * @param type the type name
+		 * @param context the JSON-LD context for type, or null if not
+		 * 		  enabled the JSON-LD feature
 		 * @return the Builder instance for method chaining
 		 */
-		public Builder type(String ... types) {
+		public Builder type(String type, String context) {
 			checkNotSealed();
-			checkArgument(types != null && types.length > 0, "Invalid types");
+			checkArgument(type != null && !type.isEmpty(), "Invalid type: " + String.valueOf(type));
 
-			presentation.type = new ArrayList<String>(Arrays.asList(types));
+			if (Features.isEnabledJsonLdContext()) {
+				checkArgument(context != null && !context.isEmpty(), "Invalid context: " + String.valueOf(context));
+
+				if (presentation.context == null)
+					presentation.context = new ArrayList<String>();
+
+				if (!presentation.context.contains(context))
+					presentation.context.add(context);
+			}
+
+			if (presentation.type == null)
+				presentation.type = new ArrayList<String>();
+
+			if (!presentation.type.contains(type))
+				presentation.type.add(type);
+
+			return this;
+		}
+
+		/**
+		 * Add a new presentation type.
+		 *
+		 * @param type the type name
+		 * @param context the JSON-LD context for type, or null if not
+		 * 		  enabled the JSON-LD feature
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder type(String type, URI context) {
+			return type(type, context != null ? context.toString() : null);
+		}
+
+		/**
+		 * Add a new presentation type.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param type the type name
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder type(String type) {
+			checkNotSealed();
+			checkArgument(type != null && !type.isEmpty(), "Invalid type: " + String.valueOf(type));
+
+			if (type.indexOf('#') < 0)
+				return type(type, (String)null);
+			else {
+				String[] context_type = type.split("#", 2);
+				return type(context_type[1], context_type[0]);
+			}
+		}
+
+		/**
+		 * Add a new presentation type.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param type the type name
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder type(URI type) {
+			checkNotSealed();
+			checkArgument(type != null, "Invalid type: " + String.valueOf(type));
+
+			return type(type.toString());
+		}
+
+		/**
+		 * Add new presentation types.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param types the type names
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder types(String ... types) {
+			if (types == null || types.length == 0)
+				return this;
+
+			checkNotSealed();
+			for (String t : types)
+				type(t);
+
+			return this;
+		}
+
+		/**
+		 * Add new presentation types.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param types the type names
+		 * @return the Builder instance for method chaining
+		 */
+		public Builder types(URI ... types) {
+			if (types == null || types.length == 0)
+				return this;
+
+			checkNotSealed();
+			for (URI t : types)
+				type(t);
+
 			return this;
 		}
 
@@ -996,12 +1155,10 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			checkNotSealed();
 			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-			if (presentation.type == null || presentation.type.isEmpty()) {
-				presentation.type = new ArrayList<String>();
-				presentation.type.add(DEFAULT_PRESENTATION_TYPE);
-			} else {
-				Collections.sort(presentation.type);
-			}
+			if (presentation.type == null || presentation.type.isEmpty())
+				throw new MalformedPresentationException("Missing presentation type");
+
+			Collections.sort(presentation.type);
 
 			Calendar cal = Calendar.getInstance(Constants.UTC);
 			presentation.created = cal.getTime();

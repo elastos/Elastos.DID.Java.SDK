@@ -1,0 +1,23 @@
+{
+  "@context" : [ "https://www.w3.org/ns/did/v1", "https://elastos.org/did/v1", "https://w3id.org/security/v1" ],
+  "id" : "did:elastos:bar",
+  "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g", "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS" ],
+  "multisig" : "3:3",
+  "expires" : "2026-11-02T13:37:11Z",
+  "proof" : [ {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:37:11Z",
+    "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+    "signatureValue" : "5xejmdvTaFvIURaR676jDQZ0QFkjqAk-PCQJ3tkO6EWjcHQhGfeupUIv7mcgbE8kPO--CHQXGmgey-plT78pmw"
+  }, {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:37:11Z",
+    "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
+    "signatureValue" : "KdbGxBqkDuYKUUXLbmma4ez07pNiCrUsyqSs0lMoOK-bkOpmDearA8ewjing0_kLnHko_TTiy3PYdugq39glmA"
+  }, {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:37:11Z",
+    "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
+    "signatureValue" : "3Ctwxn2E4Lvc-z82Mo0_eN84gefaQfzkHUIB21r-byLzX0UtSAMKx8VYZNZ6jVfv558Tl1ZzNjbl5PUSE-vB2g"
+  } ]
+}

@@ -137,7 +137,7 @@ public class IssueCredential {
 
 			VerifiableCredential.Builder cb = issuer.issueFor(student.getDid());
 			VerifiableCredential vc = cb.id("diploma")
-				.type("DiplomaCredential")
+				.type("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
 				.properties(subject)
 				.expirationDate(exp.getTime())
 				.seal(getStorePassword());
