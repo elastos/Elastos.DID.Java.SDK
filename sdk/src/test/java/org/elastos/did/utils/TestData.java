@@ -57,6 +57,7 @@ public final class TestData {
 
 	private CompatibleData v1;
 	private CompatibleData v2;
+	private CompatibleData v2_2;
 	private InstantData instantData;
 
 	public TestData() throws DIDException {
@@ -109,17 +110,22 @@ public final class TestData {
 		return mnemonic;
 	}
 
-	public CompatibleData getCompatibleData(int version) {
+	public CompatibleData getCompatibleData(String version) {
 		switch (version) {
-		case 1:
+		case "1":
 			if (v1 == null)
 				v1 = new CompatibleData(version);
 			return v1;
 
-		case 2:
+		case "2":
 			if (v2 == null)
 				v2 = new CompatibleData(version);
 			return v2;
+
+		case "2.2":
+			if (v2_2 == null)
+				v2_2 = new CompatibleData(version);
+			return v2_2;
 
 		default:
 			throw new IllegalArgumentException("Unsupported version");
@@ -159,9 +165,9 @@ public final class TestData {
 		private File dataPath;
 		private File storePath;
 		private Map<String, Object> data;
-		private int version;
+		private String version;
 
-		public CompatibleData(int version) {
+		public CompatibleData(String version) {
 			this.data = new HashMap<String, Object>();
 
 			URL url = this.getClass().getResource("/v" + version);
@@ -173,7 +179,7 @@ public final class TestData {
 		}
 
 		public boolean isLatestVersion() {
-			return version == 2;
+			return Float.valueOf(version) >= 2.0;
 		}
 
 		private File getDidFile(String name, String type) {
@@ -207,7 +213,7 @@ public final class TestData {
 		}
 
 		private File getTransferTicketFile(String name) {
-			if (version == 1)
+			if (Float.valueOf(version) < 2.0)
 				return null;
 
 			return new File(dataPath, name + ".tt.json");
@@ -367,7 +373,7 @@ public final class TestData {
 
 		public TransferTicket getTransferTicket(String did)
 				throws DIDException, IOException {
-			if (version == 1)
+			if (Float.valueOf(version) < 2.0)
 				throw new IOException("Not exists");
 
 			String key = "res:tt:" + did;
@@ -391,7 +397,7 @@ public final class TestData {
 			getDocument("user2");
 			getDocument("user3");
 
-			if (version == 2) {
+			if (Float.valueOf(version) >= 2.0) {
 				getDocument("user4");
 				getDocument("examplecorp");
 				getDocument("foobar");
@@ -445,7 +451,7 @@ public final class TestData {
 
 				Map<String, Object> props = new HashMap<String, Object>();
 				props.put("name", "Test Issuer");
-				props.put("nation", "Singapore");
+				props.put("nationality", "Singapore");
 				props.put("language", "English");
 				props.put("email", "issuer@example.com");
 
@@ -548,13 +554,16 @@ public final class TestData {
 				props = new HashMap<String, Object>();
 				props.put("name", "John");
 				props.put("gender", "Male");
-				props.put("nation", "Singapore");
+				props.put("nationality", "Singapore");
 				props.put("language", "English");
 				props.put("email", "john@example.com");
 				props.put("twitter", "@john");
 
 				VerifiableCredential vcProfile = cb.id("#profile")
-						.type("BasicProfileCredential", "SelfProclaimedCredential")
+						.type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
+						.type("https://elastos.org/credentials/profile/v1#ProfileCredential")
+						.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+						.type("SocialCredential", "https://elastos.org/credentials/social/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 
@@ -565,8 +574,7 @@ public final class TestData {
 				props.put("email", "john@example.com");
 
 				VerifiableCredential vcEmail = cb.id("#email")
-						.type("BasicProfileCredential",
-								"InternetAccountCredential", "EmailCredential")
+						.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 
@@ -592,11 +600,11 @@ public final class TestData {
 				VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
 
 				Map<String, Object> props = new HashMap<String, Object>();
-				props.put("nation", "Singapore");
+				props.put("nationality", "Singapore");
 				props.put("passport", "S653258Z07");
 
 				VerifiableCredential vcPassport = cb.id(id)
-						.type("BasicProfileCredential", "SelfProclaimedCredential")
+						.type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
 						.properties(props)
 						.seal(TestConfig.storePass);
 				vcPassport.getMetadata().setAlias("Passport");
@@ -621,7 +629,7 @@ public final class TestData {
 				props.put("twitter", "@john");
 
 				VerifiableCredential vcTwitter = cb.id(id)
-						.type("InternetAccountCredential", "TwitterCredential")
+						.type("SocialCredential", "https://elastos.org/credentials/social/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 				vcTwitter.getMetadata().setAlias("Twitter");
@@ -645,7 +653,6 @@ public final class TestData {
 				String jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
 				VerifiableCredential vcJson = cb.id(id)
-						.type("TestCredential", "JsonCredential")
 						.properties(jsonProps)
 						.seal(TestConfig.storePass);
 				vcJson.getMetadata().setAlias("json");
@@ -672,7 +679,7 @@ public final class TestData {
 				props.put("title", "CEO");
 
 				VerifiableCredential vc = cb.id(id)
-						.type("JobPositionCredential")
+						.type("JobPositionCredential", "https://example.com/credentials/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 				store.storeCredential(vc);
@@ -732,12 +739,18 @@ public final class TestData {
 				Map<String, Object> props = new HashMap<String, Object>();
 				props.put("name", "John");
 				props.put("gender", "Male");
-				props.put("nation", "Singapore");
-				props.put("language", "English");
+				props.put("nationality", "Singapore");
 				props.put("email", "john@example.com");
 				props.put("twitter", "@john");
 
-				db.addCredential("#profile", props, TestConfig.storePass);
+				String[] types = {
+						"https://elastos.org/credentials/v1#SelfProclaimedCredential",
+						"https://elastos.org/credentials/profile/v1#ProfileCredential",
+						"https://elastos.org/credentials/email/v1#EmailCredential",
+						"https://elastos.org/credentials/social/v1#SocialCredential"
+					};
+
+				db.addCredential("#profile", types, props, TestConfig.storePass);
 				doc = db.seal(TestConfig.storePass);
 				store.storeDid(doc);
 				doc.publish(TestConfig.storePass);
@@ -784,11 +797,13 @@ public final class TestData {
 
 				Map<String, Object> props = new HashMap<String, Object>();
 				props.put("name", "Example LLC");
-				props.put("website", "https://example.com/");
+				props.put("url", "https://example.com/");
 				props.put("email", "contact@example.com");
 
 				VerifiableCredential vc = cb.id("#profile")
-						.type("BasicProfileCredential", "SelfProclaimedCredential")
+						.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+						.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+						.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 
@@ -877,11 +892,13 @@ public final class TestData {
 
 				props = new HashMap<String, Object>();
 				props.put("name", "Foo Bar Inc");
-				props.put("language", "Chinese");
+				props.put("nationality", "China");
 				props.put("email", "contact@foobar.com");
 
 				VerifiableCredential vcProfile = cb.id("#profile")
-						.type("BasicProfileCredential", "SelfProclaimedCredential")
+						.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+						.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+						.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 
@@ -892,8 +909,7 @@ public final class TestData {
 				props.put("email", "foobar@example.com");
 
 				VerifiableCredential vcEmail = cb.id("#email")
-						.type("BasicProfileCredential",
-								"InternetAccountCredential", "EmailCredential")
+						.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 
@@ -924,7 +940,7 @@ public final class TestData {
 				props.put("Outsourceing", "https://foobar.com/outsourcing");
 
 				VerifiableCredential vc = cb.id(id)
-						.type("BasicProfileCredential", "SelfProclaimedCredential")
+						.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 				store.storeCredential(vc);
@@ -954,7 +970,7 @@ public final class TestData {
 				props.put("scope", "Consulting");
 
 				VerifiableCredential vc = cb.id(id)
-						.type("LicenseCredential")
+						.type("LicenseCredential", "https://example.com/credentials/license/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 				store.storeCredential(vc);
@@ -1054,7 +1070,7 @@ public final class TestData {
 				props.put("email", "foo@example.com");
 
 				VerifiableCredential vc = cb.id(id)
-						.type("InternetAccountCredential")
+						.type("EmailCredential", "https://elastos.org/credentials/email/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 				store.storeCredential(vc);

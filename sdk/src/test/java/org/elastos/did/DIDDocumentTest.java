@@ -81,8 +81,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testGetPublicKey(int version) throws IOException, DIDException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testGetPublicKey(String version) throws IOException, DIDException {
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
@@ -153,9 +153,10 @@ public class DIDDocumentTest {
 		assertEquals(new DIDURL(doc.getSubject(), "#key3"), pks.get(0).getId());
 	}
 
-	@Test
-	public void testGetPublicKeyWithCid() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testGetPublicKeyWithCid(String version) throws IOException, DIDException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 
 		DIDDocument issuer = cd.getDocument("issuer");
 		DIDDocument doc = cd.getDocument("examplecorp");
@@ -205,9 +206,10 @@ public class DIDDocumentTest {
 		assertEquals(1, pks.size());
 	}
 
-	@Test
-	public void testGetPublicKeyWithMultiControllerCid1() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testGetPublicKeyWithMultiControllerCid1(String version) throws IOException, DIDException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 
 		DIDDocument user1 = cd.getDocument("user1");
 		DIDDocument user2 = cd.getDocument("user2");
@@ -300,9 +302,10 @@ public class DIDDocumentTest {
 		assertEquals(new DIDURL(doc.getSubject(), "#key3"), pks.get(0).getId());
 	}
 
-	@Test
-	public void testGetPublicKeyWithMultiControllerCid2() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testGetPublicKeyWithMultiControllerCid2(String version) throws IOException, DIDException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 
 		DIDDocument user1 = cd.getDocument("user1");
 		DIDDocument user2 = cd.getDocument("user2");
@@ -384,8 +387,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testAddPublicKey(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testAddPublicKey(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -421,9 +424,10 @@ public class DIDDocumentTest {
 		assertEquals(1, doc.getAuthorizationKeyCount());
 	}
 
-	@Test
-	public void testAddPublicKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testAddPublicKeyWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -467,8 +471,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testRemovePublicKey(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testRemovePublicKey(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -516,9 +520,10 @@ public class DIDDocumentTest {
 		assertEquals(0, doc.getAuthorizationKeyCount());
 	}
 
-	@Test
-	public void testRemovePublicKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testRemovePublicKeyWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -574,8 +579,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testGetAuthenticationKey(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testGetAuthenticationKey(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -639,9 +644,10 @@ public class DIDDocumentTest {
 		assertEquals(new DIDURL(doc.getSubject(), "#key2"), pks.get(0).getId());
 	}
 
-	@Test
-	public void testGetAuthenticationKeyWithCid() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testGetAuthenticationKeyWithCid(String version) throws IOException, DIDException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 
 		DIDDocument issuer = cd.getDocument("issuer");
 		DIDDocument doc = cd.getDocument("examplecorp");
@@ -689,9 +695,10 @@ public class DIDDocumentTest {
 		assertEquals(1, pks.size());
 	}
 
-	@Test
-	public void testGetAuthenticationKeyWithMultiControllerCid1() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testGetAuthenticationKeyWithMultiControllerCid1(String version) throws IOException, DIDException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 
 		DIDDocument user1 = cd.getDocument("user1");
 		DIDDocument user2 = cd.getDocument("user2");
@@ -780,9 +787,10 @@ public class DIDDocumentTest {
 		assertEquals(new DIDURL(doc.getSubject(), "#key3"), pks.get(0).getId());
 	}
 
-	@Test
-	public void testGetAuthenticationKeyWithMultiControllerCid2() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testGetAuthenticationKeyWithMultiControllerCid2(String version) throws IOException, DIDException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 
 		DIDDocument user1 = cd.getDocument("user1");
 		DIDDocument user2 = cd.getDocument("user2");
@@ -861,8 +869,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testAddAuthenticationKey(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testAddAuthenticationKey(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -929,9 +937,10 @@ public class DIDDocumentTest {
 		assertEquals(1, doc.getAuthorizationKeyCount());
 	}
 
-	@Test
-	public void testAddAuthenticationKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testAddAuthenticationKeyWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 
 		DIDDocument user1 = cd.getDocument("user1");
 		cd.getDocument("user2");
@@ -1009,8 +1018,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testRemoveAuthenticationKey(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testRemoveAuthenticationKey(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -1064,9 +1073,10 @@ public class DIDDocumentTest {
 		assertEquals(1, doc.getAuthorizationKeyCount());
 	}
 
-	@Test
-	public void testRemoveAuthenticationKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testRemoveAuthenticationKeyWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1121,8 +1131,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testGetAuthorizationKey(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testGetAuthorizationKey(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -1176,9 +1186,10 @@ public class DIDDocumentTest {
 		assertEquals(1, pks.size());
 	}
 
-	@Test
-	public void testGetAuthorizationKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testGetAuthorizationKeyWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1199,8 +1210,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testAddAuthorizationKey(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testAddAuthorizationKey(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -1273,9 +1284,10 @@ public class DIDDocumentTest {
 		assertEquals(5, doc.getAuthorizationKeyCount());
 	}
 
-	@Test
-	public void testAddAuthorizationKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testAddAuthorizationKeyWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1346,8 +1358,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testRemoveAuthorizationKey(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testRemoveAuthorizationKey(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -1439,8 +1451,8 @@ public class DIDDocumentTest {
 	*/
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testGetCredential(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testGetCredential(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -1492,9 +1504,10 @@ public class DIDDocumentTest {
 		assertEquals(0, vcs.size());
 	}
 
-	@Test
-	public void testGetCredentialWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testGetCredentialWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1552,8 +1565,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testAddCredential(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testAddCredential(String version) throws DIDException, IOException {
 		TestData.CompatibleData cd = testData.getCompatibleData(version);
 
 		testData.getRootIdentity();
@@ -1595,9 +1608,10 @@ public class DIDDocumentTest {
 		assertEquals(4, doc.getCredentialCount());
 	}
 
-	@Test
-	public void testAddCredentialWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testAddCredentialWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1649,8 +1663,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testAddSelfClaimedCredential(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testAddSelfClaimedCredential(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -1695,9 +1709,10 @@ public class DIDDocumentTest {
 		assertEquals(5, doc.getCredentialCount());
 	}
 
-	@Test
-	public void testAddSelfClaimedCredentialWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testAddSelfClaimedCredentialWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1750,8 +1765,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testRemoveCredential(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testRemoveCredential(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 		TestData.CompatibleData cd = testData.getCompatibleData(version);
 
@@ -1798,9 +1813,10 @@ public class DIDDocumentTest {
 		assertEquals(2, doc.getCredentialCount());
 	}
 
-	@Test
-	public void testRemoveCredentialWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testRemoveCredentialWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1847,8 +1863,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testGetService(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testGetService(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -1902,7 +1918,7 @@ public class DIDDocumentTest {
 		assertEquals(new DIDURL(doc.getSubject(), "#carrier"),
 				svcs.get(0).getId());
 		props = svcs.get(0).getProperties();
-		if (version == 1) {
+		if (Float.valueOf(version) == 1.0) {
 			assertTrue(props.isEmpty());
 		} else {
 			assertEquals(12, props.size());
@@ -1919,9 +1935,10 @@ public class DIDDocumentTest {
 		assertEquals(0, svcs.size());
 	}
 
-	@Test
-	public void testGetServiceWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testGetServiceWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1984,8 +2001,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testAddService(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testAddService(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -2021,8 +2038,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testAddServiceWithDescription(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testAddServiceWithDescription(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		Map<String, Object> map = new HashMap<String, Object>();
@@ -2090,9 +2107,10 @@ public class DIDDocumentTest {
 		assertTrue(svcs.get(2).getProperties().isEmpty());
 	}
 
-	@Test
-	public void testAddServiceWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testAddServiceWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -2134,9 +2152,10 @@ public class DIDDocumentTest {
 		assertEquals("Service.Testing", svcs.get(1).getType());
 	}
 
-	@Test
-	public void testAddServiceWithCidAndDescription() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testAddServiceWithCidAndDescription(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -2212,8 +2231,8 @@ public class DIDDocumentTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testRemoveService(int version) throws DIDException, IOException {
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testRemoveService(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
@@ -2246,9 +2265,10 @@ public class DIDDocumentTest {
 		assertEquals(1, doc.getServiceCount());
 	}
 
-	@Test
-	public void testRemoveServiceWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testRemoveServiceWithCid(String version) throws DIDException, IOException {
+		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -2303,9 +2323,19 @@ public class DIDDocumentTest {
 		"2,foobar",
 		"2,foo",
 		"2,bar",
-		"2,baz"
+		"2,baz",
+		"2.2,issuer",
+		"2.2,user1",
+		"2.2,user2",
+		"2.2,user3",
+		"2.2,user4",
+		"2.2,examplecorp",
+		"2.2,foobar",
+		"2.2,foo",
+		"2.2,bar",
+		"2.2,baz"
 	})
-	public void testParseAndSerialize(int version, String did)
+	public void testParseAndSerialize(String version, String did)
 			throws DIDException, IOException {
 		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		cd.loadAll();
@@ -2351,9 +2381,19 @@ public class DIDDocumentTest {
 		"2,foobar",
 		"2,foo",
 		"2,bar",
-		"2,baz"
+		"2,baz",
+		"2.2,issuer",
+		"2.2,user1",
+		"2.2,user2",
+		"2.2,user3",
+		"2.2,user4",
+		"2.2,examplecorp",
+		"2.2,foobar",
+		"2.2,foo",
+		"2.2,bar",
+		"2.2,baz"
 	})
-	public void testGenuineAndValidWithListener(int version, String did)
+	public void testGenuineAndValidWithListener(String version, String did)
 			throws DIDException, IOException {
 		TestData.CompatibleData cd = testData.getCompatibleData(version);
 		cd.loadAll();
@@ -2446,9 +2486,10 @@ public class DIDDocumentTest {
 		}
 	}
 
-	@Test
-	public void testDerive2() throws DIDException, IOException {
-		DIDDocument doc = testData.getCompatibleData(2).getDocument("user1");
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testDerive2(String version) throws DIDException, IOException {
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
@@ -2485,11 +2526,12 @@ public class DIDDocumentTest {
 		}
 	}
 
-	@Test
-	public void testDeriveFromIdentifier2() throws DIDException, IOException {
+	@ParameterizedTest
+	@ValueSource(strings = {"2", "2.2"})
+	public void testDeriveFromIdentifier2(String version) throws DIDException, IOException {
 		String identifier = "org.elastos.did.test";
 
-		DIDDocument doc = testData.getCompatibleData(2).getDocument("user1");
+		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 

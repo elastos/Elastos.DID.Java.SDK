@@ -1,0 +1,15 @@
+{
+  "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1" ],
+  "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#user1-vp-empty",
+  "type" : "VerifiablePresentation",
+  "holder" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
+  "created" : "2021-11-02T13:37:09Z",
+  "verifiableCredential" : [ ],
+  "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+    "realm" : "https://example.com/",
+    "nonce" : "873172f58701a9ee686f0630204fee59",
+    "signature" : "qJ0cHQQCTxZ75ZE2PmsB50WALPND1V0AjVue2SFPGb1JrFUtwXs8RlKG3TwrxeamETxqfjRMoK5usPitPzvFTA"
+  }
+}

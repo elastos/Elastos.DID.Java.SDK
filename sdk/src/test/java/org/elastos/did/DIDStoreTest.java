@@ -674,9 +674,9 @@ public class DIDStoreTest {
 		});
 	}
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testCompatibility(int version) throws DIDException, IOException {
+	@ParameterizedTest
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testCompatibility(String version) throws DIDException, IOException {
     	byte[] data = "Hello World".getBytes();
 
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
@@ -685,7 +685,7 @@ public class DIDStoreTest {
 		DIDStore store = DIDStore.open(cd.getStoreDir());
 
        	List<DID> dids = store.listDids();
-       	assertEquals(version == 2 ? 10 : 4, dids.size());
+       	assertEquals(Float.valueOf(version) >= 2.0 ? 10 : 4, dids.size());
 
        	for (DID did : dids) {
        		String alias = String.valueOf(did.getMetadata().getAlias());
@@ -698,7 +698,7 @@ public class DIDStoreTest {
        				assertNotNull(store.loadCredential(id));
        		} else if (alias.equals("User1")) {
        			List<DIDURL> vcs = store.listCredentials(did);
-       			assertEquals(version == 2 ? 5 : 4, vcs.size());
+       			assertEquals(Float.valueOf(version) >= 2.0 ? 5 : 4, vcs.size());
 
        			for (DIDURL id : vcs)
        				assertNotNull(store.loadCredential(id));
@@ -721,9 +721,9 @@ public class DIDStoreTest {
        	}
 	}
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testCompatibilityNewDIDWithWrongPass(int version) throws DIDException {
+	@ParameterizedTest
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testCompatibilityNewDIDWithWrongPass(String version) throws DIDException {
 		DIDStore store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
 		RootIdentity idenitty = store.loadRootIdentity();
 
@@ -732,9 +732,9 @@ public class DIDStoreTest {
 		});
 	}
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testCompatibilityNewDIDandGetDID(int version) throws DIDException {
+	@ParameterizedTest
+	@ValueSource(strings = {"1", "2", "2.2"})
+	public void testCompatibilityNewDIDandGetDID(String version) throws DIDException {
 		DIDStore store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
 		RootIdentity identity = store.loadRootIdentity();
 
@@ -758,7 +758,7 @@ public class DIDStoreTest {
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "John");
 		props.put("gender", "Male");
-		props.put("nation", "Singapore");
+		props.put("nationality", "Singapore");
 		props.put("language", "English");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
@@ -772,7 +772,10 @@ public class DIDStoreTest {
         	Issuer issuer = new Issuer(doc);
         	VerifiableCredential.Builder cb = issuer.issueFor(doc.getSubject());
         	VerifiableCredential vc = cb.id("#cred-1")
-        			.type("BasicProfileCredential", "SelfProclaimedCredential")
+					.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+					.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+					.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+					.type("SocialCredential", "https://elastos.org/credentials/social/v1")
         			.properties(props)
         			.seal(TestConfig.storePass);
 

@@ -1,0 +1,19 @@
+{
+  "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1" ],
+  "id" : "did:elastos:foobar#services",
+  "type" : [ "SelfProclaimedCredential", "VerifiableCredential" ],
+  "issuer" : "did:elastos:foobar",
+  "issuanceDate" : "2021-11-02T13:37:11Z",
+  "expirationDate" : "2026-11-02T13:37:11Z",
+  "credentialSubject" : {
+    "id" : "did:elastos:foobar",
+    "Outsourceing" : "https://foobar.com/outsourcing",
+    "consultation" : "https://foobar.com/consultation"
+  },
+  "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:37:11Z",
+    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+    "signature" : "RVOHd2b1qZEfP9fQbsVg6h7vhgqok7qyavKRaea6HvL5P6UIhHBExgSZCISbTC2RBnzBMm_v3e9QuKH4Fi-64w"
+  }
+}

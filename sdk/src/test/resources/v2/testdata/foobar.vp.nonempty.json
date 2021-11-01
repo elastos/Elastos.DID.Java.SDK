@@ -1,79 +1,82 @@
 {
-  "holder" : "did:elastos:foobar",
-  "created" : "2021-07-13T04:35:57Z",
   "id" : "did:elastos:foobar#foobar-vp-nonempty",
   "type" : "VerifiablePresentation",
+  "holder" : "did:elastos:foobar",
+  "created" : "2021-11-02T13:38:02Z",
   "verifiableCredential" : [ {
-    "id" : "did:elastos:foobar#profile",
-    "type" : [ "SelfProclaimedCredential", "BasicProfileCredential" ],
-    "issuanceDate" : "2021-07-13T04:35:57Z",
-    "expirationDate" : "2026-07-13T04:35:57Z",
+    "id" : "did:elastos:foobar#email",
+    "type" : [ "EmailCredential", "VerifiableCredential" ],
+    "issuer" : "did:elastos:example",
+    "issuanceDate" : "2021-11-02T13:38:02Z",
+    "expirationDate" : "2026-11-02T13:38:02Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
-      "email" : "contact@foobar.com",
-      "language" : "Chinese",
-      "name" : "Foo Bar Inc"
+      "email" : "foobar@example.com"
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-07-13T04:35:57Z",
-      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "exhyiQ1awewFgxVwv59n3bsvrZ3D8XGeBmPbpAf_F_22tOoXRWfnVBbPOJmlq87QvnTDkmB7MlGidVEZyHf-AQ"
+      "created" : "2021-11-02T13:38:02Z",
+      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+      "signature" : "H6gRgQNuXEubQQsdTqFhlTUmsSSwG5aM7wfZhUjParuOx8936oWm7U7xW-rYigPGGxn5-kBNoOFLwmj6iAyNQQ"
     }
   }, {
-    "id" : "#email",
-    "type" : [ "BasicProfileCredential", "EmailCredential", "InternetAccountCredential" ],
+    "id" : "did:elastos:foobar#license",
+    "type" : [ "LicenseCredential", "VerifiableCredential" ],
     "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-07-13T04:35:57Z",
-    "expirationDate" : "2026-07-13T04:35:57Z",
+    "issuanceDate" : "2021-11-02T13:38:02Z",
+    "expirationDate" : "2026-11-02T13:38:02Z",
     "credentialSubject" : {
-      "email" : "foobar@example.com",
-      "id" : "did:elastos:foobar"
+      "id" : "did:elastos:foobar",
+      "license-id" : "20201021C889",
+      "scope" : "Consulting"
     },
     "proof" : {
-      "created" : "2021-07-13T04:35:57Z",
+      "type" : "ECDSAsecp256r1",
+      "created" : "2021-11-02T13:38:02Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "vYYGCC260ZsQt-XFOnyT05c14ks3plm6mIfz5OZLf7UyPxh0mrVVfFmrpiRMqW47aLk7Jb4Ygerlv9qNkVLnHQ"
+      "signature" : "Ez1e_4Mf1TSDv80Io0qwaqNQEInF_Uey7Dhh6jDK05GBIxWr6IXjaydU_pt9sIocnRlj5QyUY_YsrEIcoMMUlQ"
+    }
+  }, {
+    "id" : "did:elastos:foobar#profile",
+    "type" : [ "EmailCredential", "ProfileCredential", "SelfProclaimedCredential", "VerifiableCredential" ],
+    "issuer" : "did:elastos:foobar",
+    "issuanceDate" : "2021-11-02T13:38:02Z",
+    "expirationDate" : "2026-11-02T13:38:02Z",
+    "credentialSubject" : {
+      "id" : "did:elastos:foobar",
+      "email" : "contact@foobar.com",
+      "name" : "Foo Bar Inc",
+      "nationality" : "China"
+    },
+    "proof" : {
+      "type" : "ECDSAsecp256r1",
+      "created" : "2021-11-02T13:38:02Z",
+      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+      "signature" : "4L309OXxr2EryuK5vZlMxNLECk0XWo6KhOwEQrY31U43ES_WtkD5C9_krkaVe6h4u7YLDTfWjQ25rZ9RgWFYMA"
     }
   }, {
     "id" : "did:elastos:foobar#services",
-    "type" : [ "SelfProclaimedCredential", "BasicProfileCredential" ],
+    "type" : [ "SelfProclaimedCredential", "VerifiableCredential" ],
     "issuer" : "did:elastos:foobar",
-    "issuanceDate" : "2021-07-13T04:35:57Z",
-    "expirationDate" : "2026-07-13T04:35:57Z",
-    "proof" : {
-      "created" : "2021-07-13T04:35:57Z",
-      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "7HFWbwQEKErM2eAQdlUtLsi5aJwSMpDqPh-CdVKv3mu6FziwWBY_USxsPMhlEaSvYD4gcyhUTCTFSU6oC0025w"
-    },
+    "issuanceDate" : "2021-11-02T13:38:02Z",
+    "expirationDate" : "2026-11-02T13:38:02Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
       "Outsourceing" : "https://foobar.com/outsourcing",
       "consultation" : "https://foobar.com/consultation"
-    }
-  }, {
-    "id" : "#license",
-    "type" : [ "LicenseCredential" ],
-    "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-07-13T04:35:57Z",
-    "expirationDate" : "2026-07-13T04:35:57Z",
-    "credentialSubject" : {
-      "license-id" : "20201021C889",
-      "scope" : "Consulting",
-      "id" : "did:elastos:foobar"
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-07-13T04:35:57Z",
-      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "coITwAW3RtqPXubyIZy4oJeW31xWL2ZfytfNTixikk2LyNTF02AHyx_0WUn6Hp4thg5S98hyKN4CyAc1mXjTFw"
+      "created" : "2021-11-02T13:38:02Z",
+      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+      "signature" : "xN4LK3RmFcaDC3x9DEzI_HZEgB8mW_EjQ2upgVMWzQT0Xs2IAhnc7xhtJIW7HdA7TF9Pj1gFA8bQ1l_kEpx6EQ"
     }
   } ],
   "proof" : {
-    "signature" : "yBO6_4jOyBBgp5N6zAMrEEwx9s6Kkh7488IT76x1OWlwnEwwyiw7tTooyXTcCdgoXFqUtf_hwf_OfWkmPC9hUg",
+    "type" : "ECDSAsecp256r1",
+    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
     "realm" : "https://example.com/",
     "nonce" : "873172f58701a9ee686f0630204fee59",
-    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "type" : "ECDSAsecp256r1"
+    "signature" : "Q596uZhf61Wx7MliEDgsSmwc1uwhdZS1wmcqJItEe4SxaoT2oy2hX5USB6-rUUizLKsLa14yZfUxV4zHrDEh2g"
   }
 }

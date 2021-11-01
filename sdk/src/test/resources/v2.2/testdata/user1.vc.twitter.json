@@ -1,0 +1,18 @@
+{
+  "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1", "https://elastos.org/credentials/social/v1" ],
+  "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#twitter",
+  "type" : [ "SocialCredential", "VerifiableCredential" ],
+  "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
+  "issuanceDate" : "2021-11-02T13:37:09Z",
+  "expirationDate" : "2026-11-02T13:37:09Z",
+  "credentialSubject" : {
+    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
+    "twitter" : "@john"
+  },
+  "proof" : {
+    "type" : "ECDSAsecp256r1",
+    "created" : "2021-11-02T13:37:09Z",
+    "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+    "signature" : "VoBTbSApVl5Mg9bdzCe7fj0OFCYICBwyYt2W8m_cjsnxNd2XQm2bkk74GlLoJ4FjKid3-ZoFnqMhjGg4OS9Zfg"
+  }
+}
