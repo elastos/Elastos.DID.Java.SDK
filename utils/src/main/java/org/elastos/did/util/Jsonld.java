@@ -23,8 +23,10 @@
 package org.elastos.did.util;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URI;
@@ -49,6 +51,8 @@ import com.apicatalog.jsonld.loader.SchemeRouter;
 import com.apicatalog.jsonld.uri.UriUtils;
 
 import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import jakarta.json.JsonWriterFactory;
 import jakarta.json.stream.JsonGenerator;
@@ -62,14 +66,96 @@ import picocli.CommandLine.Parameters;
 				Jsonld.Compact.class,
 				Jsonld.Verify.class
 })
-public class Jsonld {
+public class Jsonld extends CommandBase {
 	private static URI baseURI;
 	private static Set<String> builtinContexts;
+	private static LocalContexts localContexts;
+
+	static class LocalContexts {
+		private File contextsDir;
+		private Map<String, String> contexts;
+
+		public LocalContexts(File dir) {
+			this.contextsDir = dir;
+		}
+
+		private Map<String, String> loadContextsMap(File mapFile) throws IOException {
+			try (InputStream in = new FileInputStream(mapFile)) {
+				JsonObject map = Json.createReader(in).readObject();
+				Map<String, String> ctx = new HashMap<String, String>();
+				map.forEach((String k, JsonValue v) -> {
+					String uri = k;
+					String file = ((JsonString)v).getString();
+
+					ctx.put(uri, file);
+				});
+
+				return ctx;
+			}
+		}
+
+		private void loadLocalContexts() {
+			if (contexts != null)
+				return;
+
+			if (contextsDir == null) {
+				contexts = Collections.emptyMap();
+				return;
+			}
+
+			File mapFile = new File(contextsDir, "contexts.json");
+			if (!mapFile.exists() || !mapFile.isFile()) {
+				System.out.println(Colorize.yellow("Empty local context directory"));
+				contexts = Collections.emptyMap();
+			} else {
+				try {
+					contexts = loadContextsMap(mapFile);
+				} catch (IOException e) {
+					System.out.println(Colorize.red("Load local contexts failed" + e.getMessage()));
+					e.printStackTrace();
+				}
+			}
+		}
+
+		public boolean contains(String uri) {
+			loadLocalContexts();
+
+			return contexts.containsKey(uri);
+		}
+
+		public InputStream loadContext(String uri) throws IOException {
+			loadLocalContexts();
+
+			if (!contexts.containsKey(uri))
+				return null;
+
+			File contextFile = new File(contextsDir, contexts.get(uri));
+			return new FileInputStream(contextFile);
+		}
+	}
 
 	static class MyDocumentLoader implements DocumentLoader {
 
+		public MyDocumentLoader(File localContextsDir) {
+			super();
+			localContexts = new LocalContexts(localContextsDir);
+		}
+
 		@Override
 		public Document loadDocument(URI uri, DocumentLoaderOptions options) throws JsonLdError {
+			// local contexts
+			if (localContexts.contains(uri.toString())) {
+				try {
+					JsonDocument document = JsonDocument.of(localContexts.loadContext(uri.toString()));
+					document.setContextUrl(null);
+					document.setDocumentUrl(uri);
+					return document;
+				} catch (IOException e) {
+					throw new JsonLdError(JsonLdErrorCode.LOADING_REMOTE_CONTEXT_FAILED, e);
+				}
+			}
+
+			// built-in contexts
 			if (builtinContexts == null) {
 				try {
 					builtinContexts = Contexts.getBuiltinContexts();
@@ -89,11 +175,12 @@ public class Jsonld {
 				}
 			}
 
+			// external contexts
 			return SchemeRouter.defaultInstance().loadDocument(uri, options);
 		}
 	}
 
-	private static JsonLdOptions getJsonLdOptions() {
+	private static JsonLdOptions getJsonLdOptions(String localContextsDir) {
 		if (baseURI == null) {
 			try {
 				baseURI = new URI("https://trinity-tech.io/ns/v1#");
@@ -101,7 +188,17 @@ public class Jsonld {
 				throw new RuntimeException("Error create base URI", e);
 			}
 		}
-		JsonLdOptions opts = new JsonLdOptions(new MyDocumentLoader());
+
+		File contextsDir = null;
+		if (localContextsDir != null) {
+			File dir = new File(localContextsDir).getAbsoluteFile();
+			if (!dir.exists() || !dir.isDirectory())
+				System.out.println(Colorize.yellow("Invalid local context directory: " + localContextsDir));
+			else
+				contextsDir = dir;
+		}
+
+		JsonLdOptions opts = new JsonLdOptions(new MyDocumentLoader(contextsDir));
 		opts.setBase(baseURI);
 
 		return opts;
@@ -118,6 +215,9 @@ public class Jsonld {
 	@Command(name = "expand", mixinStandardHelpOptions = true, version = "jsonld expand 1.1",
 			description = "Expand JSON-LD document.")
 	public static class Expand extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-x", "--context"}, description = "Local contexts directory")
+		private String contextDir = null;
+
 		@Option(names = {"-o", "--output"}, description = "Output filename, default output to console.")
 		private String outputFile = null;
 
@@ -127,7 +227,7 @@ public class Jsonld {
 		@Override
 		public Integer call() throws Exception {
 			JsonValue result = JsonLd.expand(toUri(document))
-					.options(getJsonLdOptions())
+					.options(getJsonLdOptions(contextDir))
 					.get();
 
 			Map<String,Boolean> config = new HashMap<>();
@@ -151,6 +251,9 @@ public class Jsonld {
 	@Command(name = "compact", mixinStandardHelpOptions = true, version = "jsonld expand 1.1",
 			description = "Compact JSON-LD document.")
 	public static class Compact extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-x", "--context"}, description = "Local contexts directory")
+		private String contextDir = null;
+
 		@Option(names = {"-o", "--output"}, description = "Output filename, default output to console.")
 		private String outputFile = null;
 
@@ -163,7 +266,7 @@ public class Jsonld {
 		@Override
 		public Integer call() throws Exception {
 			JsonValue result = JsonLd.compact(toUri(document), toUri(context))
-					.options(getJsonLdOptions())
+					.options(getJsonLdOptions(contextDir))
 					.base(baseURI)
 					.compactToRelative(false)
 					.get();
@@ -189,6 +292,9 @@ public class Jsonld {
 	@Command(name = "verify", mixinStandardHelpOptions = true, version = "jsonld verify 1.1",
 			description = "Verify JSON-LD document.")
 	public static class Verify extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-x", "--context"}, description = "Local contexts directory")
+		private String contextDir = null;
+
 		@Option(names = {"-e", "--expandedOutput"}, description = "Expanded output filename, default output to console.")
 		private String expandedOutput = null;
 
@@ -203,8 +309,10 @@ public class Jsonld {
 
 		@Override
 		public Integer call() throws Exception {
+			JsonLdOptions options = getJsonLdOptions(contextDir);
+
 			JsonValue result = JsonLd.expand(toUri(document))
-					.options(getJsonLdOptions())
+					.options(options)
 					.get();
 
 			Map<String,Boolean> config = new HashMap<>();
@@ -233,7 +341,7 @@ public class Jsonld {
 				output.close();
 
 			result = JsonLd.compact(toUri(expandedOutput), toUri(context))
-					.options(getJsonLdOptions())
+					.options(options)
 					.base(baseURI)
 					.compactToRelative(false)
 					.get();
