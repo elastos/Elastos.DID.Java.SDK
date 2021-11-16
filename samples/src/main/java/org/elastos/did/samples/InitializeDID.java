@@ -40,9 +40,15 @@ public class InitializeDID {
 
 	private DIDStore store;
 
-	private void initPrivateIdentity() throws DIDException {
-		final String storePath = System.getProperty("java.io.tmpdir")
-				+ File.separator + "exampleStore";
+	private void initDIDBackend() throws DIDException {
+		// Initialize the DID backend globally.
+		DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
+	}
+
+	private void initRootIdentity() throws DIDException {
+		// Location to your DIDStore
+		String storePath = System.getProperty("java.io.tmpdir")
+				+ File.separator + this.getClass().getName() + ".store";
 
 		store = DIDStore.open(storePath);
 
@@ -67,7 +73,8 @@ public class InitializeDID {
 		// Check the DID store already contains owner's DID(with private key).
 		List<DID> dids = store.listDids((did) -> {
 			try {
-				return (store.containsPrivateKeys(did) && did.getMetadata().getAlias().equals("me"));
+				return (did.getMetadata().getAlias().equals("me") &&
+						store.containsPrivateKeys(did));
 			} catch (DIDException e) {
 				return false;
 			}
@@ -88,10 +95,8 @@ public class InitializeDID {
 		InitializeDID example = new InitializeDID();
 
 		try {
-			// Initializa the DID backend globally.
-			DIDBackend.initialize(new AssistDIDAdapter("testnet"));
-
-			example.initPrivateIdentity();
+			example.initDIDBackend();
+			example.initRootIdentity();
 			example.initDid();
 		} catch (DIDException e) {
 			e.printStackTrace();
