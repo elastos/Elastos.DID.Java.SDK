@@ -51,11 +51,11 @@ public class IssueCredential {
 		protected Entity(String name) throws DIDException {
 			this.name = name;
 
-			initPrivateIdentity();
+			initRootIdentity();
 			initDid();
 		}
 
-		private void initPrivateIdentity() throws DIDException {
+		private void initRootIdentity() throws DIDException {
 			final String storePath = System.getProperty("java.io.tmpdir")
 					+ File.separator + "exampleStore";
 

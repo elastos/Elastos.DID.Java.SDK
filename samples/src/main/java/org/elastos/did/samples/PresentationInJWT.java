@@ -60,11 +60,11 @@ public class PresentationInJWT {
 		protected Entity(String name) throws DIDException {
 			this.name = name;
 
-			initPrivateIdentity();
+			initRootIdentity();
 			initDid();
 		}
 
-		protected void initPrivateIdentity() throws DIDException {
+		protected void initRootIdentity() throws DIDException {
 			final String storePath = System.getProperty("java.io.tmpdir")
 					+ File.separator + name + ".store";
 

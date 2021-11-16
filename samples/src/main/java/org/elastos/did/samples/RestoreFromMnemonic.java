@@ -10,26 +10,16 @@ import org.elastos.did.RootIdentity;
 import org.elastos.did.exception.DIDException;
 
 public class RestoreFromMnemonic {
-	private static void deleteFile(File file) {
-		if (file.isDirectory()) {
-			File[] children = file.listFiles();
-			for (File child : children)
-				deleteFile(child);
-		}
-
-		file.delete();
-	}
-
-	public static void main(String[] args) throws DIDException {
+	public void restore() throws DIDException {
 		String mnemonic = "advance duty suspect finish space matter squeeze elephant twenty over stick shield";
 		String passphrase = "secret";
 		String storepass = "passwd";
 
 		// Initializa the DID backend globally.
-		DIDBackend.initialize(new AssistDIDAdapter("testnet"));
+		DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
 
-		final String storePath = System.getProperty("java.io.tmpdir")
-				+ File.separator + "recovery.store";
+		String storePath = System.getProperty("java.io.tmpdir")
+				+ File.separator + this.getClass().getName() + ".store";
 		deleteFile(new File(storePath));
 
 		DIDStore store = DIDStore.open(storePath);
@@ -49,4 +39,18 @@ public class RestoreFromMnemonic {
 		}
 	}
 
+	private static void deleteFile(File file) {
+		if (file.isDirectory()) {
+			File[] children = file.listFiles();
+			for (File child : children)
+				deleteFile(child);
+		}
+
+		file.delete();
+	}
+
+	public static void main(String[] args) throws DIDException {
+		RestoreFromMnemonic sample = new RestoreFromMnemonic();
+		sample.restore();
+	}
 }

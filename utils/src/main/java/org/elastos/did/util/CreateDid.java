@@ -35,6 +35,9 @@ import picocli.CommandLine.Option;
 @Command(name = "createdid", mixinStandardHelpOptions = true, version = "createdid 2.0",
 		description = "Create a DID.")
 public class CreateDid extends CommandBase implements Callable<Integer> {
+	@Option(names = {"-n", "--network"}, description = "Avaliable networks: mainnet testnet")
+	private String network = null;
+
 	@Option(names = {"-f", "--force"}, description = "Overwrite the existing.")
 	private boolean force = false;
 
@@ -44,7 +47,7 @@ public class CreateDid extends CommandBase implements Callable<Integer> {
 	@Option(names = {"-i", "--identity"}, description = "The root identity ID to create the DID")
 	private String identity = null;
 
-	@Option(names = {"-n", "--index"}, description = "Create new DID with the index")
+	@Option(names = {"-d", "--index"}, description = "Create new DID with the index")
 	private int index = -1;
 
 	@Option(names = {"-p", "--password"}, required = true, description = "Password for the DID store")
@@ -56,6 +59,8 @@ public class CreateDid extends CommandBase implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 		try {
+			setupDIDBackend(network, null);
+
 			DIDStore store = openDIDStore(storeDir);
 
 			RootIdentity id = null;
