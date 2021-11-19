@@ -451,12 +451,13 @@ public final class TestData {
 
 				Map<String, Object> props = new HashMap<String, Object>();
 				props.put("name", "Test Issuer");
+				props.put("gender", "Male");
 				props.put("nationality", "Singapore");
-				props.put("language", "English");
 				props.put("email", "issuer@example.com");
 
 				VerifiableCredential vc = cb.id("#profile")
-						.type("BasicProfileCredential", "SelfProclaimedCredential")
+						.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+						.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
 						.properties(props)
 						.seal(TestConfig.storePass);
 
@@ -555,7 +556,6 @@ public final class TestData {
 				props.put("name", "John");
 				props.put("gender", "Male");
 				props.put("nationality", "Singapore");
-				props.put("language", "English");
 				props.put("email", "john@example.com");
 				props.put("twitter", "@john");
 
