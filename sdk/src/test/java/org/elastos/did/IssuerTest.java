@@ -149,7 +149,7 @@ public class IssuerTest {
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Testing Issuer");
 		props.put("nationality", "Singapore");
-		props.put("language", "English");
+		props.put("gender", "Male");
 		props.put("email", "issuer@example.com");
 
 		Issuer issuer = new Issuer(issuerDoc);
@@ -175,7 +175,7 @@ public class IssuerTest {
 
 		assertEquals("Testing Issuer", vc.getSubject().getProperty("name"));
 		assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
-		assertEquals("English", vc.getSubject().getProperty("language"));
+		assertEquals("Male", vc.getSubject().getProperty("gender"));
 		assertEquals("issuer@example.com", vc.getSubject().getProperty("email"));
 
 		assertFalse(vc.isExpired());
@@ -191,7 +191,6 @@ public class IssuerTest {
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nationality", "Singapore");
-		props.put("language", "English");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
@@ -219,7 +218,6 @@ public class IssuerTest {
 		assertEquals("John", vc.getSubject().getProperty("name"));
 		assertEquals("Male", vc.getSubject().getProperty("gender"));
 		assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
-		assertEquals("English", vc.getSubject().getProperty("language"));
 		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
 		assertEquals("@john", vc.getSubject().getProperty("twitter"));
 
@@ -236,7 +234,6 @@ public class IssuerTest {
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nationality", "Singapore");
-		props.put("language", "English");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
@@ -264,7 +261,6 @@ public class IssuerTest {
 		assertEquals("John", vc.getSubject().getProperty("name"));
 		assertEquals("Male", vc.getSubject().getProperty("gender"));
 		assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
-		assertEquals("English", vc.getSubject().getProperty("language"));
 		assertEquals("john@example.com", vc.getSubject().getProperty("email"));
 		assertEquals("@john", vc.getSubject().getProperty("twitter"));
 
@@ -280,7 +276,7 @@ public class IssuerTest {
 		Map<String, Object> props= new HashMap<String, Object>();
 		props.put("name", "Testing Issuer");
 		props.put("nationality", "Singapore");
-		props.put("language", "English");
+		props.put("gender", "Male");
 		props.put("email", "issuer@example.com");
 
 		Issuer issuer = new Issuer(issuerDoc);
@@ -306,7 +302,7 @@ public class IssuerTest {
 
 		assertEquals("Testing Issuer", vc.getSubject().getProperty("name"));
 		assertEquals("Singapore", vc.getSubject().getProperty("nationality"));
-		assertEquals("English", vc.getSubject().getProperty("language"));
+		assertEquals("Male", vc.getSubject().getProperty("gender"));
 		assertEquals("issuer@example.com", vc.getSubject().getProperty("email"));
 
 		assertFalse(vc.isExpired());
@@ -332,7 +328,7 @@ public class IssuerTest {
 
 		assertEquals(vcId, vc.getId());
 
-		assertTrue(vc.getType().contains("ProfileCredential"));
+		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
 		assertTrue(vc.getType().contains("ProfileCredential"));
 		assertFalse(vc.getType().contains("InternetAccountCredential"));
 

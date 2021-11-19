@@ -108,7 +108,7 @@ public class Web3Adapter extends DefaultDIDAdapter {
 
 		try {
 			//BigInteger gasPrice = web3j.ethGasPrice().sendAsync().get().getGasPrice();
-			BigInteger gasPrice = new BigInteger("1000000000000");
+			BigInteger gasPrice = new BigInteger("10000000000");
 			BigInteger gasLimit = new BigInteger("3000000");
 
 			log.info("Creating transaction via {}", rpcEndpoint);

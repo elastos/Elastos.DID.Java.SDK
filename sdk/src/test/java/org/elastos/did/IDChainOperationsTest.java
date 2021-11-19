@@ -446,7 +446,6 @@ public class IDChainOperationsTest {
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nationality", "Singapore");
-		props.put("language", "English");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
@@ -650,7 +649,6 @@ public class IDChainOperationsTest {
 		props.put("name", "John");
 		props.put("gender", "Male");
 		props.put("nationality", "Singapore");
-		props.put("language", "English");
 		props.put("email", "john@example.com");
 		props.put("twitter", "@john");
 
