@@ -112,7 +112,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	protected final static String SIGNATURE = "signature";
 
     public final static String W3C_CREDENTIAL_CONTEXT = "https://www.w3.org/2018/credentials/v1";
-    public final static String ELASTOS_CREDENTIAL_CONTEXT = "https://elastos.org/credentials/v1";
+    public final static String ELASTOS_CREDENTIAL_CONTEXT = "https://ns.elastos.org/credentials/v1";
     public final static String DEFAULT_CREDENTIAL_TYPE = "VerifiableCredential";
 
 	private static final Logger log = LoggerFactory.getLogger(VerifiableCredential.class);

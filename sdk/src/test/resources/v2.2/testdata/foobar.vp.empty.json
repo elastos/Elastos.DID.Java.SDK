@@ -1,15 +1,15 @@
 {
-  "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1" ],
+  "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1" ],
   "id" : "did:elastos:foobar#foobar-vp-empty",
   "type" : "VerifiablePresentation",
   "holder" : "did:elastos:foobar",
-  "created" : "2021-11-02T13:37:11Z",
+  "created" : "2021-11-20T09:55:45Z",
   "verifiableCredential" : [ ],
   "proof" : {
     "type" : "ECDSAsecp256r1",
     "verificationMethod" : "did:elastos:foobar#key2",
     "realm" : "https://example.com/",
     "nonce" : "873172f58701a9ee686f0630204fee59",
-    "signature" : "T8e1noAVRC35_qAf1Fd1gH81jQwbIl-qdDLc0wihaLSsVDgfnv3KwJJ4lgyja21cEbkVikLWAcZrD25EhZj2cw"
+    "signature" : "bOBQUDfVHNUICDyupWO8CPB2xPNjULxKkd1zSqY7fCMpxwS-EsCRjRzIrg4XvbDtK_v-K7_YcFWatgY6JASTSg"
   }
 }

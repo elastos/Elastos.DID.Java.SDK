@@ -1,33 +1,33 @@
 {
-  "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1" ],
+  "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1" ],
   "id" : "did:elastos:foobar#foobar-vp-nonempty",
   "type" : "VerifiablePresentation",
   "holder" : "did:elastos:foobar",
-  "created" : "2021-11-02T13:37:11Z",
+  "created" : "2021-11-20T09:55:45Z",
   "verifiableCredential" : [ {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1", "https://elastos.org/credentials/email/v1" ],
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/email/v1" ],
     "id" : "did:elastos:foobar#email",
     "type" : [ "EmailCredential", "VerifiableCredential" ],
     "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-11-02T13:37:10Z",
-    "expirationDate" : "2026-11-02T13:37:10Z",
+    "issuanceDate" : "2021-11-20T09:55:45Z",
+    "expirationDate" : "2026-11-20T09:55:45Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
       "email" : "foobar@example.com"
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-02T13:37:10Z",
+      "created" : "2021-11-20T09:55:45Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "zITzXXL1wDyMeWZBLfJzVUBLnjCkn2pVMk4Bty0G7XPByWXvhhnJ8Sw8Ar1boeu-G61AOfKlclssSAKPba4RXQ"
+      "signature" : "2vJYOKshXcelYFG5hpvy7Z0sptRQrTSH13HISVWzNDe21Py8fhDwY6sGwLCknl38DVdMCMm135ds6DpGxpGk7Q"
     }
   }, {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1", "https://example.com/credentials/license/v1" ],
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://example.com/credentials/license/v1" ],
     "id" : "did:elastos:foobar#license",
     "type" : [ "LicenseCredential", "VerifiableCredential" ],
     "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-11-02T13:37:11Z",
-    "expirationDate" : "2026-11-02T13:37:11Z",
+    "issuanceDate" : "2021-11-20T09:55:45Z",
+    "expirationDate" : "2026-11-20T09:55:45Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
       "license-id" : "20201021C889",
@@ -35,17 +35,17 @@
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-02T13:37:11Z",
+      "created" : "2021-11-20T09:55:45Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "5siXFejHNJL8nRzpZFIqu5Y2oMWaQJC7YYLckHgJPChA6LLshcW3PL6GmevC9w4N3wqddrL7nu38K0BKgmIAwA"
+      "signature" : "AI8C1YIPvHmDFOKhiCucurA2YRfLASsv5TF2D-erKEgdoO8eCAaqVX3LW23V8yMZVNuRRMB5nn2r2AfApqft_A"
     }
   }, {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1", "https://elastos.org/credentials/profile/v1", "https://elastos.org/credentials/email/v1" ],
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/profile/v1", "https://ns.elastos.org/credentials/email/v1" ],
     "id" : "did:elastos:foobar#profile",
     "type" : [ "EmailCredential", "ProfileCredential", "SelfProclaimedCredential", "VerifiableCredential" ],
     "issuer" : "did:elastos:foobar",
-    "issuanceDate" : "2021-11-02T13:37:10Z",
-    "expirationDate" : "2026-11-02T13:37:10Z",
+    "issuanceDate" : "2021-11-20T09:55:45Z",
+    "expirationDate" : "2026-11-20T09:55:45Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
       "email" : "contact@foobar.com",
@@ -54,17 +54,17 @@
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-02T13:37:10Z",
+      "created" : "2021-11-20T09:55:45Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "xvzx3BI1Bdwc4GJC8eZUA31L7UdezPztJ4acADWCpxqXf0rcxCkxcE6ubknkjjWWtaycVQca4pHgzIhWqMUdtQ"
+      "signature" : "Jhz9-q9EaKPxoM3ablDUZM82aPCr3zSKbFf-PoWbDCif1AivPmyZ7lhCTJ281SEQuWp3ElpbtqEYimVUw3eUFw"
     }
   }, {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1" ],
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1" ],
     "id" : "did:elastos:foobar#services",
     "type" : [ "SelfProclaimedCredential", "VerifiableCredential" ],
     "issuer" : "did:elastos:foobar",
-    "issuanceDate" : "2021-11-02T13:37:11Z",
-    "expirationDate" : "2026-11-02T13:37:11Z",
+    "issuanceDate" : "2021-11-20T09:55:45Z",
+    "expirationDate" : "2026-11-20T09:55:45Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
       "Outsourceing" : "https://foobar.com/outsourcing",
@@ -72,9 +72,9 @@
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-02T13:37:11Z",
+      "created" : "2021-11-20T09:55:45Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "RVOHd2b1qZEfP9fQbsVg6h7vhgqok7qyavKRaea6HvL5P6UIhHBExgSZCISbTC2RBnzBMm_v3e9QuKH4Fi-64w"
+      "signature" : "NH0muGsu1VP3Qe5WHMvmRL7KnFA6y5pgTCISOW5DIzi0CusWQbULtp3LQwylIAWydmc2CXOddtZt2H28BbuMpQ"
     }
   } ],
   "proof" : {
@@ -82,6 +82,6 @@
     "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
     "realm" : "https://example.com/",
     "nonce" : "873172f58701a9ee686f0630204fee59",
-    "signature" : "86JR1mNV2PPEoGxhdQIgU3FTxqBy1NYYCbX5WJCr0HKF1k3nvYUbmZYRmSm8UVJxyw1_2uKLT9ybJD063m0pUw"
+    "signature" : "ESf4QEhlv3f61l8rxhca2Z8L-75WSPXlQnyhfeaxvYUWsrgffs4k4pMkvF_vG_PDm4GEfNEYNG3-FyhtjvkDMw"
   }
 }

@@ -147,7 +147,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	protected final static String SIGNATURE_VALUE = "signatureValue";
 
 	public final static String W3C_DID_CONTEXT = "https://www.w3.org/ns/did/v1";
-	public final static String ELASTOS_DID_CONTEXT = "https://elastos.org/did/v1";
+	public final static String ELASTOS_DID_CONTEXT = "https://ns.elastos.org/did/v1";
 	public final static String W3ID_SECURITY_CONTEXT = "https://w3id.org/security/v1";
 
 	@JsonProperty(CONTEXT)

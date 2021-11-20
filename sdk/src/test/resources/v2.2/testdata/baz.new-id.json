@@ -1,13 +1,13 @@
 {
-  "@context" : [ "https://www.w3.org/ns/did/v1", "https://elastos.org/did/v1", "https://w3id.org/security/v1" ],
+  "@context" : [ "https://www.w3.org/ns/did/v1", "https://ns.elastos.org/did/v1", "https://w3id.org/security/v1" ],
   "id" : "did:elastos:baz",
   "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d" ],
   "multisig" : "1:2",
-  "expires" : "2026-11-02T13:37:12Z",
+  "expires" : "2026-11-20T09:55:46Z",
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-11-02T13:37:12Z",
+    "created" : "2021-11-20T09:55:46Z",
     "creator" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d#primary",
-    "signatureValue" : "a0Mf4kfhA5lsrSHVeENX_sum1Rb5IoJkjAz8flG8iPRn-rgK8NIOiBRM5LwCbOKixqa4mEwbLlBHLJ-4pvO8sQ"
+    "signatureValue" : "Wg_1wu_XhFX_l-k126_m9Z2xRXKnFZYyRs5A08XBq0hkqTBueYh2JdOIPPFcaPKfksxqz7zLhYzeHcKmEqMfgw"
   }
 }

@@ -771,10 +771,10 @@ public class DIDStoreTest {
         	Issuer issuer = new Issuer(doc);
         	VerifiableCredential.Builder cb = issuer.issueFor(doc.getSubject());
         	VerifiableCredential vc = cb.id("#cred-1")
-					.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-					.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-					.type("EmailCredential", "https://elastos.org/credentials/email/v1")
-					.type("SocialCredential", "https://elastos.org/credentials/social/v1")
+					.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+					.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+					.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
+					.type("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
         			.properties(props)
         			.seal(TestConfig.storePass);
 
