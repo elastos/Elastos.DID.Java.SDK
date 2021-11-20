@@ -1,5 +1,5 @@
 {
-  "@context" : [ "https://www.w3.org/ns/did/v1", "https://elastos.org/did/v1", "https://w3id.org/security/v1" ],
+  "@context" : [ "https://www.w3.org/ns/did/v1", "https://ns.elastos.org/did/v1", "https://w3id.org/security/v1" ],
   "id" : "did:elastos:foobar",
   "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g", "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS" ],
   "multisig" : "2:3",
@@ -7,38 +7,38 @@
     "id" : "did:elastos:foobar#key2",
     "type" : "ECDSAsecp256r1",
     "controller" : "did:elastos:foobar",
-    "publicKeyBase58" : "258zeC119kiFYXjb8GYiABUSv5RF4547kWwh6ZvSrdVLn"
+    "publicKeyBase58" : "26Cuo6GcQrrhfdAafL5bzcXoULcXKRr5o37WGhuGWUHqN"
   }, {
     "id" : "did:elastos:foobar#key3",
     "type" : "ECDSAsecp256r1",
     "controller" : "did:elastos:foobar",
-    "publicKeyBase58" : "tPXfpxoX7Zit372jSypbKYw9Sr3rG6Bj3DNFL4VwQdYH"
+    "publicKeyBase58" : "nMc13648JpaWrwaZrpZBTy7GHxPN2BRjdYF2Vmxdm3pC"
   } ],
   "authentication" : [ "did:elastos:foobar#key2", "did:elastos:foobar#key3" ],
   "verifiableCredential" : [ {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1", "https://elastos.org/credentials/email/v1" ],
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/email/v1" ],
     "id" : "did:elastos:foobar#email",
     "type" : [ "EmailCredential", "VerifiableCredential" ],
     "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-11-02T13:37:10Z",
-    "expirationDate" : "2026-11-02T13:37:10Z",
+    "issuanceDate" : "2021-11-20T09:55:45Z",
+    "expirationDate" : "2026-11-20T09:55:45Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
       "email" : "foobar@example.com"
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-02T13:37:10Z",
+      "created" : "2021-11-20T09:55:45Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "zITzXXL1wDyMeWZBLfJzVUBLnjCkn2pVMk4Bty0G7XPByWXvhhnJ8Sw8Ar1boeu-G61AOfKlclssSAKPba4RXQ"
+      "signature" : "2vJYOKshXcelYFG5hpvy7Z0sptRQrTSH13HISVWzNDe21Py8fhDwY6sGwLCknl38DVdMCMm135ds6DpGxpGk7Q"
     }
   }, {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://elastos.org/credentials/v1", "https://elastos.org/credentials/profile/v1", "https://elastos.org/credentials/email/v1" ],
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/profile/v1", "https://ns.elastos.org/credentials/email/v1" ],
     "id" : "did:elastos:foobar#profile",
     "type" : [ "EmailCredential", "ProfileCredential", "SelfProclaimedCredential", "VerifiableCredential" ],
     "issuer" : "did:elastos:foobar",
-    "issuanceDate" : "2021-11-02T13:37:10Z",
-    "expirationDate" : "2026-11-02T13:37:10Z",
+    "issuanceDate" : "2021-11-20T09:55:45Z",
+    "expirationDate" : "2026-11-20T09:55:45Z",
     "credentialSubject" : {
       "id" : "did:elastos:foobar",
       "email" : "contact@foobar.com",
@@ -47,9 +47,9 @@
     },
     "proof" : {
       "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-02T13:37:10Z",
+      "created" : "2021-11-20T09:55:45Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "xvzx3BI1Bdwc4GJC8eZUA31L7UdezPztJ4acADWCpxqXf0rcxCkxcE6ubknkjjWWtaycVQca4pHgzIhWqMUdtQ"
+      "signature" : "Jhz9-q9EaKPxoM3ablDUZM82aPCr3zSKbFf-PoWbDCif1AivPmyZ7lhCTJ281SEQuWp3ElpbtqEYimVUw3eUFw"
     }
   } ],
   "service" : [ {
@@ -62,49 +62,49 @@
     "serviceEndpoint" : "https://foobar.com/credentials",
     "ABC" : "Helloworld",
     "BAR" : "Foobar",
-    "DATE" : "2021-11-02T13:37:10Z",
+    "DATE" : "2021-11-20T09:55:45Z",
     "FOO" : 678,
     "FOOBAR" : "Lalala...",
     "MAP" : {
       "ABC" : "Helloworld",
       "BAR" : "Foobar",
-      "DATE" : "2021-11-02T13:37:10Z",
+      "DATE" : "2021-11-20T09:55:45Z",
       "FOO" : 678,
       "FOOBAR" : "Lalala...",
       "abc" : "helloworld",
       "bar" : "foobar",
-      "date" : "2021-11-02T13:37:10Z",
+      "date" : "2021-11-20T09:55:45Z",
       "foo" : 123,
       "foobar" : "lalala..."
     },
     "abc" : "helloworld",
     "bar" : "foobar",
-    "date" : "2021-11-02T13:37:10Z",
+    "date" : "2021-11-20T09:55:45Z",
     "foo" : 123,
     "foobar" : "lalala...",
     "map" : {
       "ABC" : "Helloworld",
       "BAR" : "Foobar",
-      "DATE" : "2021-11-02T13:37:10Z",
+      "DATE" : "2021-11-20T09:55:45Z",
       "FOO" : 678,
       "FOOBAR" : "Lalala...",
       "abc" : "helloworld",
       "bar" : "foobar",
-      "date" : "2021-11-02T13:37:10Z",
+      "date" : "2021-11-20T09:55:45Z",
       "foo" : 123,
       "foobar" : "lalala..."
     }
   } ],
-  "expires" : "2026-11-02T13:37:10Z",
+  "expires" : "2026-11-20T09:55:45Z",
   "proof" : [ {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-11-02T13:37:10Z",
+    "created" : "2021-11-20T09:55:45Z",
     "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "x8Ogvm3MSmgdMJ45JmvaSzCgxRtQeipKNA6bHMVtwWUSyiHbqhPZ7De1-UwS1XxMegyM0Kp0GCONREYVb7rMsQ"
+    "signatureValue" : "Q0zzJEDWk0AEhi38OxyUi462CDTS8_fqNRETgodG2Puqri7w3mgSjLtwWwz8kycPa7tpJeanEZJ5kcbXwKdp7A"
   }, {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-11-02T13:37:10Z",
+    "created" : "2021-11-20T09:55:45Z",
     "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
-    "signatureValue" : "isKbwywccKlWVS1YkRqGpLzXzkYnXGJjDOFxqNK7XDc6x4ZxubvNU8mF-FapIdZ72UzQszffN5bUbnCdRfoVXg"
+    "signatureValue" : "aHiapaIl4IK6c7ujixjx3GK61Ctktmg8vUhQevHCnbVoQVNEs6H1YKO-GYVCG-8aYK77pM2Wr4xD3U3xmi4mNA"
   } ]
 }

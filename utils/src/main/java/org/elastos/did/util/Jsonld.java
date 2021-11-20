@@ -34,10 +34,7 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
-
-import org.elastos.did.Contexts;
 
 import com.apicatalog.jsonld.JsonLd;
 import com.apicatalog.jsonld.JsonLdError;
@@ -68,7 +65,6 @@ import picocli.CommandLine.Parameters;
 })
 public class Jsonld extends CommandBase {
 	private static URI baseURI;
-	private static Set<String> builtinContexts;
 	private static LocalContexts localContexts;
 
 	static class LocalContexts {
@@ -147,26 +143,6 @@ public class Jsonld extends CommandBase {
 			if (localContexts.contains(uri.toString())) {
 				try {
 					JsonDocument document = JsonDocument.of(localContexts.loadContext(uri.toString()));
-					document.setContextUrl(null);
-					document.setDocumentUrl(uri);
-					return document;
-				} catch (IOException e) {
-					throw new JsonLdError(JsonLdErrorCode.LOADING_REMOTE_CONTEXT_FAILED, e);
-				}
-			}
-
-			// built-in contexts
-			if (builtinContexts == null) {
-				try {
-					builtinContexts = Contexts.getBuiltinContexts();
-				} catch (IOException ignore) {
-					builtinContexts = Collections.emptySet();
-				}
-			}
-
-			if (builtinContexts.contains(uri.toString())) {
-				try {
-					JsonDocument document = JsonDocument.of(Contexts.loadContext(uri));
 					document.setContextUrl(null);
 					document.setDocumentUrl(uri);
 					return document;

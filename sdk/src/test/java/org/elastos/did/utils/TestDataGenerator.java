@@ -104,9 +104,9 @@ public class TestDataGenerator {
 		props.put("email", "issuer@example.com");
 
 		VerifiableCredential vc = cb.id("#profile")
-				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-				.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-				.type("https://elastos.org/credentials/email/v1#EmailCredential")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+				.type("https://ns.elastos.org/credentials/email/v1#EmailCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -205,10 +205,10 @@ public class TestDataGenerator {
 		props.put("twitter", "@john");
 
 		VerifiableCredential vcProfile = cb.id("#profile")
-				.type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
-				.type("https://elastos.org/credentials/profile/v1#ProfileCredential")
-				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
-				.type("SocialCredential", "https://elastos.org/credentials/social/v1")
+				.type("https://ns.elastos.org/credentials/v1#SelfProclaimedCredential")
+				.type("https://ns.elastos.org/credentials/profile/v1#ProfileCredential")
+				.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
+				.type("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -219,7 +219,7 @@ public class TestDataGenerator {
 		props.put("email", "john@example.com");
 
 		VerifiableCredential vcEmail = cb.id("#email")
-				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -257,7 +257,7 @@ public class TestDataGenerator {
 		props.put("passport", "S653258Z07");
 
 		VerifiableCredential vcPassport = cb.id(id)
-				.type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
+				.type("https://ns.elastos.org/credentials/v1#SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		vcPassport.getMetadata().setAlias("Passport");
@@ -285,7 +285,7 @@ public class TestDataGenerator {
 		props.put("twitter", "@john");
 
 		VerifiableCredential vcTwitter = cb.id(id)
-				.type("SocialCredential", "https://elastos.org/credentials/social/v1")
+				.type("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		vcTwitter.getMetadata().setAlias("Twitter");
@@ -403,10 +403,10 @@ public class TestDataGenerator {
 		props.put("twitter", "@john");
 
 		String[] types = {
-			"https://elastos.org/credentials/v1#SelfProclaimedCredential",
-			"https://elastos.org/credentials/profile/v1#ProfileCredential",
-			"https://elastos.org/credentials/email/v1#EmailCredential",
-			"https://elastos.org/credentials/social/v1#SocialCredential"
+			"https://ns.elastos.org/credentials/v1#SelfProclaimedCredential",
+			"https://ns.elastos.org/credentials/profile/v1#ProfileCredential",
+			"https://ns.elastos.org/credentials/email/v1#EmailCredential",
+			"https://ns.elastos.org/credentials/social/v1#SocialCredential"
 		};
 
 		db.addCredential("#profile", types, props, TestConfig.storePass);
@@ -505,9 +505,9 @@ public class TestDataGenerator {
 		props.put("email", "contact@example.com");
 
 		VerifiableCredential vc = cb.id("#profile")
-				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-				.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+				.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -599,9 +599,9 @@ public class TestDataGenerator {
 		props.put("email", "contact@foobar.com");
 
 		VerifiableCredential vcProfile = cb.id("#profile")
-				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-				.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+				.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -612,7 +612,7 @@ public class TestDataGenerator {
 		props.put("email", "foobar@example.com");
 
 		VerifiableCredential vcEmail = cb.id("#email")
-				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 
@@ -646,7 +646,7 @@ public class TestDataGenerator {
 		props.put("Outsourceing", "https://foobar.com/outsourcing");
 
 		VerifiableCredential vcServices = cb.id(id)
-				.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		store.storeCredential(vcServices);
@@ -804,7 +804,7 @@ public class TestDataGenerator {
 		props.put("email", "foo@example.com");
 
 		VerifiableCredential vc = cb.id(id)
-				.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
 				.properties(props)
 				.seal(TestConfig.storePass);
 		store.storeCredential(vc);
@@ -906,7 +906,7 @@ public class TestDataGenerator {
 	}
 
 	public void createTestFiles() throws IOException, DIDException {
-		Features.enableJsonLdContext(false);
+		Features.enableJsonLdContext(true);
 
 		init(TestConfig.tempDir + File.separator + "DIDTestFiles.v2");
 		createTestIssuer();

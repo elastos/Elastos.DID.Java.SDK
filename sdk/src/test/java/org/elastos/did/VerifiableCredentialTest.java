@@ -1129,7 +1129,7 @@ public class VerifiableCredentialTest {
 
     		VerifiableCredential vc = selfIssuer.issueFor(did)
     				.id("#test" + i)
-					.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+					.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
     				.property("index", Integer.valueOf(i))
     				.seal(TestConfig.storePass);
 

@@ -114,9 +114,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
 		VerifiableCredential vc = cb.id("#testCredential")
-			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
-			.type("SocialCredential", "https://elastos.org/credentials/social/v1")
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
+			.type("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -156,9 +156,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
 		VerifiableCredential vc = cb.id("#myCredential")
-			.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -198,9 +198,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
 		VerifiableCredential vc = cb.id("#testCredential")
-			.type("SocialCredential", "https://elastos.org/credentials/social/v1")
-			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+			.type("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -241,9 +241,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(testDoc.getSubject());
 		VerifiableCredential vc = cb.id("#testCredential")
-			.type("SocialCredential", "https://elastos.org/credentials/social/v1")
-			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+			.type("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -283,9 +283,9 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
 		VerifiableCredential vc = cb.id("#myCredential")
-			.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-			.type("EmailCredential", "https://elastos.org/credentials/email/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
@@ -319,8 +319,8 @@ public class IssuerTest {
 
 		VerifiableCredential.Builder cb = issuer.issueFor(issuerDoc.getSubject());
 		VerifiableCredential vc = cb.id("#myCredential")
-			.type("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-			.type("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
 			.properties(props)
 			.seal(TestConfig.storePass);
 
