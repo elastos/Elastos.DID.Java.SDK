@@ -42,6 +42,7 @@ task fatjar(type: Jar) {
 		attributes "Main-Class": "org.elastos.did.util.DIDUtils"
 	}
 
+	duplicatesStrategy = DuplicatesStrategy.INCLUDE
 	archiveBaseName = 'didutils'
 	from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
 	with jar
