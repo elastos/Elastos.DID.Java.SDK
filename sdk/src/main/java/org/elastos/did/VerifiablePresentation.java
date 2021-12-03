@@ -106,6 +106,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	@JsonProperty(HOLDER)
 	@JsonInclude(Include.NON_NULL)
 	private DID holder;
+	// TODO: remove the created field in the future, use proof.created as formal time stamp
 	@JsonProperty(CREATED)
 	@JsonInclude(Include.NON_NULL)
 	private Date created;
@@ -150,11 +151,13 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		 */
 		@JsonCreator
 		protected Proof(@JsonProperty(value = TYPE) String type,
+				@JsonProperty(value = CREATED) Date created,
 				@JsonProperty(value = VERIFICATION_METHOD, required = true) DIDURL method,
 				@JsonProperty(value = REALM, required = true) String realm,
 				@JsonProperty(value = NONCE, required = true) String nonce,
 				@JsonProperty(value = SIGNATURE, required = true) String signature) {
 			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+			this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
 			this.verificationMethod = method;
 			this.realm = realm;
 			this.nonce = nonce;
@@ -171,7 +174,23 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		 */
 		protected Proof(DIDURL method, String realm,
 				String nonce, String signature) {
-			this(Constants.DEFAULT_PUBLICKEY_TYPE, method, realm, nonce, signature);
+			this(null, method, realm, nonce, signature);
+		}
+
+		/**
+		 * Create the proof object with the given values.
+		 *
+		 * @param created the create time stamp
+		 * @param method the sign key
+		 * @param realm where is Presentation use
+		 * @param nonce the nonce string
+		 * @param signature the signature string
+		 */
+		protected Proof(Date created, DIDURL method, String realm,
+				String nonce, String signature) {
+			this(Constants.DEFAULT_PUBLICKEY_TYPE,
+					created != null ? created : Calendar.getInstance(Constants.UTC).getTime(), 
+					method, realm, nonce, signature);
 		}
 
 		/**
@@ -183,6 +202,15 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			return type;
 		}
 
+		/**
+		 * Get the proof create time stamp
+		 * 
+		 * @return the create time stamp
+		 */
+		public Date getCreated() {
+			return created;
+		}
+		
 		/**
 		 * Get the verification method.
 		 *
@@ -295,7 +323,9 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return the create time stamp
 	 */
 	public Date getCreated() {
-		return created;
+		// From 2.2.x proof.created is the formal created time stamp,
+		// fail-back to created for back compatible support.
+		return  proof.created != null ?  proof.created : created;
 	}
 
 	/**
@@ -360,7 +390,10 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		if (type == null || type.isEmpty())
 			throw new MalformedPresentationException("Missing presentation type");
 
-		if (created == null)
+		if (proof == null)
+			throw new MalformedPresentationException("Missing presentation proof");
+
+		if (created == null && proof.created == null)
 			throw new MalformedPresentationException("Missing presentation create timestamp");
 
 		if (_credentials != null && _credentials.size() > 0) {
@@ -377,9 +410,6 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 				credentials.put(vc.getId(), vc);
 			}
 		}
-
-		if (proof == null)
-			throw new MalformedPresentationException("Missing presentation proof");
 
 		if (holder == null) {
 			if (id != null && id.getDid() == null)
@@ -1160,6 +1190,9 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
 			Collections.sort(presentation.type);
 
+			// from 2.2.x, will use proof.created as the formal created time stamp
+			// keep the field for backward compatible only.
+			// TODO: remove this in the future
 			Calendar cal = Calendar.getInstance(Constants.UTC);
 			presentation.created = cal.getTime();
 
@@ -1168,7 +1201,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			String json = presentation.serialize(true);
 			String sig = holder.sign(signKey, storepass, json.getBytes(),
 					realm.getBytes(), nonce.getBytes());
-			Proof proof = new Proof(signKey, realm, nonce, sig);
+			Proof proof = new Proof(presentation.created, signKey, realm, nonce, sig);
 			presentation.proof = proof;
 
 			// Invalidate builder
