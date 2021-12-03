@@ -15,10 +15,9 @@ buildscript {
 
 allprojects {
 	repositories {
-		// Use jcenter for resolving your dependencies.
-		// You can declare any Maven/Ivy/file repository here.
+		// Use mavenCentral instead of jcenter() because of jcenter() 
+		// method has been deprecated by Gradle
 		mavenCentral()
-		jcenter()
 		mavenLocal()
 	}
 }
