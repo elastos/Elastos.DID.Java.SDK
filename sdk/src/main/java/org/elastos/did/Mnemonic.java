@@ -190,7 +190,7 @@ public class Mnemonic {
 	public boolean isValid(String mnemonic) {
 		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
 
-		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFKD);
 		List<String> words = Arrays.asList(mnemonic.split(" "));
 
 		try {
@@ -212,7 +212,7 @@ public class Mnemonic {
 	public static String getLanguage(String mnemonic) throws MnemonicException {
 		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
 
-		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFKD);
 		List<String> words = Arrays.asList(mnemonic.split(" "));
 
 		String[] langs = { ENGLISH, SPANISH, FRENCH, CZECH, ITALIAN,
@@ -258,9 +258,9 @@ public class Mnemonic {
 		if (passphrase == null)
 			passphrase = "";
 
-		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
-		passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
-
+		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFKD);
+		passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFKD);
+ 
 		List<String> words = Arrays.asList(mnemonic.split(" "));
 
 		return MnemonicCode.toSeed(words, passphrase);
