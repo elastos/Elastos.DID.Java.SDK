@@ -26,7 +26,6 @@ import java.io.File;
 import java.util.List;
 
 import org.elastos.did.DID;
-import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.Mnemonic;
@@ -34,20 +33,29 @@ import org.elastos.did.RootIdentity;
 import org.elastos.did.exception.DIDException;
 
 /**
- * This sample shows the application how to initialize the user's or application's DID.
+ * The common class that represent an entity with DID.
  */
-public class InitializeDID {
+class Entity {
 	// Mnemonic passphrase and the store password should set by the end user.
 	private final static String passphrase = "";  // Default is an empty string, or any user defined word
 	private final static String storepass = "mypassword";
 
+	// The entity name
+	private String name;
+
 	private DIDStore store;
-	private DID myDid;
+	private DID did;
+
+	protected Entity(String name) throws DIDException {
+		this.name = name;
+
+		initRootIdentity();
+		initDid();
+	}
 
 	private void initRootIdentity() throws DIDException {
-		// Location to your DIDStore
-		String storePath = System.getProperty("java.io.tmpdir")
-				+ File.separator + this.getClass().getName() + ".store";
+		final String storePath = System.getProperty("java.io.tmpdir")
+				+ File.separator + name + ".store";
 
 		store = DIDStore.open(storePath);
 
@@ -59,7 +67,7 @@ public class InitializeDID {
 		Mnemonic mg = Mnemonic.getInstance();
 		String mnemonic = mg.generate();
 
-		System.out.println("Please write down your mnemonic and passwords:");
+		System.out.println(name + " -- Please write down your mnemonic and passwords:");
 		System.out.println("  Mnemonic: " + mnemonic);
 		System.out.println("  Mnemonic passphrase: " + passphrase);
 		System.out.println("  Store password: " + storepass);
@@ -81,8 +89,8 @@ public class InitializeDID {
 
 		if (dids.size() > 0) {
 			// Already has DID
-			this.myDid = dids.get(0);
-			System.out.println("Using existing DID: " + myDid);
+			this.did = dids.get(0);
+			System.out.println(name + " -- Using existing DID: " + did);
 			return;
 		}
 
@@ -90,24 +98,27 @@ public class InitializeDID {
 		DIDDocument doc = id.newDid(storepass);
 		doc.getMetadata().setAlias("me");
 		doc.publish(storepass);
-		this.myDid = doc.getSubject();
-		System.out.println("Created the new DID : " + doc.getSubject());		
+		this.did = doc.getSubject();
+		System.out.println(name + " -- Created the new DID : " + doc.getSubject());
 	}
 
-	public static void main(String args[]) {
-		// Initializa the DID backend globally.		
-		Web3Adapter adapter = new Web3Adapter();
-		DIDBackend.initialize(adapter);
+	public DID getDid() {
+		return did;
+	}
 
-		InitializeDID example = new InitializeDID();
+	public DIDDocument getDocument() throws DIDException {
+		return store.loadDid(did);
+	}
 
-		try {
-			example.initRootIdentity();
-			example.initDid();
-		} catch (DIDException e) {
-			e.printStackTrace();
-		}
-		
-		adapter.shutdown();
+	public String getName() {
+		return name;
+	}
+
+	protected DIDStore getStore() {
+		return store;
+	}
+
+	protected String getStorePassword() {
+		return storepass;
 	}
 }

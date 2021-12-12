@@ -20,8 +20,9 @@ dependencies {
 	implementation project(':Elastos-DID-SDK')
 	implementation 'com.fasterxml.jackson.core:jackson-core:2.11.0'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.11.0'
-	implementation 'org.web3j:core:5.0.0'
-	implementation 'org.web3j:abi:5.0.0'
+	implementation 'org.web3j:core:4.8.7'
+	implementation 'org.web3j:abi:4.8.7'
+	implementation 'ch.qos.logback:logback-classic:1.2.3'
 }
 
 jar {

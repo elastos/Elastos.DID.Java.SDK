@@ -40,6 +40,9 @@ import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.exception.DIDException;
 
+/**
+ * How to create a verifiable presentation.
+ */
 public class CreatePresentation {
 	public static class Entity {
 		// Mnemonic passphrase and the store password should set by the end user.
@@ -91,6 +94,7 @@ public class CreatePresentation {
 			});
 
 			if (dids.size() > 0) {
+				did = dids.get(0);
 				return; // Already create my DID.
 			}
 
@@ -99,6 +103,7 @@ public class CreatePresentation {
 			doc.getMetadata().setAlias("me");
 			System.out.println("My new DID created: " + doc.getSubject());
 			doc.publish(storepass);
+			did = doc.getSubject();
 		}
 
 		protected DIDStore getDIDStore() {
@@ -203,7 +208,7 @@ public class CreatePresentation {
 	public static void main(String args[]) {
 		try {
 			// Initializa the DID backend globally.
-			DIDBackend.initialize(new AssistDIDAdapter("testnet"));
+			DIDBackend.initialize(new AssistAdapter("mainnet"));
 
 			University university = new University("Elastos");
 			Student student = new Student("John Smith", "Male", "johnsmith@example.org");
