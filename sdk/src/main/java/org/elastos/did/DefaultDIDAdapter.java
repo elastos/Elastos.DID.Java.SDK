@@ -56,17 +56,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * </p>
  */
 public class DefaultDIDAdapter implements DIDAdapter {
-	private static final String[] MAINNET_RESOLVERS = {
+	private static final String[] MAINNET_RPC_ENDPOINTS = {
 			"https://api.elastos.io/eid",
-			"https://api.trinity-tech.cn/eid"
+			"https://api.trinity-tech.io/eid"
 	};
 
-	private static final String[] TESTNET_RESOLVERS = {
+	private static final String[] TESTNET_RPC_ENDPOINTS = {
 			"https://api-testnet.elastos.io/eid",
-			"https://api-testnet.trinity-tech.cn/eid",
+			"https://api-testnet.trinity-tech.io/eid",
 	};
 
-	private URL resolver;
+	private URL rpcEndpoint;
 
 	private static final Logger log = LoggerFactory.getLogger(DefaultDIDAdapter.class);
 
@@ -117,21 +117,21 @@ public class DefaultDIDAdapter implements DIDAdapter {
 	/**
 	 * Create a DefaultDIDAdapter instance with given resolver endpoint.
 	 *
-	 * @param resolver the resolver url string
+	 * @param rpcEndpoint the resolver RPC endpoint
 	 */
-	public DefaultDIDAdapter(String resolver) {
-		checkArgument(resolver != null && !resolver.isEmpty(), "Invalid resolver URL");
+	public DefaultDIDAdapter(String rpcEndpoint) {
+		checkArgument(rpcEndpoint != null && !rpcEndpoint.isEmpty(), "Invalid resolver URL");
 		String[] endpoints = null;
 
-		switch (resolver.toLowerCase()) {
+		switch (rpcEndpoint.toLowerCase()) {
 		case "mainnet":
-			resolver = MAINNET_RESOLVERS[0];
-			endpoints = MAINNET_RESOLVERS;
+			rpcEndpoint = MAINNET_RPC_ENDPOINTS[0];
+			endpoints = MAINNET_RPC_ENDPOINTS;
 			break;
 
 		case "testnet":
-			resolver = TESTNET_RESOLVERS[0];
-			endpoints = TESTNET_RESOLVERS;
+			rpcEndpoint = TESTNET_RPC_ENDPOINTS[0];
+			endpoints = TESTNET_RPC_ENDPOINTS;
 			break;
 
 		default:
@@ -139,7 +139,7 @@ public class DefaultDIDAdapter implements DIDAdapter {
 		}
 
 		try {
-			this.resolver = new URL(resolver);
+			this.rpcEndpoint = new URL(rpcEndpoint);
 		} catch (MalformedURLException e) {
 			throw new IllegalArgumentException("Invalid resolver URL", e);
 		}
@@ -207,8 +207,8 @@ public class DefaultDIDAdapter implements DIDAdapter {
 
 			CheckResult best = results.get(0);
 			if (best.available()) {
-				this.resolver = best.endpoint;
-				log.info("Update resolver to {}", resolver.toString());
+				this.rpcEndpoint = best.endpoint;
+				log.info("Update resolver to {}", rpcEndpoint.toString());
 			}
 		}
 	}
@@ -218,9 +218,9 @@ public class DefaultDIDAdapter implements DIDAdapter {
 	 *
 	 * @param resolver the resolver URL object
 	 */
-	public DefaultDIDAdapter(URL resolver) {
-		checkArgument(resolver != null, "Invalid resolver URL");
-		this.resolver = resolver;
+	public DefaultDIDAdapter(URL rpcEndpoint) {
+		checkArgument(rpcEndpoint != null, "Invalid resolver URL");
+		this.rpcEndpoint = rpcEndpoint;
 	}
 
 	/**
@@ -331,6 +331,15 @@ public class DefaultDIDAdapter implements DIDAdapter {
 
 		return connection.getInputStream();
 	}
+	
+	/**
+	 * Get current used RPC endpoint
+	 * 
+	 * @return the current RPC endpoint
+	 */
+	protected URL getRpcEndpoint() {
+		return this.rpcEndpoint;
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -340,8 +349,8 @@ public class DefaultDIDAdapter implements DIDAdapter {
 		checkArgument(request != null && !request.isEmpty(), "Invalid request");
 
 		try {
-			log.debug("Resolving via {}", resolver.toString());
-			return httpPost(resolver, request);
+			log.debug("Resolving via {}", rpcEndpoint.toString());
+			return httpPost(rpcEndpoint, request);
 		} catch (IOException e) {
 			throw new NetworkException("Network error.", e);
 		}
