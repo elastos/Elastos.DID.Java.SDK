@@ -22,7 +22,6 @@
 
 package org.elastos.did.samples;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -30,105 +29,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.elastos.did.DID;
 import org.elastos.did.DIDBackend;
-import org.elastos.did.DIDDocument;
-import org.elastos.did.DIDStore;
 import org.elastos.did.Issuer;
-import org.elastos.did.Mnemonic;
-import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.jwt.Claims;
 import org.elastos.did.jwt.Header;
 import org.elastos.did.jwt.Jws;
-import org.elastos.did.jwt.JwsSignatureException;
+import org.elastos.did.jwt.JwtException;
 import org.elastos.did.jwt.JwtParser;
 import org.elastos.did.jwt.JwtParserBuilder;
 
+/**
+ * How to embedded a verifiable presentation in the JWT token, and how to read it.
+ */
 public class PresentationInJWT {
-	public static class Entity {
-		// Mnemonic passphrase and the store password should set by the end user.
-		private final static String passphrase = "mypassphrase";
-		private final static String storepass = "mypassword";
-
-		private String name;
-		private DIDStore store;
-		private DID did;
-
-		protected Entity(String name) throws DIDException {
-			this.name = name;
-
-			initRootIdentity();
-			initDid();
-		}
-
-		protected void initRootIdentity() throws DIDException {
-			final String storePath = System.getProperty("java.io.tmpdir")
-					+ File.separator + name + ".store";
-
-			store = DIDStore.open(storePath);
-
-			// Check the store whether contains the root private identity.
-			if (store.containsRootIdentities())
-				return; // Already exists
-
-			// Create a mnemonic use default language(English).
-			Mnemonic mg = Mnemonic.getInstance();
-			String mnemonic = mg.generate();
-
-			System.out.format("[%s] Please write down your mnemonic and passwords:%n", name);
-			System.out.println("  Mnemonic: " + mnemonic);
-			System.out.println("  Mnemonic passphrase: " + passphrase);
-			System.out.println("  Store password: " + storepass);
-
-			// Initialize the root identity.
-			RootIdentity.create(mnemonic, passphrase, store, storepass);
-		}
-
-		protected void initDid() throws DIDException {
-			// Check the DID store already contains owner's DID(with private key).
-			List<DID> dids = store.listDids((did) -> {
-				try {
-					return (store.containsPrivateKeys(did) && did.getMetadata().getAlias().equals("me"));
-				} catch (DIDException e) {
-					return false;
-				}
-			});
-
-			if (dids.size() > 0) {
-				return; // Already create my DID.
-			}
-
-			RootIdentity id = store.loadRootIdentity();
-			DIDDocument doc = id.newDid(storepass);
-			doc.getMetadata().setAlias("me");
-			System.out.println("My new DID created: " + doc.getSubject());
-			doc.publish(storepass);
-		}
-
-		protected DIDStore getDIDStore() {
-			return store;
-		}
-
-		public DID getDid() {
-			return did;
-		}
-
-		public DIDDocument getDocument() throws DIDException {
-			return store.loadDid(did);
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		protected String getStorePassword() {
-			return storepass;
-		}
-	}
-
 	public static class University extends Entity {
 		private Issuer issuer;
 
@@ -197,46 +113,20 @@ public class PresentationInJWT {
 			vcs.add(vc);
 		}
 
-		public VerifiablePresentation createPresentation(String realm, String nonce) throws DIDException {
-			VerifiablePresentation.Builder vpb = VerifiablePresentation.createFor(getDid(), getDIDStore());
+		public VerifiablePresentation createPresentation() throws DIDException {
+			String realm = "sample";
+			String nonce = "873172f58701a9ee686f0630204fee59";
+
+			VerifiablePresentation.Builder vpb = VerifiablePresentation.createFor(getDid(), getStore());
 
 			return vpb.credentials(vcs.toArray(new VerifiableCredential[vcs.size()]))
 				.realm(realm)
 				.nonce(nonce)
 				.seal(getStorePassword());
 		}
-	}
 
-	public static void main(String args[]) {
-		try {
-			// Initializa the DID backend globally.
-			DIDBackend.initialize(new AssistDIDAdapter("testnet"));
 
-			University university = new University("Elastos");
-			Student student = new Student("John Smith", "Male", "johnsmith@example.org");
-
-			VerifiableCredential vc = university.issueDiplomaFor(student);
-			System.out.println("The diploma credential:");
-			System.out.println("  " + vc);
-			System.out.println("  Genuine: " + vc.isGenuine());
-			System.out.println("  Expired: " + vc.isExpired());
-			System.out.println("  Valid: " + vc.isValid());
-			student.addCredential(vc);
-
-			vc = student.createSelfProclaimedCredential();
-			System.out.println("The profile credential:");
-			System.out.println("  " + vc);
-			System.out.println("  Genuine: " + vc.isGenuine());
-			System.out.println("  Expired: " + vc.isExpired());
-			System.out.println("  Valid: " + vc.isValid());
-			student.addCredential(vc);
-
-			VerifiablePresentation vp = student.createPresentation("test", "873172f58701a9ee686f0630204fee59");
-			System.out.println("The verifiable presentation:");
-			System.out.println("  " + vp);
-			System.out.println("  Genuine: " + vp.isGenuine());
-			System.out.println("  Valid: " + vp.isValid());
-
+		public String createToken(String audience) throws JwtException, DIDException {
 			Calendar cal = Calendar.getInstance();
 			cal.set(Calendar.MILLISECOND, 0);
 			Date iat = cal.getTime();
@@ -245,46 +135,68 @@ public class PresentationInJWT {
 			Date exp = cal.getTime();
 
 			// Create JWT token with presentation.
-			String token = student.getDocument().jwtBuilder()
+			String token = getDocument().jwtBuilder()
 					.addHeader(Header.TYPE, Header.JWT_TYPE)
-					.setId("test00000000")
-					.setAudience(university.getDid().toString())
+					.setId("sample-00000002")
+					.setAudience(audience)
 					.setIssuedAt(iat)
 					.setNotBefore(nbf)
 					.setExpiration(exp)
-					.claimWithJson("presentation", vp.toString())
-					.sign(student.getStorePassword())
+					.claimWithJson("presentation", createPresentation().toString())
+					.sign(getStorePassword())
 					.compact();
 
 			System.out.println("JWT Token:");
 			System.out.println("  " + token);
 
-			// Verify the token automatically
+			return token;
+		}
+	}
+
+	public static class Verifier extends Entity {
+		protected Verifier(String name) throws DIDException {
+			super(name);
+		}
+
+		public void verifyAndReadJWT(String token) throws JwtException, DIDException {
 			JwtParser jp = new JwtParserBuilder().build();
 			Jws<Claims> jwt = jp.parseClaimsJws(token);
 
-			// Get claims from the token
-			String preJson = jwt.getBody().getAsJson("presentation");
-			vp = VerifiablePresentation.parse(preJson);
-			System.out.println("Presentation from JWT:");
-			System.out.println("  " + vp);
-			System.out.println("  Genuine: " + vp.isGenuine());
-			System.out.println("  Valid: " + vp.isValid());
+			String pre = jwt.getBody().getAsJson("presentation");
+			VerifiablePresentation vp = VerifiablePresentation.parse(pre);
 
-			// Verify the token based on a DID
-			// This will success, because the JWT was signed by the student
-			jp = student.getDocument().jwtParserBuilder().build();
-			jwt = jp.parseClaimsJws(token);
+			System.out.format("%s - got a JWT token from %s with presentation:\n   %s\n",
+					getName(), jwt.getBody().getIssuer(), vp.toString());
+		}
+	}
 
-			// This will failed, because the JWT was signed by the student not by the university
-			jp = university.getDocument().jwtParserBuilder().build();
-			try {
-				jwt = jp.parseClaimsJws(token);
-			} catch (JwsSignatureException e) {
-				// Should be here.
-			}
+	public static void main(String args[]) {
+		// Initializa the DID backend globally.
+		Web3Adapter adapter = new Web3Adapter();
+		DIDBackend.initialize(adapter);
+
+		try {
+			University university = new University("Elastos University");
+			Student student = new Student("John Smith", "Male", "johnsmith@example.org");
+			Verifier verifier = new Verifier("Test verifier");
+
+			VerifiableCredential vc = university.issueDiplomaFor(student);
+			System.out.println("The diploma credential:");
+			System.out.println("  " + vc);
+			student.addCredential(vc);
+
+			vc = student.createSelfProclaimedCredential();
+			System.out.println("The profile credential:");
+			System.out.println("  " + vc);
+			student.addCredential(vc);
+
+			String token = student.createToken(verifier.getDid().toString());
+
+			verifier.verifyAndReadJWT(token);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		adapter.shutdown();
 	}
 }

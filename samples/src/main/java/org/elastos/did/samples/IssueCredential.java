@@ -22,100 +22,19 @@
 
 package org.elastos.did.samples;
 
-import java.io.File;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.elastos.did.DID;
 import org.elastos.did.DIDBackend;
-import org.elastos.did.DIDDocument;
-import org.elastos.did.DIDStore;
 import org.elastos.did.Issuer;
-import org.elastos.did.Mnemonic;
-import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.exception.DIDException;
 
+/**
+ * Sample that shows how to issue a credential.
+ */
 public class IssueCredential {
-	public static class Entity {
-		// Mnemonic passphrase and the store password should set by the end user.
-		private final static String passphrase = "mypassphrase";
-		private final static String storepass = "mypassword";
-
-		private String name;
-		private DIDStore store;
-		private DID did;
-
-		protected Entity(String name) throws DIDException {
-			this.name = name;
-
-			initRootIdentity();
-			initDid();
-		}
-
-		private void initRootIdentity() throws DIDException {
-			final String storePath = System.getProperty("java.io.tmpdir")
-					+ File.separator + "exampleStore";
-
-			store = DIDStore.open(storePath);
-
-			// Check the store whether contains the root private identity.
-			if (store.containsRootIdentities())
-				return; // Already exists
-
-			// Create a mnemonic use default language(English).
-			Mnemonic mg = Mnemonic.getInstance();
-			String mnemonic = mg.generate();
-
-			System.out.println("Please write down your mnemonic and passwords:");
-			System.out.println("  Mnemonic: " + mnemonic);
-			System.out.println("  Mnemonic passphrase: " + passphrase);
-			System.out.println("  Store password: " + storepass);
-
-			// Initialize the root identity.
-			RootIdentity.create(mnemonic, passphrase, store, storepass);
-		}
-
-		private void initDid() throws DIDException {
-			// Check the DID store already contains owner's DID(with private key).
-			List<DID> dids = store.listDids((did) -> {
-				try {
-					return (store.containsPrivateKeys(did) && did.getMetadata().getAlias().equals("me"));
-				} catch (DIDException e) {
-					return false;
-				}
-			});
-
-			if (dids.size() > 0) {
-				return; // Already create my DID.
-			}
-
-			RootIdentity id = store.loadRootIdentity();
-			DIDDocument doc = id.newDid(storepass);
-			doc.getMetadata().setAlias("me");
-			System.out.println("My new DID created: " + doc.getSubject());
-			doc.publish(storepass);
-		}
-
-		public DID getDid() {
-			return did;
-		}
-
-		public DIDDocument getDocument() throws DIDException {
-			return store.loadDid(did);
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		protected String getStorePassword() {
-			return storepass;
-		}
-	}
-
 	public static class University extends Entity {
 		private Issuer issuer;
 
@@ -153,22 +72,26 @@ public class IssueCredential {
 	}
 
 	public static void main(String args[]) {
-		try {
-			// Initializa the DID backend globally.
-			DIDBackend.initialize(new AssistDIDAdapter("testnet"));
+		// Initializa the DID backend globally.		
+		Web3Adapter adapter = new Web3Adapter();
+		DIDBackend.initialize(adapter);
 
+		try {
 			University university = new University("Elastos");
 			Student student = new Student("John Smith");
 
 			VerifiableCredential vc = university.issueDiplomaFor(student);
-			System.out.println("The diploma credential:");
+			System.out.println("\nThe diploma credential:");
 			System.out.println("  " + vc);
 
+			System.out.println("\nThe credential status:");
 			System.out.println("  Genuine: " + vc.isGenuine());
 			System.out.println("  Expired: " + vc.isExpired());
 			System.out.println("  Valid: " + vc.isValid());
 		} catch (DIDException e) {
 			e.printStackTrace();
 		}
+		
+		adapter.shutdown();
 	}
 }
