@@ -216,7 +216,7 @@ public class DefaultDIDAdapter implements DIDAdapter {
 	/**
 	 * Create a DefaultDIDAdapter instance with given resolver endpoint.
 	 *
-	 * @param resolver the resolver URL object
+	 * @param rpcEndpoint the resolver URL object
 	 */
 	public DefaultDIDAdapter(URL rpcEndpoint) {
 		checkArgument(rpcEndpoint != null, "Invalid resolver URL");
@@ -331,10 +331,10 @@ public class DefaultDIDAdapter implements DIDAdapter {
 
 		return connection.getInputStream();
 	}
-	
+
 	/**
 	 * Get current used RPC endpoint
-	 * 
+	 *
 	 * @return the current RPC endpoint
 	 */
 	protected URL getRpcEndpoint() {
