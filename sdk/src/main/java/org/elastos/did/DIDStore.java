@@ -1455,8 +1455,13 @@ public final class DIDStore {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 		checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
-		HDKey key = HDKey.deserialize(loadPrivateKey(id, storepass));
+		byte[] binKey = loadPrivateKey(id, storepass);
+		if (binKey == null)
+			throw new DIDStoreException("Key not exists: " + id.toString());
+
+		HDKey key = HDKey.deserialize(binKey);
 		byte[] sig = EcdsaSigner.sign(key.getPrivateKeyBytes(), digest);
+		Arrays.fill(binKey, (byte)0);
 		key.wipe();
 
 		return Base64.encodeToString(sig,

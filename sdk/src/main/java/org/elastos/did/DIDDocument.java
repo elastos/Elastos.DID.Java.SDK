@@ -2485,10 +2485,12 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	public Builder edit(DIDDocument controller) {
 		checkIsCustomized();
 
-		if (!getMetadata().attachedStore() && ! controller.getMetadata().attachedStore())
+		if (!getMetadata().attachedStore() && !controller.getMetadata().attachedStore())
 			throw new NotAttachedWithStoreException();
 
-		if (!controller.getMetadata().attachedStore())
+		if (controller.getMetadata().attachedStore())
+			getMetadata().attachStore(controller.getMetadata().getStore());
+		else
 			controller.getMetadata().attachStore(getMetadata().getStore());
 
 		if (!hasController(controller.getSubject()))
