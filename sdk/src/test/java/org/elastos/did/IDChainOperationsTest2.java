@@ -1255,7 +1255,6 @@ public class IDChainOperationsTest2 {
     		props.put("nationality", "Singapore");
     		props.put("email", person.getName() + "@example.com");
 
-    		// VC for the normal DID
     		DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
     		VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
     		VerifiableCredential vc = cb.id(id)
@@ -1293,7 +1292,6 @@ public class IDChainOperationsTest2 {
     		props.put("nationality", "Singapore");
     		props.put("email", person.getName() + "@example.com");
 
-    		// VC for the normal DID
     		DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
     		VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
     		VerifiableCredential vc = cb.id(id)
@@ -1311,6 +1309,234 @@ public class IDChainOperationsTest2 {
     		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
     		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
     		assertEquals(doc.getSubject(), resolvedVc.getSubject().getId());
+    		assertEquals(vc.getProof().getSignature(),
+    				resolvedVc.getProof().getSignature());
+
+    		assertTrue(resolvedVc.isValid());
+    	}
+    }
+
+    @Test
+    @Order(42)
+    public void testDeclareSelfProclaimedCredentialForFoo1() throws DIDException {
+		DIDDocument doc = foo1.resolve();
+		Carol.getStore().storeDid(doc);
+		doc.setEffectiveController(Carol.getDid());
+
+		// add a self-proclaimed credential
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", "Foo1");
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", "foo1@example.com");
+
+		// VC for the normal DID
+		DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
+		VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(Carol.getStorePassword());
+
+		Carol.getStore().storeCredential(vc);
+		vc.declare(Carol.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNotNull(resolvedVc);
+		assertEquals(id, resolvedVc.getId());
+		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+		assertEquals(doc.getSubject(), resolvedVc.getSubject().getId());
+		assertEquals(vc.getProof().getSignature(),
+				resolvedVc.getProof().getSignature());
+
+		assertTrue(resolvedVc.isValid());
+    }
+
+    @Test
+    @Order(43)
+    public void testDeclareSelfProclaimedCredentialForFoo2() throws DIDException {
+		DIDDocument doc = foo2.resolve();
+		Dave.getStore().storeDid(doc);
+		doc.setEffectiveController(Dave.getDid());
+
+		// add a self-proclaimed credential
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", "Foo2");
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", "foo2@example.com");
+
+		// VC for the normal DID
+		DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
+		VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(Dave.getStorePassword());
+
+		Dave.getStore().storeCredential(vc);
+		vc.declare(Dave.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNotNull(resolvedVc);
+		assertEquals(id, resolvedVc.getId());
+		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+		assertEquals(doc.getSubject(), resolvedVc.getSubject().getId());
+		assertEquals(vc.getProof().getSignature(),
+				resolvedVc.getProof().getSignature());
+
+		assertTrue(resolvedVc.isValid());
+    }
+
+    @Test
+    @Order(44)
+    public void testDeclareKycCredential_p2p() throws DIDException {
+    	Issuer issuer = new Issuer(Grace.getDocument());
+
+    	for (Entity person : persons) {
+    		// add a self-proclaimed credential
+    		Map<String, Object> props = new HashMap<String, Object>();
+    		props.put("name", person.getName());
+    		props.put("gender", "Male");
+    		props.put("nationality", "Singapore");
+    		props.put("email", person.getName() + "@example.com");
+
+    		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+    		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+    		VerifiableCredential vc = cb.id(id)
+    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+    			.properties(props)
+    			.seal(Grace.getStorePassword());
+
+    		person.getStore().storeCredential(vc);
+    		vc.declare(person.getStorePassword());
+
+    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+    		assertNotNull(resolvedVc);
+    		assertEquals(id, resolvedVc.getId());
+    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+    		assertEquals(person.getDid(), resolvedVc.getSubject().getId());
+    		assertEquals(Grace.getDid(), resolvedVc.getIssuer());
+    		assertEquals(vc.getProof().getSignature(),
+    				resolvedVc.getProof().getSignature());
+
+    		assertTrue(resolvedVc.isValid());
+    	}
+    }
+
+    @Test
+    @Order(45)
+    public void testDeclareKycCredential_p2c() throws DIDException {
+    	Issuer issuer = new Issuer(Grace.getDocument());
+
+    	for (Entity person : persons) {
+    		// add a self-proclaimed credential
+    		Map<String, Object> props = new HashMap<String, Object>();
+    		props.put("name", person.getName());
+    		props.put("gender", "Male");
+    		props.put("nationality", "Singapore");
+    		props.put("email", person.getName() + "@example.com");
+
+    		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+    		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+    		VerifiableCredential vc = cb.id(id)
+    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+    			.properties(props)
+    			.seal(Grace.getStorePassword());
+
+    		person.getStore().storeCredential(vc);
+    		vc.declare(person.getStorePassword());
+
+    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+    		assertNotNull(resolvedVc);
+    		assertEquals(id, resolvedVc.getId());
+    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+    		assertEquals(person.getCustomizedDid(), resolvedVc.getSubject().getId());
+    		assertEquals(Grace.getDid(), resolvedVc.getIssuer());
+    		assertEquals(vc.getProof().getSignature(),
+    				resolvedVc.getProof().getSignature());
+
+    		assertTrue(resolvedVc.isValid());
+    	}
+    }
+
+    @Test
+    @Order(46)
+    public void testDeclareKycCredential_c2p() throws DIDException {
+    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+    	for (Entity person : persons) {
+    		// add a self-proclaimed credential
+    		Map<String, Object> props = new HashMap<String, Object>();
+    		props.put("name", person.getName());
+    		props.put("gender", "Male");
+    		props.put("nationality", "Singapore");
+    		props.put("email", person.getName() + "@example.com");
+
+    		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+    		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+    		VerifiableCredential vc = cb.id(id)
+    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+    			.properties(props)
+    			.seal(Grace.getStorePassword());
+
+    		person.getStore().storeCredential(vc);
+    		vc.declare(person.getStorePassword());
+
+    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+    		assertNotNull(resolvedVc);
+    		assertEquals(id, resolvedVc.getId());
+    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+    		assertEquals(person.getDid(), resolvedVc.getSubject().getId());
+    		assertEquals(Grace.getCustomizedDid(), resolvedVc.getIssuer());
+    		assertEquals(vc.getProof().getSignature(),
+    				resolvedVc.getProof().getSignature());
+
+    		assertTrue(resolvedVc.isValid());
+    	}
+    }
+
+    @Test
+    @Order(47)
+    public void testDeclareKycCredential_c2c() throws DIDException {
+    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+    	for (Entity person : persons) {
+    		// add a self-proclaimed credential
+    		Map<String, Object> props = new HashMap<String, Object>();
+    		props.put("name", person.getName());
+    		props.put("gender", "Male");
+    		props.put("nationality", "Singapore");
+    		props.put("email", person.getName() + "@example.com");
+
+    		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+    		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+    		VerifiableCredential vc = cb.id(id)
+    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+    			.properties(props)
+    			.seal(Grace.getStorePassword());
+
+    		person.getStore().storeCredential(vc);
+    		vc.declare(person.getStorePassword());
+
+    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+    		assertNotNull(resolvedVc);
+    		assertEquals(id, resolvedVc.getId());
+    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+    		assertEquals(person.getCustomizedDid(), resolvedVc.getSubject().getId());
+    		assertEquals(Grace.getCustomizedDid(), resolvedVc.getIssuer());
     		assertEquals(vc.getProof().getSignature(),
     				resolvedVc.getProof().getSignature());
 
