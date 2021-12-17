@@ -1056,7 +1056,7 @@ public class IDChainOperationsTest2 {
     }
 
     @Test
-    @Order(20)
+    @Order(21)
     public void testTransferCustomizedDid_2to2() throws DIDException {
 		DID customizedDid = foo2;
 		DIDDocument customizedDoc = customizedDid.resolve();
@@ -1104,4 +1104,219 @@ public class IDChainOperationsTest2 {
 
 		assertTrue(resolvedDoc.isValid());
     }
+
+    @Test
+    @Order(22)
+    public void testTransferCustomizedDid_3to1() throws DIDException {
+		DID customizedDid = bar1;
+		DIDDocument customizedDoc = customizedDid.resolve();
+		assertNotNull(customizedDoc);
+
+		// Carol prepare to transfer to Dave
+		Carol.getStore().storeDid(customizedDoc);
+		customizedDoc.setEffectiveController(Carol.getDid());
+		TransferTicket ticket = customizedDoc.createTransferTicket(Dave.getDid(), Carol.getStorePassword());
+
+		// Dave create the new document
+    	DIDDocument doc = Dave.getDocument();
+
+		customizedDoc = doc.newCustomizedDid(customizedDid, true, Dave.getStorePassword());
+		assertTrue(customizedDoc.isValid());
+
+		// Dave publish the DID and take the ownership
+		customizedDoc.publish(ticket, Dave.getStorePassword());
+
+		DIDDocument resolvedDoc = customizedDid.resolve();
+		assertNotNull(resolvedDoc);
+		assertEquals(customizedDid, resolvedDoc.getSubject());
+		assertEquals(1, resolvedDoc.getControllerCount());
+		assertEquals(Dave.getDid(), resolvedDoc.getController());
+		assertEquals(customizedDoc.getProof().getSignature(),
+				resolvedDoc.getProof().getSignature());
+
+		assertTrue(resolvedDoc.isValid());
+    }
+
+    @Test
+    @Order(23)
+    public void testTransferCustomizedDid_3to2() throws DIDException {
+		DID customizedDid = bar2;
+		DIDDocument customizedDoc = customizedDid.resolve();
+		assertNotNull(customizedDoc);
+
+		// Alice prepare to transfer to Dave
+		Alice.getStore().storeDid(customizedDoc);
+		customizedDoc.setEffectiveController(Alice.getDid());
+		TransferTicket ticket = customizedDoc.createTransferTicket(Dave.getDid(), Alice.getStorePassword());
+		assertFalse(ticket.isValid());
+
+		// Carol sign the ticket
+		ticket = Carol.getDocument().sign(ticket, Carol.getStorePassword());
+		assertTrue(ticket.isValid());
+
+		// Dave create the new document
+    	DIDDocument doc = Dave.getDocument();
+
+		customizedDoc = doc.newCustomizedDid(customizedDid,
+				new DID[] { Dave.getDid(), Erin.getDid() },
+				2, true, Dave.getStorePassword());
+		assertFalse(customizedDoc.isValid());
+
+		// Erin sign the doc
+		customizedDoc = Erin.getDocument().sign(customizedDoc, Erin.getStorePassword());
+		assertTrue(customizedDoc.isValid());
+
+		// Erin publish the DID
+		Erin.getStore().storeDid(customizedDoc);
+		customizedDoc.setEffectiveController(Erin.getDid());
+		customizedDoc.publish(ticket, Erin.getStorePassword());
+
+		DIDDocument resolvedDoc = customizedDid.resolve();
+		assertNotNull(resolvedDoc);
+		assertEquals(customizedDid, resolvedDoc.getSubject());
+		assertEquals(2, resolvedDoc.getControllerCount());
+		assertEquals("2:2", resolvedDoc.getMultiSignature().toString());
+		List<DID> ctrls = new ArrayList<DID>();
+		ctrls.add(Erin.getDid());
+		ctrls.add(Dave.getDid());
+		Collections.sort(ctrls);
+		assertArrayEquals(resolvedDoc.getControllers().toArray(), ctrls.toArray());
+		assertEquals(customizedDoc.getProof().getSignature(),
+				resolvedDoc.getProof().getSignature());
+
+		assertTrue(resolvedDoc.isValid());
+    }
+
+    @Test
+    @Order(24)
+    public void testTransferCustomizedDid_3to3() throws DIDException {
+		DID customizedDid = bar3;
+		DIDDocument customizedDoc = customizedDid.resolve();
+		assertNotNull(customizedDoc);
+
+		// Alice prepare to transfer to Dave
+		Alice.getStore().storeDid(customizedDoc);
+		customizedDoc.setEffectiveController(Alice.getDid());
+		TransferTicket ticket = customizedDoc.createTransferTicket(Dave.getDid(), Alice.getStorePassword());
+		assertFalse(ticket.isValid());
+
+		// Bob sign the ticket
+		ticket = Bob.getDocument().sign(ticket, Bob.getStorePassword());
+		assertFalse(ticket.isValid());
+
+		// Carol sign the ticket
+		ticket = Carol.getDocument().sign(ticket, Carol.getStorePassword());
+		assertTrue(ticket.isValid());
+
+		// Erin create the new document
+    	DIDDocument doc = Erin.getDocument();
+
+		customizedDoc = doc.newCustomizedDid(customizedDid,
+				new DID[] { Dave.getDid(), Erin.getDid(), Frank.getDid() },
+				2, true, Erin.getStorePassword());
+		assertFalse(customizedDoc.isValid());
+
+		// Dave sign the doc
+		customizedDoc = Dave.getDocument().sign(customizedDoc, Dave.getStorePassword());
+		assertTrue(customizedDoc.isValid());
+
+		// Frank publish the DID
+		Frank.getStore().storeDid(customizedDoc);
+		customizedDoc.setEffectiveController(Frank.getDid());
+		customizedDoc.publish(ticket, Frank.getStorePassword());
+
+		DIDDocument resolvedDoc = customizedDid.resolve();
+		assertNotNull(resolvedDoc);
+		assertEquals(customizedDid, resolvedDoc.getSubject());
+		assertEquals(3, resolvedDoc.getControllerCount());
+		assertEquals("2:3", resolvedDoc.getMultiSignature().toString());
+		List<DID> ctrls = new ArrayList<DID>();
+		ctrls.add(Dave.getDid());
+		ctrls.add(Erin.getDid());
+		ctrls.add(Frank.getDid());
+		Collections.sort(ctrls);
+		assertArrayEquals(resolvedDoc.getControllers().toArray(), ctrls.toArray());
+		assertEquals(customizedDoc.getProof().getSignature(),
+				resolvedDoc.getProof().getSignature());
+
+		assertTrue(resolvedDoc.isValid());
+    }
+
+    @Test
+    @Order(40)
+    public void testDeclareSelfProclaimedCredential() throws DIDException {
+    	for (Entity person : persons) {
+    		DIDDocument doc = person.getDocument();
+
+    		// add a self-proclaimed credential
+    		Map<String, Object> props = new HashMap<String, Object>();
+    		props.put("name", person.getName());
+    		props.put("gender", "Male");
+    		props.put("nationality", "Singapore");
+    		props.put("email", person.getName() + "@example.com");
+
+    		// VC for the normal DID
+    		DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
+    		VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
+    		VerifiableCredential vc = cb.id(id)
+    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+    			.properties(props)
+    			.seal(person.getStorePassword());
+
+    		person.getStore().storeCredential(vc);
+    		vc.declare(person.getStorePassword());
+
+    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+    		assertNotNull(resolvedVc);
+    		assertEquals(id, resolvedVc.getId());
+    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+    		assertEquals(doc.getSubject(), resolvedVc.getSubject().getId());
+    		assertEquals(vc.getProof().getSignature(),
+    				resolvedVc.getProof().getSignature());
+
+    		assertTrue(resolvedVc.isValid());
+    	}
+    }
+
+    @Test
+    @Order(41)
+    public void testDeclareSelfProclaimedCredentialForCid() throws DIDException {
+    	for (Entity person : persons) {
+    		DIDDocument doc = person.getCustomizedDocument();
+
+    		// add a self-proclaimed credential
+    		Map<String, Object> props = new HashMap<String, Object>();
+    		props.put("name", person.getName());
+    		props.put("gender", "Male");
+    		props.put("nationality", "Singapore");
+    		props.put("email", person.getName() + "@example.com");
+
+    		// VC for the normal DID
+    		DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
+    		VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
+    		VerifiableCredential vc = cb.id(id)
+    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+    			.properties(props)
+    			.seal(person.getStorePassword());
+
+    		person.getStore().storeCredential(vc);
+    		vc.declare(person.getStorePassword());
+
+    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+    		assertNotNull(resolvedVc);
+    		assertEquals(id, resolvedVc.getId());
+    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+    		assertEquals(doc.getSubject(), resolvedVc.getSubject().getId());
+    		assertEquals(vc.getProof().getSignature(),
+    				resolvedVc.getProof().getSignature());
+
+    		assertTrue(resolvedVc.isValid());
+    	}
+    }
+
+    // test deactivate the dids
 }
