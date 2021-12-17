@@ -103,6 +103,7 @@ public class IDChainOperationsTest2 {
 			DIDDocument doc = id.newDid(storepass);
 			doc.getMetadata().setAlias("me");
 			doc.publish(storepass);
+
 			this.did = doc.getSubject();
 			System.out.format("%s created DID: %s\n", getName(), did.toString());
 		}
@@ -174,9 +175,11 @@ public class IDChainOperationsTest2 {
     @Order(1)
     public void testCreateCustomizedDid() throws DIDException {
     	for (Entity person : persons) {
+    		assertNotNull(person.getDid().resolve());
+
     		DIDDocument doc = person.getDocument();
 
-    		DID customizedDid = new DID("did:elastos:" + person.getName() + "-" + System.currentTimeMillis());
+    		DID customizedDid = new DID("did:elastos:" + person.getName() + "Z" + System.currentTimeMillis());
     		DIDDocument customizedDoc = doc.newCustomizedDid(customizedDid, person.getStorePassword());
     		assertNotNull(customizedDoc);
 
@@ -199,7 +202,7 @@ public class IDChainOperationsTest2 {
     @Test
     @Order(2)
     public void testCreateMultisigCustomizedDid_1of2() throws DIDException {
-		DID customizedDid = new DID("did:elastos:foo1" + "-" + System.currentTimeMillis());
+		DID customizedDid = new DID("did:elastos:foo1" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
 		DIDDocument customizedDoc = Alice.getDocument().newCustomizedDid(customizedDid,
@@ -233,7 +236,7 @@ public class IDChainOperationsTest2 {
     @Test
     @Order(3)
     public void testCreateMultisigCustomizedDid_2of2() throws DIDException {
-		DID customizedDid = new DID("did:elastos:foo2" + "-" + System.currentTimeMillis());
+		DID customizedDid = new DID("did:elastos:foo2" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
 		DIDDocument customizedDoc = Alice.getDocument().newCustomizedDid(customizedDid,
@@ -271,7 +274,7 @@ public class IDChainOperationsTest2 {
     @Test
     @Order(4)
     public void testCreateMultisigCustomizedDid_1of3() throws DIDException {
-		DID customizedDid = new DID("did:elastos:bar1" + "-" + System.currentTimeMillis());
+		DID customizedDid = new DID("did:elastos:bar1" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
 		DIDDocument customizedDoc = Alice.getDocument().newCustomizedDid(customizedDid,
@@ -305,7 +308,7 @@ public class IDChainOperationsTest2 {
     @Test
     @Order(5)
     public void testCreateMultisigCustomizedDid_2of3() throws DIDException {
-		DID customizedDid = new DID("did:elastos:bar2" + "-" + System.currentTimeMillis());
+		DID customizedDid = new DID("did:elastos:bar2" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
 		DIDDocument customizedDoc = Alice.getDocument().newCustomizedDid(customizedDid,
@@ -344,7 +347,7 @@ public class IDChainOperationsTest2 {
     @Test
     @Order(6)
     public void testCreateMultisigCustomizedDid_3of3() throws DIDException {
-		DID customizedDid = new DID("did:elastos:bar3" + "-" + System.currentTimeMillis());
+		DID customizedDid = new DID("did:elastos:bar3" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
 		DIDDocument customizedDoc = Alice.getDocument().newCustomizedDid(customizedDid,
@@ -870,7 +873,7 @@ public class IDChainOperationsTest2 {
     	// Alice create a customized did: baz1
     	DIDDocument doc = Alice.getDocument();
 
-		DID customizedDid = new DID("did:elastos:baz1" + "-" + System.currentTimeMillis());
+		DID customizedDid = new DID("did:elastos:baz1" + "Z" + System.currentTimeMillis());
 		DIDDocument customizedDoc = doc.newCustomizedDid(customizedDid, Alice.getStorePassword());
 		assertNotNull(customizedDoc);
 
@@ -918,7 +921,7 @@ public class IDChainOperationsTest2 {
     	// Alice create a customized did: baz2
     	DIDDocument doc = Alice.getDocument();
 
-		DID customizedDid = new DID("did:elastos:baz2" + "-" + System.currentTimeMillis());
+		DID customizedDid = new DID("did:elastos:baz2" + "Z" + System.currentTimeMillis());
 		DIDDocument customizedDoc = doc.newCustomizedDid(customizedDid, Alice.getStorePassword());
 		assertNotNull(customizedDoc);
 
@@ -973,7 +976,7 @@ public class IDChainOperationsTest2 {
     	// Alice create a customized did: baz3
     	DIDDocument doc = Alice.getDocument();
 
-		DID customizedDid = new DID("did:elastos:baz3" + "-" + System.currentTimeMillis());
+		DID customizedDid = new DID("did:elastos:baz3" + "Z" + System.currentTimeMillis());
 		DIDDocument customizedDoc = doc.newCustomizedDid(customizedDid, Alice.getStorePassword());
 		assertNotNull(customizedDoc);
 
@@ -1544,5 +1547,175 @@ public class IDChainOperationsTest2 {
     	}
     }
 
+    @Test
+    @Order(48)
+    public void testDeclareKycCredentialForBar1_p() throws DIDException {
+    	Issuer issuer = new Issuer(Grace.getDocument());
+
+		// add a self-proclaimed credential
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", "Bar1");
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", "bar2@example.com");
+
+		// VC for the normal DID
+		DIDURL id = new DIDURL(bar1, "#profile-" + System.currentTimeMillis());
+		VerifiableCredential.Builder cb = issuer.issueFor(bar1);
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		Dave.getStore().storeCredential(vc);
+		vc.declare(Dave.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNotNull(resolvedVc);
+		assertEquals(id, resolvedVc.getId());
+		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+		assertEquals(bar1, resolvedVc.getSubject().getId());
+		assertEquals(Grace.getDid(), resolvedVc.getIssuer());
+		assertEquals(vc.getProof().getSignature(),
+				resolvedVc.getProof().getSignature());
+
+		assertTrue(resolvedVc.isValid());
+    }
+
+    @Test
+    @Order(49)
+    public void testDeclareKycCredentialForBar2_c() throws DIDException {
+    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		// add a self-proclaimed credential
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", "Bar2");
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", "bar2@example.com");
+
+		// VC for the normal DID
+		DIDURL id = new DIDURL(bar2, "#profile-" + System.currentTimeMillis());
+		VerifiableCredential.Builder cb = issuer.issueFor(bar2);
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		Erin.getStore().storeCredential(vc);
+		vc.declare(Erin.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNotNull(resolvedVc);
+		assertEquals(id, resolvedVc.getId());
+		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+		assertEquals(bar2, resolvedVc.getSubject().getId());
+		assertEquals(Grace.getCustomizedDid(), resolvedVc.getIssuer());
+		assertEquals(vc.getProof().getSignature(),
+				resolvedVc.getProof().getSignature());
+
+		assertTrue(resolvedVc.isValid());
+    }
+
+    @Test
+    @Order(50)
+    public void testDeclareKycCredentialForBar3_c() throws DIDException {
+    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		// add a self-proclaimed credential
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", "Bar3");
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", "bar3@example.com");
+
+		// VC for the normal DID
+		DIDURL id = new DIDURL(bar3, "#profile-" + System.currentTimeMillis());
+		VerifiableCredential.Builder cb = issuer.issueFor(bar3);
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		Frank.getStore().storeCredential(vc);
+		vc.declare(Frank.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNotNull(resolvedVc);
+		assertEquals(id, resolvedVc.getId());
+		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+		assertEquals(bar3, resolvedVc.getSubject().getId());
+		assertEquals(Grace.getCustomizedDid(), resolvedVc.getIssuer());
+		assertEquals(vc.getProof().getSignature(),
+				resolvedVc.getProof().getSignature());
+
+		assertTrue(resolvedVc.isValid());
+    }
+
+    @Test
+    @Order(51)
+    public void testListVcForAlice_p() throws DIDException {
+    	List<DIDURL> vcs = VerifiableCredential.list(Alice.getDid());
+
+    	assertEquals(3, vcs.size());
+
+    	for (DIDURL id : vcs) {
+    		VerifiableCredential vc = VerifiableCredential.resolve(id);
+    		assertNotNull(vc);
+    		assertEquals(id, vc.getId());
+    		assertEquals(Alice.getDid(), vc.getSubject().getId());
+    	}
+    }
+
+    @Test
+    @Order(52)
+    public void testListVcForAlice_c() throws DIDException {
+    	List<DIDURL> vcs = VerifiableCredential.list(Alice.getCustomizedDid());
+
+    	assertEquals(3, vcs.size());
+
+    	for (DIDURL id : vcs) {
+    		VerifiableCredential vc = VerifiableCredential.resolve(id);
+    		assertNotNull(vc);
+    		assertEquals(id, vc.getId());
+    		assertEquals(Alice.getCustomizedDid(), vc.getSubject().getId());
+    	}
+    }
+
+    @Test
+    @Order(52)
+    public void testListVcForFoo1() throws DIDException {
+    	List<DIDURL> vcs = VerifiableCredential.list(foo1);
+
+    	assertEquals(1, vcs.size());
+
+    	for (DIDURL id : vcs) {
+    		VerifiableCredential vc = VerifiableCredential.resolve(id);
+    		assertNotNull(vc);
+    		assertEquals(id, vc.getId());
+    		assertEquals(foo1, vc.getSubject().getId());
+    	}
+    }
+
+    @Test
+    @Order(52)
+    public void testListVcForBar3() throws DIDException {
+    	List<DIDURL> vcs = VerifiableCredential.list(bar3);
+
+    	assertEquals(1, vcs.size());
+
+    	for (DIDURL id : vcs) {
+    		VerifiableCredential vc = VerifiableCredential.resolve(id);
+    		assertNotNull(vc);
+    		assertEquals(id, vc.getId());
+    		assertEquals(bar3, vc.getSubject().getId());
+    	}
+    }
     // test deactivate the dids
 }
