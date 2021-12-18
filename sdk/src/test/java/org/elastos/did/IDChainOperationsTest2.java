@@ -1814,8 +1814,8 @@ public class IDChainOperationsTest2 {
 		}
 	}
 
-	//@Test
-	//@Order(204)
+	@Test
+	@Order(204)
 	public void testListPagination() throws DIDException {
 		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
