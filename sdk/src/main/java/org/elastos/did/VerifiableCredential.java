@@ -1307,6 +1307,11 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	public void revoke(DIDDocument signer, DIDURL signKey, String storepass,
 			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+
+		// Prefer use the signer's store
+		if (signer != null && signer.getMetadata().attachedStore())
+			getMetadata().attachStore(signer.getStore());
+
 		checkAttachedStore();
 
 		DIDDocument owner = getSubject().getId().resolve();
