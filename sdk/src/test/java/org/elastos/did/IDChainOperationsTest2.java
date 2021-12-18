@@ -1,5 +1,6 @@
 package org.elastos.did;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -20,29 +21,32 @@ import org.elastos.did.exception.DIDException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestData;
 import org.elastos.did.utils.Utils;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @TestMethodOrder(OrderAnnotation.class)
 @ExtendWith(DIDTestExtension.class)
 public class IDChainOperationsTest2 {
-	static private List<Entity> persons;
+	private static List<Entity> persons;
 
-	static Entity Alice;
-	static Entity Bob;
-	static Entity Carol;
-	static Entity Dave;
-	static Entity Erin;
-	static Entity Frank;
-	static Entity Grace;
+	private static Entity Alice;
+	private static Entity Bob;
+	private static Entity Carol;
+	private static Entity Dave;
+	private static Entity Erin;
+	private static Entity Frank;
+	private static Entity Grace;
 
-	static DID foo1, foo2;
-	static DID bar1, bar2, bar3;
-	static DID baz1, baz2, baz3;
+	private static DID foo1, foo2;
+	private static DID bar1, bar2, bar3;
+	//private static DID baz1, baz2, baz3;
+
+	private static final Logger log = LoggerFactory.getLogger(IDChainOperationsTest2.class);
 
 	static class Entity {
 		// Mnemonic passphrase and the store password should set by the end user.
@@ -56,8 +60,19 @@ public class IDChainOperationsTest2 {
 		private DID did;
 		private DID customizedDid;
 
+		private List<DIDURL> selfProclaimedVcs;
+		private List<DIDURL> kycVcs;
+
+		private List<DIDURL> cidSelfProclaimedVcs;
+		private List<DIDURL> cidKycVcs;
+
 		protected Entity(String name) throws DIDException {
 			this.name = name;
+
+			selfProclaimedVcs = new ArrayList<DIDURL>();
+			kycVcs = new ArrayList<DIDURL>();
+			cidSelfProclaimedVcs = new ArrayList<DIDURL>();
+			cidKycVcs = new ArrayList<DIDURL>();
 
 			initRootIdentity();
 			initDid();
@@ -105,7 +120,7 @@ public class IDChainOperationsTest2 {
 			doc.publish(storepass);
 
 			this.did = doc.getSubject();
-			System.out.format("%s created DID: %s\n", getName(), did.toString());
+			log.debug("{} created DID: {}\n", getName(), did.toString());
 		}
 
 		public DID getDid() {
@@ -139,13 +154,49 @@ public class IDChainOperationsTest2 {
 		protected String getStorePassword() {
 			return storepass;
 		}
+
+		public void addSelfProclaimedCredential(DIDURL id) {
+			if (id.getDid().equals(getDid()))
+				selfProclaimedVcs.add(id);
+			else if (id.getDid().equals(getCustomizedDid()))
+				cidSelfProclaimedVcs.add(id);
+			else
+				throw new IllegalArgumentException("Invalid credential");
+		}
+
+		public List<DIDURL> getSelfProclaimedCredential(DID did) {
+			if (did.equals(getDid()))
+				return selfProclaimedVcs;
+			else if (did.equals(getCustomizedDid()))
+				return cidSelfProclaimedVcs;
+			else
+				return null;
+		}
+
+		public void addKycCredential(DIDURL id) {
+			if (id.getDid().equals(getDid()))
+				kycVcs.add(id);
+			else if (id.getDid().equals(getCustomizedDid()))
+				cidKycVcs.add(id);
+			else
+				throw new IllegalArgumentException("Invalid credential");
+		}
+
+		public List<DIDURL> getKycCredential(DID did) {
+			if (did.equals(getDid()))
+				return kycVcs;
+			else if (did.equals(getCustomizedDid()))
+				return cidKycVcs;
+			else
+				return null;
+		}
 	}
 
-    @BeforeAll
-    public static void beforeAll() throws DIDException {
-    	System.out.println("Prepareing the DIDs for testing...");
+    @Test
+    @Order(0)
+    public void beforeAll() throws DIDException {
+    	log.debug("Prepareing the DIDs for testing...");
     	persons = new ArrayList<Entity>();
-
 
     	Alice = new Entity("Alice");
     	persons.add(Alice);
@@ -167,8 +218,6 @@ public class IDChainOperationsTest2 {
 
     	Grace = new Entity("Grace");
     	persons.add(Grace);
-
-    	System.out.println("Ready!");
     }
 
     @Test
@@ -912,7 +961,7 @@ public class IDChainOperationsTest2 {
 
 		assertTrue(resolvedDoc.isValid());
 
-		baz1 = customizedDid;
+		// baz1 = customizedDid;
     }
 
     @Test
@@ -967,7 +1016,7 @@ public class IDChainOperationsTest2 {
 
 		assertTrue(resolvedDoc.isValid());
 
-		baz2 = customizedDid;
+		// baz2 = customizedDid;
     }
 
     @Test
@@ -1023,7 +1072,7 @@ public class IDChainOperationsTest2 {
 
 		// TODO: how to verify the behavior of the ID chain
 
-		baz3 = customizedDid;
+		// baz3 = customizedDid;
     }
 
     @Test
@@ -1279,6 +1328,8 @@ public class IDChainOperationsTest2 {
     				resolvedVc.getProof().getSignature());
 
     		assertTrue(resolvedVc.isValid());
+
+    		person.addSelfProclaimedCredential(vc.getId());
     	}
     }
 
@@ -1316,6 +1367,8 @@ public class IDChainOperationsTest2 {
     				resolvedVc.getProof().getSignature());
 
     		assertTrue(resolvedVc.isValid());
+
+    		person.addSelfProclaimedCredential(vc.getId());
     	}
     }
 
@@ -1401,7 +1454,7 @@ public class IDChainOperationsTest2 {
     	Issuer issuer = new Issuer(Grace.getDocument());
 
     	for (Entity person : persons) {
-    		// add a self-proclaimed credential
+    		// add a KYC credential
     		Map<String, Object> props = new HashMap<String, Object>();
     		props.put("name", person.getName());
     		props.put("gender", "Male");
@@ -1430,6 +1483,8 @@ public class IDChainOperationsTest2 {
     				resolvedVc.getProof().getSignature());
 
     		assertTrue(resolvedVc.isValid());
+
+    		person.addKycCredential(vc.getId());
     	}
     }
 
@@ -1439,7 +1494,7 @@ public class IDChainOperationsTest2 {
     	Issuer issuer = new Issuer(Grace.getDocument());
 
     	for (Entity person : persons) {
-    		// add a self-proclaimed credential
+    		// add a KYC credential
     		Map<String, Object> props = new HashMap<String, Object>();
     		props.put("name", person.getName());
     		props.put("gender", "Male");
@@ -1468,6 +1523,8 @@ public class IDChainOperationsTest2 {
     				resolvedVc.getProof().getSignature());
 
     		assertTrue(resolvedVc.isValid());
+
+    		person.addKycCredential(vc.getId());
     	}
     }
 
@@ -1477,7 +1534,7 @@ public class IDChainOperationsTest2 {
     	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
     	for (Entity person : persons) {
-    		// add a self-proclaimed credential
+    		// add a KYC credential
     		Map<String, Object> props = new HashMap<String, Object>();
     		props.put("name", person.getName());
     		props.put("gender", "Male");
@@ -1506,6 +1563,8 @@ public class IDChainOperationsTest2 {
     				resolvedVc.getProof().getSignature());
 
     		assertTrue(resolvedVc.isValid());
+
+    		person.addKycCredential(vc.getId());
     	}
     }
 
@@ -1515,7 +1574,7 @@ public class IDChainOperationsTest2 {
     	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
     	for (Entity person : persons) {
-    		// add a self-proclaimed credential
+    		// add a KYC credential
     		Map<String, Object> props = new HashMap<String, Object>();
     		props.put("name", person.getName());
     		props.put("gender", "Male");
@@ -1544,6 +1603,8 @@ public class IDChainOperationsTest2 {
     				resolvedVc.getProof().getSignature());
 
     		assertTrue(resolvedVc.isValid());
+
+    		person.addKycCredential(vc.getId());
     	}
     }
 
@@ -1552,7 +1613,7 @@ public class IDChainOperationsTest2 {
     public void testDeclareKycCredentialForBar1_p() throws DIDException {
     	Issuer issuer = new Issuer(Grace.getDocument());
 
-		// add a self-proclaimed credential
+		// add a KYC credential
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("name", "Bar1");
 		props.put("gender", "Male");
@@ -1589,7 +1650,7 @@ public class IDChainOperationsTest2 {
     public void testDeclareKycCredentialForBar2_c() throws DIDException {
     	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
-		// add a self-proclaimed credential
+		// add a KYC credential
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("name", "Bar2");
 		props.put("gender", "Male");
@@ -1626,7 +1687,7 @@ public class IDChainOperationsTest2 {
     public void testDeclareKycCredentialForBar3_c() throws DIDException {
     	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
-		// add a self-proclaimed credential
+		// add a KYC credential
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("name", "Bar3");
 		props.put("gender", "Male");
@@ -1689,7 +1750,7 @@ public class IDChainOperationsTest2 {
     }
 
     @Test
-    @Order(52)
+    @Order(53)
     public void testListVcForFoo1() throws DIDException {
     	List<DIDURL> vcs = VerifiableCredential.list(foo1);
 
@@ -1704,7 +1765,7 @@ public class IDChainOperationsTest2 {
     }
 
     @Test
-    @Order(52)
+    @Order(54)
     public void testListVcForBar3() throws DIDException {
     	List<DIDURL> vcs = VerifiableCredential.list(bar3);
 
@@ -1717,5 +1778,240 @@ public class IDChainOperationsTest2 {
     		assertEquals(bar3, vc.getSubject().getId());
     	}
     }
+
+    //@Test
+    //@Order(55)
+    public void testListPagination() throws DIDException {
+    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+    	Entity nobody = new Entity("nobody");
+
+    	// Create a bunch of vcs
+    	for (int i = 0; i < 520; i++) {
+    		log.debug("Creating test credential {}...", i);
+
+    		VerifiableCredential vc = issuer.issueFor(nobody.getDid())
+    				.id("#test" + i)
+					.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+    				.property("index", Integer.valueOf(i))
+    				.seal(Grace.getStorePassword());
+
+    		nobody.getStore().storeCredential(vc);
+    		vc.declare(nobody.getStorePassword());
+
+    		assertTrue(vc.wasDeclared());
+    	}
+
+    	// Default page size
+    	int index = 519;
+    	List<DIDURL> ids = VerifiableCredential.list(nobody.getDid());
+    	assertNotNull(ids);
+    	assertEquals(128, ids.size());
+	   	for (DIDURL id : ids) {
+	   		log.trace("Resolving credential {}...", id.getFragment());
+
+	   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + index--);
+	   		assertEquals(ref, id);
+
+	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+
+	   		assertNotNull(vc);
+	   		assertEquals(ref, vc.getId());
+	   		assertTrue(vc.wasDeclared());
+	   	}
+
+	   	// Max page size
+    	index = 519;
+    	ids = VerifiableCredential.list(nobody.getDid(), 550);
+    	assertNotNull(ids);
+    	assertEquals(512, ids.size());
+	   	for (DIDURL id : ids) {
+	   		log.trace("Resolving credential {}...", id.getFragment());
+
+	   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + index--);
+	   		assertEquals(ref, id);
+
+	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+
+	   		assertNotNull(vc);
+	   		assertEquals(ref, vc.getId());
+	   		assertTrue(vc.wasDeclared());
+	   	}
+
+	   	// out of boundary
+    	ids = VerifiableCredential.list(nobody.getDid(), 520, 100);
+    	assertNull(ids);
+
+    	// list all with default page size
+    	int skip = 0;
+    	int limit = 256;
+    	index = 520;
+    	while (true) {
+    		int resultSize = index >= limit ? limit : index;
+	    	ids = VerifiableCredential.list(nobody.getDid(), skip, limit);
+	    	if (ids == null)
+	    		break;
+
+	    	assertEquals(resultSize, ids.size());
+		   	for (DIDURL id : ids) {
+		   		log.trace("Resolving credential {}...", id.getFragment());
+
+		   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
+		   		assertEquals(ref, id);
+
+		   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+
+		   		assertNotNull(vc);
+		   		assertEquals(ref, vc.getId());
+		   		assertTrue(vc.wasDeclared());
+		   	}
+
+		   	skip += ids.size();
+    	}
+    	assertEquals(0, index);
+
+    	// list with specific page size and start position
+    	skip = 200;
+    	limit = 100;
+    	index = 320;
+    	while (true) {
+    		int resultSize = index >= limit ? limit : index;
+	    	ids = VerifiableCredential.list(nobody.getDid(), skip, limit);
+	    	if (ids == null)
+	    		break;
+
+	    	assertEquals(resultSize, ids.size());
+		   	for (DIDURL id : ids) {
+		   		log.trace("Resolving credential {}...", id.getFragment());
+
+		   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
+		   		assertEquals(ref, id);
+
+		   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+
+		   		assertNotNull(vc);
+		   		assertEquals(ref, vc.getId());
+		   		assertTrue(vc.wasDeclared());
+		   	}
+
+		   	skip += ids.size();
+    	}
+    	assertEquals(0, index);
+    }
+
+    @Test
+    @Order(70)
+    public void testRevokeSelfProclaimedVcFromNobody_p() throws DIDException {
+    	// Frank' self-proclaimed credential
+    	DIDURL id = Frank.getSelfProclaimedCredential(Frank.getDid()).get(0);
+
+    	// Alice try to revoke
+    	assertThrows(Exception.class, () -> {
+    		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+    	});
+
+    	List<DIDURL> vcs = VerifiableCredential.list(Frank.getDid());
+    	assertEquals(3, vcs.size());
+    	assertTrue(vcs.contains(id));
+
+    	VerifiableCredential vc = VerifiableCredential.resolve(id);
+    	assertFalse(vc.isRevoked());
+    }
+
+    @Test
+    @Order(71)
+    public void testRevokeSelfProclaimedVcFromNobody_c() throws DIDException {
+    	// Frank' self-proclaimed credential
+    	DIDURL id = Frank.getSelfProclaimedCredential(Frank.getCustomizedDid()).get(0);
+
+    	// Alice try to revoke
+    	assertThrows(Exception.class, () -> {
+    		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+    	});
+
+    	List<DIDURL> vcs = VerifiableCredential.list(Frank.getCustomizedDid());
+    	assertEquals(3, vcs.size());
+    	assertTrue(vcs.contains(id));
+
+    	VerifiableCredential vc = VerifiableCredential.resolve(id);
+    	assertFalse(vc.isRevoked());
+    }
+
+    @Test
+    @Order(72)
+    public void testRevokeSelfProclaimedVc_p1() throws DIDException {
+    	// Frank' self-proclaimed credential
+    	DIDURL id = Frank.getSelfProclaimedCredential(Frank.getDid()).get(0);
+
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+    	List<DIDURL> vcs = VerifiableCredential.list(Frank.getDid());
+    	assertEquals(3, vcs.size());
+    	assertTrue(vcs.contains(id));
+
+    	VerifiableCredential vc = VerifiableCredential.resolve(id);
+    	assertTrue(vc.isRevoked());
+    }
+
+    @Test
+    @Order(73)
+    public void testRevokeSelfProclaimedVc_c1() throws DIDException {
+    	// Frank' self-proclaimed credential
+    	DIDURL id = Frank.getSelfProclaimedCredential(Frank.getCustomizedDid()).get(0);
+
+    	DIDDocument doc = Frank.getCustomizedDocument();
+    	doc.setEffectiveController(Frank.getDid());
+
+		VerifiableCredential.revoke(id, doc, Frank.getStorePassword());
+
+    	List<DIDURL> vcs = VerifiableCredential.list(Frank.getCustomizedDid());
+    	assertEquals(3, vcs.size());
+    	assertTrue(vcs.contains(id));
+
+    	VerifiableCredential vc = VerifiableCredential.resolve(id);
+    	assertTrue(vc.isRevoked());
+    }
+
+    @Test
+    @Order(74)
+    public void testRevokeSelfProclaimedVc_p2() throws DIDException {
+    	// Erin' self-proclaimed credential
+    	DIDURL id = Erin.getSelfProclaimedCredential(Erin.getDid()).get(0);
+
+    	VerifiableCredential vc = VerifiableCredential.resolve(id);
+    	assertFalse(vc.isRevoked());
+
+		vc.revoke(Erin.getDocument(), Erin.getStorePassword());
+
+    	List<DIDURL> vcs = VerifiableCredential.list(Erin.getDid());
+    	assertEquals(3, vcs.size());
+    	assertTrue(vcs.contains(id));
+
+    	vc = VerifiableCredential.resolve(id);
+    	assertTrue(vc.isRevoked());
+    }
+
+    @Test
+    @Order(75)
+    public void testRevokeSelfProclaimedVc_c2() throws DIDException {
+    	// Frank' self-proclaimed credential
+    	DIDURL id = Erin.getSelfProclaimedCredential(Erin.getCustomizedDid()).get(0);
+
+    	VerifiableCredential vc = VerifiableCredential.resolve(id);
+    	assertFalse(vc.isRevoked());
+
+    	DIDDocument doc = Erin.getCustomizedDocument();
+    	doc.setEffectiveController(Erin.getDid());
+
+		vc.revoke(doc, Erin.getStorePassword());
+
+    	List<DIDURL> vcs = VerifiableCredential.list(Erin.getCustomizedDid());
+    	assertEquals(3, vcs.size());
+    	assertTrue(vcs.contains(id));
+
+    	vc = VerifiableCredential.resolve(id);
+    	assertTrue(vc.isRevoked());
+    }
+
     // test deactivate the dids
 }
