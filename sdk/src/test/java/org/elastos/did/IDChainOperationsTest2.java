@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2019 Elastos Foundation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package org.elastos.did;
 
 import static org.junit.Assert.assertNull;
@@ -45,6 +67,9 @@ public class IDChainOperationsTest2 {
 	private static DID foo1, foo2;
 	private static DID bar1, bar2, bar3;
 	//private static DID baz1, baz2, baz3;
+
+	private static DIDURL foo1Vc, foo2Vc; // self-proclaimed VC
+	private static DIDURL bar1Vc, bar2Vc, bar3Vc; // KYC VC
 
 	private static final Logger log = LoggerFactory.getLogger(IDChainOperationsTest2.class);
 
@@ -192,65 +217,65 @@ public class IDChainOperationsTest2 {
 		}
 	}
 
-    @Test
-    @Order(0)
-    public void beforeAll() throws DIDException {
-    	log.debug("Prepareing the DIDs for testing...");
-    	persons = new ArrayList<Entity>();
+	@Test
+	@Order(0)
+	public void beforeAll() throws DIDException {
+		log.debug("Prepareing the DIDs for testing...");
+		persons = new ArrayList<Entity>();
 
-    	Alice = new Entity("Alice");
-    	persons.add(Alice);
+		Alice = new Entity("Alice");
+		persons.add(Alice);
 
-    	Bob = new Entity("Bob");
-    	persons.add(Bob);
+		Bob = new Entity("Bob");
+		persons.add(Bob);
 
-    	Carol = new Entity("Carol");
-    	persons.add(Carol);
+		Carol = new Entity("Carol");
+		persons.add(Carol);
 
-    	Dave = new Entity("Dave");
-    	persons.add(Dave);
+		Dave = new Entity("Dave");
+		persons.add(Dave);
 
-    	Erin = new Entity("Erin");
-    	persons.add(Erin);
+		Erin = new Entity("Erin");
+		persons.add(Erin);
 
-    	Frank = new Entity("Frank");
-    	persons.add(Frank);
+		Frank = new Entity("Frank");
+		persons.add(Frank);
 
-    	Grace = new Entity("Grace");
-    	persons.add(Grace);
-    }
+		Grace = new Entity("Grace");
+		persons.add(Grace);
+	}
 
-    @Test
-    @Order(1)
-    public void testCreateCustomizedDid() throws DIDException {
-    	for (Entity person : persons) {
-    		assertNotNull(person.getDid().resolve());
+	@Test
+	@Order(1)
+	public void testCreateCustomizedDid() throws DIDException {
+		for (Entity person : persons) {
+			assertNotNull(person.getDid().resolve());
 
-    		DIDDocument doc = person.getDocument();
+			DIDDocument doc = person.getDocument();
 
-    		DID customizedDid = new DID("did:elastos:" + person.getName() + "Z" + System.currentTimeMillis());
-    		DIDDocument customizedDoc = doc.newCustomizedDid(customizedDid, person.getStorePassword());
-    		assertNotNull(customizedDoc);
+			DID customizedDid = new DID("did:elastos:" + person.getName() + "Z" + System.currentTimeMillis());
+			DIDDocument customizedDoc = doc.newCustomizedDid(customizedDid, person.getStorePassword());
+			assertNotNull(customizedDoc);
 
-    		customizedDoc.publish(person.getStorePassword());
+			customizedDoc.publish(person.getStorePassword());
 
-    		DIDDocument resolvedDoc = customizedDid.resolve();
-    		assertNotNull(resolvedDoc);
-    		assertEquals(customizedDid, resolvedDoc.getSubject());
-    		assertEquals(1, resolvedDoc.getControllerCount());
-    		assertEquals(person.getDid(), resolvedDoc.getController());
-    		assertEquals(customizedDoc.getProof().getSignature(),
-    				resolvedDoc.getProof().getSignature());
+			DIDDocument resolvedDoc = customizedDid.resolve();
+			assertNotNull(resolvedDoc);
+			assertEquals(customizedDid, resolvedDoc.getSubject());
+			assertEquals(1, resolvedDoc.getControllerCount());
+			assertEquals(person.getDid(), resolvedDoc.getController());
+			assertEquals(customizedDoc.getProof().getSignature(),
+					resolvedDoc.getProof().getSignature());
 
-    		assertTrue(resolvedDoc.isValid());
+			assertTrue(resolvedDoc.isValid());
 
-    		person.setCustomizedDid(customizedDid);
-    	}
-    }
+			person.setCustomizedDid(customizedDid);
+		}
+	}
 
-    @Test
-    @Order(2)
-    public void testCreateMultisigCustomizedDid_1of2() throws DIDException {
+	@Test
+	@Order(2)
+	public void testCreateMultisigCustomizedDid_1of2() throws DIDException {
 		DID customizedDid = new DID("did:elastos:foo1" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
@@ -280,11 +305,11 @@ public class IDChainOperationsTest2 {
 		assertTrue(resolvedDoc.isValid());
 
 		foo1 = customizedDid;
-    }
+	}
 
-    @Test
-    @Order(3)
-    public void testCreateMultisigCustomizedDid_2of2() throws DIDException {
+	@Test
+	@Order(3)
+	public void testCreateMultisigCustomizedDid_2of2() throws DIDException {
 		DID customizedDid = new DID("did:elastos:foo2" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
@@ -318,11 +343,11 @@ public class IDChainOperationsTest2 {
 		assertTrue(resolvedDoc.isValid());
 
 		foo2 = customizedDid;
-    }
+	}
 
-    @Test
-    @Order(4)
-    public void testCreateMultisigCustomizedDid_1of3() throws DIDException {
+	@Test
+	@Order(4)
+	public void testCreateMultisigCustomizedDid_1of3() throws DIDException {
 		DID customizedDid = new DID("did:elastos:bar1" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
@@ -352,11 +377,11 @@ public class IDChainOperationsTest2 {
 		assertTrue(resolvedDoc.isValid());
 
 		bar1 = customizedDid;
-    }
+	}
 
-    @Test
-    @Order(5)
-    public void testCreateMultisigCustomizedDid_2of3() throws DIDException {
+	@Test
+	@Order(5)
+	public void testCreateMultisigCustomizedDid_2of3() throws DIDException {
 		DID customizedDid = new DID("did:elastos:bar2" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
@@ -391,11 +416,11 @@ public class IDChainOperationsTest2 {
 		assertTrue(resolvedDoc.isValid());
 
 		bar2 = customizedDid;
-    }
+	}
 
-    @Test
-    @Order(6)
-    public void testCreateMultisigCustomizedDid_3of3() throws DIDException {
+	@Test
+	@Order(6)
+	public void testCreateMultisigCustomizedDid_3of3() throws DIDException {
 		DID customizedDid = new DID("did:elastos:bar3" + "Z" + System.currentTimeMillis());
 
 		// Alice create initially
@@ -434,11 +459,11 @@ public class IDChainOperationsTest2 {
 		assertTrue(resolvedDoc.isValid());
 
 		bar3 = customizedDid;
-    }
+	}
 
-    @Test
-    @Order(7)
-    public void testUpdateMultisigCustomizedDid_1of2() throws DIDException {
+	@Test
+	@Order(7)
+	public void testUpdateMultisigCustomizedDid_1of2() throws DIDException {
 		DID customizedDid = foo1;
 		HDKey newKey = TestData.generateKeypair();
 
@@ -489,11 +514,11 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(8)
-    public void testUpdateMultisigCustomizedDid_2of2() throws DIDException {
+	@Test
+	@Order(8)
+	public void testUpdateMultisigCustomizedDid_2of2() throws DIDException {
 		DID customizedDid = foo2;
 		HDKey newKey = TestData.generateKeypair();
 
@@ -548,11 +573,11 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(9)
-    public void testUpdateMultisigCustomizedDid_1of3() throws DIDException {
+	@Test
+	@Order(9)
+	public void testUpdateMultisigCustomizedDid_1of3() throws DIDException {
 		DID customizedDid = bar1;
 		HDKey newKey = TestData.generateKeypair();
 
@@ -604,11 +629,11 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(10)
-    public void testUpdateMultisigCustomizedDid_2of3() throws DIDException {
+	@Test
+	@Order(10)
+	public void testUpdateMultisigCustomizedDid_2of3() throws DIDException {
 		DID customizedDid = bar2;
 		HDKey newKey = TestData.generateKeypair();
 
@@ -664,11 +689,11 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(11)
-    public void testUpdateMultisigCustomizedDid_3of3() throws DIDException {
+	@Test
+	@Order(11)
+	public void testUpdateMultisigCustomizedDid_3of3() throws DIDException {
 		DID customizedDid = bar3;
 		HDKey newKey = TestData.generateKeypair();
 
@@ -728,11 +753,11 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(12)
-    public void testChangeControllersWithUpdate_1of2() throws DIDException {
+	@Test
+	@Order(12)
+	public void testChangeControllersWithUpdate_1of2() throws DIDException {
 		DID customizedDid = foo1;
 
 		DIDDocument customizedDoc = customizedDid.resolve();
@@ -762,11 +787,11 @@ public class IDChainOperationsTest2 {
 		});
 
 		// TODO: how to verify the behavior of the ID chain
-    }
+	}
 
-    @Test
-    @Order(13)
-    public void testChangeControllersWithUpdate_2of2() throws DIDException {
+	@Test
+	@Order(13)
+	public void testChangeControllersWithUpdate_2of2() throws DIDException {
 		DID customizedDid = foo2;
 
 		DIDDocument customizedDoc = customizedDid.resolve();
@@ -800,11 +825,11 @@ public class IDChainOperationsTest2 {
 		});
 
 		// TODO: how to verify the behavior of the ID chain
-    }
+	}
 
-    @Test
-    @Order(14)
-    public void testChangeControllersWithUpdate_1of3() throws DIDException {
+	@Test
+	@Order(14)
+	public void testChangeControllersWithUpdate_1of3() throws DIDException {
 		DID customizedDid = bar1;
 
 		DIDDocument customizedDoc = customizedDid.resolve();
@@ -834,11 +859,11 @@ public class IDChainOperationsTest2 {
 		});
 
 		// TODO: how to verify the behavior of the ID chain
-    }
+	}
 
-    @Test
-    @Order(15)
-    public void testChangeControllersWithUpdate_2of3() throws DIDException {
+	@Test
+	@Order(15)
+	public void testChangeControllersWithUpdate_2of3() throws DIDException {
 		DID customizedDid = bar2;
 
 		DIDDocument customizedDoc = customizedDid.resolve();
@@ -872,11 +897,11 @@ public class IDChainOperationsTest2 {
 		});
 
 		// TODO: how to verify the behavior of the ID chain
-    }
+	}
 
-    @Test
-    @Order(16)
-    public void testChangeControllersWithUpdate_3of3() throws DIDException {
+	@Test
+	@Order(16)
+	public void testChangeControllersWithUpdate_3of3() throws DIDException {
 		DID customizedDid = bar3;
 
 		DIDDocument customizedDoc = customizedDid.resolve();
@@ -914,13 +939,13 @@ public class IDChainOperationsTest2 {
 		});
 
 		// TODO: how to verify the behavior of the ID chain
-    }
+	}
 
-    @Test
-    @Order(17)
-    public void testTransferCustomizedDid_1to1() throws DIDException {
-    	// Alice create a customized did: baz1
-    	DIDDocument doc = Alice.getDocument();
+	@Test
+	@Order(17)
+	public void testTransferCustomizedDid_1to1() throws DIDException {
+		// Alice create a customized did: baz1
+		DIDDocument doc = Alice.getDocument();
 
 		DID customizedDid = new DID("did:elastos:baz1" + "Z" + System.currentTimeMillis());
 		DIDDocument customizedDoc = doc.newCustomizedDid(customizedDid, Alice.getStorePassword());
@@ -943,7 +968,7 @@ public class IDChainOperationsTest2 {
 		TransferTicket ticket = customizedDoc.createTransferTicket(Bob.getDid(), Alice.getStorePassword());
 
 		// Bob create the new document
-    	doc = Bob.getDocument();
+		doc = Bob.getDocument();
 
 		customizedDoc = doc.newCustomizedDid(customizedDid, true, Bob.getStorePassword());
 		assertNotNull(customizedDoc);
@@ -962,13 +987,13 @@ public class IDChainOperationsTest2 {
 		assertTrue(resolvedDoc.isValid());
 
 		// baz1 = customizedDid;
-    }
+	}
 
-    @Test
-    @Order(18)
-    public void testTransferCustomizedDid_1to2() throws DIDException {
-    	// Alice create a customized did: baz2
-    	DIDDocument doc = Alice.getDocument();
+	@Test
+	@Order(18)
+	public void testTransferCustomizedDid_1to2() throws DIDException {
+		// Alice create a customized did: baz2
+		DIDDocument doc = Alice.getDocument();
 
 		DID customizedDid = new DID("did:elastos:baz2" + "Z" + System.currentTimeMillis());
 		DIDDocument customizedDoc = doc.newCustomizedDid(customizedDid, Alice.getStorePassword());
@@ -991,7 +1016,7 @@ public class IDChainOperationsTest2 {
 		TransferTicket ticket = customizedDoc.createTransferTicket(Bob.getDid(), Alice.getStorePassword());
 
 		// Bob create the new document
-    	doc = Bob.getDocument();
+		doc = Bob.getDocument();
 
 		customizedDoc = doc.newCustomizedDid(customizedDid,
 				new DID[] { Bob.getDid(), Carol.getDid() }, 1,
@@ -1017,13 +1042,13 @@ public class IDChainOperationsTest2 {
 		assertTrue(resolvedDoc.isValid());
 
 		// baz2 = customizedDid;
-    }
+	}
 
-    @Test
-    @Order(19)
-    public void testTransferCustomizedDid_1to3_WithoutRequiredSig() throws DIDException {
-    	// Alice create a customized did: baz3
-    	DIDDocument doc = Alice.getDocument();
+	@Test
+	@Order(19)
+	public void testTransferCustomizedDid_1to3_WithoutRequiredSig() throws DIDException {
+		// Alice create a customized did: baz3
+		DIDDocument doc = Alice.getDocument();
 
 		DID customizedDid = new DID("did:elastos:baz3" + "Z" + System.currentTimeMillis());
 		DIDDocument customizedDoc = doc.newCustomizedDid(customizedDid, Alice.getStorePassword());
@@ -1046,7 +1071,7 @@ public class IDChainOperationsTest2 {
 		TransferTicket ticket = customizedDoc.createTransferTicket(Bob.getDid(), Alice.getStorePassword());
 
 		// Carol create the new document
-    	doc = Carol.getDocument();
+		doc = Carol.getDocument();
 
 		customizedDoc = doc.newCustomizedDid(customizedDid,
 				new DID[] { Bob.getDid(), Carol.getDid(), Dave.getDid() }, 2,
@@ -1073,11 +1098,11 @@ public class IDChainOperationsTest2 {
 		// TODO: how to verify the behavior of the ID chain
 
 		// baz3 = customizedDid;
-    }
+	}
 
-    @Test
-    @Order(20)
-    public void testTransferCustomizedDid_2to1() throws DIDException {
+	@Test
+	@Order(20)
+	public void testTransferCustomizedDid_2to1() throws DIDException {
 		DID customizedDid = foo1;
 		DIDDocument customizedDoc = customizedDid.resolve();
 		assertNotNull(customizedDoc);
@@ -1088,7 +1113,7 @@ public class IDChainOperationsTest2 {
 		TransferTicket ticket = customizedDoc.createTransferTicket(Carol.getDid(), Bob.getStorePassword());
 
 		// Carol create the new document
-    	DIDDocument doc = Carol.getDocument();
+		DIDDocument doc = Carol.getDocument();
 
 		customizedDoc = doc.newCustomizedDid(customizedDid, true, Carol.getStorePassword());
 		assertTrue(customizedDoc.isValid());
@@ -1105,11 +1130,11 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(21)
-    public void testTransferCustomizedDid_2to2() throws DIDException {
+	@Test
+	@Order(21)
+	public void testTransferCustomizedDid_2to2() throws DIDException {
 		DID customizedDid = foo2;
 		DIDDocument customizedDoc = customizedDid.resolve();
 		assertNotNull(customizedDoc);
@@ -1125,7 +1150,7 @@ public class IDChainOperationsTest2 {
 		assertTrue(ticket.isValid());
 
 		// Carol create the new document
-    	DIDDocument doc = Carol.getDocument();
+		DIDDocument doc = Carol.getDocument();
 
 		customizedDoc = doc.newCustomizedDid(customizedDid,
 				new DID[] { Carol.getDid(), Dave.getDid() },
@@ -1155,11 +1180,11 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(22)
-    public void testTransferCustomizedDid_3to1() throws DIDException {
+	@Test
+	@Order(22)
+	public void testTransferCustomizedDid_3to1() throws DIDException {
 		DID customizedDid = bar1;
 		DIDDocument customizedDoc = customizedDid.resolve();
 		assertNotNull(customizedDoc);
@@ -1170,7 +1195,7 @@ public class IDChainOperationsTest2 {
 		TransferTicket ticket = customizedDoc.createTransferTicket(Dave.getDid(), Carol.getStorePassword());
 
 		// Dave create the new document
-    	DIDDocument doc = Dave.getDocument();
+		DIDDocument doc = Dave.getDocument();
 
 		customizedDoc = doc.newCustomizedDid(customizedDid, true, Dave.getStorePassword());
 		assertTrue(customizedDoc.isValid());
@@ -1187,11 +1212,11 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(23)
-    public void testTransferCustomizedDid_3to2() throws DIDException {
+	@Test
+	@Order(23)
+	public void testTransferCustomizedDid_3to2() throws DIDException {
 		DID customizedDid = bar2;
 		DIDDocument customizedDoc = customizedDid.resolve();
 		assertNotNull(customizedDoc);
@@ -1207,7 +1232,7 @@ public class IDChainOperationsTest2 {
 		assertTrue(ticket.isValid());
 
 		// Dave create the new document
-    	DIDDocument doc = Dave.getDocument();
+		DIDDocument doc = Dave.getDocument();
 
 		customizedDoc = doc.newCustomizedDid(customizedDid,
 				new DID[] { Dave.getDid(), Erin.getDid() },
@@ -1237,11 +1262,11 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(24)
-    public void testTransferCustomizedDid_3to3() throws DIDException {
+	@Test
+	@Order(24)
+	public void testTransferCustomizedDid_3to3() throws DIDException {
 		DID customizedDid = bar3;
 		DIDDocument customizedDoc = customizedDid.resolve();
 		assertNotNull(customizedDoc);
@@ -1261,7 +1286,7 @@ public class IDChainOperationsTest2 {
 		assertTrue(ticket.isValid());
 
 		// Erin create the new document
-    	DIDDocument doc = Erin.getDocument();
+		DIDDocument doc = Erin.getDocument();
 
 		customizedDoc = doc.newCustomizedDid(customizedDid,
 				new DID[] { Dave.getDid(), Erin.getDid(), Frank.getDid() },
@@ -1292,89 +1317,89 @@ public class IDChainOperationsTest2 {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
-    }
+	}
 
-    @Test
-    @Order(40)
-    public void testDeclareSelfProclaimedCredential() throws DIDException {
-    	for (Entity person : persons) {
-    		DIDDocument doc = person.getDocument();
+	@Test
+	@Order(100)
+	public void testDeclareSelfProclaimedCredential() throws DIDException {
+		for (Entity person : persons) {
+			DIDDocument doc = person.getDocument();
 
-    		// add a self-proclaimed credential
-    		Map<String, Object> props = new HashMap<String, Object>();
-    		props.put("name", person.getName());
-    		props.put("gender", "Male");
-    		props.put("nationality", "Singapore");
-    		props.put("email", person.getName() + "@example.com");
+			// add a self-proclaimed credential
+			Map<String, Object> props = new HashMap<String, Object>();
+			props.put("name", person.getName());
+			props.put("gender", "Male");
+			props.put("nationality", "Singapore");
+			props.put("email", person.getName() + "@example.com");
 
-    		DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
-    		VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
-    		VerifiableCredential vc = cb.id(id)
-    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
-    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
-    			.properties(props)
-    			.seal(person.getStorePassword());
+			DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
+			VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
+			VerifiableCredential vc = cb.id(id)
+				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.properties(props)
+				.seal(person.getStorePassword());
 
-    		person.getStore().storeCredential(vc);
-    		vc.declare(person.getStorePassword());
+			person.getStore().storeCredential(vc);
+			vc.declare(person.getStorePassword());
 
-    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
-    		assertNotNull(resolvedVc);
-    		assertEquals(id, resolvedVc.getId());
-    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
-    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
-    		assertEquals(doc.getSubject(), resolvedVc.getSubject().getId());
-    		assertEquals(vc.getProof().getSignature(),
-    				resolvedVc.getProof().getSignature());
+			VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+			assertNotNull(resolvedVc);
+			assertEquals(id, resolvedVc.getId());
+			assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+			assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+			assertEquals(doc.getSubject(), resolvedVc.getSubject().getId());
+			assertEquals(vc.getProof().getSignature(),
+					resolvedVc.getProof().getSignature());
 
-    		assertTrue(resolvedVc.isValid());
+			assertTrue(resolvedVc.isValid());
 
-    		person.addSelfProclaimedCredential(vc.getId());
-    	}
-    }
+			person.addSelfProclaimedCredential(vc.getId());
+		}
+	}
 
-    @Test
-    @Order(41)
-    public void testDeclareSelfProclaimedCredentialForCid() throws DIDException {
-    	for (Entity person : persons) {
-    		DIDDocument doc = person.getCustomizedDocument();
+	@Test
+	@Order(101)
+	public void testDeclareSelfProclaimedCredentialForCid() throws DIDException {
+		for (Entity person : persons) {
+			DIDDocument doc = person.getCustomizedDocument();
 
-    		// add a self-proclaimed credential
-    		Map<String, Object> props = new HashMap<String, Object>();
-    		props.put("name", person.getName());
-    		props.put("gender", "Male");
-    		props.put("nationality", "Singapore");
-    		props.put("email", person.getName() + "@example.com");
+			// add a self-proclaimed credential
+			Map<String, Object> props = new HashMap<String, Object>();
+			props.put("name", person.getName());
+			props.put("gender", "Male");
+			props.put("nationality", "Singapore");
+			props.put("email", person.getName() + "@example.com");
 
-    		DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
-    		VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
-    		VerifiableCredential vc = cb.id(id)
-    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
-    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
-    			.properties(props)
-    			.seal(person.getStorePassword());
+			DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
+			VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
+			VerifiableCredential vc = cb.id(id)
+				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.properties(props)
+				.seal(person.getStorePassword());
 
-    		person.getStore().storeCredential(vc);
-    		vc.declare(person.getStorePassword());
+			person.getStore().storeCredential(vc);
+			vc.declare(person.getStorePassword());
 
-    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
-    		assertNotNull(resolvedVc);
-    		assertEquals(id, resolvedVc.getId());
-    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
-    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
-    		assertEquals(doc.getSubject(), resolvedVc.getSubject().getId());
-    		assertEquals(vc.getProof().getSignature(),
-    				resolvedVc.getProof().getSignature());
+			VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+			assertNotNull(resolvedVc);
+			assertEquals(id, resolvedVc.getId());
+			assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+			assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+			assertEquals(doc.getSubject(), resolvedVc.getSubject().getId());
+			assertEquals(vc.getProof().getSignature(),
+					resolvedVc.getProof().getSignature());
 
-    		assertTrue(resolvedVc.isValid());
+			assertTrue(resolvedVc.isValid());
 
-    		person.addSelfProclaimedCredential(vc.getId());
-    	}
-    }
+			person.addSelfProclaimedCredential(vc.getId());
+		}
+	}
 
-    @Test
-    @Order(42)
-    public void testDeclareSelfProclaimedCredentialForFoo1() throws DIDException {
+	@Test
+	@Order(102)
+	public void testDeclareSelfProclaimedCredentialForFoo1() throws DIDException {
 		DIDDocument doc = foo1.resolve();
 		Carol.getStore().storeDid(doc);
 		doc.setEffectiveController(Carol.getDid());
@@ -1408,11 +1433,13 @@ public class IDChainOperationsTest2 {
 				resolvedVc.getProof().getSignature());
 
 		assertTrue(resolvedVc.isValid());
-    }
 
-    @Test
-    @Order(43)
-    public void testDeclareSelfProclaimedCredentialForFoo2() throws DIDException {
+		foo1Vc = vc.getId();
+	}
+
+	@Test
+	@Order(103)
+	public void testDeclareSelfProclaimedCredentialForFoo2() throws DIDException {
 		DIDDocument doc = foo2.resolve();
 		Dave.getStore().storeDid(doc);
 		doc.setEffectiveController(Dave.getDid());
@@ -1446,172 +1473,174 @@ public class IDChainOperationsTest2 {
 				resolvedVc.getProof().getSignature());
 
 		assertTrue(resolvedVc.isValid());
-    }
 
-    @Test
-    @Order(44)
-    public void testDeclareKycCredential_p2p() throws DIDException {
-    	Issuer issuer = new Issuer(Grace.getDocument());
+		foo2Vc = vc.getId();
+	}
 
-    	for (Entity person : persons) {
-    		// add a KYC credential
-    		Map<String, Object> props = new HashMap<String, Object>();
-    		props.put("name", person.getName());
-    		props.put("gender", "Male");
-    		props.put("nationality", "Singapore");
-    		props.put("email", person.getName() + "@example.com");
+	@Test
+	@Order(104)
+	public void testDeclareKycCredential_p2p() throws DIDException {
+		Issuer issuer = new Issuer(Grace.getDocument());
 
-    		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
-    		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
-    		VerifiableCredential vc = cb.id(id)
-    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
-    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
-    			.properties(props)
-    			.seal(Grace.getStorePassword());
+		for (Entity person : persons) {
+			// add a KYC credential
+			Map<String, Object> props = new HashMap<String, Object>();
+			props.put("name", person.getName());
+			props.put("gender", "Male");
+			props.put("nationality", "Singapore");
+			props.put("email", person.getName() + "@example.com");
 
-    		person.getStore().storeCredential(vc);
-    		vc.declare(person.getStorePassword());
+			DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+			VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+			VerifiableCredential vc = cb.id(id)
+				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.properties(props)
+				.seal(Grace.getStorePassword());
 
-    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
-    		assertNotNull(resolvedVc);
-    		assertEquals(id, resolvedVc.getId());
-    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
-    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
-    		assertEquals(person.getDid(), resolvedVc.getSubject().getId());
-    		assertEquals(Grace.getDid(), resolvedVc.getIssuer());
-    		assertEquals(vc.getProof().getSignature(),
-    				resolvedVc.getProof().getSignature());
+			person.getStore().storeCredential(vc);
+			vc.declare(person.getStorePassword());
 
-    		assertTrue(resolvedVc.isValid());
+			VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+			assertNotNull(resolvedVc);
+			assertEquals(id, resolvedVc.getId());
+			assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+			assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+			assertEquals(person.getDid(), resolvedVc.getSubject().getId());
+			assertEquals(Grace.getDid(), resolvedVc.getIssuer());
+			assertEquals(vc.getProof().getSignature(),
+					resolvedVc.getProof().getSignature());
 
-    		person.addKycCredential(vc.getId());
-    	}
-    }
+			assertTrue(resolvedVc.isValid());
 
-    @Test
-    @Order(45)
-    public void testDeclareKycCredential_p2c() throws DIDException {
-    	Issuer issuer = new Issuer(Grace.getDocument());
+			person.addKycCredential(vc.getId());
+		}
+	}
 
-    	for (Entity person : persons) {
-    		// add a KYC credential
-    		Map<String, Object> props = new HashMap<String, Object>();
-    		props.put("name", person.getName());
-    		props.put("gender", "Male");
-    		props.put("nationality", "Singapore");
-    		props.put("email", person.getName() + "@example.com");
+	@Test
+	@Order(105)
+	public void testDeclareKycCredential_p2c() throws DIDException {
+		Issuer issuer = new Issuer(Grace.getDocument());
 
-    		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
-    		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
-    		VerifiableCredential vc = cb.id(id)
-    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
-    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
-    			.properties(props)
-    			.seal(Grace.getStorePassword());
+		for (Entity person : persons) {
+			// add a KYC credential
+			Map<String, Object> props = new HashMap<String, Object>();
+			props.put("name", person.getName());
+			props.put("gender", "Male");
+			props.put("nationality", "Singapore");
+			props.put("email", person.getName() + "@example.com");
 
-    		person.getStore().storeCredential(vc);
-    		vc.declare(person.getStorePassword());
+			DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+			VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+			VerifiableCredential vc = cb.id(id)
+				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.properties(props)
+				.seal(Grace.getStorePassword());
 
-    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
-    		assertNotNull(resolvedVc);
-    		assertEquals(id, resolvedVc.getId());
-    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
-    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
-    		assertEquals(person.getCustomizedDid(), resolvedVc.getSubject().getId());
-    		assertEquals(Grace.getDid(), resolvedVc.getIssuer());
-    		assertEquals(vc.getProof().getSignature(),
-    				resolvedVc.getProof().getSignature());
+			person.getStore().storeCredential(vc);
+			vc.declare(person.getStorePassword());
 
-    		assertTrue(resolvedVc.isValid());
+			VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+			assertNotNull(resolvedVc);
+			assertEquals(id, resolvedVc.getId());
+			assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+			assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+			assertEquals(person.getCustomizedDid(), resolvedVc.getSubject().getId());
+			assertEquals(Grace.getDid(), resolvedVc.getIssuer());
+			assertEquals(vc.getProof().getSignature(),
+					resolvedVc.getProof().getSignature());
 
-    		person.addKycCredential(vc.getId());
-    	}
-    }
+			assertTrue(resolvedVc.isValid());
 
-    @Test
-    @Order(46)
-    public void testDeclareKycCredential_c2p() throws DIDException {
-    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+			person.addKycCredential(vc.getId());
+		}
+	}
 
-    	for (Entity person : persons) {
-    		// add a KYC credential
-    		Map<String, Object> props = new HashMap<String, Object>();
-    		props.put("name", person.getName());
-    		props.put("gender", "Male");
-    		props.put("nationality", "Singapore");
-    		props.put("email", person.getName() + "@example.com");
+	@Test
+	@Order(106)
+	public void testDeclareKycCredential_c2p() throws DIDException {
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
-    		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
-    		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
-    		VerifiableCredential vc = cb.id(id)
-    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
-    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
-    			.properties(props)
-    			.seal(Grace.getStorePassword());
+		for (Entity person : persons) {
+			// add a KYC credential
+			Map<String, Object> props = new HashMap<String, Object>();
+			props.put("name", person.getName());
+			props.put("gender", "Male");
+			props.put("nationality", "Singapore");
+			props.put("email", person.getName() + "@example.com");
 
-    		person.getStore().storeCredential(vc);
-    		vc.declare(person.getStorePassword());
+			DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+			VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+			VerifiableCredential vc = cb.id(id)
+				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.properties(props)
+				.seal(Grace.getStorePassword());
 
-    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
-    		assertNotNull(resolvedVc);
-    		assertEquals(id, resolvedVc.getId());
-    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
-    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
-    		assertEquals(person.getDid(), resolvedVc.getSubject().getId());
-    		assertEquals(Grace.getCustomizedDid(), resolvedVc.getIssuer());
-    		assertEquals(vc.getProof().getSignature(),
-    				resolvedVc.getProof().getSignature());
+			person.getStore().storeCredential(vc);
+			vc.declare(person.getStorePassword());
 
-    		assertTrue(resolvedVc.isValid());
+			VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+			assertNotNull(resolvedVc);
+			assertEquals(id, resolvedVc.getId());
+			assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+			assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+			assertEquals(person.getDid(), resolvedVc.getSubject().getId());
+			assertEquals(Grace.getCustomizedDid(), resolvedVc.getIssuer());
+			assertEquals(vc.getProof().getSignature(),
+					resolvedVc.getProof().getSignature());
 
-    		person.addKycCredential(vc.getId());
-    	}
-    }
+			assertTrue(resolvedVc.isValid());
 
-    @Test
-    @Order(47)
-    public void testDeclareKycCredential_c2c() throws DIDException {
-    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+			person.addKycCredential(vc.getId());
+		}
+	}
 
-    	for (Entity person : persons) {
-    		// add a KYC credential
-    		Map<String, Object> props = new HashMap<String, Object>();
-    		props.put("name", person.getName());
-    		props.put("gender", "Male");
-    		props.put("nationality", "Singapore");
-    		props.put("email", person.getName() + "@example.com");
+	@Test
+	@Order(107)
+	public void testDeclareKycCredential_c2c() throws DIDException {
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
-    		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
-    		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
-    		VerifiableCredential vc = cb.id(id)
-    			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
-    			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
-    			.properties(props)
-    			.seal(Grace.getStorePassword());
+		for (Entity person : persons) {
+			// add a KYC credential
+			Map<String, Object> props = new HashMap<String, Object>();
+			props.put("name", person.getName());
+			props.put("gender", "Male");
+			props.put("nationality", "Singapore");
+			props.put("email", person.getName() + "@example.com");
 
-    		person.getStore().storeCredential(vc);
-    		vc.declare(person.getStorePassword());
+			DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+			VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+			VerifiableCredential vc = cb.id(id)
+				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.properties(props)
+				.seal(Grace.getStorePassword());
 
-    		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
-    		assertNotNull(resolvedVc);
-    		assertEquals(id, resolvedVc.getId());
-    		assertTrue(resolvedVc.getType().contains("ProfileCredential"));
-    		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
-    		assertEquals(person.getCustomizedDid(), resolvedVc.getSubject().getId());
-    		assertEquals(Grace.getCustomizedDid(), resolvedVc.getIssuer());
-    		assertEquals(vc.getProof().getSignature(),
-    				resolvedVc.getProof().getSignature());
+			person.getStore().storeCredential(vc);
+			vc.declare(person.getStorePassword());
 
-    		assertTrue(resolvedVc.isValid());
+			VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+			assertNotNull(resolvedVc);
+			assertEquals(id, resolvedVc.getId());
+			assertTrue(resolvedVc.getType().contains("ProfileCredential"));
+			assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+			assertEquals(person.getCustomizedDid(), resolvedVc.getSubject().getId());
+			assertEquals(Grace.getCustomizedDid(), resolvedVc.getIssuer());
+			assertEquals(vc.getProof().getSignature(),
+					resolvedVc.getProof().getSignature());
 
-    		person.addKycCredential(vc.getId());
-    	}
-    }
+			assertTrue(resolvedVc.isValid());
 
-    @Test
-    @Order(48)
-    public void testDeclareKycCredentialForBar1_p() throws DIDException {
-    	Issuer issuer = new Issuer(Grace.getDocument());
+			person.addKycCredential(vc.getId());
+		}
+	}
+
+	@Test
+	@Order(108)
+	public void testDeclareKycCredentialForBar1_p() throws DIDException {
+		Issuer issuer = new Issuer(Grace.getDocument());
 
 		// add a KYC credential
 		Map<String, Object> props = new HashMap<String, Object>();
@@ -1643,12 +1672,14 @@ public class IDChainOperationsTest2 {
 				resolvedVc.getProof().getSignature());
 
 		assertTrue(resolvedVc.isValid());
-    }
 
-    @Test
-    @Order(49)
-    public void testDeclareKycCredentialForBar2_c() throws DIDException {
-    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+		bar1Vc = vc.getId();
+	}
+
+	@Test
+	@Order(109)
+	public void testDeclareKycCredentialForBar2_c() throws DIDException {
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
 		// add a KYC credential
 		Map<String, Object> props = new HashMap<String, Object>();
@@ -1680,12 +1711,14 @@ public class IDChainOperationsTest2 {
 				resolvedVc.getProof().getSignature());
 
 		assertTrue(resolvedVc.isValid());
-    }
 
-    @Test
-    @Order(50)
-    public void testDeclareKycCredentialForBar3_c() throws DIDException {
-    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+		bar2Vc = vc.getId();
+	}
+
+	@Test
+	@Order(110)
+	public void testDeclareKycCredentialForBar3_c() throws DIDException {
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
 		// add a KYC credential
 		Map<String, Object> props = new HashMap<String, Object>();
@@ -1717,96 +1750,98 @@ public class IDChainOperationsTest2 {
 				resolvedVc.getProof().getSignature());
 
 		assertTrue(resolvedVc.isValid());
-    }
 
-    @Test
-    @Order(51)
-    public void testListVcForAlice_p() throws DIDException {
-    	List<DIDURL> vcs = VerifiableCredential.list(Alice.getDid());
+		bar3Vc = vc.getId();
+	}
 
-    	assertEquals(3, vcs.size());
+	@Test
+	@Order(200)
+	public void testListVcForAlice_p() throws DIDException {
+		List<DIDURL> vcs = VerifiableCredential.list(Alice.getDid());
 
-    	for (DIDURL id : vcs) {
-    		VerifiableCredential vc = VerifiableCredential.resolve(id);
-    		assertNotNull(vc);
-    		assertEquals(id, vc.getId());
-    		assertEquals(Alice.getDid(), vc.getSubject().getId());
-    	}
-    }
+		assertEquals(3, vcs.size());
 
-    @Test
-    @Order(52)
-    public void testListVcForAlice_c() throws DIDException {
-    	List<DIDURL> vcs = VerifiableCredential.list(Alice.getCustomizedDid());
+		for (DIDURL id : vcs) {
+			VerifiableCredential vc = VerifiableCredential.resolve(id);
+			assertNotNull(vc);
+			assertEquals(id, vc.getId());
+			assertEquals(Alice.getDid(), vc.getSubject().getId());
+		}
+	}
 
-    	assertEquals(3, vcs.size());
+	@Test
+	@Order(201)
+	public void testListVcForAlice_c() throws DIDException {
+		List<DIDURL> vcs = VerifiableCredential.list(Alice.getCustomizedDid());
 
-    	for (DIDURL id : vcs) {
-    		VerifiableCredential vc = VerifiableCredential.resolve(id);
-    		assertNotNull(vc);
-    		assertEquals(id, vc.getId());
-    		assertEquals(Alice.getCustomizedDid(), vc.getSubject().getId());
-    	}
-    }
+		assertEquals(3, vcs.size());
 
-    @Test
-    @Order(53)
-    public void testListVcForFoo1() throws DIDException {
-    	List<DIDURL> vcs = VerifiableCredential.list(foo1);
+		for (DIDURL id : vcs) {
+			VerifiableCredential vc = VerifiableCredential.resolve(id);
+			assertNotNull(vc);
+			assertEquals(id, vc.getId());
+			assertEquals(Alice.getCustomizedDid(), vc.getSubject().getId());
+		}
+	}
 
-    	assertEquals(1, vcs.size());
+	@Test
+	@Order(202)
+	public void testListVcForFoo1() throws DIDException {
+		List<DIDURL> vcs = VerifiableCredential.list(foo1);
 
-    	for (DIDURL id : vcs) {
-    		VerifiableCredential vc = VerifiableCredential.resolve(id);
-    		assertNotNull(vc);
-    		assertEquals(id, vc.getId());
-    		assertEquals(foo1, vc.getSubject().getId());
-    	}
-    }
+		assertEquals(1, vcs.size());
 
-    @Test
-    @Order(54)
-    public void testListVcForBar3() throws DIDException {
-    	List<DIDURL> vcs = VerifiableCredential.list(bar3);
+		for (DIDURL id : vcs) {
+			VerifiableCredential vc = VerifiableCredential.resolve(id);
+			assertNotNull(vc);
+			assertEquals(id, vc.getId());
+			assertEquals(foo1, vc.getSubject().getId());
+		}
+	}
 
-    	assertEquals(1, vcs.size());
+	@Test
+	@Order(203)
+	public void testListVcForBar3() throws DIDException {
+		List<DIDURL> vcs = VerifiableCredential.list(bar3);
 
-    	for (DIDURL id : vcs) {
-    		VerifiableCredential vc = VerifiableCredential.resolve(id);
-    		assertNotNull(vc);
-    		assertEquals(id, vc.getId());
-    		assertEquals(bar3, vc.getSubject().getId());
-    	}
-    }
+		assertEquals(1, vcs.size());
 
-    //@Test
-    //@Order(55)
-    public void testListPagination() throws DIDException {
-    	Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+		for (DIDURL id : vcs) {
+			VerifiableCredential vc = VerifiableCredential.resolve(id);
+			assertNotNull(vc);
+			assertEquals(id, vc.getId());
+			assertEquals(bar3, vc.getSubject().getId());
+		}
+	}
 
-    	Entity nobody = new Entity("nobody");
+	//@Test
+	//@Order(204)
+	public void testListPagination() throws DIDException {
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
-    	// Create a bunch of vcs
-    	for (int i = 0; i < 520; i++) {
-    		log.debug("Creating test credential {}...", i);
+		Entity nobody = new Entity("nobody");
 
-    		VerifiableCredential vc = issuer.issueFor(nobody.getDid())
-    				.id("#test" + i)
+		// Create a bunch of vcs
+		for (int i = 0; i < 520; i++) {
+			log.debug("Creating test credential {}...", i);
+
+			VerifiableCredential vc = issuer.issueFor(nobody.getDid())
+					.id("#test" + i)
 					.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
-    				.property("index", Integer.valueOf(i))
-    				.seal(Grace.getStorePassword());
+					.property("index", Integer.valueOf(i))
+					.seal(Grace.getStorePassword());
 
-    		nobody.getStore().storeCredential(vc);
-    		vc.declare(nobody.getStorePassword());
+			nobody.getStore().storeCredential(vc);
+			vc.declare(nobody.getStorePassword());
 
-    		assertTrue(vc.wasDeclared());
-    	}
+			assertTrue(vc.wasDeclared());
+		}
 
-    	// Default page size
-    	int index = 519;
-    	List<DIDURL> ids = VerifiableCredential.list(nobody.getDid());
-    	assertNotNull(ids);
-    	assertEquals(128, ids.size());
+		// Default page size
+		int index = 519;
+		List<DIDURL> ids = VerifiableCredential.list(nobody.getDid());
+		assertNotNull(ids);
+		assertEquals(128, ids.size());
 	   	for (DIDURL id : ids) {
 	   		log.trace("Resolving credential {}...", id.getFragment());
 
@@ -1821,10 +1856,10 @@ public class IDChainOperationsTest2 {
 	   	}
 
 	   	// Max page size
-    	index = 519;
-    	ids = VerifiableCredential.list(nobody.getDid(), 550);
-    	assertNotNull(ids);
-    	assertEquals(512, ids.size());
+		index = 519;
+		ids = VerifiableCredential.list(nobody.getDid(), 550);
+		assertNotNull(ids);
+		assertEquals(512, ids.size());
 	   	for (DIDURL id : ids) {
 	   		log.trace("Resolving credential {}...", id.getFragment());
 
@@ -1839,20 +1874,20 @@ public class IDChainOperationsTest2 {
 	   	}
 
 	   	// out of boundary
-    	ids = VerifiableCredential.list(nobody.getDid(), 520, 100);
-    	assertNull(ids);
+		ids = VerifiableCredential.list(nobody.getDid(), 520, 100);
+		assertNull(ids);
 
-    	// list all with default page size
-    	int skip = 0;
-    	int limit = 256;
-    	index = 520;
-    	while (true) {
-    		int resultSize = index >= limit ? limit : index;
-	    	ids = VerifiableCredential.list(nobody.getDid(), skip, limit);
-	    	if (ids == null)
-	    		break;
+		// list all with default page size
+		int skip = 0;
+		int limit = 256;
+		index = 520;
+		while (true) {
+			int resultSize = index >= limit ? limit : index;
+			ids = VerifiableCredential.list(nobody.getDid(), skip, limit);
+			if (ids == null)
+				break;
 
-	    	assertEquals(resultSize, ids.size());
+			assertEquals(resultSize, ids.size());
 		   	for (DIDURL id : ids) {
 		   		log.trace("Resolving credential {}...", id.getFragment());
 
@@ -1867,20 +1902,20 @@ public class IDChainOperationsTest2 {
 		   	}
 
 		   	skip += ids.size();
-    	}
-    	assertEquals(0, index);
+		}
+		assertEquals(0, index);
 
-    	// list with specific page size and start position
-    	skip = 200;
-    	limit = 100;
-    	index = 320;
-    	while (true) {
-    		int resultSize = index >= limit ? limit : index;
-	    	ids = VerifiableCredential.list(nobody.getDid(), skip, limit);
-	    	if (ids == null)
-	    		break;
+		// list with specific page size and start position
+		skip = 200;
+		limit = 100;
+		index = 320;
+		while (true) {
+			int resultSize = index >= limit ? limit : index;
+			ids = VerifiableCredential.list(nobody.getDid(), skip, limit);
+			if (ids == null)
+				break;
 
-	    	assertEquals(resultSize, ids.size());
+			assertEquals(resultSize, ids.size());
 		   	for (DIDURL id : ids) {
 		   		log.trace("Resolving credential {}...", id.getFragment());
 
@@ -1895,123 +1930,424 @@ public class IDChainOperationsTest2 {
 		   	}
 
 		   	skip += ids.size();
-    	}
-    	assertEquals(0, index);
-    }
+		}
+		assertEquals(0, index);
+	}
 
-    @Test
-    @Order(70)
-    public void testRevokeSelfProclaimedVcFromNobody_p() throws DIDException {
-    	// Frank' self-proclaimed credential
-    	DIDURL id = Frank.getSelfProclaimedCredential(Frank.getDid()).get(0);
+	@Test
+	@Order(300)
+	public void testRevokeSelfProclaimedVcFromNobody_p() throws DIDException {
+		// Frank' self-proclaimed credential
+		DIDURL id = Frank.getSelfProclaimedCredential(Frank.getDid()).get(0);
 
-    	// Alice try to revoke
-    	assertThrows(Exception.class, () -> {
-    		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
-    	});
+		// Alice try to revoke
+		assertThrows(Exception.class, () -> {
+			VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+		});
 
-    	List<DIDURL> vcs = VerifiableCredential.list(Frank.getDid());
-    	assertEquals(3, vcs.size());
-    	assertTrue(vcs.contains(id));
+		List<DIDURL> vcs = VerifiableCredential.list(Frank.getDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
 
-    	VerifiableCredential vc = VerifiableCredential.resolve(id);
-    	assertFalse(vc.isRevoked());
-    }
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertFalse(vc.isRevoked());
+	}
 
-    @Test
-    @Order(71)
-    public void testRevokeSelfProclaimedVcFromNobody_c() throws DIDException {
-    	// Frank' self-proclaimed credential
-    	DIDURL id = Frank.getSelfProclaimedCredential(Frank.getCustomizedDid()).get(0);
+	@Test
+	@Order(301)
+	public void testRevokeSelfProclaimedVcFromNobody_c() throws DIDException {
+		// Frank' self-proclaimed credential
+		DIDURL id = Frank.getSelfProclaimedCredential(Frank.getCustomizedDid()).get(0);
 
-    	// Alice try to revoke
-    	assertThrows(Exception.class, () -> {
-    		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
-    	});
+		// Alice try to revoke
+		assertThrows(Exception.class, () -> {
+			VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+		});
 
-    	List<DIDURL> vcs = VerifiableCredential.list(Frank.getCustomizedDid());
-    	assertEquals(3, vcs.size());
-    	assertTrue(vcs.contains(id));
+		List<DIDURL> vcs = VerifiableCredential.list(Frank.getCustomizedDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
 
-    	VerifiableCredential vc = VerifiableCredential.resolve(id);
-    	assertFalse(vc.isRevoked());
-    }
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertFalse(vc.isRevoked());
+	}
 
-    @Test
-    @Order(72)
-    public void testRevokeSelfProclaimedVc_p1() throws DIDException {
-    	// Frank' self-proclaimed credential
-    	DIDURL id = Frank.getSelfProclaimedCredential(Frank.getDid()).get(0);
+	@Test
+	@Order(302)
+	public void testRevokeSelfProclaimedVc_p1() throws DIDException {
+		// Frank' self-proclaimed credential
+		DIDURL id = Frank.getSelfProclaimedCredential(Frank.getDid()).get(0);
 
 		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
 
-    	List<DIDURL> vcs = VerifiableCredential.list(Frank.getDid());
-    	assertEquals(3, vcs.size());
-    	assertTrue(vcs.contains(id));
+		List<DIDURL> vcs = VerifiableCredential.list(Frank.getDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
 
-    	VerifiableCredential vc = VerifiableCredential.resolve(id);
-    	assertTrue(vc.isRevoked());
-    }
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertTrue(vc.isRevoked());
+	}
 
-    @Test
-    @Order(73)
-    public void testRevokeSelfProclaimedVc_c1() throws DIDException {
-    	// Frank' self-proclaimed credential
-    	DIDURL id = Frank.getSelfProclaimedCredential(Frank.getCustomizedDid()).get(0);
+	@Test
+	@Order(303)
+	public void testRevokeSelfProclaimedVc_c1() throws DIDException {
+		// Frank' self-proclaimed credential
+		DIDURL id = Frank.getSelfProclaimedCredential(Frank.getCustomizedDid()).get(0);
 
-    	DIDDocument doc = Frank.getCustomizedDocument();
-    	doc.setEffectiveController(Frank.getDid());
+		DIDDocument doc = Frank.getCustomizedDocument();
+		doc.setEffectiveController(Frank.getDid());
 
 		VerifiableCredential.revoke(id, doc, Frank.getStorePassword());
 
-    	List<DIDURL> vcs = VerifiableCredential.list(Frank.getCustomizedDid());
-    	assertEquals(3, vcs.size());
-    	assertTrue(vcs.contains(id));
+		List<DIDURL> vcs = VerifiableCredential.list(Frank.getCustomizedDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
 
-    	VerifiableCredential vc = VerifiableCredential.resolve(id);
-    	assertTrue(vc.isRevoked());
-    }
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertTrue(vc.isRevoked());
+	}
 
-    @Test
-    @Order(74)
-    public void testRevokeSelfProclaimedVc_p2() throws DIDException {
-    	// Erin' self-proclaimed credential
-    	DIDURL id = Erin.getSelfProclaimedCredential(Erin.getDid()).get(0);
+	@Test
+	@Order(304)
+	public void testRevokeSelfProclaimedVc_p2() throws DIDException {
+		// Erin' self-proclaimed credential
+		DIDURL id = Erin.getSelfProclaimedCredential(Erin.getDid()).get(0);
 
-    	VerifiableCredential vc = VerifiableCredential.resolve(id);
-    	assertFalse(vc.isRevoked());
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertFalse(vc.isRevoked());
 
 		vc.revoke(Erin.getDocument(), Erin.getStorePassword());
 
-    	List<DIDURL> vcs = VerifiableCredential.list(Erin.getDid());
-    	assertEquals(3, vcs.size());
-    	assertTrue(vcs.contains(id));
+		List<DIDURL> vcs = VerifiableCredential.list(Erin.getDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
 
-    	vc = VerifiableCredential.resolve(id);
-    	assertTrue(vc.isRevoked());
-    }
+		vc = VerifiableCredential.resolve(id);
+		assertTrue(vc.isRevoked());
+	}
 
-    @Test
-    @Order(75)
-    public void testRevokeSelfProclaimedVc_c2() throws DIDException {
-    	// Frank' self-proclaimed credential
-    	DIDURL id = Erin.getSelfProclaimedCredential(Erin.getCustomizedDid()).get(0);
+	@Test
+	@Order(305)
+	public void testRevokeSelfProclaimedVc_c2() throws DIDException {
+		// Erin' self-proclaimed credential
+		DIDURL id = Erin.getSelfProclaimedCredential(Erin.getCustomizedDid()).get(0);
 
-    	VerifiableCredential vc = VerifiableCredential.resolve(id);
-    	assertFalse(vc.isRevoked());
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertFalse(vc.isRevoked());
 
-    	DIDDocument doc = Erin.getCustomizedDocument();
-    	doc.setEffectiveController(Erin.getDid());
+		DIDDocument doc = Erin.getCustomizedDocument();
+		doc.setEffectiveController(Erin.getDid());
 
 		vc.revoke(doc, Erin.getStorePassword());
 
-    	List<DIDURL> vcs = VerifiableCredential.list(Erin.getCustomizedDid());
-    	assertEquals(3, vcs.size());
-    	assertTrue(vcs.contains(id));
+		List<DIDURL> vcs = VerifiableCredential.list(Erin.getCustomizedDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
 
-    	vc = VerifiableCredential.resolve(id);
-    	assertTrue(vc.isRevoked());
-    }
+		vc = VerifiableCredential.resolve(id);
+		assertTrue(vc.isRevoked());
+	}
 
-    // test deactivate the dids
+	@Test
+	@Order(306)
+	public void testRevokeKycVc_p1() throws DIDException {
+		// Frank' KYC credential
+		DIDURL id = Frank.getKycCredential(Frank.getDid()).get(0);
+
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		List<DIDURL> vcs = VerifiableCredential.list(Frank.getDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
+
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertTrue(vc.isRevoked());
+	}
+
+	@Test
+	@Order(307)
+	public void testRevokeKycVc_c1() throws DIDException {
+		// Frank' KYC credential
+		DIDURL id = Frank.getKycCredential(Frank.getCustomizedDid()).get(0);
+
+		DIDDocument doc = Frank.getCustomizedDocument();
+		doc.setEffectiveController(Frank.getDid());
+
+		VerifiableCredential.revoke(id, doc, Frank.getStorePassword());
+
+		List<DIDURL> vcs = VerifiableCredential.list(Frank.getCustomizedDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
+
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertTrue(vc.isRevoked());
+	}
+
+	@Test
+	@Order(308)
+	public void testRevokeKycVc_p2() throws DIDException {
+		// Erin' KYC credential
+		DIDURL id = Erin.getKycCredential(Erin.getDid()).get(0);
+
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertFalse(vc.isRevoked());
+
+		vc.revoke(Erin.getDocument(), Erin.getStorePassword());
+
+		List<DIDURL> vcs = VerifiableCredential.list(Erin.getDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
+
+		vc = VerifiableCredential.resolve(id);
+		assertTrue(vc.isRevoked());
+	}
+
+	@Test
+	@Order(309)
+	public void testRevokeKycVc_c2() throws DIDException {
+		// Erin' KYC credential
+		DIDURL id = Erin.getKycCredential(Erin.getCustomizedDid()).get(0);
+
+		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		assertFalse(vc.isRevoked());
+
+		DIDDocument doc = Erin.getCustomizedDocument();
+		doc.setEffectiveController(Erin.getDid());
+
+		vc.revoke(doc, Erin.getStorePassword());
+
+		List<DIDURL> vcs = VerifiableCredential.list(Erin.getCustomizedDid());
+		assertEquals(3, vcs.size());
+		assertTrue(vcs.contains(id));
+
+		vc = VerifiableCredential.resolve(id);
+		assertTrue(vc.isRevoked());
+	}
+
+	@Test
+	@Order(310)
+	public void testRevokeFoo1Vc() throws DIDException {
+		VerifiableCredential vc = VerifiableCredential.resolve(foo1Vc);
+		assertFalse(vc.isRevoked());
+
+		DIDDocument doc = foo1.resolve();
+		Carol.getStore().storeDid(doc);
+		doc.setEffectiveController(Carol.getDid());
+
+		vc.revoke(doc, Carol.getStorePassword());
+
+		List<DIDURL> vcs = VerifiableCredential.list(foo1);
+		assertEquals(1, vcs.size());
+		assertTrue(vcs.contains(foo1Vc));
+
+		vc = VerifiableCredential.resolve(foo1Vc);
+		assertTrue(vc.isRevoked());
+	}
+
+	@Test
+	@Order(311)
+	public void testRevokeFoo2Vc() throws DIDException {
+		VerifiableCredential vc = VerifiableCredential.resolve(foo2Vc);
+		assertFalse(vc.isRevoked());
+
+		DIDDocument doc = foo2.resolve();
+		Dave.getStore().storeDid(doc);
+		doc.setEffectiveController(Dave.getDid());
+
+		vc.revoke(doc, Dave.getStorePassword());
+
+		List<DIDURL> vcs = VerifiableCredential.list(foo2);
+		assertEquals(1, vcs.size());
+		assertTrue(vcs.contains(foo2Vc));
+
+		vc = VerifiableCredential.resolve(foo2Vc);
+		assertTrue(vc.isRevoked());
+	}
+
+	@Test
+	@Order(312)
+	public void testRevokeBar1VcFromNobody() throws DIDException {
+		final VerifiableCredential vc = VerifiableCredential.resolve(bar1Vc);
+		assertFalse(vc.isRevoked());
+
+		DIDDocument doc = Alice.getDocument();
+
+		assertThrows(Exception.class, () -> {
+			vc.revoke(doc, Alice.getStorePassword());
+		});
+
+		List<DIDURL> vcs = VerifiableCredential.list(bar1);
+		assertEquals(1, vcs.size());
+		assertTrue(vcs.contains(bar1Vc));
+
+		VerifiableCredential resolved = VerifiableCredential.resolve(bar1Vc);
+		assertFalse(resolved.isRevoked());
+	}
+
+	@Test
+	@Order(313)
+	public void testRevokeBar2VcFromNobody() throws DIDException {
+		final VerifiableCredential vc = VerifiableCredential.resolve(bar2Vc);
+		assertFalse(vc.isRevoked());
+
+		DIDDocument doc = Alice.getDocument();
+
+		assertThrows(Exception.class, () -> {
+			vc.revoke(doc, Alice.getStorePassword());
+		});
+
+		List<DIDURL> vcs = VerifiableCredential.list(bar2);
+		assertEquals(1, vcs.size());
+		assertTrue(vcs.contains(bar2Vc));
+
+		VerifiableCredential resolved = VerifiableCredential.resolve(bar2Vc);
+		assertFalse(resolved.isRevoked());
+	}
+
+	@Test
+	@Order(314)
+	public void testRevokeBar1VcFromController() throws DIDException {
+		VerifiableCredential vc = VerifiableCredential.resolve(bar1Vc);
+		assertFalse(vc.isRevoked());
+
+		DIDDocument doc = bar1.resolve();
+		Dave.getStore().storeDid(doc);
+		doc.setEffectiveController(Dave.getDid());
+
+		vc.revoke(doc, Dave.getStorePassword());
+
+		List<DIDURL> vcs = VerifiableCredential.list(bar1);
+		assertEquals(1, vcs.size());
+		assertTrue(vcs.contains(bar1Vc));
+
+		vc = VerifiableCredential.resolve(bar1Vc);
+		assertTrue(vc.isRevoked());
+	}
+
+	@Test
+	@Order(315)
+	public void testRevokeBar2VcFromIssuer() throws DIDException {
+		VerifiableCredential vc = VerifiableCredential.resolve(bar2Vc);
+		assertFalse(vc.isRevoked());
+
+		DIDDocument doc = Grace.getCustomizedDocument();
+		doc.setEffectiveController(Grace.getDid());
+
+		vc.revoke(doc, Grace.getStorePassword());
+
+		List<DIDURL> vcs = VerifiableCredential.list(bar2);
+		assertEquals(1, vcs.size());
+		assertTrue(vcs.contains(bar2Vc));
+
+		vc = VerifiableCredential.resolve(bar2Vc);
+		assertTrue(vc.isRevoked());
+	}
+
+
+	@Test
+	@Order(316)
+	public void testRevokeBar3VcFromIssuer() throws DIDException {
+		VerifiableCredential vc = VerifiableCredential.resolve(bar3Vc);
+		assertFalse(vc.isRevoked());
+
+		DIDDocument doc = Grace.getCustomizedDocument();
+		doc.setEffectiveController(Grace.getDid());
+
+		VerifiableCredential.revoke(bar3Vc, doc, Grace.getStorePassword());
+
+		List<DIDURL> vcs = VerifiableCredential.list(bar3);
+		assertEquals(1, vcs.size());
+		assertTrue(vcs.contains(bar3Vc));
+
+		vc = VerifiableCredential.resolve(bar3Vc);
+		assertTrue(vc.isRevoked());
+	}
+
+
+	@Test
+	@Order(400)
+	public void testDeactivateFoo1() throws DIDException {
+		DIDDocument doc = foo1.resolve();
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		Carol.getStore().storeDid(doc);
+		doc.setEffectiveController(Carol.getDid());
+		doc.deactivate(Carol.getStorePassword());
+
+		doc = foo1.resolve();
+		assertTrue(doc.isDeactivated());
+	}
+
+	@Test
+	@Order(401)
+	public void testDeactivateFoo2() throws DIDException {
+		DIDDocument doc = foo2.resolve();
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		Dave.getDocument().deactivate(foo2, Dave.getStorePassword());
+
+		doc = foo1.resolve();
+		assertTrue(doc.isDeactivated());
+	}
+
+	@Test
+	@Order(402)
+	public void testDeactivateBar1() throws DIDException {
+		DIDDocument doc = bar1.resolve();
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		Dave.getDocument().deactivate(bar1, Dave.getStorePassword());
+
+		doc = bar1.resolve();
+		assertTrue(doc.isDeactivated());
+	}
+
+	@Test
+	@Order(403)
+	public void testDeactivateBar2() throws DIDException {
+		DIDDocument doc = bar2.resolve();
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		Erin.getStore().storeDid(doc);
+		doc.setEffectiveController(Erin.getDid());
+		doc.deactivate(Erin.getStorePassword());
+
+		doc = bar2.resolve();
+		assertTrue(doc.isDeactivated());
+	}
+
+	@Test
+	@Order(404)
+	public void testDeactivateBar3() throws DIDException {
+		DIDDocument doc = bar3.resolve();
+		assertNotNull(doc);
+		assertTrue(doc.isValid());
+
+		Frank.getStore().storeDid(doc);
+		doc.setEffectiveController(Frank.getDid());
+		doc.deactivate(Frank.getStorePassword());
+
+		doc = bar3.resolve();
+		assertTrue(doc.isDeactivated());
+	}
+
+	@Test
+	@Order(405)
+	public void testDeactivatePersonsCid() throws DIDException {
+		for (Entity person : persons) {
+			DIDDocument doc = person.getCustomizedDid().resolve();
+			assertNotNull(doc);
+			assertTrue(doc.isValid());
+
+			doc = person.getCustomizedDocument();
+			doc.deactivate(person.getStorePassword());
+
+			doc = person.getCustomizedDid().resolve();
+			assertTrue(doc.isDeactivated());
+		}
+	}
 }
