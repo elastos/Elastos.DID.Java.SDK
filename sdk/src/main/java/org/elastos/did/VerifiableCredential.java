@@ -1838,7 +1838,7 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (bio.getStatus() == CredentialBiography.Status.VALID) {
 			VerifiableCredential vc = bio.getTransaction(0).getRequest().getCredential();
 			if (!signer.getSubject().equals(vc.getSubject().getId()) &&
-					signer.getSubject().equals(vc.getIssuer())) {
+					!signer.getSubject().equals(vc.getIssuer())) {
 				log.error("Publish failed because the invalid signer or signkey.");
 				throw new InvalidKeyException("Not owner or issuer: " + signer.getSubject());
 			}

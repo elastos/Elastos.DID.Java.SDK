@@ -262,9 +262,9 @@ public class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		if (getOperation() == Operation.DECLARE)
 			signer = getCredential().getSubject().getId().resolve();
 		else {
-			if (getCredential() != null)
-				signer = getCredential().getSubject().getId().resolve();
-			else
+			// if (getCredential() != null)
+			//	signer = getCredential().getSubject().getId().resolve();
+			// else
 				signer = getProof().getVerificationMethod().getDid().resolve();
 		}
 
