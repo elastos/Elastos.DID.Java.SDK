@@ -38,7 +38,7 @@ import org.elastos.did.backend.IDChainRequest;
 import org.elastos.did.exception.CredentialAlreadyExistException;
 import org.elastos.did.exception.CredentialRevokedException;
 import org.elastos.did.exception.DIDException;
-import org.elastos.did.exception.DIDTransactionException;
+import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestConfig;
 import org.elastos.did.utils.TestData;
@@ -568,7 +568,7 @@ public class VerifiableCredentialTest {
 
 		assertTrue(credential.wasDeclared());
 
-		assertThrows(DIDTransactionException.class, () -> {
+		assertThrows(InvalidKeyException.class, () -> {
 		   	TestData.InstantData sd = testData.getInstantData();
 		   	DIDDocument d = sd.getUser1Document();
 			VerifiableCredential.revoke(credential.getId(), d, TestConfig.storePass);
