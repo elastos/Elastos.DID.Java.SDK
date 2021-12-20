@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+package org.elastos.did.idchain;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -37,12 +37,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.elastos.did.DID;
+import org.elastos.did.DIDDocument;
+import org.elastos.did.DIDStore;
+import org.elastos.did.DIDURL;
+import org.elastos.did.Issuer;
+import org.elastos.did.Mnemonic;
+import org.elastos.did.RootIdentity;
+import org.elastos.did.TransferTicket;
+import org.elastos.did.VerifiableCredential;
+import org.elastos.did.backend.CredentialList;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDControllersChangedException;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.utils.DIDTestExtension;
 import org.elastos.did.utils.TestData;
 import org.elastos.did.utils.Utils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -53,7 +64,7 @@ import org.slf4j.LoggerFactory;
 
 @TestMethodOrder(OrderAnnotation.class)
 @ExtendWith(DIDTestExtension.class)
-public class IDChainOperationsTest2 {
+public class IDChain2Test {
 	private static List<Entity> persons;
 
 	private static Entity Alice;
@@ -71,7 +82,7 @@ public class IDChainOperationsTest2 {
 	private static DIDURL foo1Vc, foo2Vc; // self-proclaimed VC
 	private static DIDURL bar1Vc, bar2Vc, bar3Vc; // KYC VC
 
-	private static final Logger log = LoggerFactory.getLogger(IDChainOperationsTest2.class);
+	private static final Logger log = LoggerFactory.getLogger(IDChain2Test.class);
 
 	static class Entity {
 		// Mnemonic passphrase and the store password should set by the end user.
@@ -216,6 +227,11 @@ public class IDChainOperationsTest2 {
 				return null;
 		}
 	}
+
+    @BeforeEach
+    public void beforeEach() throws DIDException {
+		TestData.waitForWalletAvaliable();
+    }
 
 	@Test
 	@Order(0)
@@ -1333,8 +1349,12 @@ public class IDChainOperationsTest2 {
 			props.put("email", person.getName() + "@example.com");
 
 			DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
+
+	    	VerifiableCredential vc = VerifiableCredential.resolve(id);
+	    	assertNull(vc);
+
 			VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
-			VerifiableCredential vc = cb.id(id)
+			vc = cb.id(id)
 				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
 				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
 				.properties(props)
@@ -1372,8 +1392,12 @@ public class IDChainOperationsTest2 {
 			props.put("email", person.getName() + "@example.com");
 
 			DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
+
+	    	VerifiableCredential vc = VerifiableCredential.resolve(id);
+	    	assertNull(vc);
+
 			VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
-			VerifiableCredential vc = cb.id(id)
+			vc = cb.id(id)
 				.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
 				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
 				.properties(props)
@@ -1822,7 +1846,7 @@ public class IDChainOperationsTest2 {
 		Entity nobody = new Entity("nobody");
 
 		// Create a bunch of vcs
-		for (int i = 0; i < 520; i++) {
+		for (int i = 0; i < 271; i++) {
 			log.debug("Creating test credential {}...", i);
 
 			VerifiableCredential vc = issuer.issueFor(nobody.getDid())
@@ -1838,14 +1862,14 @@ public class IDChainOperationsTest2 {
 		}
 
 		// Default page size
-		int index = 519;
+		int index = 271;
 		List<DIDURL> ids = VerifiableCredential.list(nobody.getDid());
 		assertNotNull(ids);
-		assertEquals(128, ids.size());
+		assertEquals(CredentialList.DEFAULT_SIZE, ids.size());
 	   	for (DIDURL id : ids) {
 	   		log.trace("Resolving credential {}...", id.getFragment());
 
-	   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + index--);
+	   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
 	   		assertEquals(ref, id);
 
 	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
@@ -1856,14 +1880,14 @@ public class IDChainOperationsTest2 {
 	   	}
 
 	   	// Max page size
-		index = 519;
-		ids = VerifiableCredential.list(nobody.getDid(), 550);
+		index = 271;
+		ids = VerifiableCredential.list(nobody.getDid(), 500);
 		assertNotNull(ids);
-		assertEquals(512, ids.size());
+		assertEquals(CredentialList.MAX_SIZE, ids.size());
 	   	for (DIDURL id : ids) {
 	   		log.trace("Resolving credential {}...", id.getFragment());
 
-	   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + index--);
+	   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
 	   		assertEquals(ref, id);
 
 	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
@@ -1874,13 +1898,13 @@ public class IDChainOperationsTest2 {
 	   	}
 
 	   	// out of boundary
-		ids = VerifiableCredential.list(nobody.getDid(), 520, 100);
+		ids = VerifiableCredential.list(nobody.getDid(), 300, 100);
 		assertNull(ids);
 
 		// list all with default page size
 		int skip = 0;
-		int limit = 256;
-		index = 520;
+		int limit = CredentialList.DEFAULT_SIZE;
+		index = 271;
 		while (true) {
 			int resultSize = index >= limit ? limit : index;
 			ids = VerifiableCredential.list(nobody.getDid(), skip, limit);
@@ -1906,9 +1930,9 @@ public class IDChainOperationsTest2 {
 		assertEquals(0, index);
 
 		// list with specific page size and start position
-		skip = 200;
+		skip = 100;
 		limit = 100;
-		index = 320;
+		index = 171;
 		while (true) {
 			int resultSize = index >= limit ? limit : index;
 			ids = VerifiableCredential.list(nobody.getDid(), skip, limit);

@@ -139,7 +139,7 @@ public final class TestData {
 		return instantData;
 	}
 
-	public void waitForWalletAvaliable() throws DIDException {
+	public static void waitForWalletAvaliable() throws DIDException {
 		// need synchronize?
 		if (DIDTestExtension.getAdapter() instanceof Web3Adapter) {
 			Web3Adapter adapter = (Web3Adapter)DIDTestExtension.getAdapter();

@@ -35,6 +35,8 @@ public final class TestConfig {
 	public static String rpcEndpoint;
 	public static String contractAddress;
 
+	public static boolean idChainTest;
+
 	public static String walletPath;
 	public static String walletPassword;
 
@@ -61,6 +63,8 @@ public final class TestConfig {
 
 		rpcEndpoint = config.getProperty("idchain.rpcEndpoint");
 		contractAddress = config.getProperty("idchain.contractAddress");
+
+		idChainTest = Boolean.valueOf(config.getProperty("idchain.test"));
 
 		walletPath = config.getProperty("wallet.path");
 		walletPassword = config.getProperty("wallet.password");
