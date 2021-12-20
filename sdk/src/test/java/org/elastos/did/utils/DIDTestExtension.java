@@ -74,7 +74,6 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 
 	@Override
 	public void beforeAll(ExtensionContext context) throws Exception {
-		System.out.println(">>>>>>>> " + context.getDisplayName() + " : " + context.getUniqueId());
 		if (TestConfig.idChainTest && context.getDisplayName().startsWith("IDChain")) {
 			if (context.getUniqueId().indexOf("WithContext") > 0)
 				Features.enableJsonLdContext(true);
@@ -90,6 +89,9 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 
 			adapter = getSimChainAdapter();
 		}
+
+		System.out.format(">>>>>>>> Running %s[Chain: %s, JSON-LD: %s]\n", context.getDisplayName(),
+				adapter instanceof Web3Adapter ? "EID" : "Simulated", Features.isEnabledJsonLdContext());
 
 		String key = "did-test-ext";
 		if (context.getRoot().getStore(ExtensionContext.Namespace.GLOBAL).get(key) == null)
