@@ -54,7 +54,7 @@ public class CredentialList extends ResolveResult<CredentialList>
 	/**
 	 * Maximum page size.
 	 */
-	public static final int MAX_SIZE = 512;
+	public static final int MAX_SIZE = 256;
 
 	@JsonProperty(DID)
 	private DID did;
