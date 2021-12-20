@@ -22,12 +22,11 @@
 
 package org.elastos.did.utils;
 
-import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
-
 import java.io.IOException;
 
 import org.elastos.did.DIDAdapter;
 import org.elastos.did.DIDBackend;
+import org.elastos.did.Features;
 import org.elastos.did.backend.SimulatedIDChain;
 import org.elastos.did.backend.SimulatedIDChainAdapter;
 import org.elastos.did.backend.Web3Adapter;
@@ -36,48 +35,73 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource;
 
 public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
-	private static DIDAdapter adapter;
+	private static Web3Adapter web3Adapter;
 	private static SimulatedIDChain simChain;
 
-	private void setup(String name) throws Exception {
-		// Force load TestConfig first!!!
+	private static DIDAdapter adapter;
+
+	private static synchronized DIDAdapter getSimChainAdapter() throws IOException {
+		if (simChain == null) {
+			simChain = new SimulatedIDChain();
+			simChain.start();
+		}
+
+		return simChain.getAdapter();
+	}
+
+	private static synchronized DIDAdapter getWeb3Adapter() {
 		String rpcEndpoint = TestConfig.rpcEndpoint;
 
-		if (name.equals("IDChainOperationsTest")) {
-			// When run the IDChainOperationsTest only
-			adapter = new Web3Adapter(rpcEndpoint, TestConfig.contractAddress,
+		if (web3Adapter == null) {
+			web3Adapter = new Web3Adapter(rpcEndpoint, TestConfig.contractAddress,
 					TestConfig.walletPath, TestConfig.walletPassword);
 		}
 
-		if (adapter == null) {
-			simChain = new SimulatedIDChain();
-			simChain.start();
-			adapter = simChain.getAdapter();
+		return web3Adapter;
+	}
+
+	private static synchronized void shutdownAdapter() {
+		if (simChain != null) {
+			simChain.stop();
+			simChain = null;
 		}
+
+		if (web3Adapter != null) {
+			web3Adapter.shutdown();
+			web3Adapter = null;
+		}
+	}
+
+	@Override
+	public void beforeAll(ExtensionContext context) throws Exception {
+		System.out.println(">>>>>>>> " + context.getDisplayName() + " : " + context.getUniqueId());
+		if (TestConfig.idChainTest && context.getDisplayName().startsWith("IDChain")) {
+			if (context.getUniqueId().indexOf("WithContext") > 0)
+				Features.enableJsonLdContext(true);
+			else
+				Features.enableJsonLdContext(false);
+
+			adapter = getWeb3Adapter();
+		} else {
+			if (context.getUniqueId().indexOf("WithContext") > 0)
+				Features.enableJsonLdContext(true);
+			else
+				Features.enableJsonLdContext(false);
+
+			adapter = getSimChainAdapter();
+		}
+
+		String key = "did-test-ext";
+		if (context.getRoot().getStore(ExtensionContext.Namespace.GLOBAL).get(key) == null)
+			context.getRoot().getStore(ExtensionContext.Namespace.GLOBAL).put(key, this);
 
 		DIDBackend.initialize(adapter);
 	}
 
 	@Override
-	public void close() throws Throwable {
+	public void close() throws Exception {
 		resetData();
-
-		if (simChain != null)
-			simChain.stop();
-
-		simChain = null;
-		adapter = null;
-	}
-
-	@Override
-	public void beforeAll(ExtensionContext context) throws Exception {
-		String key = this.getClass().getName();
-	    Object value = context.getRoot().getStore(GLOBAL).get(key);
-	    if (value == null) {
-	    	// First test container invocation.
-	    	setup(context.getDisplayName());
-	    	context.getRoot().getStore(GLOBAL).put(key, this);
-	    }
+		shutdownAdapter();
 	}
 
 	public static void resetData() {

@@ -107,12 +107,13 @@ public class Web3Adapter extends DefaultDIDAdapter {
 		String encodedContract = FunctionEncoder.encode(contract);
 
 		try {
-			//BigInteger gasPrice = web3j.ethGasPrice().sendAsync().get().getGasPrice();
+			// BigInteger gasPrice = web3j.ethGasPrice().sendAsync().get().getGasPrice();
 			BigInteger gasPrice = new BigInteger("10000000000");
 			BigInteger gasLimit = new BigInteger("40000000");
 
 			log.info("Creating transaction via {}", rpcEndpoint);
 			TransactionManager txManager = new RawTransactionManager(web3j, account);
+
 			EthSendTransaction ethSendTx = txManager.sendTransaction(
 					gasPrice,
 					gasLimit,
@@ -174,5 +175,9 @@ public class Web3Adapter extends DefaultDIDAdapter {
 		} catch (InterruptedException | ExecutionException e) {
 			throw new RuntimeException("Error get confirmations: " + e.getMessage(), e);
 		}
+	}
+
+	public void shutdown() {
+		web3j.shutdown();
 	}
 }

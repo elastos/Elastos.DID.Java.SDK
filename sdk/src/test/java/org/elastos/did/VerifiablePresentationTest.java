@@ -36,6 +36,7 @@ import org.elastos.did.utils.TestConfig;
 import org.elastos.did.utils.TestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -199,12 +200,9 @@ public class VerifiablePresentationTest {
 		listener.reset();
 	}
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-	public void testBuildNonempty(boolean contextEnabled) throws DIDException, IOException {
-       	Features.enableJsonLdContext(contextEnabled);
-
-		TestData.InstantData td = testData.getInstantData();
+    @Test
+ 	public void testBuildNonempty() throws DIDException, IOException {
+ 		TestData.InstantData td = testData.getInstantData();
 		DIDDocument doc = td.getUser1Document();
 
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
@@ -247,10 +245,8 @@ public class VerifiablePresentationTest {
 		assertTrue(vp.isValid());
 	}
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-	public void testBuildNonemptyWithOptionalAttrs(boolean contextEnabled) throws DIDException, IOException {
-       	Features.enableJsonLdContext(contextEnabled);
+    @Test
+ 	public void testBuildNonemptyWithOptionalAttrs() throws DIDException, IOException {
 
 		TestData.InstantData td = testData.getInstantData();
 		DIDDocument doc = td.getUser1Document();
@@ -298,11 +294,8 @@ public class VerifiablePresentationTest {
 		assertTrue(vp.isValid());
 	}
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-	public void testBuildEmpty(boolean contextEnabled) throws DIDException, IOException {
-       	Features.enableJsonLdContext(contextEnabled);
-
+    @Test
+	public void testBuildEmpty() throws DIDException, IOException {
   		DIDDocument doc = testData.getInstantData().getUser1Document();
 
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
@@ -327,11 +320,8 @@ public class VerifiablePresentationTest {
 		assertTrue(vp.isValid());
 	}
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-	public void testBuildEmptyWithOptionsAttrs(boolean contextEnabled) throws DIDException, IOException {
-       	Features.enableJsonLdContext(contextEnabled);
-
+    @Test
+	public void testBuildEmptyWithOptionsAttrs() throws DIDException, IOException {
 		DIDDocument doc = testData.getInstantData().getUser1Document();
 
 		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(

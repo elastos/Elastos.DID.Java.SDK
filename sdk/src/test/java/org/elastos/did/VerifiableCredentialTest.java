@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.elastos.did.backend.CredentialBiography;
+import org.elastos.did.backend.CredentialList;
 import org.elastos.did.backend.IDChainRequest;
 import org.elastos.did.exception.CredentialAlreadyExistException;
 import org.elastos.did.exception.CredentialRevokedException;
@@ -399,11 +400,8 @@ public class VerifiableCredentialTest {
 		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(0).getRequest().getOperation());
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    public void testDeclareCrendentials(boolean contextEnabled) throws DIDException {
-    	Features.enableJsonLdContext(contextEnabled);
-
+    @Test
+    public void testDeclareCrendentials() throws DIDException {
 	   	TestData.InstantData sd = testData.getInstantData();
 
 	   	String[][] vcds = {
@@ -957,11 +955,8 @@ public class VerifiableCredentialTest {
 		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(1).getRequest().getOperation());
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    public void testListCrendentials(boolean contextEnabled) throws DIDException {
-    	Features.enableJsonLdContext(contextEnabled);
-
+    @Test
+    public void testListCrendentials() throws DIDException {
 	   	TestData.InstantData sd = testData.getInstantData();
 
 	   	String[][] vcds = {
@@ -1139,14 +1134,14 @@ public class VerifiableCredentialTest {
     		assertTrue(vc.wasDeclared());
     	}
 
-    	int index = 1027;
+    	int index = 1028;
     	List<DIDURL> ids = VerifiableCredential.list(did);
     	assertNotNull(ids);
-    	assertEquals(128, ids.size());
+    	assertEquals(CredentialList.DEFAULT_SIZE, ids.size());
 	   	for (DIDURL id : ids) {
 	   		log.trace("Resolving credential {}...", id.getFragment());
 
-	   		DIDURL ref = new DIDURL(did, "#test" + index--);
+	   		DIDURL ref = new DIDURL(did, "#test" + --index);
 	   		assertEquals(ref, id);
 
 	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
@@ -1156,14 +1151,14 @@ public class VerifiableCredentialTest {
 	   		assertTrue(vc.wasDeclared());
 	   	}
 
-    	index = 1027;
-    	ids = VerifiableCredential.list(did, 560);
+    	index = 1028;
+    	ids = VerifiableCredential.list(did, 500);
     	assertNotNull(ids);
-    	assertEquals(512, ids.size());
+    	assertEquals(CredentialList.MAX_SIZE, ids.size());
 	   	for (DIDURL id : ids) {
 	   		log.trace("Resolving credential {}...", id.getFragment());
 
-	   		DIDURL ref = new DIDURL(did, "#test" + index--);
+	   		DIDURL ref = new DIDURL(did, "#test" + --index);
 	   		assertEquals(ref, id);
 
 	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
@@ -1177,7 +1172,7 @@ public class VerifiableCredentialTest {
     	assertNull(ids);
 
     	int skip = 0;
-    	int limit = 256;
+    	int limit = CredentialList.DEFAULT_SIZE;
     	index = 1028;
     	while (true) {
     		int resultSize = index >= limit ? limit : index;
