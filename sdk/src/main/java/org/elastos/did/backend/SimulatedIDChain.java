@@ -141,6 +141,8 @@ public class SimulatedIDChain {
 	private ConcurrentLinkedDeque<DIDTransaction> idtxs;
 	private ConcurrentLinkedDeque<CredentialTransaction> vctxs;
 
+	private SimulatedIDChainAdapter adapter;
+
 	private Statistics stat;
 
 	private static final Logger log = LoggerFactory.getLogger(SimulatedIDChain.class);
@@ -740,8 +742,10 @@ public class SimulatedIDChain {
 		this.notifyAll();
 
 		log.info("Simulated IDChain stopped");
+	}
 
-		System.out.println(stat.toString());
+	public String getStatistics() {
+		return stat.toString();
 	}
 
 	/**
@@ -750,13 +754,16 @@ public class SimulatedIDChain {
 	 * @return the DIDAdapter instance
 	 */
 	public DIDAdapter getAdapter() {
-		try {
-			return new SimulatedIDChainAdapter(
-				new URL("http", host, port, "/"));
-		} catch (MalformedURLException ignore) {
-			log.error("INTERNAL - error create DIDAdapter", ignore);
-			return null;
+		if (adapter == null) {
+			try {
+				adapter = new SimulatedIDChainAdapter(
+					new URL("http", host, port, "/"));
+			} catch (MalformedURLException ignore) {
+				log.error("INTERNAL - error create DIDAdapter", ignore);
+			}
 		}
+
+		return adapter;
 	}
 
 	private class ResolveHandler implements HttpHandler {

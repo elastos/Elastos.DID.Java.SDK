@@ -924,7 +924,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 *
 	 * @return the Controller's DID if only has one controller, other wise null
 	 */
-	protected DID getController() {
+	public DID getController() {
 		return controllers.size() == 1 ? controllers.get(0) : null;
 	}
 
@@ -1753,7 +1753,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 *
 	 * @return the Proof object
 	 */
-	protected Proof getProof() {
+	public Proof getProof() {
 		return _proofs.get(0);
 	}
 

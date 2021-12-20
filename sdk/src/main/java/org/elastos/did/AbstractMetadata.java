@@ -429,6 +429,19 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 			store = metadata.store;
 	}
 
+	public void update(AbstractMetadata metadata) {
+		if (metadata == this || metadata == null)
+			return;
+
+		metadata.props.forEach((k, v) -> {
+			if (v != null)
+				props.put(k, v);
+		});
+
+		if (store == null && metadata.store != null)
+			store = metadata.store;
+	}
+
 	/**
 	 * Returns a shallow copy of this instance: the property names and values
 	 * themselves are not cloned.
