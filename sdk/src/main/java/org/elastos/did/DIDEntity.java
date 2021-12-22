@@ -307,7 +307,7 @@ public abstract class DIDEntity<T> {
 	 * @param normalized true for normalized output, false otherwise
 	 * @return a ObjectMapper instance
 	 */
-	private ObjectMapper getObjectMapper(boolean normalized) {
+	protected ObjectMapper getObjectMapper(boolean normalized) {
 		ObjectMapper mapper = getObjectMapper();
 
 		mapper.setConfig(mapper.getSerializationConfig().withAttribute(CONTEXT_KEY,
