@@ -118,6 +118,11 @@ public class IDChain1Test {
 		assertTrue(resolved.isValid());
 		assertEquals(doc.toString(true), resolved.toString(true));
 
+		DIDBiography bio = did.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(resolved.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
+
 		dids.add(did); // 0
 	}
 
@@ -144,6 +149,11 @@ public class IDChain1Test {
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
 		assertEquals(doc.toString(true), resolved.toString(true));
+
+		DIDBiography bio = did.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(resolved.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		dids.add(did); // 1
 	}
@@ -174,6 +184,11 @@ public class IDChain1Test {
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
 		assertEquals(doc.toString(true), resolved.toString(true));
+
+		DIDBiography bio = did.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(resolved.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		dids.add(did); // 2
 	}
@@ -218,12 +233,12 @@ public class IDChain1Test {
 		lastTxid = resolved.getMetadata().getTransactionId();
         log.debug("Last transaction id {}", lastTxid);
 
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(2, rr.size());
-		List<DIDTransaction> txs = rr.getAllTransactions();
+		DIDBiography bio = did.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(did, bio.getDid());
+		assertEquals(DIDBiography.Status.VALID, bio.getStatus());
+		assertEquals(2, bio.size());
+		List<DIDTransaction> txs = bio.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(2, txs.size());
 
@@ -278,12 +293,12 @@ public class IDChain1Test {
 		lastTxid = resolved.getMetadata().getTransactionId();
         log.debug("Last transaction id {}", lastTxid);
 
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.size());
-		List<DIDTransaction> txs = rr.getAllTransactions();
+		DIDBiography bio = did.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(did, bio.getDid());
+		assertEquals(DIDBiography.Status.VALID, bio.getStatus());
+		assertEquals(3, bio.size());
+		List<DIDTransaction> txs = bio.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());
 
@@ -347,12 +362,12 @@ public class IDChain1Test {
 		lastTxid = resolved.getMetadata().getTransactionId();
         log.debug("Last transaction id {}", lastTxid);
 
-		DIDBiography rr = did.resolveBiographyAsync().join();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(2, rr.size());
-		List<DIDTransaction> txs = rr.getAllTransactions();
+		DIDBiography bio = did.resolveBiographyAsync().join();
+		assertNotNull(bio);
+		assertEquals(did, bio.getDid());
+		assertEquals(DIDBiography.Status.VALID, bio.getStatus());
+		assertEquals(2, bio.size());
+		List<DIDTransaction> txs = bio.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(2, txs.size());
 
@@ -412,12 +427,12 @@ public class IDChain1Test {
 		lastTxid = resolved.getMetadata().getTransactionId();
         log.debug("Last transaction id {}", lastTxid);
 
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.size());
-		List<DIDTransaction> txs = rr.getAllTransactions();
+		DIDBiography bio = did.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(did, bio.getDid());
+		assertEquals(DIDBiography.Status.VALID, bio.getStatus());
+		assertEquals(3, bio.size());
+		List<DIDTransaction> txs = bio.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());
 
@@ -539,12 +554,12 @@ public class IDChain1Test {
 		lastTxid = resolved.getMetadata().getTransactionId();
 		log.debug("Last transaction id {}", lastTxid);
 
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(2, rr.size());
-		List<DIDTransaction> txs = rr.getAllTransactions();
+		DIDBiography bio = did.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(did, bio.getDid());
+		assertEquals(DIDBiography.Status.VALID, bio.getStatus());
+		assertEquals(2, bio.size());
+		List<DIDTransaction> txs = bio.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(2, txs.size());
 
@@ -615,12 +630,12 @@ public class IDChain1Test {
 		lastTxid = resolved.getMetadata().getTransactionId();
 		log.debug("Last transaction id {}", lastTxid);
 
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.size());
-		List<DIDTransaction> txs = rr.getAllTransactions();
+		DIDBiography bio = did.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(did, bio.getDid());
+		assertEquals(DIDBiography.Status.VALID, bio.getStatus());
+		assertEquals(3, bio.size());
+		List<DIDTransaction> txs = bio.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());
 
@@ -812,12 +827,12 @@ public class IDChain1Test {
 		lastTxid = resolved.getMetadata().getTransactionId();
 		log.debug("Last transaction id {}", lastTxid);
 
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.size());
-		List<DIDTransaction> txs = rr.getAllTransactions();
+		DIDBiography bio = did.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(did, bio.getDid());
+		assertEquals(DIDBiography.Status.VALID, bio.getStatus());
+		assertEquals(3, bio.size());
+		List<DIDTransaction> txs = bio.getAllTransactions();
 		assertNotNull(txs);
 		assertEquals(3, txs.size());
 
@@ -838,7 +853,7 @@ public class IDChain1Test {
 	}
 
 	@Test
-	@Order(14)
+	@Order(100)
 	public void testSyncRootIdentityClean() throws DIDException, IOException {
 		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
 		Utils.deleteFile(path);
@@ -880,7 +895,7 @@ public class IDChain1Test {
 	}
 
 	@Test
-	@Order(15)
+	@Order(101)
 	public void testSyncRootIdentityCleanAsync() throws DIDException, IOException {
 		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
 		Utils.deleteFile(path);
@@ -938,7 +953,7 @@ public class IDChain1Test {
 	}
 
 	@Test
-	@Order(17)
+	@Order(102)
 	public void testSyncRootIdentityWithoutModificationAsync() throws DIDException, IOException {
 		log.debug("Synchronizing from IDChain...");
 		long start = System.currentTimeMillis();
@@ -971,7 +986,7 @@ public class IDChain1Test {
 	}
 
 	@Test
-	@Order(18)
+	@Order(103)
 	public void testSyncRootIdentityWithLocalModification1() throws DIDException, IOException {
 		// Sync to a clean store first
 		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
@@ -1028,7 +1043,7 @@ public class IDChain1Test {
 	}
 
 	@Test
-	@Order(19)
+	@Order(104)
 	public void testSyncRootIdentityWithLocalModification2() throws DIDException, IOException {
 		// Sync to a clean store first
 		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
@@ -1086,7 +1101,7 @@ public class IDChain1Test {
 	}
 
 	@Test
-	@Order(20)
+	@Order(105)
 	public void testSyncRootIdentityWithLocalModificationAsync() throws DIDException, IOException {
 		// Sync to a clean store first
 		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
@@ -1152,7 +1167,7 @@ public class IDChain1Test {
 	}
 
 	@Test
-	@Order(40)
+	@Order(106)
 	// TODO: should improve after all DID2 features online
 	public void testSynchronizeStore() throws DIDException {
 		List<DID> dids = new ArrayList<DID>(store.listDids());
@@ -1170,5 +1185,27 @@ public class IDChain1Test {
 		Collections.sort(syncedDids);
 
 		assertArrayEquals(dids.toArray(), syncedDids.toArray());
+	}
+
+	@Test
+	@Order(200)
+	public void testDeactivate() throws DIDException {
+		for (int i = 0; i < dids.size(); i++) {
+			DID did = dids.get(i);
+			int txs = i != 2 ? 4 : 2;
+
+			DIDDocument doc = store.loadDid(did);
+
+			doc.deactivate(TestConfig.storePass);
+
+			DIDDocument resolved = did.resolve();
+			assertNotNull(resolved);
+			assertTrue(resolved.isDeactivated());
+
+			DIDBiography bio = did.resolveBiography();
+			assertNotNull(bio);
+			assertEquals(txs, bio.size());
+			assertEquals(IDChainRequest.Operation.DEACTIVATE, bio.getTransaction(0).getRequest().getOperation());
+		}
 	}
 }

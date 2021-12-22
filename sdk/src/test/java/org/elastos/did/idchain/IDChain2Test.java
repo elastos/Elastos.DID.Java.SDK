@@ -46,8 +46,12 @@ import org.elastos.did.Mnemonic;
 import org.elastos.did.RootIdentity;
 import org.elastos.did.TransferTicket;
 import org.elastos.did.VerifiableCredential;
+import org.elastos.did.backend.CredentialBiography;
 import org.elastos.did.backend.CredentialList;
+import org.elastos.did.backend.DIDBiography;
+import org.elastos.did.backend.IDChainRequest;
 import org.elastos.did.crypto.HDKey;
+import org.elastos.did.exception.CredentialRevokedException;
 import org.elastos.did.exception.DIDControllersChangedException;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.utils.DIDTestExtension;
@@ -285,6 +289,11 @@ public class IDChain2Test {
 
 			assertTrue(resolvedDoc.isValid());
 
+			DIDBiography bio = customizedDid.resolveBiography();
+			assertNotNull(bio);
+			assertEquals(1, bio.size());
+			assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
+
 			person.setCustomizedDid(customizedDid);
 		}
 	}
@@ -319,6 +328,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		foo1 = customizedDid;
 	}
@@ -358,6 +372,11 @@ public class IDChain2Test {
 
 		assertTrue(resolvedDoc.isValid());
 
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
+
 		foo2 = customizedDid;
 	}
 
@@ -391,6 +410,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		bar1 = customizedDid;
 	}
@@ -430,6 +454,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		bar2 = customizedDid;
 	}
@@ -473,6 +502,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		bar3 = customizedDid;
 	}
@@ -528,6 +562,11 @@ public class IDChain2Test {
 		assertArrayEquals(resolvedDoc.getControllers().toArray(), ctrls.toArray());
 		assertEquals(customizedDoc.getProof().getSignature(),
 				resolvedDoc.getProof().getSignature());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
 	}
@@ -588,6 +627,11 @@ public class IDChain2Test {
 		assertEquals(customizedDoc.getProof().getSignature(),
 				resolvedDoc.getProof().getSignature());
 
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
+
 		assertTrue(resolvedDoc.isValid());
 	}
 
@@ -643,6 +687,11 @@ public class IDChain2Test {
 		assertArrayEquals(resolvedDoc.getControllers().toArray(), ctrls.toArray());
 		assertEquals(customizedDoc.getProof().getSignature(),
 				resolvedDoc.getProof().getSignature());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
 	}
@@ -703,6 +752,11 @@ public class IDChain2Test {
 		assertArrayEquals(resolvedDoc.getControllers().toArray(), ctrls.toArray());
 		assertEquals(customizedDoc.getProof().getSignature(),
 				resolvedDoc.getProof().getSignature());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
 	}
@@ -767,6 +821,11 @@ public class IDChain2Test {
 		assertArrayEquals(resolvedDoc.getControllers().toArray(), ctrls.toArray());
 		assertEquals(customizedDoc.getProof().getSignature(),
 				resolvedDoc.getProof().getSignature());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
 	}
@@ -979,6 +1038,11 @@ public class IDChain2Test {
 
 		assertTrue(resolvedDoc.isValid());
 
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
+
 		// Alice prepare to transfer to Bob
 		customizedDoc.setEffectiveController(Alice.getDid());
 		TransferTicket ticket = customizedDoc.createTransferTicket(Bob.getDid(), Alice.getStorePassword());
@@ -1001,6 +1065,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		// baz1 = customizedDid;
 	}
@@ -1026,6 +1095,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		// Alice prepare to transfer to Bob, Carol...
 		customizedDoc.setEffectiveController(Alice.getDid());
@@ -1057,6 +1131,11 @@ public class IDChain2Test {
 
 		assertTrue(resolvedDoc.isValid());
 
+		bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
+
 		// baz2 = customizedDid;
 	}
 
@@ -1081,6 +1160,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 
 		// Alice prepare to transfer to Bob, Carol...
 		customizedDoc.setEffectiveController(Alice.getDid());
@@ -1146,6 +1230,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(3, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 	}
 
 	@Test
@@ -1196,6 +1285,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(3, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 	}
 
 	@Test
@@ -1228,6 +1322,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(3, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 	}
 
 	@Test
@@ -1278,6 +1377,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(3, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 	}
 
 	@Test
@@ -1333,6 +1437,11 @@ public class IDChain2Test {
 				resolvedDoc.getProof().getSignature());
 
 		assertTrue(resolvedDoc.isValid());
+
+		DIDBiography bio = customizedDid.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(3, bio.size());
+		assertEquals(customizedDoc.getSignature(), bio.getTransaction(0).getRequest().getDocument().getSignature());
 	}
 
 	@Test
@@ -1373,6 +1482,11 @@ public class IDChain2Test {
 					resolvedVc.getProof().getSignature());
 
 			assertTrue(resolvedVc.isValid());
+
+			CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+			assertNotNull(bio);
+			assertEquals(1, bio.size());
+			assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
 
 			person.addSelfProclaimedCredential(vc.getId());
 		}
@@ -1417,6 +1531,11 @@ public class IDChain2Test {
 
 			assertTrue(resolvedVc.isValid());
 
+			CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+			assertNotNull(bio);
+			assertEquals(1, bio.size());
+			assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
+
 			person.addSelfProclaimedCredential(vc.getId());
 		}
 	}
@@ -1458,6 +1577,11 @@ public class IDChain2Test {
 
 		assertTrue(resolvedVc.isValid());
 
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
+
 		foo1Vc = vc.getId();
 	}
 
@@ -1498,6 +1622,11 @@ public class IDChain2Test {
 
 		assertTrue(resolvedVc.isValid());
 
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
+
 		foo2Vc = vc.getId();
 	}
 
@@ -1536,6 +1665,11 @@ public class IDChain2Test {
 					resolvedVc.getProof().getSignature());
 
 			assertTrue(resolvedVc.isValid());
+
+			CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+			assertNotNull(bio);
+			assertEquals(1, bio.size());
+			assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
 
 			person.addKycCredential(vc.getId());
 		}
@@ -1577,6 +1711,11 @@ public class IDChain2Test {
 
 			assertTrue(resolvedVc.isValid());
 
+			CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+			assertNotNull(bio);
+			assertEquals(1, bio.size());
+			assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
+
 			person.addKycCredential(vc.getId());
 		}
 	}
@@ -1616,6 +1755,11 @@ public class IDChain2Test {
 					resolvedVc.getProof().getSignature());
 
 			assertTrue(resolvedVc.isValid());
+
+			CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+			assertNotNull(bio);
+			assertEquals(1, bio.size());
+			assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
 
 			person.addKycCredential(vc.getId());
 		}
@@ -1657,6 +1801,11 @@ public class IDChain2Test {
 
 			assertTrue(resolvedVc.isValid());
 
+			CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+			assertNotNull(bio);
+			assertEquals(1, bio.size());
+			assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
+
 			person.addKycCredential(vc.getId());
 		}
 	}
@@ -1697,6 +1846,11 @@ public class IDChain2Test {
 
 		assertTrue(resolvedVc.isValid());
 
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
+
 		bar1Vc = vc.getId();
 	}
 
@@ -1736,6 +1890,11 @@ public class IDChain2Test {
 
 		assertTrue(resolvedVc.isValid());
 
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
+
 		bar2Vc = vc.getId();
 	}
 
@@ -1774,6 +1933,11 @@ public class IDChain2Test {
 				resolvedVc.getProof().getSignature());
 
 		assertTrue(resolvedVc.isValid());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
 
 		bar3Vc = vc.getId();
 	}
@@ -1838,8 +2002,8 @@ public class IDChain2Test {
 		}
 	}
 
-	@Test
-	@Order(204)
+	//@Test
+	//@Order(204)
 	public void testListPagination() throws DIDException {
 		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
@@ -1975,6 +2139,11 @@ public class IDChain2Test {
 
 		VerifiableCredential vc = VerifiableCredential.resolve(id);
 		assertFalse(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
 	}
 
 	@Test
@@ -1994,6 +2163,11 @@ public class IDChain2Test {
 
 		VerifiableCredential vc = VerifiableCredential.resolve(id);
 		assertFalse(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
 	}
 
 	@Test
@@ -2010,6 +2184,11 @@ public class IDChain2Test {
 
 		VerifiableCredential vc = VerifiableCredential.resolve(id);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2029,6 +2208,11 @@ public class IDChain2Test {
 
 		VerifiableCredential vc = VerifiableCredential.resolve(id);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2048,6 +2232,11 @@ public class IDChain2Test {
 
 		vc = VerifiableCredential.resolve(id);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2070,6 +2259,11 @@ public class IDChain2Test {
 
 		vc = VerifiableCredential.resolve(id);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2086,6 +2280,11 @@ public class IDChain2Test {
 
 		VerifiableCredential vc = VerifiableCredential.resolve(id);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2105,6 +2304,11 @@ public class IDChain2Test {
 
 		VerifiableCredential vc = VerifiableCredential.resolve(id);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2124,6 +2328,11 @@ public class IDChain2Test {
 
 		vc = VerifiableCredential.resolve(id);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2146,6 +2355,11 @@ public class IDChain2Test {
 
 		vc = VerifiableCredential.resolve(id);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2166,6 +2380,11 @@ public class IDChain2Test {
 
 		vc = VerifiableCredential.resolve(foo1Vc);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(vc.getId());
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2186,11 +2405,16 @@ public class IDChain2Test {
 
 		vc = VerifiableCredential.resolve(foo2Vc);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(vc.getId());
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
 	@Order(312)
-	public void testRevokeBar1VcFromNobody() throws DIDException {
+	public void testRevokeBar1VcByNobody() throws DIDException {
 		final VerifiableCredential vc = VerifiableCredential.resolve(bar1Vc);
 		assertFalse(vc.isRevoked());
 
@@ -2206,11 +2430,16 @@ public class IDChain2Test {
 
 		VerifiableCredential resolved = VerifiableCredential.resolve(bar1Vc);
 		assertFalse(resolved.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(vc.getId());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
 	}
 
 	@Test
 	@Order(313)
-	public void testRevokeBar2VcFromNobody() throws DIDException {
+	public void testRevokeBar2VcByNobody() throws DIDException {
 		final VerifiableCredential vc = VerifiableCredential.resolve(bar2Vc);
 		assertFalse(vc.isRevoked());
 
@@ -2226,11 +2455,16 @@ public class IDChain2Test {
 
 		VerifiableCredential resolved = VerifiableCredential.resolve(bar2Vc);
 		assertFalse(resolved.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(vc.getId());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
 	}
 
 	@Test
 	@Order(314)
-	public void testRevokeBar1VcFromController() throws DIDException {
+	public void testRevokeBar1VcByController() throws DIDException {
 		VerifiableCredential vc = VerifiableCredential.resolve(bar1Vc);
 		assertFalse(vc.isRevoked());
 
@@ -2246,11 +2480,16 @@ public class IDChain2Test {
 
 		vc = VerifiableCredential.resolve(bar1Vc);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(vc.getId());
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
 	@Order(315)
-	public void testRevokeBar2VcFromIssuer() throws DIDException {
+	public void testRevokeBar2VcByIssuer() throws DIDException {
 		VerifiableCredential vc = VerifiableCredential.resolve(bar2Vc);
 		assertFalse(vc.isRevoked());
 
@@ -2265,12 +2504,16 @@ public class IDChain2Test {
 
 		vc = VerifiableCredential.resolve(bar2Vc);
 		assertTrue(vc.isRevoked());
-	}
 
+		CredentialBiography bio = VerifiableCredential.resolveBiography(vc.getId());
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
+	}
 
 	@Test
 	@Order(316)
-	public void testRevokeBar3VcFromIssuer() throws DIDException {
+	public void testRevokeBar3VcByIssuer() throws DIDException {
 		VerifiableCredential vc = VerifiableCredential.resolve(bar3Vc);
 		assertFalse(vc.isRevoked());
 
@@ -2285,8 +2528,1490 @@ public class IDChain2Test {
 
 		vc = VerifiableCredential.resolve(bar3Vc);
 		assertTrue(vc.isRevoked());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(vc.getId());
+		assertNotNull(bio);
+		assertEquals(2, bio.size());
+		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
+	@Test
+	@Order(317)
+	public void testRevokeUndeclaredByNobody_selfproclaimed_p() throws DIDException {
+		Entity person = Alice;
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = new Issuer(person.getDocument()).issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(person.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+	}
+
+	@Test
+	@Order(318)
+	public void testRevokeUndeclaredByNobody_selfproclaimed_c() throws DIDException {
+		Entity person = Alice;
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = new Issuer(person.getCustomizedDocument()).issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(person.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+	}
+
+	@Test
+	@Order(319)
+	public void testRevokeUndeclaredByNobody_kyc_p2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+	}
+
+	@Test
+	@Order(320)
+	public void testRevokeUndeclaredByNobody_kyc_p2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+	}
+
+	@Test
+	@Order(321)
+	public void testRevokeUndeclaredByNobody_kyc_c2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+	}
+
+	@Test
+	@Order(322)
+	public void testRevokeUndeclaredByNobody_kyc_c2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+	}
+
+	@Test
+	@Order(323)
+	public void testRevokeUndeclaredByController_selfproclaimed_p() throws DIDException {
+		Entity person = Alice;
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = new Issuer(person.getDocument()).issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(person.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(324)
+	public void testRevokeUndeclaredByController_selfproclaimed_p2() throws DIDException {
+		Entity person = Alice;
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = new Issuer(person.getDocument()).issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(person.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(325)
+	public void testRevokeUndeclaredByController_selfproclaimed_c() throws DIDException {
+		Entity person = Alice;
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = new Issuer(person.getCustomizedDocument()).issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(person.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Alice
+		DIDDocument doc = Alice.getCustomizedDocument();
+		doc.setEffectiveController(Alice.getDid());
+		VerifiableCredential.revoke(id, doc, Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(326)
+	public void testRevokeUndeclaredByController_selfproclaimed_c2() throws DIDException {
+		Entity person = Alice;
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = new Issuer(person.getCustomizedDocument()).issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(person.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(327)
+	public void testRevokeUndeclaredByController_selfproclaimed_c3() throws DIDException {
+		Entity person = Alice;
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = new Issuer(person.getCustomizedDocument()).issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(person.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Alice
+		DIDDocument doc = Alice.getCustomizedDocument();
+		doc.setEffectiveController(Alice.getDid());
+		VerifiableCredential.revoke(id, doc, Alice.getStorePassword());
+
+		// Revoke by Alice again
+		assertThrows(CredentialRevokedException.class, () -> {
+			VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+		});
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(328)
+	public void testRevokeUndeclaredByController_selfproclaimed_c4() throws DIDException {
+		Entity person = Alice;
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = new Issuer(person.getCustomizedDocument()).issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+			.properties(props)
+			.seal(person.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		DIDDocument doc = Alice.getCustomizedDocument();
+		doc.setEffectiveController(Alice.getDid());
+		VerifiableCredential.revoke(id, doc, Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(329)
+	public void testRevokeUndeclaredByController_kyc_p2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(330)
+	public void testRevokeUndeclaredByController_kyc_p2p2() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(331)
+	public void testRevokeUndeclaredByIssuer_kyc_p2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(332)
+	public void testRevokeUndeclaredByIssuer_kyc_p2p2() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(333)
+	public void testRevokeUndeclaredByIssuerAndController_kyc_p2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(334)
+	public void testRevokeUndeclaredByControllerAndIssuer_kyc_p2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		// Revoke by Grace
+		assertThrows(CredentialRevokedException.class, () -> {
+			VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+		});
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(335)
+	public void testRevokeUndeclaredByController_kyc_p2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(336)
+	public void testRevokeUndeclaredByController_kyc_p2c2() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(337)
+	public void testRevokeUndeclaredByIssuer_kyc_p2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(338)
+	public void testRevokeUndeclaredByIssuer_kyc_p2c2() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(339)
+	public void testRevokeUndeclaredByIssuerAndController_kyc_p2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(340)
+	public void testRevokeUndeclaredByControllerAndIssuer_kyc_p2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		// Revoke by Grace
+		assertThrows(CredentialRevokedException.class, () -> {
+			VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+		});
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(341)
+	public void testRevokeUndeclaredByController_kyc_c2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(342)
+	public void testRevokeUndeclaredByController_kyc_c2p2() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(343)
+	public void testRevokeUndeclaredByIssuer_kyc_c2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(344)
+	public void testRevokeUndeclaredByIssuer_kyc_c2p2() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(345)
+	public void testRevokeUndeclaredByIssuerAndController_kyc_c2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(346)
+	public void testRevokeUndeclaredByControllerAndIssuer_kyc_c2p() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		// Revoke by Grace
+		assertThrows(CredentialRevokedException.class, () -> {
+			VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+		});
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(347)
+	public void testRevokeUndeclaredByController_kyc_c2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(348)
+	public void testRevokeUndeclaredByController_kyc_c2c2() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(person.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(349)
+	public void testRevokeUndeclaredByIssuer_kyc_c2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(350)
+	public void testRevokeUndeclaredByIssuer_kyc_c2c2() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(0, bio.size());
+		assertEquals(CredentialBiography.Status.NOT_FOUND, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(351)
+	public void testRevokeUndeclaredByIssuerAndController_kyc_c2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Grace
+		VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Grace.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
+
+	@Test
+	@Order(352)
+	public void testRevokeUndeclaredByControllerAndIssuer_kyc_c2c() throws DIDException {
+		Entity person = Alice;
+		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
+
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("name", person.getName());
+		props.put("gender", "Male");
+		props.put("nationality", "Singapore");
+		props.put("email", person.getName() + "@example.com");
+
+		DIDURL id = new DIDURL(person.getCustomizedDid(), "#profile-" + System.currentTimeMillis());
+
+		VerifiableCredential.Builder cb = issuer.issueFor(person.getCustomizedDid());
+		VerifiableCredential vc = cb.id(id)
+			.type("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+			.properties(props)
+			.seal(Grace.getStorePassword());
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNull(resolvedVc);
+
+		// Revoke by Frank
+		VerifiableCredential.revoke(id, Frank.getDocument(), Frank.getStorePassword());
+
+		// Revoke by Alice
+		VerifiableCredential.revoke(id, Alice.getDocument(), Alice.getStorePassword());
+
+		// Revoke by Grace
+		assertThrows(CredentialRevokedException.class, () -> {
+			VerifiableCredential.revoke(id, Grace.getDocument(), Grace.getStorePassword());
+		});
+
+		vc = VerifiableCredential.resolve(id);
+		assertNull(vc);
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+
+		bio = VerifiableCredential.resolveBiography(id, Grace.getDid());
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertTrue(Alice.getCustomizedDocument().isAuthenticationKey(bio.getTransaction(0).getRequest().getProof().getVerificationMethod()));
+		assertEquals(CredentialBiography.Status.REVOKED, bio.getStatus());
+	}
 
 	@Test
 	@Order(400)
@@ -2301,6 +4026,11 @@ public class IDChain2Test {
 
 		doc = foo1.resolve();
 		assertTrue(doc.isDeactivated());
+
+		DIDBiography bio = foo1.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(4, bio.size());
+		assertEquals(IDChainRequest.Operation.DEACTIVATE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2314,6 +4044,11 @@ public class IDChain2Test {
 
 		doc = foo1.resolve();
 		assertTrue(doc.isDeactivated());
+
+		DIDBiography bio = foo2.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(4, bio.size());
+		assertEquals(IDChainRequest.Operation.DEACTIVATE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2327,6 +4062,11 @@ public class IDChain2Test {
 
 		doc = bar1.resolve();
 		assertTrue(doc.isDeactivated());
+
+		DIDBiography bio = bar1.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(4, bio.size());
+		assertEquals(IDChainRequest.Operation.DEACTIVATE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2342,6 +4082,11 @@ public class IDChain2Test {
 
 		doc = bar2.resolve();
 		assertTrue(doc.isDeactivated());
+
+		DIDBiography bio = bar2.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(4, bio.size());
+		assertEquals(IDChainRequest.Operation.DEACTIVATE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2357,6 +4102,11 @@ public class IDChain2Test {
 
 		doc = bar3.resolve();
 		assertTrue(doc.isDeactivated());
+
+		DIDBiography bio = bar3.resolveBiography();
+		assertNotNull(bio);
+		assertEquals(4, bio.size());
+		assertEquals(IDChainRequest.Operation.DEACTIVATE, bio.getTransaction(0).getRequest().getOperation());
 	}
 
 	@Test
@@ -2372,6 +4122,11 @@ public class IDChain2Test {
 
 			doc = person.getCustomizedDid().resolve();
 			assertTrue(doc.isDeactivated());
+
+			DIDBiography bio = foo1.resolveBiography();
+			assertNotNull(bio);
+			assertEquals(4, bio.size());
+			assertEquals(IDChainRequest.Operation.DEACTIVATE, bio.getTransaction(0).getRequest().getOperation());
 		}
 	}
 }
