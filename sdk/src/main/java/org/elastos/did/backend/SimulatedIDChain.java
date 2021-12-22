@@ -457,26 +457,33 @@ public class SimulatedIDChain {
 		if (signer != null && !signer.equals(id.getDid()))
 			signerDoc = getLastDidDocument(signer);
 
+		CredentialTransaction controllerTx = null;
+		CredentialTransaction issuerTx = null;
+
 		for (CredentialTransaction tx : vctxs) {
 			if (tx.getId().equals(id) &&
 					tx.getRequest().getOperation() == IDChainRequest.Operation.REVOKE) {
 				DID did = tx.getRequest().getProof().getVerificationMethod().getDid();
 
-				if (did.equals(id.getDid())) // controller revoked
-					return tx;
+				if (did.equals(id.getDid()) ||
+						(ownerDoc != null && ownerDoc.hasController(did))) { // controller revoked
+					if (issuerTx != null)
+						return tx;
 
-				if (signer != null && did.equals(signer)) // issuer revoked
-					return tx;
+					controllerTx = tx;
+				}
 
-				if (ownerDoc != null && ownerDoc.hasController(did)) // controller revoked
-					return tx;
+				if ((signer != null && did.equals(signer)) ||
+						(signerDoc != null && signerDoc.hasController(did))) { // issuer revoked
+					if (controllerTx != null)
+						return tx;
 
-				if (signerDoc != null && signerDoc.hasController(did)) // issuer revoked
-					return tx;
+					issuerTx = tx;
+				}
 			}
 		}
 
-		return null;
+		return controllerTx != null ? controllerTx : issuerTx;
 	}
 
 	private CredentialTransaction getCredentialDeclareTransaction(DIDURL id) {

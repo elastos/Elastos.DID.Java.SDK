@@ -228,20 +228,10 @@ public class CredentialBiography extends ResolveResult<CredentialBiography>
 	 */
 	@Override
 	protected void sanitize() throws MalformedResolveResultException {
-		// TODO: revert this change later!!!
-		//
-		// Normally should check id field here.
-		// But now the resolve gives wrong response with a empty id field.
-		// Now check id field only if status != NOT_FOUND as a workaround
-		//
-		// if (id == null)
-		//	throw new MalformedResolveResultException("Missing id");
+		if (id == null)
+			throw new MalformedResolveResultException("Missing id");
 
 		if (status != Status.NOT_FOUND) {
-			// TODO: see above
-			if (id == null)
-				throw new MalformedResolveResultException("Missing id");
-
 			if (txs == null || txs.size() == 0)
 				throw new MalformedResolveResultException("Missing transaction");
 
