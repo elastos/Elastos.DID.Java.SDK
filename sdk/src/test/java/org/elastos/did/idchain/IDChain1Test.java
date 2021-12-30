@@ -28,7 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
@@ -77,26 +80,26 @@ public class IDChain1Test {
 
 	private static final Logger log = LoggerFactory.getLogger(IDChain1Test.class);
 
-    @BeforeAll
-    public static void beforeAll() throws DIDException {
-    	testData = new TestData();
-    	testData.getRootIdentity();
-    	dids = new ArrayList<DID>();
-    }
+	@BeforeAll
+	public static void beforeAll() throws DIDException {
+		testData = new TestData();
+		testData.getRootIdentity();
+		dids = new ArrayList<DID>();
+	}
 
-    @AfterAll
-    public static void afterEach() {
-    	testData.cleanup();
-    }
+	@AfterAll
+	public static void afterEach() {
+		testData.cleanup();
+	}
 
-    @BeforeEach
-    public void beforeEach() throws DIDException {
-    	store = testData.getStore();
-    	mnemonic = testData.getMnemonic();
-    	identity = testData.getRootIdentity();
+	@BeforeEach
+	public void beforeEach() throws DIDException {
+		store = testData.getStore();
+		mnemonic = testData.getMnemonic();
+		identity = testData.getRootIdentity();
 
 		TestData.waitForWalletAvaliable();
-    }
+	}
 
 	@Test
 	@Order(1)
@@ -133,12 +136,12 @@ public class IDChain1Test {
 		DIDDocument doc = identity.newDid(TestConfig.storePass);
 		DID did = doc.getSubject();
 
-        log.debug("Publishing new DID {}...", did);
+		log.debug("Publishing new DID {}...", did);
 		long start = System.currentTimeMillis();
 		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
 				.thenApply((tx) -> {
 					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-			        log.debug("Publish new DID {}...OK({}s)", did, duration);
+					log.debug("Publish new DID {}...OK({}s)", did, duration);
 					return tx;
 				});
 		tf.join();
@@ -179,7 +182,7 @@ public class IDChain1Test {
 				});
 		DIDDocument resolved = tf.join();
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Publish new DID and resolve {}...OK({}s)", did, duration);
+		log.debug("Publish new DID and resolve {}...OK({}s)", did, duration);
 
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
@@ -217,11 +220,11 @@ public class IDChain1Test {
 		assertEquals(2, doc.getAuthenticationKeyCount());
 		store.storeDid(doc);
 
-        log.debug("Updating DID {}...", did);
+		log.debug("Updating DID {}...", did);
 		long start = System.currentTimeMillis();
 		doc.publish(TestConfig.storePass);
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Update DID {}...OK({}s)", did, duration);
+		log.debug("Update DID {}...OK({}s)", did, duration);
 
 		TestData.waitForWalletAvaliable();
 		resolved = did.resolve();
@@ -231,7 +234,7 @@ public class IDChain1Test {
 		assertEquals(doc.toString(true), resolved.toString(true));
 
 		lastTxid = resolved.getMetadata().getTransactionId();
-        log.debug("Last transaction id {}", lastTxid);
+		log.debug("Last transaction id {}", lastTxid);
 
 		DIDBiography bio = did.resolveBiography();
 		assertNotNull(bio);
@@ -277,11 +280,11 @@ public class IDChain1Test {
 		assertEquals(3, doc.getAuthenticationKeyCount());
 		store.storeDid(doc);
 
-        log.debug("Updating DID {}...", did);
+		log.debug("Updating DID {}...", did);
 		long start = System.currentTimeMillis();
 		doc.publish(TestConfig.storePass);
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Update DID {}...OK({}s)", did, duration);
+		log.debug("Update DID {}...OK({}s)", did, duration);
 
 		TestData.waitForWalletAvaliable();
 		resolved = did.resolve();
@@ -291,7 +294,7 @@ public class IDChain1Test {
 		assertEquals(doc.toString(true), resolved.toString(true));
 
 		lastTxid = resolved.getMetadata().getTransactionId();
-        log.debug("Last transaction id {}", lastTxid);
+		log.debug("Last transaction id {}", lastTxid);
 
 		DIDBiography bio = did.resolveBiography();
 		assertNotNull(bio);
@@ -343,12 +346,12 @@ public class IDChain1Test {
 		assertEquals(2, doc.getAuthenticationKeyCount());
 		store.storeDid(doc);
 
-        log.debug("Updating DID {}...", did);
+		log.debug("Updating DID {}...", did);
 		long start = System.currentTimeMillis();
 		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-			        log.debug("Update DID {}...OK({}s)", did, duration);
+					log.debug("Update DID {}...OK({}s)", did, duration);
 				});
 		tf.join();
 
@@ -360,7 +363,7 @@ public class IDChain1Test {
 		assertTrue(resolved.isValid());
 		assertEquals(doc.toString(true), resolved.toString(true));
 		lastTxid = resolved.getMetadata().getTransactionId();
-        log.debug("Last transaction id {}", lastTxid);
+		log.debug("Last transaction id {}", lastTxid);
 
 		DIDBiography bio = did.resolveBiographyAsync().join();
 		assertNotNull(bio);
@@ -407,12 +410,12 @@ public class IDChain1Test {
 		assertEquals(3, doc.getAuthenticationKeyCount());
 		store.storeDid(doc);
 
-        log.debug("Updating DID {}...", did);
+		log.debug("Updating DID {}...", did);
 		long start = System.currentTimeMillis();
 		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-			        log.debug("Update DID {}...OK({}s)", did, duration);
+					log.debug("Update DID {}...OK({}s)", did, duration);
 				});
 		tf.join();
 
@@ -425,7 +428,7 @@ public class IDChain1Test {
 		assertEquals(doc.toString(true), resolved.toString(true));
 
 		lastTxid = resolved.getMetadata().getTransactionId();
-        log.debug("Last transaction id {}", lastTxid);
+		log.debug("Last transaction id {}", lastTxid);
 
 		DIDBiography bio = did.resolveBiography();
 		assertNotNull(bio);
@@ -485,11 +488,11 @@ public class IDChain1Test {
 		assertEquals(1, doc.getCredentialCount());
 		store.storeDid(doc);
 
-        log.debug("Publishing new DID {}...", did);
+		log.debug("Publishing new DID {}...", did);
 		long start = System.currentTimeMillis();
 		doc.publish(TestConfig.storePass);
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Publish new DID {}...OK({}s)", did, duration);
+		log.debug("Publish new DID {}...OK({}s)", did, duration);
 
 		TestData.waitForWalletAvaliable();
 		DIDDocument resolved = did.resolve();
@@ -498,9 +501,9 @@ public class IDChain1Test {
 		assertEquals(doc.toString(true), resolved.toString(true));
 
 		String lastTxid = resolved.getMetadata().getTransactionId();
-        log.debug("Last transaction id {}", lastTxid);
+		log.debug("Last transaction id {}", lastTxid);
 
-        dids.add(did); // 3
+		dids.add(did); // 3
 	}
 
 	@Test
@@ -538,11 +541,11 @@ public class IDChain1Test {
 		assertEquals(2, doc.getCredentialCount());
 		store.storeDid(doc);
 
-        log.debug("Updating DID {}...", did);
+		log.debug("Updating DID {}...", did);
 		long start = System.currentTimeMillis();
 		doc.publish(TestConfig.storePass);
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Update DID {}...OK({}s)", did, duration);
+		log.debug("Update DID {}...OK({}s)", did, duration);
 
 		TestData.waitForWalletAvaliable();
 		resolved = did.resolve();
@@ -618,7 +621,7 @@ public class IDChain1Test {
 		long start = System.currentTimeMillis();
 		doc.publish(TestConfig.storePass);
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Update DID {}...OK({}s)", did, duration);
+		log.debug("Update DID {}...OK({}s)", did, duration);
 
 		TestData.waitForWalletAvaliable();
 		resolved = did.resolve();
@@ -688,12 +691,12 @@ public class IDChain1Test {
 		assertEquals(1, doc.getCredentialCount());
 		store.storeDid(doc);
 
-        log.debug("Publishing new DID {}...", did);
+		log.debug("Publishing new DID {}...", did);
 		long s1 = System.currentTimeMillis();
 		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - s1 + 500) / 1000;
-			        log.debug("Publish new DID {}...OK({}s)", did, duration);
+					log.debug("Publish new DID {}...OK({}s)", did, duration);
 				});
 		tf.join();
 
@@ -746,12 +749,12 @@ public class IDChain1Test {
 		assertEquals(2, doc.getCredentialCount());
 		store.storeDid(doc);
 
-        log.debug("Updating DID {}...", did);
+		log.debug("Updating DID {}...", did);
 		long start = System.currentTimeMillis();
 		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-			        log.debug("Update DID {}...OK({}s)", did, duration);
+					log.debug("Update DID {}...OK({}s)", did, duration);
 				});
 		tf.join();
 
@@ -807,12 +810,12 @@ public class IDChain1Test {
 		assertEquals(3, doc.getCredentialCount());
 		store.storeDid(doc);
 
-        log.debug("Updating DID {}...", did);
+		log.debug("Updating DID {}...", did);
 		long start = System.currentTimeMillis();
 		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
 				.thenRun(() -> {
 					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-			        log.debug("Update DID {}...OK({}s)", did, duration);
+					log.debug("Update DID {}...OK({}s)", did, duration);
 				});
 		tf.join();
 
@@ -1207,5 +1210,56 @@ public class IDChain1Test {
 			assertEquals(txs, bio.size());
 			assertEquals(IDChainRequest.Operation.DEACTIVATE, bio.getTransaction(0).getRequest().getOperation());
 		}
+	}
+
+	@Test
+	@Order(300)
+	public void testCreateAndResolveWithMultilangCredential() throws DIDException, IOException {
+		DIDDocument doc = identity.newDid(TestConfig.storePass);
+		DID did = doc.getSubject();
+
+		Issuer selfIssuer = new Issuer(doc);
+		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
+
+		Map<String, Object> props= new HashMap<String, Object>();
+
+		File i18nDir = new File(getClass().getResource("/i18n").getPath());
+		File[] i18nRes = i18nDir.listFiles();
+		for (File res : i18nRes) {
+			BufferedReader reader = new BufferedReader(new FileReader(res));
+			String text = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+			reader.close();
+
+			props.put(res.getName(), text);
+		}
+
+		VerifiableCredential vc = cb.id("#profile")
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.type("TestCredential", "https://trinity-tech.io/credentials/i18n/v1")
+				.properties(props)
+				.seal(TestConfig.storePass);
+		assertNotNull(vc);
+
+		DIDDocument.Builder db = doc.edit();
+		db.addCredential(vc);
+		doc = db.seal(TestConfig.storePass);
+		assertNotNull(doc);
+		assertEquals(1, doc.getCredentialCount());
+		store.storeDid(doc);
+
+		log.debug("Publishing new DID {}...", did);
+		long start = System.currentTimeMillis();
+		doc.publish(TestConfig.storePass);
+		long duration = (System.currentTimeMillis() - start + 500) / 1000;
+		log.debug("Publish new DID {}...OK({}s)", did, duration);
+
+		TestData.waitForWalletAvaliable();
+		DIDDocument resolved = did.resolve();
+		assertEquals(did, resolved.getSubject());
+		assertTrue(resolved.isValid());
+		assertEquals(doc.toString(true), resolved.toString(true));
+
+		String lastTxid = resolved.getMetadata().getTransactionId();
+		log.debug("Last transaction id {}", lastTxid);
 	}
 }
