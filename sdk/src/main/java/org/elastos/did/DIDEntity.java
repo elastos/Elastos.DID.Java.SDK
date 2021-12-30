@@ -25,11 +25,16 @@ package org.elastos.did;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.FilterWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.text.Normalizer;
+import java.text.Normalizer.Form;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -255,6 +260,123 @@ public abstract class DIDEntity<T> {
 		}
 	}
 
+	static class NormalizedWriter extends FilterWriter {
+		private char cb[];
+		private int nChars, nextChar;
+
+		private static int defaultCharBufferSize = 4096;
+
+		protected NormalizedWriter(Writer out) {
+			this(out, defaultCharBufferSize);
+		}
+
+		public NormalizedWriter(Writer out, int sz) {
+			super(out);
+			if (sz <= 0)
+				throw new IllegalArgumentException("Buffer size <= 0");
+
+			this.out = out;
+			cb = new char[sz];
+			nChars = sz;
+			nextChar = 0;
+		}
+
+		private int min(int a, int b) {
+			if (a < b) return a;
+			return b;
+		}
+
+		void flushBuffer() throws IOException {
+			synchronized (lock) {
+				if (nextChar == 0)
+					return;
+
+				String cs = new String(cb, 0, nextChar);
+				out.write(Normalizer.normalize(cs, Form.NFC));
+				nextChar = 0;
+			}
+		}
+
+		@Override
+		public void write(int c) throws IOException {
+			synchronized (lock) {
+				if (nextChar >= nChars)
+					flushBuffer();
+				cb[nextChar++] = (char)c;
+			}
+		}
+
+		@Override
+		public void write(char cbuf[], int off, int len) throws IOException {
+			synchronized (lock) {
+				if ((off < 0) || (off > cbuf.length) || (len < 0) ||
+					((off + len) > cbuf.length) || ((off + len) < 0)) {
+					throw new IndexOutOfBoundsException();
+				} else if (len == 0) {
+					return;
+				}
+
+				if (len >= nChars) {
+					/* If the request length exceeds the size of the output buffer,
+					   flush the buffer and then write the data directly.  In this
+					   way buffered streams will cascade harmlessly. */
+					flushBuffer();
+					String cs = new String(cbuf, off, len);
+					out.write(Normalizer.normalize(cs, Form.NFC));
+					return;
+				}
+
+				int b = off, t = off + len;
+				while (b < t) {
+					int d = min(nChars - nextChar, t - b);
+					System.arraycopy(cbuf, b, cb, nextChar, d);
+					b += d;
+					nextChar += d;
+					if (nextChar >= nChars)
+						flushBuffer();
+				}
+			}
+		}
+
+		@Override
+		public void write(String s, int off, int len) throws IOException {
+			synchronized (lock) {
+				int b = off, t = off + len;
+				while (b < t) {
+					int d = min(nChars - nextChar, t - b);
+					s.getChars(b, b + d, cb, nextChar);
+					b += d;
+					nextChar += d;
+					if (nextChar >= nChars)
+						flushBuffer();
+				}
+			}
+		}
+
+		@Override
+		public void flush() throws IOException {
+			synchronized (lock) {
+				flushBuffer();
+				out.flush();
+			}
+		}
+
+		@Override
+		public void close() throws IOException {
+			synchronized (lock) {
+				if (out == null) {
+					return;
+				}
+				try (Writer w = out) {
+					flushBuffer();
+				} finally {
+					out = null;
+					cb = null;
+				}
+			}
+		}
+	}
+
 	/**
 	 * Get current object's DID context.
 	 *
@@ -457,7 +579,8 @@ public abstract class DIDEntity<T> {
 	 */
 	public String serialize(boolean normalized) {
 		try {
-			return getObjectMapper(normalized).writeValueAsString(this);
+			String str = getObjectMapper(normalized).writeValueAsString(this);
+			return Normalizer.normalize(str, Form.NFC);
 		} catch (JsonProcessingException e) {
 			throw new UnknownInternalException(e);
 		}
@@ -483,7 +606,7 @@ public abstract class DIDEntity<T> {
 		checkArgument(out != null, "Invalid out writer");
 
 		try {
-			getObjectMapper(normalized).writeValue(out, this);
+			getObjectMapper(normalized).writeValue(new NormalizedWriter(out), this);
 		} catch (JsonGenerationException | JsonMappingException e) {
 			throw new UnknownInternalException(e);
 		}
@@ -508,12 +631,7 @@ public abstract class DIDEntity<T> {
 	 */
 	public void serialize(OutputStream out, boolean normalized) throws IOException {
 		checkArgument(out != null, "Invalid out stream");
-
-		try {
-			getObjectMapper(normalized).writeValue(out, this);
-		} catch (JsonGenerationException | JsonMappingException e) {
-			throw new UnknownInternalException(e);
-		}
+		serialize(new OutputStreamWriter(out), normalized);
 	}
 
 	/**
@@ -535,12 +653,7 @@ public abstract class DIDEntity<T> {
 	 */
 	public void serialize(File out, boolean normalized) throws IOException {
 		checkArgument(out != null, "Invalid out file");
-
-		try {
-			getObjectMapper(normalized).writeValue(out, this);
-		} catch (JsonGenerationException | JsonMappingException e) {
-			throw new UnknownInternalException(e);
-		}
+		serialize(new FileWriter(out), normalized);
 	}
 
 	/**

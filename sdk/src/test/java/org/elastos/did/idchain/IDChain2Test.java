@@ -30,12 +30,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
@@ -232,10 +236,10 @@ public class IDChain2Test {
 		}
 	}
 
-    @BeforeEach
-    public void beforeEach() throws DIDException {
+	@BeforeEach
+	public void beforeEach() throws DIDException {
 		TestData.waitForWalletAvaliable();
-    }
+	}
 
 	@Test
 	@Order(0)
@@ -1459,8 +1463,8 @@ public class IDChain2Test {
 
 			DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
 
-	    	VerifiableCredential vc = VerifiableCredential.resolve(id);
-	    	assertNull(vc);
+			VerifiableCredential vc = VerifiableCredential.resolve(id);
+			assertNull(vc);
 
 			VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
 			vc = cb.id(id)
@@ -1507,8 +1511,8 @@ public class IDChain2Test {
 
 			DIDURL id = new DIDURL(doc.getSubject(), "#profile-" + System.currentTimeMillis());
 
-	    	VerifiableCredential vc = VerifiableCredential.resolve(id);
-	    	assertNull(vc);
+			VerifiableCredential vc = VerifiableCredential.resolve(id);
+			assertNull(vc);
 
 			VerifiableCredential.Builder cb = new Issuer(doc).issueFor(doc.getSubject());
 			vc = cb.id(id)
@@ -1943,6 +1947,56 @@ public class IDChain2Test {
 	}
 
 	@Test
+	@Order(111)
+	public void testDeclareMultilangCredential() throws DIDException, IOException {
+		Entity nobody = new Entity("nobody");
+
+		Issuer selfIssuer = new Issuer(nobody.getDocument());
+		VerifiableCredential.Builder cb = selfIssuer.issueFor(nobody.getDid());
+
+		Map<String, Object> props= new HashMap<String, Object>();
+
+		File i18nDir = new File(getClass().getResource("/i18n").getPath());
+		File[] i18nRes = i18nDir.listFiles();
+		for (File res : i18nRes) {
+			BufferedReader reader = new BufferedReader(new FileReader(res));
+			String text = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+			reader.close();
+
+			props.put(res.getName(), text);
+		}
+
+		DIDURL id = new DIDURL(nobody.getDid(), "#i18n");
+		VerifiableCredential vc = cb.id(id)
+				.type("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+				.type("TestCredential", "https://trinity-tech.io/credentials/i18n/v1")
+				.properties(props)
+				.seal(nobody.getStorePassword());
+		assertNotNull(vc);
+
+		nobody.getStore().storeCredential(vc);
+		vc.declare(nobody.getStorePassword());
+
+		System.out.println(vc);
+
+		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
+		assertNotNull(resolvedVc);
+		assertEquals(id, resolvedVc.getId());
+		assertTrue(resolvedVc.getType().contains("SelfProclaimedCredential"));
+		assertEquals(nobody.getDid(), resolvedVc.getSubject().getId());
+		assertEquals(nobody.getDid(), resolvedVc.getIssuer());
+		assertEquals(vc.getProof().getSignature(),
+				resolvedVc.getProof().getSignature());
+
+		assertTrue(resolvedVc.isValid());
+
+		CredentialBiography bio = VerifiableCredential.resolveBiography(id);
+		assertNotNull(bio);
+		assertEquals(1, bio.size());
+		assertEquals(vc.getProof().getSignature(), bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
+	}
+
+	@Test
 	@Order(200)
 	public void testListVcForAlice_p() throws DIDException {
 		List<DIDURL> vcs = VerifiableCredential.list(Alice.getDid());
@@ -2002,8 +2056,8 @@ public class IDChain2Test {
 		}
 	}
 
-	//@Test
-	//@Order(204)
+	@Test
+	@Order(204)
 	public void testListPagination() throws DIDException {
 		Issuer issuer = new Issuer(Grace.getCustomizedDocument());
 
@@ -2030,38 +2084,38 @@ public class IDChain2Test {
 		List<DIDURL> ids = VerifiableCredential.list(nobody.getDid());
 		assertNotNull(ids);
 		assertEquals(CredentialList.DEFAULT_SIZE, ids.size());
-	   	for (DIDURL id : ids) {
-	   		log.trace("Resolving credential {}...", id.getFragment());
+		for (DIDURL id : ids) {
+			log.trace("Resolving credential {}...", id.getFragment());
 
-	   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
-	   		assertEquals(ref, id);
+			DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
+			assertEquals(ref, id);
 
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+			VerifiableCredential vc = VerifiableCredential.resolve(id);
 
-	   		assertNotNull(vc);
-	   		assertEquals(ref, vc.getId());
-	   		assertTrue(vc.wasDeclared());
-	   	}
+			assertNotNull(vc);
+			assertEquals(ref, vc.getId());
+			assertTrue(vc.wasDeclared());
+		}
 
-	   	// Max page size
+		// Max page size
 		index = 271;
 		ids = VerifiableCredential.list(nobody.getDid(), 500);
 		assertNotNull(ids);
 		assertEquals(CredentialList.MAX_SIZE, ids.size());
-	   	for (DIDURL id : ids) {
-	   		log.trace("Resolving credential {}...", id.getFragment());
+		for (DIDURL id : ids) {
+			log.trace("Resolving credential {}...", id.getFragment());
 
-	   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
-	   		assertEquals(ref, id);
+			DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
+			assertEquals(ref, id);
 
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+			VerifiableCredential vc = VerifiableCredential.resolve(id);
 
-	   		assertNotNull(vc);
-	   		assertEquals(ref, vc.getId());
-	   		assertTrue(vc.wasDeclared());
-	   	}
+			assertNotNull(vc);
+			assertEquals(ref, vc.getId());
+			assertTrue(vc.wasDeclared());
+		}
 
-	   	// out of boundary
+		// out of boundary
 		ids = VerifiableCredential.list(nobody.getDid(), 300, 100);
 		assertNull(ids);
 
@@ -2076,20 +2130,20 @@ public class IDChain2Test {
 				break;
 
 			assertEquals(resultSize, ids.size());
-		   	for (DIDURL id : ids) {
-		   		log.trace("Resolving credential {}...", id.getFragment());
+			for (DIDURL id : ids) {
+				log.trace("Resolving credential {}...", id.getFragment());
 
-		   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
-		   		assertEquals(ref, id);
+				DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
+				assertEquals(ref, id);
 
-		   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+				VerifiableCredential vc = VerifiableCredential.resolve(id);
 
-		   		assertNotNull(vc);
-		   		assertEquals(ref, vc.getId());
-		   		assertTrue(vc.wasDeclared());
-		   	}
+				assertNotNull(vc);
+				assertEquals(ref, vc.getId());
+				assertTrue(vc.wasDeclared());
+			}
 
-		   	skip += ids.size();
+			skip += ids.size();
 		}
 		assertEquals(0, index);
 
@@ -2104,20 +2158,20 @@ public class IDChain2Test {
 				break;
 
 			assertEquals(resultSize, ids.size());
-		   	for (DIDURL id : ids) {
-		   		log.trace("Resolving credential {}...", id.getFragment());
+			for (DIDURL id : ids) {
+				log.trace("Resolving credential {}...", id.getFragment());
 
-		   		DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
-		   		assertEquals(ref, id);
+				DIDURL ref = new DIDURL(nobody.getDid(), "#test" + --index);
+				assertEquals(ref, id);
 
-		   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+				VerifiableCredential vc = VerifiableCredential.resolve(id);
 
-		   		assertNotNull(vc);
-		   		assertEquals(ref, vc.getId());
-		   		assertTrue(vc.wasDeclared());
-		   	}
+				assertNotNull(vc);
+				assertEquals(ref, vc.getId());
+				assertTrue(vc.wasDeclared());
+			}
 
-		   	skip += ids.size();
+			skip += ids.size();
 		}
 		assertEquals(0, index);
 	}
