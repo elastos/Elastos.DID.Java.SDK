@@ -45,6 +45,7 @@ import picocli.CommandLine.Command;
 			DeleteDid.class,
 			DisplayDid.class,
 			PublishDid.class,
+			ListCredentials.class,
 			Recover.class,
 			SimChain.class,
 			Jsonld.class,

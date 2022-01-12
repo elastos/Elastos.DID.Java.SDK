@@ -1977,8 +1977,6 @@ public class IDChain2Test {
 		nobody.getStore().storeCredential(vc);
 		vc.declare(nobody.getStorePassword());
 
-		System.out.println(vc);
-
 		VerifiableCredential resolvedVc = VerifiableCredential.resolve(id);
 		assertNotNull(resolvedVc);
 		assertEquals(id, resolvedVc.getId());
