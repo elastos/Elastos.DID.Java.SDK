@@ -1,39 +1,33 @@
 {
   "@context" : [ "https://www.w3.org/ns/did/v1", "https://ns.elastos.org/did/v1", "https://w3id.org/security/v1" ],
   "id" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-  "publicKey" : [ {
-    "id" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-    "publicKeyBase58" : "238wLrC5sAn2qDhp78ZodB2ywfQ3g7zmaPRidgARStHGL"
-  } ],
-  "authentication" : [ "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary" ],
-  "verifiableCredential" : [ {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/profile/v1", "https://ns.elastos.org/credentials/email/v1" ],
-    "id" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#profile",
-    "type" : [ "EmailCredential", "ProfileCredential", "SelfProclaimedCredential", "VerifiableCredential" ],
-    "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-    "issuanceDate" : "2021-11-20T09:55:43Z",
-    "expirationDate" : "2026-11-20T09:55:43Z",
-    "credentialSubject" : {
-      "id" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-      "email" : "issuer@example.com",
-      "gender" : "Male",
-      "name" : "Test Issuer",
-      "nationality" : "Singapore"
-    },
-    "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-20T09:55:43Z",
-      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "Eomh4f6c5HkABRh5l7OIGrSseL7DR9Rkk1i871Xe1ZfQdIHIFpO-iKDdOYifIlmuYOUFjtl_6saQcFmFih0GLA"
-    }
+  "authentication" : [ {
+    "publicKeyBase58" : "238wLrC5sAn2qDhp78ZodB2ywfQ3g7zmaPRidgARStHGL",
+    "id" : "#primary",
+    "controller" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj"
   } ],
   "expires" : "2026-11-20T09:55:43Z",
   "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-11-20T09:55:43Z",
     "creator" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+    "created" : "2021-11-20T09:55:43Z",
     "signatureValue" : "GU0zA5-d00k3_I4O7fbZVfhtZxBlKom-PP0E0_r07xieyIkj_7GZ7q5wzngYDr7VbjarvQbQGmW9MmfHpiJCQA"
-  }
+  },
+  "verifiableCredential" : [ {
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/profile/v1", "https://ns.elastos.org/credentials/email/v1" ],
+    "id" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#profile",
+    "type" : [ "VerifiableCredential", "SelfProclaimedCredential", "EmailCredential", "ProfileCredential" ],
+    "issuanceDate" : "2021-11-20T09:55:43Z",
+    "expirationDate" : "2026-11-20T09:55:43Z",
+    "credentialSubject" : {
+      "name" : "Test Issuer",
+      "gender" : "Male",
+      "nationality" : "Singapore",
+      "email" : "issuer@example.com"
+    },
+    "proof" : {
+      "verificationMethod" : "#primary",
+      "created" : "2021-11-20T09:55:43Z",
+      "signature" : "Eomh4f6c5HkABRh5l7OIGrSseL7DR9Rkk1i871Xe1ZfQdIHIFpO-iKDdOYifIlmuYOUFjtl_6saQcFmFih0GLA"
+    }
+  } ]
 }

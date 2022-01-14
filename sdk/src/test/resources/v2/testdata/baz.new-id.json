@@ -1,12 +1,12 @@
 {
   "id" : "did:elastos:baz",
-  "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d" ],
-  "multisig" : "1:2",
-  "expires" : "2026-11-20T09:54:11Z",
   "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-11-20T09:54:11Z",
     "creator" : "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d#primary",
+    "created" : "2021-11-20T09:54:11Z",
+    "type" : "ECDSAsecp256r1",
     "signatureValue" : "rCY011D9Puzx1Kh7D_02nUPz1W6oWeSs7spmGDnEBmhTfS3l6iw5v2HHPGElhzDdIlfYjFJWTuHCoaxy0qRBfA"
-  }
+  },
+  "multisig" : "1:2",
+  "controller" : [ "did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d", "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y" ],
+  "expires" : "2026-11-20T09:54:11Z"
 }

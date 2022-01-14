@@ -6,59 +6,58 @@
   "issuanceDate" : "2021-11-20T09:55:44Z",
   "expirationDate" : "2026-11-20T09:55:44Z",
   "credentialSubject" : {
-    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "Description" : "Technologist",
-    "address" : {
-      "addressCountry" : "Canada",
-      "addressLocality" : "Vancouver",
-      "addressRegion" : "BC",
-      "type" : "PostalAddress"
-    },
-    "affiliation" : [ {
-      "name" : "Futurpreneur",
-      "sameAs" : [ "https://twitter.com/futurpreneur", "https://www.facebook.com/futurpreneur/", "https://www.linkedin.com/company-beta/100369/", "https://www.youtube.com/user/CYBF" ],
-      "type" : "Organization"
-    } ],
-    "alternateName" : "Jason Holtslander",
-    "alumniOf" : [ {
-      "name" : "Vancouver Film School",
-      "sameAs" : "https://en.wikipedia.org/wiki/Vancouver_Film_School",
-      "type" : "CollegeOrUniversity",
-      "year" : 2000
-    }, {
-      "name" : "CodeCore Bootcamp",
-      "type" : "CollegeOrUniversity"
-    } ],
-    "birthPlace" : {
-      "address" : {
-        "addressCountry" : "Canada",
-        "addressLocality" : "Vancouver",
-        "addressRegion" : "BC",
-        "type" : "PostalAddress"
-      },
-      "type" : "Place"
-    },
-    "booleanValue" : true,
-    "disambiguatingDescription" : "Co-founder of CodeCore Bootcamp",
-    "doubleValue" : 9.5,
-    "gender" : "Male",
-    "image" : "https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g",
-    "jobTitle" : "Technical Director",
     "name" : "Jay Holtslander",
+    "gender" : "Male",
+    "jobTitle" : "Technical Director",
     "nationality" : "Canadian",
-    "numberValue" : 1234,
+    "disambiguatingDescription" : "Co-founder of CodeCore Bootcamp",
+    "Description" : "Technologist",
+    "image" : "https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g",
     "sameAs" : [ "https://twitter.com/j_holtslander", "https://pinterest.com/j_holtslander", "https://instagram.com/j_holtslander", "https://www.facebook.com/jay.holtslander", "https://ca.linkedin.com/in/holtslander/en", "https://plus.google.com/+JayHoltslander", "https://www.youtube.com/user/jasonh1234", "https://github.com/JayHoltslander", "https://profiles.wordpress.org/jasonh1234", "https://angel.co/j_holtslander", "https://www.foursquare.com/user/184843", "https://jholtslander.yelp.ca", "https://codepen.io/j_holtslander/", "https://stackoverflow.com/users/751570/jay", "https://dribbble.com/j_holtslander", "http://jasonh1234.deviantart.com/", "https://www.behance.net/j_holtslander", "https://www.flickr.com/people/jasonh1234/", "https://medium.com/@j_holtslander" ],
     "url" : "https://jay.holtslander.ca",
     "worksFor" : [ {
+      "type" : "Organization",
       "name" : "Skunkworks Creative Group Inc.",
-      "sameAs" : [ "https://twitter.com/skunkworks_ca", "https://www.facebook.com/skunkworks.ca", "https://www.linkedin.com/company/skunkworks-creative-group-inc-", "https://plus.google.com/+SkunkworksCa" ],
-      "type" : "Organization"
-    } ]
+      "sameAs" : [ "https://twitter.com/skunkworks_ca", "https://www.facebook.com/skunkworks.ca", "https://www.linkedin.com/company/skunkworks-creative-group-inc-", "https://plus.google.com/+SkunkworksCa" ]
+    } ],
+    "affiliation" : [ {
+      "type" : "Organization",
+      "name" : "Futurpreneur",
+      "sameAs" : [ "https://twitter.com/futurpreneur", "https://www.facebook.com/futurpreneur/", "https://www.linkedin.com/company-beta/100369/", "https://www.youtube.com/user/CYBF" ]
+    } ],
+    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
+    "address" : {
+      "type" : "PostalAddress",
+      "addressLocality" : "Vancouver",
+      "addressRegion" : "BC",
+      "addressCountry" : "Canada"
+    },
+    "alternateName" : "Jason Holtslander",
+    "alumniOf" : [ {
+      "type" : "CollegeOrUniversity",
+      "year" : 2000,
+      "name" : "Vancouver Film School",
+      "sameAs" : "https://en.wikipedia.org/wiki/Vancouver_Film_School"
+    }, {
+      "type" : "CollegeOrUniversity",
+      "name" : "CodeCore Bootcamp"
+    } ],
+    "birthPlace" : {
+      "type" : "Place",
+      "address" : {
+        "type" : "PostalAddress",
+        "addressRegion" : "BC",
+        "addressLocality" : "Vancouver",
+        "addressCountry" : "Canada"
+      }
+    },
+    "numberValue" : 1234,
+    "booleanValue" : true,
+    "doubleValue" : 9.5
   },
   "proof" : {
-    "type" : "ECDSAsecp256r1",
+    "verificationMethod" : "#primary",
     "created" : "2021-11-20T09:55:44Z",
-    "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
     "signature" : "x4NIWAD-OpskaSgVfBaABL6pSK2oFN4499QgO-KAba1UptUNSjIIY2gGrzfds5klynjZo8EINC5JNwtZc5uZdw"
   }
 }

@@ -1,18 +1,16 @@
 {
   "@context" : [ "https://www.w3.org/ns/did/v1", "https://ns.elastos.org/did/v1", "https://w3id.org/security/v1" ],
-  "id" : "did:elastos:foo",
-  "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g" ],
   "multisig" : "2:2",
+  "id" : "did:elastos:foo",
   "expires" : "2026-11-20T09:55:45Z",
   "proof" : [ {
-    "type" : "ECDSAsecp256r1",
+    "signatureValue" : "CJkKy_vpdpMMAgzZR4c-8dn9YxaK2mMhkJlAVjQDXLf6Et_3nRUF3_BRnNH1ww80nel4lGnY9ppURKh571IN_Q",
     "created" : "2021-11-20T09:55:45Z",
-    "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-    "signatureValue" : "59kaBn5J0rITgARES9qcWVwQLRYDVdlvqQWMd-S4V5jqFdSiS65F2sOdf-1-ndFs04SB9bB4S79C3D6pvzb3Lg"
+    "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary"
   }, {
-    "type" : "ECDSAsecp256r1",
+    "creator" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
     "created" : "2021-11-20T09:55:45Z",
-    "creator" : "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g#primary",
-    "signatureValue" : "CJkKy_vpdpMMAgzZR4c-8dn9YxaK2mMhkJlAVjQDXLf6Et_3nRUF3_BRnNH1ww80nel4lGnY9ppURKh571IN_Q"
-  } ]
+    "signatureValue" : "59kaBn5J0rITgARES9qcWVwQLRYDVdlvqQWMd-S4V5jqFdSiS65F2sOdf-1-ndFs04SB9bB4S79C3D6pvzb3Lg"
+  } ],
+  "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g" ]
 }
