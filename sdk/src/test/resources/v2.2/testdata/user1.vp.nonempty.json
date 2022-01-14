@@ -1,88 +1,83 @@
 {
   "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1" ],
-  "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#user1-vp-nonempty",
-  "type" : "VerifiablePresentation",
   "holder" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
   "created" : "2021-11-20T09:55:44Z",
   "verifiableCredential" : [ {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/email/v1" ],
-    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#email",
-    "type" : [ "EmailCredential", "VerifiableCredential" ],
-    "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-    "issuanceDate" : "2021-11-20T09:55:44Z",
-    "expirationDate" : "2026-11-20T09:55:44Z",
-    "credentialSubject" : {
-      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-      "email" : "john@example.com"
-    },
-    "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-20T09:55:44Z",
-      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "ov_0d3dG5RBMSCRb1BcPwnqIJGuLSyRe558YpZdDt28388toNFqUXhndc8rO25MNpAYEUoYxfqkKZkdCc35kZw"
-    }
-  }, {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1" ],
-    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#passport",
-    "type" : [ "SelfProclaimedCredential", "VerifiableCredential" ],
-    "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "issuanceDate" : "2021-11-20T09:55:44Z",
-    "expirationDate" : "2026-11-20T09:55:44Z",
-    "credentialSubject" : {
-      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-      "nationality" : "Singapore",
-      "passport" : "S653258Z07"
-    },
-    "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-20T09:55:44Z",
-      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
-      "signature" : "5ORdGuIx3UPG26QL5Gom8koOBgdH_fG5GI6CwdXi-1CgCUc8IeDJcO_WksWw0fbzXtM5hhbY8IqWSA-SBkKNxw"
-    }
-  }, {
     "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/profile/v1", "https://ns.elastos.org/credentials/email/v1", "https://ns.elastos.org/credentials/social/v1" ],
-    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#profile",
-    "type" : [ "EmailCredential", "ProfileCredential", "SelfProclaimedCredential", "SocialCredential", "VerifiableCredential" ],
-    "issuer" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-    "issuanceDate" : "2021-11-20T09:55:44Z",
-    "expirationDate" : "2026-11-20T09:55:44Z",
     "credentialSubject" : {
-      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-      "email" : "john@example.com",
-      "gender" : "Male",
       "name" : "John",
+      "gender" : "Male",
       "nationality" : "Singapore",
+      "email" : "john@example.com",
+      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
       "twitter" : "@john"
     },
+    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#profile",
+    "type" : [ "VerifiableCredential", "SelfProclaimedCredential", "EmailCredential", "ProfileCredential", "SocialCredential" ],
+    "issuanceDate" : "2021-11-20T09:55:44Z",
+    "expirationDate" : "2026-11-20T09:55:44Z",
     "proof" : {
-      "type" : "ECDSAsecp256r1",
       "created" : "2021-11-20T09:55:44Z",
-      "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+      "verificationMethod" : "#primary",
       "signature" : "-NOuDNYPWtf9-j6Aey3AWZuoWHPVJKc1j4FPKUMWoa_DJ5DqqMAdq0Bc19f3678U8x-eWsHKmmveu8juj9vKVA"
     }
   }, {
-    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/social/v1" ],
-    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#twitter",
-    "type" : [ "SocialCredential", "VerifiableCredential" ],
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/email/v1" ],
     "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
     "issuanceDate" : "2021-11-20T09:55:44Z",
     "expirationDate" : "2026-11-20T09:55:44Z",
     "credentialSubject" : {
-      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y",
-      "twitter" : "@john"
+      "email" : "john@example.com",
+      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"
     },
     "proof" : {
-      "type" : "ECDSAsecp256r1",
+      "verificationMethod" : "#primary",
       "created" : "2021-11-20T09:55:44Z",
-      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+      "signature" : "ov_0d3dG5RBMSCRb1BcPwnqIJGuLSyRe558YpZdDt28388toNFqUXhndc8rO25MNpAYEUoYxfqkKZkdCc35kZw"
+    },
+    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#email",
+    "type" : [ "VerifiableCredential", "EmailCredential" ]
+  }, {
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/social/v1" ],
+    "proof" : {
+      "verificationMethod" : "#primary",
+      "created" : "2021-11-20T09:55:44Z",
       "signature" : "Zsd37XVFQ7EOgjolHKBzmGm4KrpJ3DXMwKi9XmmutR1JsMIRymrVwhkUusP1f3tJfeP2ElUgPOo4hlSc4m33BQ"
+    },
+    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#twitter",
+    "type" : [ "VerifiableCredential", "SocialCredential" ],
+    "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
+    "issuanceDate" : "2021-11-20T09:55:44Z",
+    "expirationDate" : "2026-11-20T09:55:44Z",
+    "credentialSubject" : {
+      "twitter" : "@john",
+      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"
+    }
+  }, {
+    "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1" ],
+    "expirationDate" : "2026-11-20T09:55:44Z",
+    "credentialSubject" : {
+      "nationality" : "Singapore",
+      "passport" : "S653258Z07",
+      "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"
+    },
+    "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#passport",
+    "type" : [ "VerifiableCredential", "SelfProclaimedCredential" ],
+    "issuanceDate" : "2021-11-20T09:55:44Z",
+    "proof" : {
+      "verificationMethod" : "#primary",
+      "created" : "2021-11-20T09:55:44Z",
+      "type" : "ECDSAsecp256r1",
+      "signature" : "5ORdGuIx3UPG26QL5Gom8koOBgdH_fG5GI6CwdXi-1CgCUc8IeDJcO_WksWw0fbzXtM5hhbY8IqWSA-SBkKNxw"
     }
   } ],
   "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+    "verificationMethod" : "#primary",
     "realm" : "https://example.com/",
+    "type" : "ECDSAsecp256r1",
     "nonce" : "873172f58701a9ee686f0630204fee59",
     "signature" : "roWkXF0km-tOm5O4SMgWOzjGU7rNA6qe3zayrxFQH_5eYj7tYhyaiqU0nmiy6u1W5zagSyj-B7o5Z8FG1MFmdQ"
-  }
+  },
+  "id" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#user1-vp-nonempty",
+  "type" : "VerifiablePresentation"
 }

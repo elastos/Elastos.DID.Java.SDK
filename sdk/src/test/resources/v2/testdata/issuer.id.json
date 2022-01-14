@@ -1,37 +1,33 @@
 {
   "id" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-  "publicKey" : [ {
-    "id" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-    "publicKeyBase58" : "238wLrC5sAn2qDhp78ZodB2ywfQ3g7zmaPRidgARStHGL"
-  } ],
-  "authentication" : [ "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary" ],
   "verifiableCredential" : [ {
-    "id" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#profile",
-    "type" : [ "EmailCredential", "ProfileCredential", "SelfProclaimedCredential", "VerifiableCredential" ],
+    "type" : [ "VerifiableCredential", "SelfProclaimedCredential", "EmailCredential", "ProfileCredential" ],
     "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-    "issuanceDate" : "2021-11-20T09:54:08Z",
-    "expirationDate" : "2026-11-20T09:54:08Z",
-    "credentialSubject" : {
-      "id" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-      "email" : "issuer@example.com",
-      "gender" : "Male",
-      "name" : "Test Issuer",
-      "nationality" : "Singapore"
-    },
+    "id" : "#profile",
     "proof" : {
       "type" : "ECDSAsecp256r1",
       "created" : "2021-11-20T09:54:08Z",
       "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
       "signature" : "wCdM1FTD41PnHghEFCf8TtzhJRDhPcgHh1Xkfvk8VS2uvXQ-5_XyfCNFxGxVigG2TdK_KCRUix7-dNJKFJ1vkQ"
+    },
+    "issuanceDate" : "2021-11-20T09:54:08Z",
+    "expirationDate" : "2026-11-20T09:54:08Z",
+    "credentialSubject" : {
+      "name" : "Test Issuer",
+      "gender" : "Male",
+      "email" : "issuer@example.com",
+      "nationality" : "Singapore"
     }
   } ],
   "expires" : "2026-11-20T09:54:07Z",
+  "authentication" : [ {
+    "id" : "#primary",
+    "controller" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
+    "publicKeyBase58" : "238wLrC5sAn2qDhp78ZodB2ywfQ3g7zmaPRidgARStHGL"
+  } ],
   "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-11-20T09:54:08Z",
+    "signatureValue" : "QZaNtj2_0yzYnDck3oTQsP5q5fhEmBRuHqcqLV6pl82RRcRmhbYcgEXYoltpDdfsIJBliB72FKIP1gt0V4uKiA",
     "creator" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "signatureValue" : "QZaNtj2_0yzYnDck3oTQsP5q5fhEmBRuHqcqLV6pl82RRcRmhbYcgEXYoltpDdfsIJBliB72FKIP1gt0V4uKiA"
+    "created" : "2021-11-20T09:54:08Z"
   }
 }

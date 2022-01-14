@@ -1,95 +1,42 @@
 {
+  "controller" : [ "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g", "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS", "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y" ],
   "id" : "did:elastos:foobar",
-  "controller" : [ "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y", "did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g", "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS" ],
-  "multisig" : "2:3",
   "publicKey" : [ {
-    "id" : "did:elastos:foobar#key2",
     "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:foobar",
-    "publicKeyBase58" : "dw41MWxHwK5SMCoP8njYHfr99nPdXR6i1rAJTVMD2MSB"
-  }, {
-    "id" : "did:elastos:foobar#key3",
-    "type" : "ECDSAsecp256r1",
-    "controller" : "did:elastos:foobar",
-    "publicKeyBase58" : "weSmDXPe3wxQYrTGosjtNbeG3dcrrmV49cDJKNp1c23H"
+    "publicKeyBase58" : "dw41MWxHwK5SMCoP8njYHfr99nPdXR6i1rAJTVMD2MSB",
+    "id" : "#key2"
   } ],
-  "authentication" : [ "did:elastos:foobar#key2", "did:elastos:foobar#key3" ],
+  "multisig" : "2:3",
   "verifiableCredential" : [ {
-    "id" : "did:elastos:foobar#email",
-    "type" : [ "EmailCredential", "VerifiableCredential" ],
-    "issuer" : "did:elastos:example",
-    "issuanceDate" : "2021-11-20T09:54:09Z",
-    "expirationDate" : "2026-11-20T09:54:09Z",
-    "credentialSubject" : {
-      "id" : "did:elastos:foobar",
-      "email" : "foobar@example.com"
-    },
-    "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-20T09:54:09Z",
-      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-      "signature" : "usPKmhAYpNwQ4za3lygGvxtDe5A-xIZRLgE27re_vut0oUiN8eZedygZQPt30Y_cLrgmeXInRwQ1PscxNaQdjQ"
-    }
-  }, {
-    "id" : "did:elastos:foobar#profile",
-    "type" : [ "EmailCredential", "ProfileCredential", "SelfProclaimedCredential", "VerifiableCredential" ],
     "issuer" : "did:elastos:foobar",
     "issuanceDate" : "2021-11-20T09:54:09Z",
     "expirationDate" : "2026-11-20T09:54:09Z",
+    "id" : "#profile",
     "credentialSubject" : {
-      "id" : "did:elastos:foobar",
-      "email" : "contact@foobar.com",
       "name" : "Foo Bar Inc",
+      "email" : "contact@foobar.com",
       "nationality" : "China"
     },
     "proof" : {
-      "type" : "ECDSAsecp256r1",
-      "created" : "2021-11-20T09:54:09Z",
       "verificationMethod" : "did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y#primary",
+      "created" : "2021-11-20T09:54:09Z",
       "signature" : "mNpNk-rDJEis_7r_DnSRez6O7Mf8DnSOYaBqezwnem8o5-5Be5oN3os5hF1a2OVShvzgISrADq9aEOa13Asuww"
-    }
-  } ],
-  "service" : [ {
-    "id" : "did:elastos:foobar#vault",
-    "type" : "Hive.Vault.Service",
-    "serviceEndpoint" : "https://foobar.com/vault"
-  }, {
-    "id" : "did:elastos:foobar#vcr",
-    "type" : "CredentialRepositoryService",
-    "serviceEndpoint" : "https://foobar.com/credentials",
-    "ABC" : "Helloworld",
-    "BAR" : "Foobar",
-    "DATE" : "2021-11-20T09:54:09Z",
-    "FOO" : 678,
-    "FOOBAR" : "Lalala...",
-    "MAP" : {
-      "ABC" : "Helloworld",
-      "BAR" : "Foobar",
-      "DATE" : "2021-11-20T09:54:09Z",
-      "FOO" : 678,
-      "FOOBAR" : "Lalala...",
-      "abc" : "helloworld",
-      "bar" : "foobar",
-      "date" : "2021-11-20T09:54:09Z",
-      "foo" : 123,
-      "foobar" : "lalala..."
     },
-    "abc" : "helloworld",
-    "bar" : "foobar",
-    "date" : "2021-11-20T09:54:09Z",
-    "foo" : 123,
-    "foobar" : "lalala...",
-    "map" : {
-      "ABC" : "Helloworld",
-      "BAR" : "Foobar",
-      "DATE" : "2021-11-20T09:54:09Z",
-      "FOO" : 678,
-      "FOOBAR" : "Lalala...",
-      "abc" : "helloworld",
-      "bar" : "foobar",
-      "date" : "2021-11-20T09:54:09Z",
-      "foo" : 123,
-      "foobar" : "lalala..."
+    "type" : [ "SelfProclaimedCredential", "VerifiableCredential", "EmailCredential", "ProfileCredential" ]
+  }, {
+    "id" : "did:elastos:foobar#email",
+    "type" : [ "VerifiableCredential", "EmailCredential" ],
+    "issuer" : "did:elastos:example",
+    "issuanceDate" : "2021-11-20T09:54:09Z",
+    "proof" : {
+      "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+      "signature" : "usPKmhAYpNwQ4za3lygGvxtDe5A-xIZRLgE27re_vut0oUiN8eZedygZQPt30Y_cLrgmeXInRwQ1PscxNaQdjQ",
+      "created" : "2021-11-20T09:54:09Z"
+    },
+    "expirationDate" : "2026-11-20T09:54:09Z",
+    "credentialSubject" : {
+      "email" : "foobar@example.com",
+      "id" : "did:elastos:foobar"
     }
   } ],
   "expires" : "2026-11-20T09:54:09Z",
@@ -103,5 +50,54 @@
     "created" : "2021-11-20T09:54:09Z",
     "creator" : "did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS#primary",
     "signatureValue" : "V_DyCyPkvtgthGpc_WWZIWuZ9wPXt6RKmKMppQS4t3QvHZSneVHUkzSmoa10UzbgEXTeqU7fyVplAl1tMfN7qw"
+  } ],
+  "authentication" : [ {
+    "id" : "#key3",
+    "publicKeyBase58" : "weSmDXPe3wxQYrTGosjtNbeG3dcrrmV49cDJKNp1c23H"
+    },
+    "did:elastos:foobar#key2"
+  ],
+  "service" : [ {
+    "id" : "#vcr",
+    "map" : {
+      "foobar" : "lalala...",
+      "FOOBAR" : "Lalala...",
+      "abc" : "helloworld",
+      "bar" : "foobar",
+      "BAR" : "Foobar",
+      "DATE" : "2021-11-20T09:54:09Z",
+      "FOO" : 678,
+      "date" : "2021-11-20T09:54:09Z",
+      "ABC" : "Helloworld",
+      "foo" : 123
+    },
+    "abc" : "helloworld",
+    "bar" : "foobar",
+    "type" : "CredentialRepositoryService",
+    "FOO" : 678,
+    "FOOBAR" : "Lalala...",
+    "DATE" : "2021-11-20T09:54:09Z",
+    "serviceEndpoint" : "https://foobar.com/credentials",
+    "MAP" : {
+      "foobar" : "lalala...",
+      "FOO" : 678,
+      "FOOBAR" : "Lalala...",
+      "ABC" : "Helloworld",
+      "abc" : "helloworld",
+      "bar" : "foobar",
+      "BAR" : "Foobar",
+      "date" : "2021-11-20T09:54:09Z",
+      "foo" : 123,
+      "DATE" : "2021-11-20T09:54:09Z"
+    },
+    "date" : "2021-11-20T09:54:09Z",
+    "foo" : 123,
+    "foobar" : "lalala...",
+    "BAR" : "Foobar",
+    "ABC" : "Helloworld"
+  }, {
+    "serviceEndpoint" : "https://foobar.com/vault",
+    "id" : "did:elastos:foobar#vault",
+    "type" : "Hive.Vault.Service"
   } ]
 }

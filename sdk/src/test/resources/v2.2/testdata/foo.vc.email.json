@@ -1,18 +1,17 @@
 {
   "@context" : [ "https://www.w3.org/2018/credentials/v1", "https://ns.elastos.org/credentials/v1", "https://ns.elastos.org/credentials/email/v1" ],
-  "id" : "did:elastos:foo#email",
-  "type" : [ "EmailCredential", "VerifiableCredential" ],
   "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
   "issuanceDate" : "2021-11-20T09:55:46Z",
   "expirationDate" : "2026-11-20T09:55:46Z",
   "credentialSubject" : {
-    "id" : "did:elastos:foo",
-    "email" : "foo@example.com"
+    "email" : "foo@example.com",
+    "id" : "did:elastos:foo"
   },
+  "id" : "#email",
+  "type" : [ "VerifiableCredential", "EmailCredential" ],
   "proof" : {
-    "type" : "ECDSAsecp256r1",
     "created" : "2021-11-20T09:55:46Z",
-    "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "signature" : "YtQFknZqNRrCzr6hprpqc-M3EjMrcGnXtpVfkzXdJmEAujXxHjlog_aeFLMbuugGbbwqUpdoRqIocoWk2bTagw"
+    "signature" : "YtQFknZqNRrCzr6hprpqc-M3EjMrcGnXtpVfkzXdJmEAujXxHjlog_aeFLMbuugGbbwqUpdoRqIocoWk2bTagw",
+    "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary"
   }
 }

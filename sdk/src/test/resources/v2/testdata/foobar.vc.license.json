@@ -1,18 +1,17 @@
 {
-  "id" : "did:elastos:foobar#license",
-  "type" : [ "LicenseCredential", "VerifiableCredential" ],
+  "type" : [ "VerifiableCredential", "LicenseCredential" ],
+  "id" : "#license",
   "issuer" : "did:elastos:example",
+  "credentialSubject" : {
+    "scope" : "Consulting",
+    "license-id" : "20201021C889",
+    "id" : "did:elastos:foobar"
+  },
   "issuanceDate" : "2021-11-20T09:54:09Z",
   "expirationDate" : "2026-11-20T09:54:09Z",
-  "credentialSubject" : {
-    "id" : "did:elastos:foobar",
-    "license-id" : "20201021C889",
-    "scope" : "Consulting"
-  },
   "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-11-20T09:54:09Z",
+    "signature" : "sUSiNf6asvuw7kev9qEbuPvPRFZQJzwOoL9zU33cFB6E7MrPrFQzsJqLzh0pZJ6oT6-U0MUQSnyGdPa0HkZrzg",
     "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "signature" : "sUSiNf6asvuw7kev9qEbuPvPRFZQJzwOoL9zU33cFB6E7MrPrFQzsJqLzh0pZJ6oT6-U0MUQSnyGdPa0HkZrzg"
+    "created" : "2021-11-20T09:54:09Z"
   }
 }

@@ -1,17 +1,16 @@
 {
-  "id" : "did:elastos:foo#email",
-  "type" : [ "EmailCredential", "VerifiableCredential" ],
+  "type" : [ "VerifiableCredential", "EmailCredential" ],
   "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
   "issuanceDate" : "2021-11-20T09:54:10Z",
+  "proof" : {
+    "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
+    "created" : "2021-11-20T09:54:10Z",
+    "signature" : "M2GGNNFbjL95h-tc_qoneMION52nb3Ta_TD_KVhb7OMKJiAHpIioNc2RKxhInk-EFyXPNQtmqZohPPPEuayWOw"
+  },
   "expirationDate" : "2026-11-20T09:54:10Z",
   "credentialSubject" : {
-    "id" : "did:elastos:foo",
-    "email" : "foo@example.com"
+    "email" : "foo@example.com",
+    "id" : "did:elastos:foo"
   },
-  "proof" : {
-    "type" : "ECDSAsecp256r1",
-    "created" : "2021-11-20T09:54:10Z",
-    "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "signature" : "M2GGNNFbjL95h-tc_qoneMION52nb3Ta_TD_KVhb7OMKJiAHpIioNc2RKxhInk-EFyXPNQtmqZohPPPEuayWOw"
-  }
+  "id" : "#email"
 }
