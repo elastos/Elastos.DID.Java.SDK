@@ -384,7 +384,11 @@ public final class RootIdentity {
 	 * @return a DID object or null if not set the default DID before
 	 */
 	public DID getDefaultDid() {
-		return metadata.getDefaultDid();
+		DID did = metadata.getDefaultDid();
+		if (did == null)
+			did = getDid(0);
+
+		return did;
 	}
 
 	/**
