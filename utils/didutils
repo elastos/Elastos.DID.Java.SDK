@@ -1,0 +1,3 @@
+#! /bin/sh
+
+java -cp 'lib/*' org.elastos.did.util.DIDUtils $*

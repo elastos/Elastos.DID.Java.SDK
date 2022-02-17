@@ -161,7 +161,7 @@ public abstract class CommandBase {
 		File storeFile = null;
 
 		if (storeDir == null || storeDir.isEmpty())
-			storeFile = getUserDirectory(".elastos/did/store");
+			storeFile = getUserFile(".elastos/did/store");
 		else
 			storeFile = new File(storeDir);
 
@@ -186,9 +186,9 @@ public abstract class CommandBase {
 		}
 	}
 
-	protected File getUserDirectory(String dir) {
+	protected File getUserFile(String file) {
 		String home = System.getProperty("user.home");
-		String path = home + File.separator + dir;
+		String path = home + File.separator + file;
 		return new File(path);
 	}
 }
