@@ -49,6 +49,8 @@ import picocli.CommandLine.Command;
 			Recover.class,
 			SimChain.class,
 			Jsonld.class,
+			CreateWallet.class,
+			RegisterNames.class,
 			Shell.class,
 		})
 public class DIDUtils {

@@ -28,3 +28,6 @@ local.properties
 
 # Visual Studio Code
 .vscode
+
+# utils local lib
+utils/lib
