@@ -26,11 +26,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.concurrent.Callable;
 
-import org.elastos.did.Constants;
 import org.elastos.did.DID;
 import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
@@ -233,6 +230,7 @@ public class RegisterNames extends CommandBase implements Callable<Integer> {
 			DIDDocument doc = ownerDoc.newCustomizedDid(did, true, password);
 
 			// Update the expires: now + 3 month
+			/*
 			Calendar cal = Calendar.getInstance(Constants.UTC);
 			cal.add(Calendar.MONTH, 3);
 			Date expires = cal.getTime();
@@ -241,6 +239,7 @@ public class RegisterNames extends CommandBase implements Callable<Integer> {
 			db.setExpires(expires);
 			doc = db.seal(password);
 			store.storeDid(doc);
+			*/
 
 			doc.publish(password);
 
