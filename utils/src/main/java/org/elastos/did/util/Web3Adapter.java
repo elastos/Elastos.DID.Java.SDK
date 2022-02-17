@@ -61,11 +61,11 @@ public class Web3Adapter extends DefaultDIDAdapter {
 	private static final int MAX_BATCH_SIZE = 64;
 
 	// mainnet or testnet
-	// private static String contractAddress = "0xF654c3cBBB60D7F4ac7cDA325d51E62f47ACD436";
+	private static String contractAddress = "0xF654c3cBBB60D7F4ac7cDA325d51E62f47ACD436";
 
 	// Privatenet
-	private static long CHAIN_ID = 23;
-	private static String contractAddress = "0xdDCF19F9A52BC3c58F89C43BfB3614293F977ccA";
+	// private static long CHAIN_ID = 23;
+	// private static String contractAddress = "0xdDCF19F9A52BC3c58F89C43BfB3614293F977ccA";
 
 	private Web3j web3j;
 	private Credentials account;
@@ -179,7 +179,7 @@ public class Web3Adapter extends DefaultDIDAdapter {
 			String signedTxStr = Numeric.toHexString(signedTx);
 			*/
 
-			FastRawTransactionManager txm = new FastRawTransactionManager(web3j, account, CHAIN_ID);
+			FastRawTransactionManager txm = new FastRawTransactionManager(web3j, account);
 			String signedTxStr = txm.sign(tx);
 
 			/*
