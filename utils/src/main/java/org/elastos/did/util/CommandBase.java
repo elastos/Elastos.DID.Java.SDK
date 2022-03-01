@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2022 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,9 +36,10 @@ import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDBackend.LocalResolveHandle;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
+import org.elastos.did.DIDURL;
+import org.elastos.did.RootIdentity;
 import org.elastos.did.VerificationEventListener;
-import org.elastos.did.exception.DIDResolveException;
-import org.elastos.did.exception.DIDStoreException;
+import org.elastos.did.exception.DIDException;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -46,129 +48,68 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class CommandBase {
-	private static DIDStore store;
+	protected CommandBase() {
+		CommandContext.initialize();
+	}
 
-	public final static class Colorize {
-		public static final String RESET = "\033[0m";
-		public static final String BLACK = "\033[0;30m";
-		public static final String RED = "\033[0;31m";
-		public static final String GREEN = "\033[0;32m";
-		public static final String YELLOW = "\033[0;33m";
-		public static final String BLUE = "\033[0;34m";
+	protected static CommandContext getContext() {
+		return CommandContext.getInstance();
+	}
 
-		public static String colorize(String text, String color) {
-			return color + text + RESET;
-		}
+	protected static Network getActiveNetwork() {
+		return getContext().getActiveNetwork();
+	}
 
-		public static String red(String text) {
-			return colorize(text, RED);
-		}
+	protected static String getActiveIdentity() {
+		return getContext().getActiveIdentity();
+	}
 
-		public static String green(String text) {
-			return colorize(text, GREEN);
-		}
+	protected static DIDStore getActiveStore() throws IOException, DIDException {
+		return getContext().getActiveStore();
+	}
 
-		public static String yellow(String text) {
-			return colorize(text, YELLOW);
-		}
+	protected static RootIdentity getActiveRootIdentity() throws IOException, DIDException {
+		return getContext().getActiveRootIdentity();
+	}
 
-		public static String blue(String text) {
-			return colorize(text, BLUE);
+	protected static DID getActiveDid() throws IOException, DIDException {
+		return getContext().getActivateDid();
+	}
+
+	protected static File getActiveWallet() {
+		return getContext().getActiveWallet();
+	}
+
+	protected static Web3Adapter getActiveDidAdapter() {
+		return getContext().getActiveDidAdapter();
+	}
+
+	protected static DID toDid(String did) {
+		try {
+			return new DID(did);
+		} catch (Exception e) {
+			System.out.println(Colorize.red("Invalid DID string: " + did));
+			throw e;
 		}
 	}
 
-	private static class MyResolveHandle implements LocalResolveHandle {
-		private File didDir;
-		private Map<DID, DIDDocument> dids;
-
-		public MyResolveHandle(String dir) throws IOException {
-			if (dir == null || dir.isEmpty())
-				didDir = new File(".");
-			else
-				didDir = new File(dir);
-
-			didDir = didDir.getCanonicalFile();
-			dids = new HashMap<DID, DIDDocument>();
-			System.out.println("Local resolve directory: " + didDir.toString());
+	protected static DIDURL toDidUrl(String id) {
+		try {
+			return new DIDURL(id);
+		} catch (Exception e) {
+			System.out.println(Colorize.red("Invalid DIDURL string: " + id));
+			throw e;
 		}
+	}
 
-		@Override
-		public DIDDocument resolve(DID did) {
-			if (dids.containsKey(did))
-				return dids.get(did);
-
-			try {
-				File didFile = new File(didDir, did.getMethodSpecificId());
-				if (!didFile.exists() || !didFile.isFile())
-					didFile = new File(didDir, did.getMethodSpecificId() + ".json");
-
-				if (didFile.exists() && didFile.isFile()) {
-					InputStream in = new FileInputStream(didFile);
-					DIDDocument doc = DIDDocument.parse(in);
-					in.close();
-					System.out.println("Load did " + did + " from " + didFile.getAbsolutePath());
-					dids.put(did, doc);
-					return doc;
-				}
-			} catch (Exception e) {
-				System.out.print("Load did  " + did + " error!");
-				e.printStackTrace(System.err);
-			}
-
+	protected static File toFile(String file) {
+		if (file == null || file.isEmpty())
 			return null;
-		}
-	}
 
-	public static class ConsoleVerificationEventListener extends VerificationEventListener {
-		@Override
-		public void done(Object context, boolean succeeded, String message) {
-			String color = succeeded ? Colorize.GREEN : Colorize.RED;
-
-			System.out.println("  " + Colorize.colorize(message, color));
-		}
-
-	}
-
-
-	protected void setupDIDBackend(String network, String localResolveFolder)
-			throws IOException, DIDResolveException {
-		if (DIDBackend.isInitialized()) {
-			if (network != null && !network.isEmpty()) {
-				System.out.println(Colorize.yellow("DID backend already initialized."));
-				System.out.println(Colorize.yellow("The following network and local resolve directory will be ignored."));
-			}
-
-			return;
-		}
-
-		if (network == null || network.isEmpty())
-			network = "mainnet";
-
-		DIDBackend.initialize(new AssistDIDAdapter(network));
-		DIDBackend.getInstance().setResolveHandle(new MyResolveHandle(localResolveFolder));
-	}
-
-	protected DIDStore openDIDStore(String storeDir) throws DIDStoreException {
-		if (CommandBase.store != null) {
-			if (storeDir != null && !storeDir.isEmpty()) {
-				System.out.println(Colorize.yellow("DID store already opened."));
-				System.out.println(Colorize.yellow("The following commands will use the opened store."));
-			}
-
-			return CommandBase.store;
-		}
-
-		File storeFile = null;
-
-		if (storeDir == null || storeDir.isEmpty())
-			storeFile = getUserFile(".elastos/did/store");
+		if (file.startsWith("~"))
+			return new File(System.getProperty("user.home") + file.substring(1));
 		else
-			storeFile = new File(storeDir);
-
-		CommandBase.store = DIDStore.open(storeFile);
-		System.out.println("Opened DID store: " + storeFile.getAbsolutePath());
-
-		return store;
+			return new File(file);
 	}
 
 	protected static void printJson(PrintStream out, boolean compact, String json) throws IOException {
@@ -186,9 +127,80 @@ public abstract class CommandBase {
 		}
 	}
 
-	protected File getUserFile(String file) {
-		String home = System.getProperty("user.home");
-		String path = home + File.separator + file;
-		return new File(path);
+	protected static void deleteFile(File file) {
+		if (file.isDirectory()) {
+			File[] children = file.listFiles();
+			for (File child : children)
+				deleteFile(child);
+		}
+
+		file.delete();
+	}
+
+	protected static void copyFile(File source, File dest) throws IOException {
+	    if (source.isDirectory()) {
+	    	if (!dest.exists())
+	    		dest.mkdirs();
+
+	    	for (File f : source.listFiles())
+	    		copyFile(f, new File(dest, f.getName()));
+	    } else {
+	    	Files.copy(source.toPath(), dest.toPath());
+	    }
+	}
+
+	protected static VerificationEventListener getVerificationEventListener() {
+		return new VerificationEventListener() {
+			@Override
+			public void done(Object context, boolean succeeded, String message) {
+				String color = succeeded ? Colorize.GREEN : Colorize.RED;
+
+				System.out.println("  " + Colorize.colorize(message, color));
+			}
+		};
+	}
+
+	protected static void setLocalResolveHandle(File dir) throws IOException {
+		DIDBackend.getInstance().setResolveHandle(new MyResolveHandle(dir));
+	}
+
+	protected static void clearLocalResolveHandle() {
+		DIDBackend.getInstance().setResolveHandle(null);
+	}
+
+	private static class MyResolveHandle implements LocalResolveHandle {
+		private File localDir;
+		private Map<DID, DIDDocument> dids;
+
+		public MyResolveHandle(File dir) throws IOException {
+			localDir = dir.getAbsoluteFile();
+			dids = new HashMap<DID, DIDDocument>();
+		}
+
+		@Override
+		public DIDDocument resolve(DID did) {
+			if (dids.containsKey(did))
+				return dids.get(did);
+
+			try {
+				File didFile = new File(localDir, did.getMethodSpecificId());
+				if (!didFile.exists() || !didFile.isFile())
+					didFile = new File(localDir, did.getMethodSpecificId() + ".json");
+
+				if (didFile.exists() && didFile.isFile()) {
+					InputStream in = new FileInputStream(didFile);
+					DIDDocument doc = DIDDocument.parse(in);
+					in.close();
+					System.out.println("Load did " + did + " from " + didFile.getAbsolutePath());
+					dids.put(did, doc);
+					return doc;
+				}
+			} catch (Exception e) {
+				System.out.print("Load did  " + did + " error!");
+				e.printStackTrace(System.err);
+			}
+
+			return null;
+		}
 	}
 }

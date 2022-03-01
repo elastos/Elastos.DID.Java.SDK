@@ -22,43 +22,31 @@
 
 package org.elastos.did.util;
 
-import java.util.concurrent.Callable;
+public final class Colorize {
+	public static final String RESET = "\033[0m";
+	public static final String BLACK = "\033[0;30m";
+	public static final String RED = "\033[0;31m";
+	public static final String GREEN = "\033[0;32m";
+	public static final String YELLOW = "\033[0;33m";
+	public static final String BLUE = "\033[0;34m";
 
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
+	public static String colorize(String text, String color) {
+		return color + text + RESET;
+	}
 
-@Command(name = "shell", mixinStandardHelpOptions = true, version = "shell 2.0",
-		description = "Interactive shell.")
-public class Shell extends CommandBase implements Callable<Integer> {
-	@Override
-	public Integer call() throws Exception {
-		int exitCode = 0;
+	public static String red(String text) {
+		return colorize(text, RED);
+	}
 
-		System.out.println("Network: " + Colorize.green(getActiveNetwork().toString()));
-		if (getActiveIdentity() != null) {
-			System.out.print("Identity: " + Colorize.green(getActiveIdentity()));
-			System.out.println(", DID: " + Colorize.green(String.valueOf(getActiveDid())));
-		} else {
-			System.out.println("Identity: " + Colorize.yellow("N/A"));
-		}
+	public static String green(String text) {
+		return colorize(text, GREEN);
+	}
 
-		while (true) {
-			String cmd = System.console().readLine("didshell $ ");
-			if (cmd.isEmpty())
-				continue;
+	public static String yellow(String text) {
+		return colorize(text, YELLOW);
+	}
 
-			if (cmd.equals("exit") || cmd.equals("quit")) {
-				exitCode = 0;
-				break;
-			}
-
-			String[] args = cmd.split("\\s+");
-			if (cmd.equals("help") || cmd.equals("?"))
-				args = new String[] {"--help"};
-
-			exitCode = new CommandLine(new DIDUtils()).execute(args);
-		}
-
-		return exitCode;
+	public static String blue(String text) {
+		return colorize(text, BLUE);
 	}
 }
