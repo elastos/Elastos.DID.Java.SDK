@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2022 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,10 @@
 
 package org.elastos.did.util;
 
+import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
@@ -45,13 +46,11 @@ import org.web3j.protocol.core.BatchRequest;
 import org.web3j.protocol.core.BatchResponse;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.Request;
-import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.FastRawTransactionManager;
-import org.web3j.utils.Convert;
 
 /**
 * The sample DID adapter implementation that using the Web3 and an EID wallet.
@@ -63,92 +62,81 @@ public class Web3Adapter extends DefaultDIDAdapter {
 	// mainnet or testnet
 	private static String contractAddress = "0xF654c3cBBB60D7F4ac7cDA325d51E62f47ACD436";
 
-	// Privatenet
-	// private static long CHAIN_ID = 23;
-	// private static String contractAddress = "0xdDCF19F9A52BC3c58F89C43BfB3614293F977ccA";
-
 	private Web3j web3j;
-	private Credentials account;
-	private String network;
-	private String walletFile;
-	private String walletPassword;
+	private File walletFile;
+	private Credentials credential;
+	private long chainId;
 	private BigInteger nonce;
 	private boolean batchMode;
 	private BatchRequest batchRequest;
 
-	public Web3Adapter(String network, String walletFile, String walletPassword) {
-		super(network);
+	public Web3Adapter(Network network, File walletFile) {
+		super(network.getRpcEndpint());
 
-		this.network = network;
+		this.chainId = network.getChainId() == null ? -1 : network.getChainId();
 		this.walletFile = walletFile;
-		this.walletPassword = walletPassword;
 		this.batchMode = false;
-
-		initWeb3j();
 	}
 
-	private void printWalletInfo() {
-		BigDecimal balance = BigDecimal.ZERO;
-		try {
-			EthGetBalance ethGetBalance = web3j.ethGetBalance(account.getAddress(),
-					 DefaultBlockParameterName.LATEST).send();
-			BigInteger wei = ethGetBalance.getBalance();
-			balance = Convert.fromWei(new BigDecimal(wei), Convert.Unit.ETHER);
-		} catch (IOException e) {
-			e.printStackTrace();
+	private Web3j getWeb3j() {
+		if (web3j == null) {
+			web3j = Web3j.build(new HttpService(getRpcEndpoint().toString()));
 		}
 
-		System.out.println("================================================");
-		System.out.println("Network: " + network);
-		System.out.format("Wallet address: %s\n", account.getAddress());
-		System.out.format("Account nonce: %s\n", nonce.toString());
-		System.out.format("Wallet balance: %s\n", balance.toString());
-		System.out.println("================================================");
+		return web3j;
 	}
 
-	private void initWeb3j() {
-		web3j = Web3j.build(new HttpService(getRpcEndpoint().toString()));
-		try {
-			account = WalletUtils.loadCredentials(walletPassword, walletFile);
-			nonce = getNonce();
-			printWalletInfo();
-		} catch (IOException | CipherException e) {
-			throw new RuntimeException("Can not load wallet: " + e.getMessage(), e);
-		}
+	@Override
+	public URL getRpcEndpoint() {
+		return super.getRpcEndpoint();
 	}
 
 	// Web3j needs to be shutdown.
 	public void shutdown() {
-		printWalletInfo();
-		web3j.shutdown();
+		if (web3j != null)
+			web3j.shutdown();
+	}
+
+	private Credentials getCredential() throws IOException {
+		if (credential == null) {
+			try {
+				credential = WalletUtils.loadCredentials(CommandContext.getPassword(), walletFile);
+			} catch (CipherException e) {
+				throw new IOException(e);
+			}
+		}
+
+		return credential;
 	}
 
     protected BigInteger getNonce() throws IOException {
-        EthGetTransactionCount ethGetTransactionCount =
-                web3j.ethGetTransactionCount(
-                                account.getAddress(), DefaultBlockParameterName.PENDING)
-                        .send();
+        EthGetTransactionCount ethGetTransactionCount = getWeb3j().ethGetTransactionCount(
+        		getCredential().getAddress(), DefaultBlockParameterName.PENDING).send();
 
         return ethGetTransactionCount.getTransactionCount();
     }
 
 	public void setBatchMode(boolean batch) {
 		this.batchMode  = batch;
-		this.batchRequest = web3j.newBatch();
+		this.batchRequest = batchMode ? getWeb3j().newBatch() : null;
 	}
 
 	public void commit() throws DIDTransactionException {
 		if (!batchMode)
 			return;
 
+		if (batchRequest.getRequests().isEmpty())
+			return;
+
 		try {
+			@SuppressWarnings("unused")
 			BatchResponse response = batchRequest.send();
 			// TODO check the response
 		} catch (IOException e) {
 			throw new DIDTransactionException("Send batch request failed", e);
 		}
 
-		this.batchRequest = web3j.newBatch();
+		this.batchRequest = getWeb3j().newBatch();
 	}
 
 	@Override
@@ -162,6 +150,9 @@ public class Web3Adapter extends DefaultDIDAdapter {
 		String encodedContract = FunctionEncoder.encode(contract);
 
 		try {
+			if (nonce == null)
+				nonce = getNonce();
+
 			//BigInteger gasPrice = web3j.ethGasPrice().sendAsync().get().getGasPrice();
 			BigInteger gasPrice = new BigInteger("10000000000");
 			BigInteger gasLimit = new BigInteger("40000000");
@@ -174,33 +165,10 @@ public class Web3Adapter extends DefaultDIDAdapter {
 					contractAddress,
 					encodedContract);
 
-			/*
-			byte[] signedTx = TransactionEncoder.signMessage(tx, account);
-			String signedTxStr = Numeric.toHexString(signedTx);
-			*/
-
-			FastRawTransactionManager txm = new FastRawTransactionManager(web3j, account);
+			FastRawTransactionManager txm = new FastRawTransactionManager(getWeb3j(), getCredential(), chainId);
 			String signedTxStr = txm.sign(tx);
 
-			/*
-			byte[] signedTx = TransactionEncoder.signMessage(tx, account);
-			String signedTxStr = Numeric.toHexString(signedTx);
-			*/
-
-			Request<?, EthSendTransaction> request = web3j.ethSendRawTransaction(signedTxStr);
-
-			/*
-			Transaction tx = Transaction.createFunctionCallTransaction(
-					account.getAddress(),
-					nonce,
-					gasPrice,
-					gasLimit,
-					contractAddress,
-					encodedContract);
-
-			Request<?, EthSendTransaction> request =
-					web3j.ethSendTransaction(tx);
-			*/
+			Request<?, EthSendTransaction> request = getWeb3j().ethSendRawTransaction(signedTxStr);
 
 			nonce = nonce.add(BigInteger.ONE);
 
@@ -222,7 +190,7 @@ public class Web3Adapter extends DefaultDIDAdapter {
 
 				int waitBlocks = MAX_WAIT_BLOCKS;
 				while (true) {
-					EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).sendAsync().get();
+					EthGetTransactionReceipt receipt = getWeb3j().ethGetTransactionReceipt(txHash).sendAsync().get();
 					if (receipt.hasError()) {
 						//log.error("Transaction receipt return error: ", receipt.getError().getMessage());
 						throw new DIDTransactionException("Error transaction response: " +

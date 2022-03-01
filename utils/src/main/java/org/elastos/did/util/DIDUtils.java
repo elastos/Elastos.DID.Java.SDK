@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2022 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 
 package org.elastos.did.util;
 
+import java.io.File;
+
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Level;
@@ -29,38 +31,41 @@ import ch.qos.logback.classic.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-@Command(name = "didutils", mixinStandardHelpOptions = true, version = "didutils 2.0",
+@Command(name = "didutils", mixinStandardHelpOptions = true, version = "2.0",
 		description = "Elastos DID command line tool.",
 		subcommands = {
-			ResolveDid.class,
-			VerifyDocument.class,
-			VerifyCredential.class,
-			VerifyPresentation.class,
-			VerifyJwt.class,
-			CreateRootIdentity.class,
-			ListRootIdentities.class,
-			DeleteRootIdentity.class,
-			CreateDid.class,
-			ListDids.class,
-			DeleteDid.class,
-			DisplayDid.class,
-			PublishDid.class,
-			ListCredentials.class,
-			Recover.class,
+			Networks.class,
+			Wallets.class,
+			Identities.class,
+			DIDs.class,
+			Credentials.class,
+			Presentations.class,
+			JWTs.class,
 			SimChain.class,
-			Jsonld.class,
-			CreateWallet.class,
-			RegisterNames.class,
-			Shell.class,
+			Shell.class
 		})
 public class DIDUtils {
+	private static final String APP_HOME = ".elastos/didutils";
+
+	public static File getHome() {
+		String userHome = System.getProperty("user.home");
+		File home = new File(userHome + File.separator + APP_HOME);
+		if (!home.exists()) {
+			home.mkdirs();
+		} else {
+			if (!home.isDirectory())
+				throw new IllegalStateException("DIDUtils home folder " + home.getAbsolutePath() + " exists, but not a directory");
+		}
+
+		return home;
+	}
+
 	public static void main(String[] args) {
 		// We use logback as the logging backend
 		Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 		root.setLevel(Level.WARN);
 
 		int exitCode = new CommandLine(new DIDUtils()).execute(args);
-
 		System.exit(exitCode);
 	}
 }

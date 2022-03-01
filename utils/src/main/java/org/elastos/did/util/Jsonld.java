@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2022 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,13 +57,13 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "jsonld", mixinStandardHelpOptions = true, version = "jsonld 1.1",
+@Command(name = "jsonld", mixinStandardHelpOptions = true, version = "2.0",
 		description = "JSON-LD tools.", subcommands = {
 				Jsonld.Expand.class,
 				Jsonld.Compact.class,
 				Jsonld.Verify.class
 })
-public class Jsonld extends CommandBase {
+public class Jsonld {
 	private static URI baseURI;
 	private static LocalContexts localContexts;
 
@@ -156,7 +156,7 @@ public class Jsonld extends CommandBase {
 		}
 	}
 
-	private static JsonLdOptions getJsonLdOptions(String localContextsDir) {
+	private static JsonLdOptions getJsonLdOptions(File localContextsDir) {
 		if (baseURI == null) {
 			try {
 				baseURI = new URI("https://trinity-tech.io/ns/v1#");
@@ -167,7 +167,7 @@ public class Jsonld extends CommandBase {
 
 		File contextsDir = null;
 		if (localContextsDir != null) {
-			File dir = new File(localContextsDir).getAbsoluteFile();
+			File dir = localContextsDir.getAbsoluteFile();
 			if (!dir.exists() || !dir.isDirectory())
 				System.out.println(Colorize.yellow("Invalid local context directory: " + localContextsDir));
 			else
@@ -188,8 +188,8 @@ public class Jsonld extends CommandBase {
 		return file.getAbsoluteFile().toPath().toUri();
 	}
 
-	@Command(name = "expand", mixinStandardHelpOptions = true, version = "jsonld expand 1.1",
-			description = "Expand JSON-LD document.")
+	@Command(name = "expand", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Expand JSON-LD document.", sortOptions = false)
 	public static class Expand extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-x", "--context"}, description = "Local contexts directory")
 		private String contextDir = null;
@@ -203,7 +203,7 @@ public class Jsonld extends CommandBase {
 		@Override
 		public Integer call() throws Exception {
 			JsonValue result = JsonLd.expand(toUri(document))
-					.options(getJsonLdOptions(contextDir))
+					.options(getJsonLdOptions(toFile(contextDir)))
 					.get();
 
 			Map<String,Boolean> config = new HashMap<>();
@@ -213,7 +213,7 @@ public class Jsonld extends CommandBase {
 
 			PrintStream output = System.out;
 			if (outputFile != null && !outputFile.isEmpty())
-				output = new PrintStream(new FileOutputStream(outputFile));
+				output = new PrintStream(new FileOutputStream(toFile(outputFile)));
 
 			writerFactory.createWriter(output).write(result);
 
@@ -242,7 +242,7 @@ public class Jsonld extends CommandBase {
 		@Override
 		public Integer call() throws Exception {
 			JsonValue result = JsonLd.compact(toUri(document), toUri(context))
-					.options(getJsonLdOptions(contextDir))
+					.options(getJsonLdOptions(toFile(contextDir)))
 					.base(baseURI)
 					.compactToRelative(false)
 					.get();
@@ -254,7 +254,7 @@ public class Jsonld extends CommandBase {
 
 			PrintStream output = System.out;
 			if (outputFile != null && !outputFile.isEmpty())
-				output = new PrintStream(new FileOutputStream(outputFile));
+				output = new PrintStream(new FileOutputStream(toFile(outputFile)));
 
 			writerFactory.createWriter(output).write(result);
 
@@ -285,7 +285,7 @@ public class Jsonld extends CommandBase {
 
 		@Override
 		public Integer call() throws Exception {
-			JsonLdOptions options = getJsonLdOptions(contextDir);
+			JsonLdOptions options = getJsonLdOptions(toFile(contextDir));
 
 			JsonValue result = JsonLd.expand(toUri(document))
 					.options(options)
@@ -299,7 +299,7 @@ public class Jsonld extends CommandBase {
 			PrintStream output = System.out;
 			File tempOutput = null;
 			if (expandedOutput != null && !expandedOutput.isEmpty())
-				output = new PrintStream(new FileOutputStream(expandedOutput));
+				output = new PrintStream(new FileOutputStream(toFile(expandedOutput)));
 			else {
 				System.out.println("======== Expanded JSON-LD ========");
 				tempOutput = File.createTempFile("temp-", ".jsonld");
@@ -324,7 +324,7 @@ public class Jsonld extends CommandBase {
 
 			output = System.out;
 			if (compactedOutput != null && !compactedOutput.isEmpty())
-				output = new PrintStream(new FileOutputStream(compactedOutput));
+				output = new PrintStream(new FileOutputStream(toFile(compactedOutput)));
 			else
 				System.out.println("\n======== Compacted JSON-LD ========");
 

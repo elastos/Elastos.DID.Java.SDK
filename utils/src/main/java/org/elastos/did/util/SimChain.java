@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2022 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,11 +49,13 @@ public class SimChain implements Callable<Integer> {
 	private String level = "info";
 
 	@Override
-	public Integer call() throws Exception {
+	public Integer call() {
 		Level logLevel = Level.valueOf(level);
 
 		// We use logback as the default logging backend
 		Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+
+		Level currentLevel = root.getLevel();
 		root.setLevel(logLevel);
 
 		try {
@@ -64,13 +66,17 @@ public class SimChain implements Callable<Integer> {
 			}));
 
 			simChain.run();
+
+			return 0;
 		} catch(Exception e) {
+			System.err.println(Colorize.red("Error: " + e.getMessage()));
 			if (verboseErrors)
 				e.printStackTrace(System.err);
-			else
-				System.err.println("Error: " + e.getMessage());
+
+			return -1;
+		} finally {
+			root.setLevel(currentLevel);
 		}
 
-		return 0;
 	}
 }
