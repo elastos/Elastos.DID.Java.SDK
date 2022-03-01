@@ -193,24 +193,26 @@ public class DefaultDIDAdapter implements DIDAdapter {
 			}
 		}
 
-		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-		List<CheckResult> results = new ArrayList<CheckResult>(futures.size());
-		for (CompletableFuture<CheckResult> future : futures) {
-			try {
-				results.add(future.get());
-			} catch (Exception ignore) {
-			}
-		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+			.thenRun(() -> {
+				List<CheckResult> results = new ArrayList<CheckResult>(futures.size());
+				for (CompletableFuture<CheckResult> future : futures) {
+					try {
+						results.add(future.get());
+					} catch (Exception ignore) {
+					}
+				}
 
-		if (results.size() > 0) {
-			results.sort(null);
+				if (results.size() > 0) {
+					results.sort(null);
 
-			CheckResult best = results.get(0);
-			if (best.available()) {
-				this.rpcEndpoint = best.endpoint;
-				log.info("Update resolver to {}", rpcEndpoint.toString());
-			}
-		}
+					CheckResult best = results.get(0);
+					if (best.available()) {
+						this.rpcEndpoint = best.endpoint;
+						log.info("Update resolver to {}", rpcEndpoint.toString());
+					}
+				}
+			});
 	}
 
 	/**

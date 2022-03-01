@@ -3757,8 +3757,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 
 		DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);
 
-		if (!getSignature().equals(doc.getSignature()))
-			getStore().storeDid(doc);
+		doc.getMetadata().setDeactivated(true);
+		getStore().storeDid(doc);
 	}
 
 	/**
@@ -3997,8 +3997,8 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 
 			DIDBackend.getInstance().deactivateDid(targetDoc, signKey, storepass, adapter);
 
-			if (getStore().containsDid(target))
-				getStore().storeDid(targetDoc);
+			targetDoc.getMetadata().setDeactivated(true);
+			getStore().storeDid(targetDoc);
 		}
 	}
 
