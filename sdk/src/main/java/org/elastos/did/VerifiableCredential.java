@@ -840,6 +840,15 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @throws DIDResolveException if error occurs when resolve the DIDs
 	 */
 	public boolean isValid(VerificationEventListener listener) throws DIDResolveException {
+		if (isRevoked()) {
+			if (listener != null) {
+				listener.failed(this, "%s: is revoked", getId());
+				listener.failed(this, "%s: is invalid", getId());
+			}
+
+			return false;
+		}
+
 		if (expirationDate != null) {
 			Calendar now = Calendar.getInstance(Constants.UTC);
 
