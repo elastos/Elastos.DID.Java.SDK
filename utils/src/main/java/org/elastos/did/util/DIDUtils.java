@@ -41,8 +41,8 @@ import picocli.CommandLine.Command;
 			Credentials.class,
 			Presentations.class,
 			JWTs.class,
-			SimChain.class,
-			Shell.class
+			Shell.class,
+			SimChain.class
 		})
 public class DIDUtils {
 	private static final String APP_HOME = ".elastos/didutils";

@@ -22,8 +22,11 @@
 
 package org.elastos.did.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.security.SecureRandom;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -31,9 +34,11 @@ import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
 import org.elastos.did.DIDURL;
+import org.elastos.did.Issuer;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.backend.CredentialBiography;
 import org.elastos.did.backend.CredentialTransaction;
+import org.elastos.did.crypto.Base58;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
 
@@ -41,11 +46,16 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "credential", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "vc", mixinStandardHelpOptions = true, version = "2.0",
 description = "Credential management commands.", subcommands = {
 		Credentials.Resolve.class,
+		Credentials.Show.class,
+		Credentials.Issue.class,
 		Credentials.ListLocal.class,
 		Credentials.ListDeclared.class,
+		Credentials.Delete.class,
+		Credentials.Declare.class,
+		Credentials.Revoke.class,
 		Credentials.Verify.class
 })
 public class Credentials {
@@ -154,6 +164,148 @@ public class Credentials {
 		}
 	}
 
+	@Command(name = "show", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Show the credential and metadata.", sortOptions = false)
+	public static class Show extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+		private boolean verboseErrors = false;
+
+		@Parameters(paramLabel = "DIDURL", index = "0", description = "The id of the credential to be show.")
+		private String idString;
+
+		@Override
+		public Integer call() {
+			try {
+				if (getActiveIdentity() == null) {
+					System.out.println(Colorize.red("No active identity"));
+					return -1;
+				}
+
+				DIDURL id = toDidUrl(idString);
+
+				DIDStore store = getActiveStore();
+				VerifiableCredential vc = store.loadCredential(id);
+				if (vc != null) {
+					System.out.println("Verifiable credential:");
+					printJson(System.out, false, vc.serialize(true));
+
+					System.out.println("\nMetadata:");
+					printJson(System.out, false, vc.getMetadata().serialize());
+				} else {
+					System.out.format(Colorize.red("Credential %s not exists\n"), id);
+				}
+
+				return 0;
+			} catch (Exception e) {
+				System.err.println(Colorize.red("Error: " + e.getMessage()));
+				if (verboseErrors)
+					e.printStackTrace(System.err);
+
+				return -1;
+			}
+		}
+	}
+
+	@Command(name = "issue", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Issue a credential.", sortOptions = false)
+	public static class Issue extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
+		private boolean compact = false;
+
+		@Option(names = {"-o", "--out"}, description = "Output file, default is STDOUT.")
+		private String outputFile;
+
+		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+		private boolean verboseErrors = false;
+
+		@Parameters(paramLabel = "DID", index = "0", defaultValue = "", description = "The DID who the credential issue to, default is self.")
+		private String didString;
+
+		@Override
+		public Integer call() {
+			try {
+				if (getActiveIdentity() == null) {
+					System.out.println(Colorize.red("No active identity"));
+					return -1;
+				}
+
+				DID did = didString.isEmpty() ? getActiveDid() : toDid(didString);;
+				byte[] binId = new byte[16];
+				new SecureRandom().nextBytes(binId);
+				DIDURL id = new DIDURL(did, "#" + Base58.encode(binId));
+
+				DIDStore store = getActiveStore();
+				DIDDocument issuerDoc = store.loadDid(getActiveDid());
+				boolean selfProclaimed = (did.equals(getActiveDid()));
+
+				boolean saveToStore = selfProclaimed;
+				if (!selfProclaimed) {
+					List<DID> myDids = store.listDids();
+					saveToStore = myDids.contains(did);
+				}
+
+				VerifiableCredential.Builder vb = new Issuer(issuerDoc).issueFor(did);
+				vb.id(id);
+
+				if (selfProclaimed)
+					vb.type("https://ns.elastos.org/credentials/v1#SelfProclaimedCredential");
+
+				String type = System.console().readLine("Types(comma separated URI list): ").trim();
+				if (!type.isEmpty()) {
+					String[] types = type.split("\\s*,\\s*");
+					vb.types(types);
+				}
+
+				while (true) {
+					String subject = System.console().readLine("Subject(JSON format): ").trim();
+					if (!subject.isEmpty()) {
+						try {
+							vb.properties(subject);
+							break;
+						} catch (Exception e) {
+							System.out.println(Colorize.red("Invalid JSON input."));
+						}
+					}
+				}
+
+				Date expiration = readExpirationDate();
+				if (expiration != null)
+					vb.expirationDate(expiration);
+
+				VerifiableCredential vc = vb.seal(CommandContext.getPassword());
+				System.out.print("Credential " + vc.getId() + " created.");
+
+				if (saveToStore) {
+					store.storeCredential(vc);
+					System.out.println(" Saved to the store.");
+				} else {
+					System.out.println();
+				}
+
+				PrintStream out = System.out;
+				if (outputFile != null) {
+					File output = toFile(outputFile);
+					out = new PrintStream(output);
+				} else {
+					System.out.println("\nCredential:");
+				}
+
+				printJson(out, compact, vc.serialize(true));
+
+				if (outputFile != null)
+					out.close();
+
+				return 0;
+			} catch(Exception e) {
+				System.err.println(Colorize.red("Error: " + e.getMessage()));
+				if (verboseErrors)
+					e.printStackTrace(System.err);
+
+				return -1;
+			}
+		}
+	}
+
 	@Command(name = "rlist", mixinStandardHelpOptions = true, version = "2.0",
 			description = "List the credentials from the ID side chain.", sortOptions = false)
 	public static class ListDeclared extends CommandBase implements Callable<Integer> {
@@ -164,13 +316,13 @@ public class Credentials {
 		private boolean verboseErrors = false;
 
 		@Parameters(paramLabel = "DID", index = "0", defaultValue = "", description = "The owner DID to be list, default is self.")
-		private String didstr;
+		private String didString;
 
 		@Override
 		public Integer call() {
 			try {
 				DID did;
-				if (didstr.isEmpty()) {
+				if (didString.isEmpty()) {
 					if (getActiveIdentity() == null) {
 						System.out.println(Colorize.red("No active identity"));
 						return -1;
@@ -178,7 +330,7 @@ public class Credentials {
 
 					did = getActiveDid();
 				} else {
-					did = toDid(didstr);
+					did = toDid(didString);
 				}
 
 				listCredentials(did);
@@ -263,6 +415,9 @@ public class Credentials {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
 		private boolean verboseErrors = false;
 
+		@Parameters(paramLabel = "DID", index = "0", defaultValue = "", description = "The owner DID to be list, default is self.")
+		private String didString;
+
 		@Override
 		public Integer call() {
 			try {
@@ -271,8 +426,10 @@ public class Credentials {
 					return -1;
 				}
 
+				DID did = didString.isEmpty() ? getActiveDid() : toDid(didString);
+
 				DIDStore store = getActiveStore();
-				List<DIDURL> ids = store.listCredentials(getActiveDid());
+				List<DIDURL> ids = store.listCredentials(did);
 
 				System.out.format(Colorize.green("Total %d credentials\n"), ids.size());
 				for (DIDURL id : ids) {
@@ -318,8 +475,151 @@ public class Credentials {
 		}
 	}
 
+	@Command(name = "delete", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Delete the credential.", sortOptions = false)
+	public static class Delete extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+		private boolean verboseErrors = false;
+
+		@Parameters(paramLabel = "DIDURL", index = "0", description = "The id of the credential to be show.")
+		private String idString;
+
+		@Override
+		public Integer call() {
+			try {
+				if (getActiveIdentity() == null) {
+					System.out.println(Colorize.red("No active identity"));
+					return -1;
+				}
+
+				DIDURL id = toDidUrl(idString);
+
+				DIDStore store = getActiveStore();
+				boolean deleted = store.deleteCredential(id);
+				if (deleted)
+					System.out.format("Credential %s deleted\n", id);
+				else
+					System.out.format(Colorize.red("Credential %s not exists\n"), id);
+
+				return 0;
+			} catch (Exception e) {
+				System.err.println(Colorize.red("Error: " + e.getMessage()));
+				if (verboseErrors)
+					e.printStackTrace(System.err);
+
+				return -1;
+			}
+		}
+	}
+
+	@Command(name = "declare", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Declare the credential.", sortOptions = false)
+	public static class Declare extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+		private boolean verboseErrors = false;
+
+		@Parameters(paramLabel = "DIDURL", index = "0", description = "The id of the credential to be show.")
+		private String idString;
+
+		@Override
+		public Integer call() {
+			try {
+				if (getActiveIdentity() == null) {
+					System.out.println(Colorize.red("No active identity"));
+					return -1;
+				}
+
+				DIDURL id = toDidUrl(idString);
+				if (VerifiableCredential.resolve(id) != null) {
+					System.out.println(Colorize.yellow("Credential " + id + " already declared"));
+					return -1;
+				}
+
+				DIDStore store = getActiveStore();
+				VerifiableCredential vc = store.loadCredential(id);
+				if (vc != null) {
+					String password = CommandContext.getPassword();
+
+					System.out.format("Declaring credential %s...", id);
+					vc.declare(password);
+					System.out.println(Colorize.green("Success"));
+				} else {
+					System.out.format(Colorize.red("Credential %s not exists\n"), id);
+				}
+			} catch (Exception e) {
+				System.err.println(Colorize.red("Error: " + e.getMessage()));
+				if (verboseErrors)
+					e.printStackTrace(System.err);
+
+				return -1;
+			}
+
+			return 0;
+		}
+	}
+
+	@Command(name = "revoke", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Revoke the credential.", sortOptions = false)
+	public static class Revoke extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+		private boolean verboseErrors = false;
+
+		@Parameters(paramLabel = "DIDURL", index = "0", description = "The id of the credential to be show.")
+		private String idString;
+
+		@Override
+		public Integer call() {
+			try {
+				if (getActiveIdentity() == null) {
+					System.out.println(Colorize.red("No active identity"));
+					return -1;
+				}
+
+				DIDURL id = toDidUrl(idString);
+
+				DIDStore store = getActiveStore();
+				DID did = getActiveDid();
+				DIDDocument signer = store.loadDid(did);
+
+				VerifiableCredential vc = VerifiableCredential.resolve(id);
+				if (vc == null)
+					vc = store.loadCredential(id);
+
+				if (vc != null) {
+					if (vc.isRevoked()) {
+						System.out.println(Colorize.yellow("Credential " + id + " already revoked."));
+						return -1;
+					}
+
+					if (!vc.getIssuer().equals(did) && !vc.getSubject().getId().equals(did)) {
+						System.out.println(Colorize.red("No rights to revoke credential " + id));
+						return -1;
+					}
+				}
+
+				String password = CommandContext.getPassword();
+
+				System.out.format("Revoking credential %s...", id);
+				if (vc != null)
+					vc.revoke(signer, (DIDURL)null, password);
+				else
+					VerifiableCredential.revoke(id, signer, password);
+
+				System.out.println(Colorize.green("Success"));
+
+				return 0;
+			} catch (Exception e) {
+				System.err.println(Colorize.red("Error: " + e.getMessage()));
+				if (verboseErrors)
+					e.printStackTrace(System.err);
+
+				return -1;
+			}
+		}
+	}
+
 	@Command(name = "verify", mixinStandardHelpOptions = true, version = "2.0",
-			description = "Verify the verifiable credential.", sortOptions = false)
+			description = "Verify the credential.", sortOptions = false)
 	public static class Verify extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")
 		private String localDir = null;

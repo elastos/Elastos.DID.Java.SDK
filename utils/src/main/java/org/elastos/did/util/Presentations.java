@@ -30,7 +30,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "presentation", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "vp", mixinStandardHelpOptions = true, version = "2.0",
 description = "Presentation management commands.", subcommands = {
 		Presentations.Verify.class
 })
