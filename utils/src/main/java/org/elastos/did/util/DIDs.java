@@ -191,10 +191,13 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 					doc.isValid(getVerificationEventListener());
 				}
 
-				System.out.println("\nDID document:");
 				PrintStream out = System.out;
-				if (outputFile != null)
-					out = new PrintStream(toFile(outputFile));
+				if (outputFile != null) {
+					File output = toFile(outputFile);
+					out = new PrintStream(output);
+				} else {
+					System.out.println("\nDID document:");
+				}
 
 				printJson(out, compact, doc.serialize(true));
 
@@ -458,10 +461,12 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 				System.out.println(Colorize.green("Transfer ticket created."));
 
 				PrintStream out = System.out;
-				if (outputFile != null)
-					out = new PrintStream(toFile(outputFile));
-				else
+				if (outputFile != null) {
+					File output = toFile(outputFile);
+					out = new PrintStream(output);
+				} else {
 					System.out.println("\nTransfer ticket:");
+				}
 
 				printJson(out, true, ticket.serialize(true));
 
@@ -496,10 +501,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 					return -1;
 				}
 
-				DIDStore store = getActiveStore();
-				RootIdentity id = getActiveRootIdentity();
+				DID did = didString.isEmpty() ? getActiveDid() : toDid(didString);
 
-				DID did = didString.isEmpty() ? id.getDefaultDid() : toDid(didString);
+				DIDStore store = getActiveStore();
 				DIDDocument doc = store.loadDid(did);
 				if (doc != null) {
 					System.out.println("DID document:");
