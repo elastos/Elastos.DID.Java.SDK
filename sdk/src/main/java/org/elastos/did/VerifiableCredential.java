@@ -498,6 +498,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (issuanceDate == null)
 			throw new MalformedCredentialException("Missing credential issuance date");
 
+		if (expirationDate == null)
+			throw new MalformedCredentialException("Missing credential expiration date");
+
 		if (subject == null)
 			throw new MalformedCredentialException("Missing credential subject");
 
@@ -620,46 +623,13 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return whether the credential object is expired
 	 * @throws DIDResolveException if error occurs when resolving the DIDs
 	 */
-	public boolean isExpired() throws DIDResolveException {
-		if (expirationDate != null) {
-			Calendar now = Calendar.getInstance(Constants.UTC);
+	public boolean isExpired() {
+		Calendar now = Calendar.getInstance(Constants.UTC);
 
-			Calendar expireDate  = Calendar.getInstance(Constants.UTC);
-			expireDate.setTime(expirationDate);
+		Calendar expireDate  = Calendar.getInstance(Constants.UTC);
+		expireDate.setTime(expirationDate);
 
-			if (now.after(expireDate))
-				return true;
-		}
-
-		DIDDocument controllerDoc = subject.id.resolve();
-		if (controllerDoc != null && controllerDoc.isExpired())
-			return true;
-
-		if (!isSelfProclaimed()) {
-			DIDDocument issuerDoc = issuer.resolve();
-			if (issuerDoc != null && issuerDoc.isExpired())
-				return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Check if this credential object is expired or not in asynchronous mode.
-	 *
-	 * @return the new CompletableStage if success; null otherwise.
-	 *         The boolean result is expired or not
-	 */
-	public CompletableFuture<Boolean> isExpiredAsync() {
-		CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return isExpired();
-			} catch (DIDResolveException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
+		return now.after(expireDate);
 	}
 
 	/**
@@ -737,18 +707,6 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return false;
 		}
 
-		if (!isSelfProclaimed()) {
-			DIDDocument controllerDoc = subject.id.resolve();
-			if (controllerDoc != null && !controllerDoc.isGenuine(listener)) {
-				if (listener != null) {
-					listener.failed(this, "VC %s: holder's document is not genuine", getId());
-					listener.failed(this, "VC %s: is not genuine", getId());
-				}
-
-				return false;
-			}
-		}
-
 		if (listener != null)
 			listener.succeeded(this, "VC %s: is genuine", getId());
 
@@ -806,6 +764,9 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		CredentialBiography bio = DIDBackend.getInstance().resolveCredentialBiography(
 				getId(), getIssuer());
+		if (bio == null)
+			return false;
+
 		boolean revoked = bio.getStatus() == CredentialBiography.Status.REVOKED;
 
 		if (revoked)
@@ -849,20 +810,13 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return false;
 		}
 
-		if (expirationDate != null) {
-			Calendar now = Calendar.getInstance(Constants.UTC);
-
-			Calendar expireDate  = Calendar.getInstance(Constants.UTC);
-			expireDate.setTime(expirationDate);
-
-			if (now.after(expireDate)) {
-				if (listener != null) {
-					listener.failed(this, "VC %s: is expired", getId());
-					listener.failed(this, "VC %s: is invalid", getId());
-				}
-
-				return false;
+		if (isExpired()) {
+			if (listener != null) {
+				listener.failed(this, "VC %s: is expired", getId());
+				listener.failed(this, "VC %s: is invalid", getId());
 			}
+
+			return false;
 		}
 
 		DIDDocument issuerDoc = issuer.resolve();
@@ -877,9 +831,19 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return false;
 		}
 
-		if (!issuerDoc.isValid(listener)) {
+		if (issuerDoc.isDeactivated()) {
 			if (listener != null) {
 				listener.failed(this, "VC %s: issuer '%s' is invalid",
+						getId(), getIssuer());
+				listener.failed(this, "VC %s: is invalid", getId());
+			}
+
+			return false;
+		}
+
+		if (!issuerDoc.isGenuine(listener)) {
+			if (listener != null) {
+				listener.failed(this, "VC %s: issuer '%s' is not genuine",
 						getId(), getIssuer());
 				listener.failed(this, "VC %s: is invalid", getId());
 			}
@@ -919,18 +883,6 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			}
 
 			return false;
-		}
-
-		if (!isSelfProclaimed()) {
-			DIDDocument controllerDoc = subject.id.resolve();
-			if (controllerDoc != null && !controllerDoc.isValid(listener)) {
-				if (listener != null) {
-					listener.failed(this, "VC %s: holder's document is invalid", getId());
-					listener.failed(this, "VC %s: is invalid", getId());
-				}
-
-				return false;
-			}
 		}
 
 		if (listener != null)

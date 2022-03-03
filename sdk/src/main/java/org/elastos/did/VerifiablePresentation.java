@@ -189,7 +189,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		protected Proof(Date created, DIDURL method, String realm,
 				String nonce, String signature) {
 			this(Constants.DEFAULT_PUBLICKEY_TYPE,
-					created != null ? created : Calendar.getInstance(Constants.UTC).getTime(), 
+					created != null ? created : Calendar.getInstance(Constants.UTC).getTime(),
 					method, realm, nonce, signature);
 		}
 
@@ -204,13 +204,13 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
 		/**
 		 * Get the proof create time stamp
-		 * 
+		 *
 		 * @return the create time stamp
 		 */
 		public Date getCreated() {
 			return created;
 		}
-		
+
 		/**
 		 * Get the verification method.
 		 *
@@ -578,9 +578,18 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		}
 
 		// Check the validity of holder' document.
-		if (!holderDoc.isValid(listener)) {
+		if (holderDoc.isDeactivated()) {
 			if (listener != null) {
-				listener.failed(this, "VP %s: holder's document is invalid", getId());
+				listener.failed(this, "VP %s: holder's document is deactivated", getId());
+				listener.failed(this, "VP %s: is invalid", getId());
+			}
+
+			return false;
+		}
+
+		if (!holderDoc.isGenuine(listener)) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: holder's document is not genuine", getId());
 				listener.failed(this, "VP %s: is invalid", getId());
 			}
 
@@ -609,9 +618,22 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			return false;
 		}
 
+		VerifiablePresentation vp = new VerifiablePresentation(this, false);
+		String json = vp.serialize(true);
 
-		// All credentials should owned by holder
+		if (!holderDoc.verify(proof.getVerificationMethod(),
+				proof.getSignature(), json.getBytes(),
+				proof.getRealm().getBytes(), proof.getNonce().getBytes())) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: proof is invalid, signature mismatch", getId());
+				listener.failed(this, "VP %s: is invalid", getId());
+			}
+
+			return false;
+		}
+
 		for (VerifiableCredential vc : credentials.values()) {
+			// All credentials should owned by holder
 			if (!vc.getSubject().getId().equals(getHolder())) {
 				if (listener != null) {
 					listener.failed(this, "VP %s: credential '%s' not owned by the holder '%s'",
@@ -633,22 +655,10 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			}
 		}
 
-		VerifiablePresentation vp = new VerifiablePresentation(this, false);
-		String json = vp.serialize(true);
+		if (listener != null)
+			listener.succeeded(this, "VP %s: is valid", getId());
 
-		boolean result = holderDoc.verify(proof.getVerificationMethod(),
-				proof.getSignature(), json.getBytes(),
-				proof.getRealm().getBytes(), proof.getNonce().getBytes());
-		if (listener != null) {
-			if (result) {
-				listener.succeeded(this, "VP %s: is valid", getId());
-			} else {
-				listener.failed(this, "VP %s: proof is invalid, signature mismatch", getId());
-				listener.failed(this, "VP %s: is invalid", getId());
-			}
-		}
-
-		return result;
+		return true;
 	}
 
 	/**
