@@ -267,9 +267,14 @@ public class SimulatedIDChain {
 		}
 
 		if (request.getOperation() != IDChainRequest.Operation.DEACTIVATE) {
-			if (!request.getDocument().isValid()) {
-				stat.invalidDidRequestWithInvalidDocument();
-				throw new DIDTransactionException("Invalid DID Document.");
+			try {
+				if (!request.getDocument().isValid()) {
+					stat.invalidDidRequestWithInvalidDocument();
+					throw new DIDTransactionException("Invalid DID Document.");
+				}
+			} catch (DIDResolveException | DIDTransactionException e) {
+				e.printStackTrace();
+				throw new DIDTransactionException("Invalid DID Document.", e);
 			}
 		}
 

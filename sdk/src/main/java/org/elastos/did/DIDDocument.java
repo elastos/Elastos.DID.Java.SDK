@@ -44,6 +44,7 @@ import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import org.elastos.did.backend.DIDBiography;
 import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.Base64;
 import org.elastos.did.crypto.EcdsaSigner;
@@ -2317,8 +2318,21 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 *
 	 * @return true if deactivated, false otherwise
 	 */
-	public boolean isDeactivated() {
-		return getMetadata().isDeactivated();
+	public boolean isDeactivated() throws DIDResolveException {
+		if (getMetadata().isDeactivated())
+			return true;
+
+		DIDBiography bio = DIDBackend.getInstance().resolveDidBiography(getSubject());
+		if (bio == null)
+			return false;
+
+		boolean deactivated = bio.getStatus() == DIDBiography.Status.DEACTIVATED;
+
+		if (deactivated)
+			getMetadata().setDeactivated(deactivated);
+
+		return deactivated;
+
 	}
 
 	/**
@@ -2340,7 +2354,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 * @param listener the listener for the verification events and messages
 	 * @return true if valid, false otherwise
 	 */
-	public boolean isValid(VerificationEventListener listener) {
+	public boolean isValid(VerificationEventListener listener) throws DIDResolveException {
 		if (isDeactivated()) {
 			if (listener != null) {
 				listener.failed(this, "%s: is deactivated", getSubject());
@@ -2401,7 +2415,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 *
 	 * @return true if valid, false otherwise
 	 */
-	public boolean isValid() {
+	public boolean isValid() throws DIDResolveException {
 		return isValid(null);
 	}
 
@@ -3735,7 +3749,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		else if (doc.isDeactivated())
 			throw new DIDDeactivatedException(getSubject().toString());
 		else
-			doc.getMetadata().attachStore(getStore());
+			getStore().storeDid(doc);
 
 		doc.effectiveController = effectiveController;
 
@@ -3756,9 +3770,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		}
 
 		DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);
-
-		doc.getMetadata().setDeactivated(true);
-		getStore().storeDid(doc);
 	}
 
 	/**
@@ -3996,9 +4007,6 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 			}
 
 			DIDBackend.getInstance().deactivateDid(targetDoc, signKey, storepass, adapter);
-
-			targetDoc.getMetadata().setDeactivated(true);
-			getStore().storeDid(targetDoc);
 		}
 	}
 
