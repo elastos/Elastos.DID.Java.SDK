@@ -3749,7 +3749,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		else if (doc.isDeactivated())
 			throw new DIDDeactivatedException(getSubject().toString());
 		else
-			getStore().storeDid(doc);
+			doc.getMetadata().attachStore(getStore());
 
 		doc.effectiveController = effectiveController;
 
