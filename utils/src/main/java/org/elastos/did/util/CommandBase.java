@@ -47,6 +47,7 @@ import org.elastos.did.exception.DIDException;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -105,6 +106,15 @@ public abstract class CommandBase {
 		}
 	}
 
+	protected static DIDURL toDidUrl(DID ref, String id) {
+		try {
+			return new DIDURL(ref, id);
+		} catch (Exception e) {
+			System.out.println(Colorize.red("Invalid DIDURL string: " + id));
+			throw e;
+		}
+	}
+
 	protected static File toFile(String file) {
 		if (file == null || file.isEmpty())
 			return null;
@@ -128,6 +138,24 @@ public abstract class CommandBase {
 		} else {
 			out.println(json);
 		}
+	}
+
+	protected static Map<String, Object> readJson(String prompt) {
+		ObjectMapper mapper = new ObjectMapper();
+
+		while (true) {
+			String jsonString = System.console().readLine(prompt).trim();
+			if (!jsonString.isEmpty()) {
+				try {
+					return mapper.readValue(jsonString, new TypeReference<Map<String, Object>>(){});
+				} catch (Exception e) {
+					System.out.println(Colorize.red("Invalid JSON input."));
+				}
+			} else {
+				return null;
+			}
+		}
+
 	}
 
 	protected static Date readExpirationDate() {

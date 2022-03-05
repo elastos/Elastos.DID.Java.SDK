@@ -28,6 +28,7 @@ import java.io.PrintStream;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.elastos.did.DID;
@@ -229,7 +230,7 @@ public class Credentials {
 					return -1;
 				}
 
-				DID did = didString.isEmpty() ? getActiveDid() : toDid(didString);;
+				DID did = didString.isEmpty() ? getActiveDid() : toDid(didString);
 				byte[] binId = new byte[16];
 				new SecureRandom().nextBytes(binId);
 				DIDURL id = new DIDURL(did, "#" + Base58.encode(binId));
@@ -256,17 +257,9 @@ public class Credentials {
 					vb.types(types);
 				}
 
-				while (true) {
-					String subject = System.console().readLine("Subject(JSON format): ").trim();
-					if (!subject.isEmpty()) {
-						try {
-							vb.properties(subject);
-							break;
-						} catch (Exception e) {
-							System.out.println(Colorize.red("Invalid JSON input."));
-						}
-					}
-				}
+				Map<String, Object> subject = readJson("Subject(JSON format): ");
+				if (subject != null && !subject.isEmpty())
+					vb.properties(subject);
 
 				Date expiration = readExpirationDate();
 				if (expiration != null)

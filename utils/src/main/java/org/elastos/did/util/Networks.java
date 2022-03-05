@@ -36,13 +36,13 @@ description = "Networks management commands.", subcommands = {
 		Networks.Delete.class,
 })
 public class Networks extends CommandBase implements Callable<Integer> {
-    @Override
-    public Integer call() {
+	@Override
+	public Integer call() {
 		Network network = getContext().getActiveNetwork();
 		System.out.println("Active network: " + Colorize.green(network.toString()));
 
 		return 0;
-    }
+	}
 
 	@Command(name = "switch", mixinStandardHelpOptions = true, version = "2.0",
 			description = "Switch the active network.", sortOptions = false)
@@ -135,7 +135,7 @@ public class Networks extends CommandBase implements Callable<Integer> {
 					return 0;
 				}
 
-				System.out.println("name                      RPC Endpoint");
+				System.out.println("name					  RPC Endpoint");
 				System.out.println("------------------------  --------------------------------");
 				for (Network network : networks.values())
 					System.out.format("%-24s  %s\n", network.getName(), network.getRpcEndpint());

@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -35,10 +36,14 @@ import org.elastos.did.Constants;
 import org.elastos.did.DID;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
+import org.elastos.did.DIDURL;
 import org.elastos.did.RootIdentity;
 import org.elastos.did.TransferTicket;
+import org.elastos.did.VerifiableCredential;
 import org.elastos.did.backend.DIDBiography;
 import org.elastos.did.backend.DIDTransaction;
+import org.elastos.did.crypto.Base58;
+import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
 
@@ -52,6 +57,7 @@ description = "DID management commands.", subcommands = {
 		DIDs.Resolve.class,
 		DIDs.Show.class,
 		DIDs.Create.class,
+		DIDs.Edit.class,
 		DIDs.CreateCustomizedDid.class,
 		DIDs.AcquireCustomizedDid.class,
 		DIDs.TransferCustomizedDid.class,
@@ -277,6 +283,340 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 			}
 		}
 	}
+
+	@Command(name = "edit", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Modify the DID document.", subcommands = {
+					Edit.PublicKeys.class,
+					Edit.Services.class,
+					Edit.Credentials.class
+			})
+	public static class Edit extends CommandBase {
+		@Command(name = "pk", mixinStandardHelpOptions = true, version = "2.0",
+				description = "Update public keys.", subcommands = {
+						PublicKeys.Add.class,
+						PublicKeys.Remove.class
+				})
+		public static class PublicKeys extends CommandBase {
+			@Command(name = "add", mixinStandardHelpOptions = true, version = "2.0",
+					description = "Add a new public key.", sortOptions = false)
+			public static class Add extends CommandBase implements Callable<Integer> {
+				@Option(names = {"-i", "--id"}, description = "Public key id, default use random.")
+				private String id = null;
+
+				@Option(names = {"-t", "--type"}, description = "Public key type, default is ECDSAsecp256r1.")
+				private String type = Constants.DEFAULT_PUBLICKEY_TYPE;
+
+				@Option(names = {"-c", "--controller"}, description = "Public key contoller, default is self.")
+				private String controller = null;
+
+				@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+				private boolean verboseErrors = false;
+
+				@Parameters(paramLabel = "PK", index = "0", defaultValue = "", description = "The public key base58 string.")
+				private String pk;
+
+				@Override
+				public Integer call() {
+					try {
+						if (getActiveIdentity() == null) {
+							System.out.println(Colorize.red("No active identity"));
+							return -1;
+						}
+
+						DID did = getActiveDid();
+
+						if (id == null) {
+							byte[] binId = new byte[16];
+							new SecureRandom().nextBytes(binId);
+							id = "#" + Base58.encode(binId);
+						}
+
+						DIDURL pkId = toDidUrl(did, id);
+						DID pkController = controller != null ? toDid(controller) : did;
+
+						DIDStore store = getActiveStore();
+						DIDDocument doc = store.loadDid(did);
+
+						String password = CommandContext.getPassword();
+
+						byte[] sk = null;
+						if (pk.isEmpty()) {
+							HDKey key = HDKey.deserializeBase58(doc.derive(id, 0, password));
+							pk = key.getPublicKeyBase58();
+							sk = key.serialize();
+						}
+
+						DIDDocument.Builder db = doc.edit();
+
+						db.addPublicKey(pkId, type, pkController, pk);
+						if (pkController.equals(did))
+							db.addAuthenticationKey(pkId);
+						else
+							db.addAuthorizationKey(pkId);
+
+						doc = db.seal(password);
+
+						store.storePrivateKey(pkId, sk, password);
+						store.storeDid(doc);
+
+						return 0;
+					} catch (Exception e) {
+						System.err.println(Colorize.red("Error: " + e.getMessage()));
+						if (verboseErrors)
+							e.printStackTrace(System.err);
+
+						return -1;
+					}
+				}
+			}
+
+			@Command(name = "remove", mixinStandardHelpOptions = true, version = "2.0",
+					description = "Remove a public key.", sortOptions = false)
+			public static class Remove extends CommandBase implements Callable<Integer> {
+				@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+				private boolean verboseErrors = false;
+
+				@Parameters(paramLabel = "ID", index = "0", description = "The public key id.")
+				private String id;
+
+				@Override
+				public Integer call() {
+					try {
+						if (getActiveIdentity() == null) {
+							System.out.println(Colorize.red("No active identity"));
+							return -1;
+						}
+
+						DID did = getActiveDid();
+						DIDURL pkId = toDidUrl(did, id);
+
+						DIDStore store = getActiveStore();
+						DIDDocument doc = store.loadDid(did);
+
+						DIDDocument.Builder db = doc.edit();
+						db.removePublicKey(pkId, true);
+
+						String password = CommandContext.getPassword();
+						doc = db.seal(password);
+
+						store.storeDid(doc);
+
+						return 0;
+					} catch (Exception e) {
+						System.err.println(Colorize.red("Error: " + e.getMessage()));
+						if (verboseErrors)
+							e.printStackTrace(System.err);
+
+						return -1;
+					}
+				}
+			}
+		}
+
+		@Command(name = "svc", mixinStandardHelpOptions = true, version = "2.0",
+				description = "Update services.", subcommands = {
+						Services.Add.class,
+						Services.Remove.class
+				})
+		public static class Services extends CommandBase {
+			@Command(name = "add", mixinStandardHelpOptions = true, version = "2.0",
+					description = "Add a new service.", sortOptions = false)
+			public static class Add extends CommandBase implements Callable<Integer> {
+				@Option(names = {"-i", "--id"}, description = "Service id, default use random.")
+				private String id = null;
+
+				@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+				private boolean verboseErrors = false;
+
+				@Parameters(paramLabel = "TYPE", index = "0", description = "The service type.")
+				private String type;
+
+				@Parameters(paramLabel = "ENDPOINT", index = "1", description = "The service endpoint.")
+				private String endpoint;
+
+				@Override
+				public Integer call() {
+					try {
+						if (getActiveIdentity() == null) {
+							System.out.println(Colorize.red("No active identity"));
+							return -1;
+						}
+
+						DID did = getActiveDid();
+
+						if (id == null) {
+							byte[] binId = new byte[16];
+							new SecureRandom().nextBytes(binId);
+							id = "#" + Base58.encode(binId);
+						}
+
+						DIDURL svcId = toDidUrl(did, id);
+
+						DIDStore store = getActiveStore();
+						DIDDocument doc = store.loadDid(did);
+
+						DIDDocument.Builder db = doc.edit();
+						db.addService(svcId, type, endpoint);
+
+						String password = CommandContext.getPassword();
+						doc = db.seal(password);
+
+						store.storeDid(doc);
+
+						return 0;
+					} catch (Exception e) {
+						System.err.println(Colorize.red("Error: " + e.getMessage()));
+						if (verboseErrors)
+							e.printStackTrace(System.err);
+
+						return -1;
+					}
+				}
+			}
+
+			@Command(name = "remove", mixinStandardHelpOptions = true, version = "2.0",
+					description = "Remove a service.", sortOptions = false)
+			public static class Remove extends CommandBase implements Callable<Integer> {
+				@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+				private boolean verboseErrors = false;
+
+				@Parameters(paramLabel = "ID", index = "0", description = "The service id.")
+				private String id;
+
+				@Override
+				public Integer call() {
+					try {
+						if (getActiveIdentity() == null) {
+							System.out.println(Colorize.red("No active identity"));
+							return -1;
+						}
+
+						DID did = getActiveDid();
+						DIDURL svcId = toDidUrl(did, id);
+
+						DIDStore store = getActiveStore();
+						DIDDocument doc = store.loadDid(did);
+
+						DIDDocument.Builder db = doc.edit();
+						db.removeService(svcId);
+
+						String password = CommandContext.getPassword();
+						doc = db.seal(password);
+
+						store.storeDid(doc);
+
+						return 0;
+					} catch (Exception e) {
+						System.err.println(Colorize.red("Error: " + e.getMessage()));
+						if (verboseErrors)
+							e.printStackTrace(System.err);
+
+						return -1;
+					}
+				}
+			}
+		}
+
+		@Command(name = "vc", mixinStandardHelpOptions = true, version = "2.0",
+				description = "Update credentials.", subcommands = {
+						Credentials.Add.class,
+						Credentials.Remove.class
+				})
+		public static class Credentials extends CommandBase {
+			@Command(name = "add", mixinStandardHelpOptions = true, version = "2.0",
+					description = "Add a new embedded credential.", sortOptions = false)
+			public static class Add extends CommandBase implements Callable<Integer> {
+				@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+				private boolean verboseErrors = false;
+
+				@Parameters(paramLabel = "ID", index = "0", description = "The existing credential id.")
+				private String id;
+
+				@Override
+				public Integer call() {
+					try {
+						if (getActiveIdentity() == null) {
+							System.out.println(Colorize.red("No active identity"));
+							return -1;
+						}
+
+						DID did = getActiveDid();
+
+						DIDURL vcId = toDidUrl(did, id);
+
+						DIDStore store = getActiveStore();
+
+						VerifiableCredential vc = store.loadCredential(vcId);
+						if (vc == null) {
+							System.out.println(Colorize.red("Credenital " + vcId + " not exists."));
+							return -1;
+						}
+
+						DIDDocument doc = store.loadDid(did);
+
+						DIDDocument.Builder db = doc.edit();
+						db.addCredential(vc);
+
+						String password = CommandContext.getPassword();
+						doc = db.seal(password);
+
+						store.storeDid(doc);
+
+						return 0;
+					} catch (Exception e) {
+						System.err.println(Colorize.red("Error: " + e.getMessage()));
+						if (verboseErrors)
+							e.printStackTrace(System.err);
+
+						return -1;
+					}
+				}
+			}
+
+			@Command(name = "remove", mixinStandardHelpOptions = true, version = "2.0",
+					description = "Remove an embedded credential.", sortOptions = false)
+			public static class Remove extends CommandBase implements Callable<Integer> {
+				@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+				private boolean verboseErrors = false;
+
+				@Parameters(paramLabel = "ID", index = "0", description = "The credential id.")
+				private String id;
+
+				@Override
+				public Integer call() {
+					try {
+						if (getActiveIdentity() == null) {
+							System.out.println(Colorize.red("No active identity"));
+							return -1;
+						}
+
+						DID did = getActiveDid();
+						DIDURL vcId = toDidUrl(did, id);
+
+						DIDStore store = getActiveStore();
+						DIDDocument doc = store.loadDid(did);
+
+						DIDDocument.Builder db = doc.edit();
+						db.removeCredential(vcId);
+
+						String password = CommandContext.getPassword();
+						doc = db.seal(password);
+
+						store.storeDid(doc);
+
+						return 0;
+					} catch (Exception e) {
+						System.err.println(Colorize.red("Error: " + e.getMessage()));
+						if (verboseErrors)
+							e.printStackTrace(System.err);
+
+						return -1;
+					}
+				}
+			}
+		}
+	}
+
 
 	@Command(name = "createcid", mixinStandardHelpOptions = true, version = "2.0",
 			description = "Create a new customized DID.", sortOptions = false)
