@@ -109,12 +109,12 @@ public class Web3Adapter extends DefaultDIDAdapter {
 		return credential;
 	}
 
-    protected BigInteger getNonce() throws IOException {
-        EthGetTransactionCount ethGetTransactionCount = getWeb3j().ethGetTransactionCount(
-        		getCredential().getAddress(), DefaultBlockParameterName.PENDING).send();
+	protected BigInteger getNonce() throws IOException {
+		EthGetTransactionCount ethGetTransactionCount = getWeb3j().ethGetTransactionCount(
+				getCredential().getAddress(), DefaultBlockParameterName.PENDING).send();
 
-        return ethGetTransactionCount.getTransactionCount();
-    }
+		return ethGetTransactionCount.getTransactionCount();
+	}
 
 	public void setBatchMode(boolean batch) {
 		this.batchMode  = batch;

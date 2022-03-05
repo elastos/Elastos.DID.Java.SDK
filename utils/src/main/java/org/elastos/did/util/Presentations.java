@@ -22,9 +22,17 @@
 
 package org.elastos.did.util;
 
+import java.io.File;
+import java.io.PrintStream;
+import java.security.SecureRandom;
 import java.util.concurrent.Callable;
 
+import org.elastos.did.DID;
+import org.elastos.did.DIDStore;
+import org.elastos.did.DIDURL;
+import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
+import org.elastos.did.crypto.Base58;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -32,9 +40,101 @@ import picocli.CommandLine.Parameters;
 
 @Command(name = "vp", mixinStandardHelpOptions = true, version = "2.0",
 description = "Presentation management commands.", subcommands = {
+		Presentations.Create.class,
 		Presentations.Verify.class
 })
 public class Presentations extends CommandBase {
+	@Command(name = "create", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Create a presentation.", sortOptions = false)
+	public static class Create extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-r", "--realm"}, description = "Realm for the presentation.")
+		private String realm = null;
+
+		@Option(names = {"-n", "--nonce"}, description = "Nonce for the presentation.")
+		private String nonce = null;
+
+		@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
+		private boolean compact = false;
+
+		@Option(names = {"-o", "--out"}, description = "Output file, default is STDOUT.")
+		private String outputFile;
+
+		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+		private boolean verboseErrors = false;
+
+		@Override
+		public Integer call() {
+			try {
+				if (getActiveIdentity() == null) {
+					System.out.println(Colorize.red("No active identity"));
+					return -1;
+				}
+
+				DID did = getActiveDid();
+
+				byte[] binId = new byte[16];
+				new SecureRandom().nextBytes(binId);
+				DIDURL id = new DIDURL(did, "#" + Base58.encode(binId));
+
+				DIDStore store = getActiveStore();
+
+				VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(did, store);
+
+				while (true) {
+					String idstr = System.console().readLine("Add credential(ID): ");
+					if (idstr == null || idstr.isEmpty())
+						break;
+
+					DIDURL vcId = null;
+					try {
+						vcId = toDidUrl(did, idstr);
+					} catch (Exception e) {
+						System.out.println(Colorize.red("Invalid DIDURL."));
+						continue;
+					}
+
+					VerifiableCredential vc = store.loadCredential(vcId);
+					if (vc == null) {
+						System.out.println(Colorize.red("Credential " + vcId + " not exists."));
+						continue;
+					}
+
+					try {
+						pb.credentials(vc);
+					} catch (Exception e) {
+						System.out.println(Colorize.red(e.getClass().getName() + ": " + e.getMessage()));
+					}
+				}
+
+				pb.id(id);
+				pb.realm(realm).nonce(nonce);
+
+				VerifiablePresentation vp = pb.seal(CommandContext.getPassword());
+
+				PrintStream out = System.out;
+				if (outputFile != null) {
+					File output = toFile(outputFile);
+					out = new PrintStream(output);
+				} else {
+					System.out.println("\nPresentation:");
+				}
+
+				printJson(out, compact, vp.serialize(true));
+
+				if (outputFile != null)
+					out.close();
+
+				return 0;
+			} catch(Exception e) {
+				System.err.println(Colorize.red("Error: " + e.getMessage()));
+				if (verboseErrors)
+					e.printStackTrace(System.err);
+
+				return -1;
+			}
+		}
+	}
+
 	@Command(name = "verify", mixinStandardHelpOptions = true, version = "verifyvp 2.0",
 			description = "Verify the verifiable presentation.")
 	public static class Verify extends CommandBase implements Callable<Integer> {

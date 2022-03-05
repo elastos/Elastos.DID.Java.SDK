@@ -23,10 +23,18 @@
 package org.elastos.did.util;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.PrintStream;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
+import org.elastos.did.Constants;
+import org.elastos.did.DIDDocument;
 import org.elastos.did.crypto.Base64;
+import org.elastos.did.jwt.JwtBuilder;
 import org.elastos.did.jwt.JwtParser;
 import org.elastos.did.jwt.JwtParserBuilder;
 
@@ -36,9 +44,74 @@ import picocli.CommandLine.Parameters;
 
 @Command(name = "jwt", mixinStandardHelpOptions = true, version = "2.0",
 description = "JWT management commands.", subcommands = {
+		JWTs.Create.class,
 		JWTs.Verify.class
 })
 public class JWTs extends CommandBase {
+	@Command(name = "create", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Create a JTW/JWS token.")
+	public static class Create extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-o", "--out"}, description = "Output file, default is STDOUT.")
+		private String outputFile;
+
+		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+		private boolean verboseErrors = false;
+
+		@Override
+		public Integer call() {
+			try {
+				if (getActiveIdentity() == null) {
+					System.out.println(Colorize.red("No active identity"));
+					return -1;
+				}
+
+				DIDDocument doc = getActiveStore().loadDid(getActiveDid());
+				JwtBuilder jb = doc.jwtBuilder();
+
+				Map<String, Object> headers = readJson("Headers(Optional, JSON): ");
+				if (headers != null && !headers.isEmpty())
+					jb.addHeaders(headers);
+
+				Map<String, Object> claims = readJson("Claims(JSON): ");
+				if (claims != null && !claims.isEmpty())
+					jb.addClaims(claims);
+
+
+				Date expires = readExpirationDate();
+				if (expires != null)
+					jb.setExpiration(expires);
+
+				Calendar cal = Calendar.getInstance(Constants.UTC);
+				jb.setNotBefore(cal.getTime());
+				jb.setIssuedAt(cal.getTime());
+
+				jb.sign(CommandContext.getPassword());
+				String token = jb.compact();
+
+				PrintStream out = System.out;
+				if (outputFile != null) {
+					File output = toFile(outputFile);
+					out = new PrintStream(output);
+				} else {
+					System.out.println("\nJWT Token:");
+				}
+
+				out.println(token);
+
+				if (outputFile != null)
+					out.close();
+
+				return 0;
+			} catch(Exception e) {
+				System.err.println("Error: " + e.getMessage());
+				if (verboseErrors)
+					e.printStackTrace(System.err);
+
+				return -1;
+			}
+		}
+	}
+
 	@Command(name = "verify", mixinStandardHelpOptions = true, version = "2.0",
 			description = "Verify the JTW/JWS token.")
 	public static class Verify extends CommandBase implements Callable<Integer> {

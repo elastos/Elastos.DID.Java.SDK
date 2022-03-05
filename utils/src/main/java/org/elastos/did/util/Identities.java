@@ -59,6 +59,7 @@ import picocli.CommandLine.Parameters;
 				Identities.List.class,
 				Identities.Create.class,
 				Identities.Delete.class,
+				Identities.Export.class,
 				Identities.Synchronize.class,
 				Identities.Recover.class
 })
@@ -315,6 +316,76 @@ public class Identities extends CommandBase implements Callable<Integer> {
 					e.printStackTrace(System.err);
 
 				return -1;
+			}
+		}
+	}
+
+	@Command(name = "export", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Export the identity.", subcommands = {
+					Export.Mnemonic.class,
+					Export.Store.class
+			})
+	public static class Export extends CommandBase {
+		@Command(name = "mnemonic", mixinStandardHelpOptions = true, version = "2.0",
+				description = "Export the identity's mnemonic.", sortOptions = false)
+		public static class Mnemonic extends CommandBase implements Callable<Integer> {
+			@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+			private boolean verboseErrors = false;
+
+			@Override
+			public Integer call() {
+				try {
+					if (getActiveIdentity() == null) {
+						System.out.println(Colorize.red("No active identity"));
+						return -1;
+					}
+
+					RootIdentity id = getActiveRootIdentity();
+					String mnemonic = id.exportMnemonic(CommandContext.getPassword());
+					System.out.println("Mnemonic: " + Colorize.green(mnemonic));
+
+					return 0;
+				} catch (Exception e) {
+					System.err.println(Colorize.red("Error: " + e.getMessage()));
+					if (verboseErrors)
+						e.printStackTrace(System.err);
+
+					return -1;
+				}
+			}
+		}
+
+		@Command(name = "store", mixinStandardHelpOptions = true, version = "2.0",
+				description = "Export the DID store.", sortOptions = false)
+		public static class Store extends CommandBase implements Callable<Integer> {
+			@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+			private boolean verboseErrors = false;
+
+			@Parameters(paramLabel = "FILE", index = "0", description = "The export file name.")
+			private String file;
+
+			@Override
+			public Integer call() {
+				try {
+					if (getActiveIdentity() == null) {
+						System.out.println(Colorize.red("No active identity"));
+						return -1;
+					}
+
+					File exportFile = toFile(file);
+					DIDStore store = getActiveStore();
+					String password = CommandContext.getPassword();
+
+					store.exportStore(exportFile, password, password);
+
+					return 0;
+				} catch (Exception e) {
+					System.err.println(Colorize.red("Error: " + e.getMessage()));
+					if (verboseErrors)
+						e.printStackTrace(System.err);
+
+					return -1;
+				}
 			}
 		}
 	}
