@@ -38,6 +38,23 @@ jar {
 	}
 
 	archiveBaseName = 'elastos-did-utils'
+	
+	doLast {
+		copy {
+			into 'build/lib'
+			from configurations.runtimeClasspath
+		}
+		
+		copy {
+			into 'build/lib'
+			from jar
+		}
+	
+		copy {
+			into 'build/bin'
+			from 'src/main/resources/bin'
+		}
+	}
 }
 
 task fatjar(type: Jar) {
@@ -51,11 +68,22 @@ task fatjar(type: Jar) {
 	with jar
 }
 
-task copylibs(type: Copy) {
-    into "lib"
-    from configurations.runtimeClasspath
-    from jar
+task tarball(type: Tar) {
+	into ('didutils/bin'){
+		from 'build/bin'
+		include 'didutils'
+	}
+
+	into ('didutils/lib'){
+		from 'build/lib'
+		include '*'
+	}
+
+	destinationDirectory = file('build')
+	archiveBaseName = 'didutils'
+	archiveExtension = 'tar.gz'
+	compression = Compression.GZIP
 }
 
-build.finalizedBy(copylibs)
+tarball { dependsOn("build") }
 
