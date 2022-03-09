@@ -718,7 +718,7 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 				System.out.println("DID " + newDoc.getSubject() + " created and acquire.");
 				System.out.println("\nDID document:");
-				printJson(System.out, false, doc.serialize(true));
+				printJson(System.out, false, newDoc.serialize(true));
 
 				return 0;
 			} catch (Exception e) {

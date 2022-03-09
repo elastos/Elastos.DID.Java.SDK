@@ -95,6 +95,9 @@ public class Networks extends CommandBase implements Callable<Integer> {
 		@Parameters(paramLabel = "RPC-ENDPOINT", index = "1", description = "The RPC endpoint for the network.")
 		private String rpcEndpoint;
 
+		@Parameters(paramLabel = "CONTRACT-ADDRESS", index = "2", description = "The DID contract address.")
+		private String contractAddress;
+
 		@Override
 		public Integer call() {
 			try {
@@ -103,7 +106,7 @@ public class Networks extends CommandBase implements Callable<Integer> {
 					return -1;
 				}
 
-				Network network = new Network(name, rpcEndpoint, chainId);
+				Network network = new Network(name, rpcEndpoint, contractAddress, chainId);
 				getContext().addNetwork(network);
 				System.out.println("Network " + name + " added.");
 				getContext().switchNetwork(name);

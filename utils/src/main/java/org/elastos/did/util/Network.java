@@ -29,8 +29,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Network {
-	public static final Network MAINNET = new Network("mainnet", "mainnet", null);
-	public static final Network TESTNET = new Network("testnet", "testnet", null);
+	public static final Network MAINNET = new Network("mainnet", "mainnet",
+			"0x46E5936a9bAA167b3368F4197eDce746A66f7a7a", null);
+	public static final Network TESTNET = new Network("testnet", "testnet",
+			"0xF654c3cBBB60D7F4ac7cDA325d51E62f47ACD436", null);
 
 	@JsonIgnore
 	private String name;
@@ -38,18 +40,22 @@ public class Network {
 	@JsonProperty
 	private String rpcEndpoint;
 	@JsonProperty
+	private String contractAddress;
+	@JsonProperty
 	@JsonInclude(Include.NON_EMPTY)
 	private Long chainId;
 
 	@JsonCreator
 	protected Network(@JsonProperty(value = "rpcEndpoint") String rpcEndpoint,
+			@JsonProperty(value = "contractAddress") String contractAddress,
 			@JsonProperty(value = "chainId") Long chainId) {
-		this(null, rpcEndpoint, chainId);
+		this(null, rpcEndpoint, contractAddress, chainId);
 	}
 
-	Network(String name, String rpcEndpoint, Long chainId) {
+	Network(String name, String rpcEndpoint, String contractAddress, Long chainId) {
 		this.name = name;
 		this.rpcEndpoint = rpcEndpoint;
+		this.contractAddress = contractAddress;
 		this.chainId = chainId;
 	}
 
@@ -63,6 +69,10 @@ public class Network {
 
 	public String getRpcEndpint() {
 		return rpcEndpoint;
+	}
+
+	public String getContractAddress() {
+		return contractAddress;
 	}
 
 	public Long getChainId() {
