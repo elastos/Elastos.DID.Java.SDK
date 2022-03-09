@@ -146,11 +146,11 @@ public class CommandContext extends DIDEntity<CommandContext> {
 			return networks.get(name);
 	}
 
-	protected void addNetwork(String name, String rpcEndpoint, Long chainId) throws IOException {
+	protected void addNetwork1(String name, String rpcEndpoint, String contractAddress, Long chainId) throws IOException {
 		if (networks.containsKey(name))
 			throw new IllegalArgumentException("Network " + name + " already exists");
 
-		Network network = new Network(name, rpcEndpoint, chainId);
+		Network network = new Network(name, rpcEndpoint, contractAddress, chainId);
 		networks.put(network.getName(), network);
 
 		save();

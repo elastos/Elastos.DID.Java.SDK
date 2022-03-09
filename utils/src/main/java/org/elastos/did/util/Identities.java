@@ -215,9 +215,18 @@ public class Identities extends CommandBase implements Callable<Integer> {
 				id.setAsDefault();
 				System.out.println("Identity " + name + ":" + id.getId() + " created.");
 
-				DIDDocument doc = id.newDid(password);
-				id.setDefaultDid(doc.getSubject());
-				System.out.println("DID " + doc.getSubject() + " created.");
+				if (importMode) {
+					id.synchronize();
+					System.out.println("Identity " + name + ":" + id.getId() + " synchronized.");
+				}
+
+				if (!importMode || store.listDids().isEmpty()) {
+					DIDDocument doc = id.newDid(password);
+					id.setDefaultDid(doc.getSubject());
+					System.out.println("DID " + doc.getSubject() + " created.");
+				} else {
+					id.setDefaultDid(id.getDid(0));
+				}
 
 				store.close();
 

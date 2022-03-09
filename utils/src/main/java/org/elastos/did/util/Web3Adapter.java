@@ -60,11 +60,12 @@ public class Web3Adapter extends DefaultDIDAdapter {
 	private static final int MAX_BATCH_SIZE = 64;
 
 	// mainnet or testnet
-	private static String contractAddress = "0xF654c3cBBB60D7F4ac7cDA325d51E62f47ACD436";
+	//private static String  = "0xF654c3cBBB60D7F4ac7cDA325d51E62f47ACD436";
 
 	private Web3j web3j;
 	private File walletFile;
 	private Credentials credential;
+	private String contractAddress;
 	private long chainId;
 	private BigInteger nonce;
 	private boolean batchMode;
@@ -73,6 +74,7 @@ public class Web3Adapter extends DefaultDIDAdapter {
 	public Web3Adapter(Network network, File walletFile) {
 		super(network.getRpcEndpint());
 
+		this.contractAddress = network.getContractAddress();
 		this.chainId = network.getChainId() == null ? -1 : network.getChainId();
 		this.walletFile = walletFile;
 		this.batchMode = false;
