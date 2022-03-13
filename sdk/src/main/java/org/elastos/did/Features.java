@@ -22,13 +22,26 @@
 
 package org.elastos.did;
 
+/**
+ * The global features for the DID SDK.
+ */
 public class Features {
 	private static boolean enabledJsonLdContext = false;
 
+	/**
+	 * Enable or disable the JSON-LD feature.
+	 *
+	 * @param enabled true to enable the JSON-LD feature; false to disable
+	 */
 	public static void enableJsonLdContext(boolean enabled) {
 		enabledJsonLdContext = enabled;
 	}
 
+	/**
+	 * Check if the JSON-LD feature is enabled or not.
+	 *
+	 * @return true if the JSON-LD feature is enabled, false otherwise
+	 */
 	public static boolean isEnabledJsonLdContext() {
 		return enabledJsonLdContext;
 	}

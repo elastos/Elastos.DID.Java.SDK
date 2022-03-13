@@ -87,3 +87,4 @@ task tarball(type: Tar) {
 
 tarball { dependsOn("build") }
 
+tasks.withType(Javadoc).all { enabled = false }
