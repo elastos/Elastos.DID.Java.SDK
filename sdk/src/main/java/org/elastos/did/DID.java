@@ -187,9 +187,22 @@ public class DID implements Comparable<DID> {
 	 * Check the DID is deactivated or not.
 	 *
 	 * @return the DID deactivated status
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
-	public boolean isDeactivated() {
-		return getMetadata().isDeactivated();
+	public boolean isDeactivated() throws DIDResolveException {
+		if (getMetadata().isDeactivated())
+			return true;
+
+		DIDBiography bio = DIDBackend.getInstance().resolveDidBiography(this);
+		if (bio == null)
+			return false;
+
+		boolean deactivated = bio.getStatus() == DIDBiography.Status.DEACTIVATED;
+
+		if (deactivated)
+			getMetadata().setDeactivated(deactivated);
+
+		return deactivated;
 	}
 
 	/**
