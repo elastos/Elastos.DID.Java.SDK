@@ -111,8 +111,17 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	protected final static String CREATED = "created";
 	protected final static String SIGNATURE = "signature";
 
+	/**
+	 * W3C verifiable credential context URI.
+	 */
     public final static String W3C_CREDENTIAL_CONTEXT = "https://www.w3.org/2018/credentials/v1";
+	/**
+	 * Elastos verifiable credential context URI.
+	 */
     public final static String ELASTOS_CREDENTIAL_CONTEXT = "https://ns.elastos.org/credentials/v1";
+	/**
+	 * The default verifiable credential type.
+	 */
     public final static String DEFAULT_CREDENTIAL_TYPE = "VerifiableCredential";
 
 	private static final Logger log = LoggerFactory.getLogger(VerifiableCredential.class);
@@ -621,7 +630,6 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * Check if this credential object is expired or not.
 	 *
 	 * @return whether the credential object is expired
-	 * @throws DIDResolveException if error occurs when resolving the DIDs
 	 */
 	public boolean isExpired() {
 		Calendar now = Calendar.getInstance(Constants.UTC);

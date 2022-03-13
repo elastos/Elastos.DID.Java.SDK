@@ -147,8 +147,17 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	protected final static String CREATED = "created";
 	protected final static String SIGNATURE_VALUE = "signatureValue";
 
+	/**
+	 * W3C DID context URI.
+	 */
 	public final static String W3C_DID_CONTEXT = "https://www.w3.org/ns/did/v1";
+	/**
+	 * Elastos DID context URI.
+	 */
 	public final static String ELASTOS_DID_CONTEXT = "https://ns.elastos.org/did/v1";
+	/**
+	 * W3C DID security context URI.
+	 */
 	public final static String W3ID_SECURITY_CONTEXT = "https://w3id.org/security/v1";
 
 	@JsonProperty(CONTEXT)
@@ -898,6 +907,11 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 			throw new NoEffectiveControllerException(getSubject().toString());
 	}
 
+	/**
+	 * Check if this document is a customized DID document.
+	 *
+	 * @return true if the document is a customized DID document, false otherwise
+	 */
 	public boolean isCustomizedDid() {
 		return defaultPublicKey == null;
 	}
@@ -2317,6 +2331,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 * Check if this DIDDocument is deactivated.
 	 *
 	 * @return true if deactivated, false otherwise
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public boolean isDeactivated() throws DIDResolveException {
 		if (getMetadata().isDeactivated())
@@ -2353,6 +2368,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 *
 	 * @param listener the listener for the verification events and messages
 	 * @return true if valid, false otherwise
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public boolean isValid(VerificationEventListener listener) throws DIDResolveException {
 		if (isDeactivated()) {
@@ -2414,6 +2430,7 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 	 * Check if this DIDDocument is valid.
 	 *
 	 * @return true if valid, false otherwise
+	 * @throws DIDResolveException if an error occurred when resolving DID
 	 */
 	public boolean isValid() throws DIDResolveException {
 		return isValid(null);

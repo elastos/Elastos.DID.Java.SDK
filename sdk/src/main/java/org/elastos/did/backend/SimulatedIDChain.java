@@ -756,6 +756,11 @@ public class SimulatedIDChain {
 		log.info("Simulated IDChain stopped");
 	}
 
+	/**
+	 * Get the usage statistics.
+	 *
+	 * @return the usage statistics in string representation.
+	 */
 	public String getStatistics() {
 		return stat.toString();
 	}

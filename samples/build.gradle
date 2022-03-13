@@ -32,3 +32,5 @@ jar {
 
 	archiveBaseName = 'elastos-did-examples'
 }
+
+tasks.withType(Javadoc).all { enabled = false }

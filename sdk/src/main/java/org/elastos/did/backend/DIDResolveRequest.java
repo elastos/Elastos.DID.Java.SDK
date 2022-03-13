@@ -37,6 +37,9 @@ public class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, DIDReso
 	protected static final String PARAMETER_DID = "did";
 	protected static final String PARAMETER_ALL = "all";
 
+	/**
+	 * The resolve method name.
+	 */
 	public static final String METHOD_NAME = "did_resolveDID";
 
 	/**

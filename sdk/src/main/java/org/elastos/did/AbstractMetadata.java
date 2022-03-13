@@ -429,6 +429,11 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 			store = metadata.store;
 	}
 
+	/**
+	 * Update current metadata object from the specified source metadata object.
+	 *
+	 * @param metadata the source metadata object
+	 */
 	public void update(AbstractMetadata metadata) {
 		if (metadata == this || metadata == null)
 			return;
