@@ -81,6 +81,7 @@ task tarball(type: Tar) {
 
 	destinationDirectory = file('build')
 	archiveBaseName = 'didutils'
+	archiveVersion = project.version + "-" + new Date().format("yyyyMMdd")
 	archiveExtension = 'tar.gz'
 	compression = Compression.GZIP
 }
