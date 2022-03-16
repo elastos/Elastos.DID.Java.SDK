@@ -23,7 +23,6 @@
 package org.elastos.did;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.io.File;
 import java.io.IOException;
@@ -4445,19 +4444,21 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		 * @return the Builder instance for method chaining
 		 */
 		public Builder addDefaultContexts() {
-			checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+			if (Features.isEnabledJsonLdContext()) {
+				if (document.context == null)
+					document.context = new ArrayList<String>();
 
-			if (document.context == null)
-				document.context = new ArrayList<String>();
+				if (!document.context.contains(W3C_DID_CONTEXT))
+					document.context.add(W3C_DID_CONTEXT);
 
-			if (!document.context.contains(W3C_DID_CONTEXT))
-				document.context.add(W3C_DID_CONTEXT);
+				if (!document.context.contains(ELASTOS_DID_CONTEXT))
+					document.context.add(ELASTOS_DID_CONTEXT);
 
-			if (!document.context.contains(ELASTOS_DID_CONTEXT))
-				document.context.add(ELASTOS_DID_CONTEXT);
-
-			if (!document.context.contains(W3ID_SECURITY_CONTEXT))
-				document.context.add(W3ID_SECURITY_CONTEXT);
+				if (!document.context.contains(W3ID_SECURITY_CONTEXT))
+					document.context.add(W3ID_SECURITY_CONTEXT);
+			} else {
+				log.warn("JSON-LD context support not enabled");
+			}
 
 			return this;
 		}
@@ -4469,13 +4470,15 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		 * @return the Builder instance for method chaining
 		 */
 		public Builder addContext(String uri) {
-			checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+			if (Features.isEnabledJsonLdContext()) {
+				if (document.context == null)
+					document.context = new ArrayList<String>();
 
-			if (document.context == null)
-				document.context = new ArrayList<String>();
-
-			if (!document.context.contains(uri))
-				document.context.add(uri);
+				if (!document.context.contains(uri))
+					document.context.add(uri);
+			} else {
+				log.warn("JSON-LD context support not enabled, the context {} will be ignored", uri);
+			}
 
 			return this;
 		}

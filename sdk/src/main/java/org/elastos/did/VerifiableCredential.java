@@ -2881,6 +2881,8 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 				if (!credential.context.contains(context))
 					credential.context.add(context);
+			} else {
+				log.warn("JSON-LD context support not enabled, the context {} will be ignored", context);
 			}
 
 			if (credential.type == null)
