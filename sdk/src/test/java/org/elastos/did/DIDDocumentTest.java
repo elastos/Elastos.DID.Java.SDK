@@ -1568,6 +1568,8 @@ public class DIDDocumentTest {
 	@ValueSource(strings = {"1", "2", "2.2"})
 	public void testAddCredential(String version) throws DIDException, IOException {
 		TestData.CompatibleData cd = testData.getCompatibleData(version);
+		// load issuer doc for vc verification
+		cd.getDocument("issuer");
 
 		testData.getRootIdentity();
 
@@ -1769,6 +1771,8 @@ public class DIDDocumentTest {
 	public void testRemoveCredential(String version) throws DIDException, IOException {
 		testData.getRootIdentity();
 		TestData.CompatibleData cd = testData.getCompatibleData(version);
+		// load issuer doc for vc verification
+		cd.getDocument("issuer");
 
 		DIDDocument doc = cd.getDocument("user1");
 		assertNotNull(doc);

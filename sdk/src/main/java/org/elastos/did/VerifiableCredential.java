@@ -23,6 +23,7 @@
 package org.elastos.did;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.io.File;
 import java.io.IOException;
@@ -717,6 +718,32 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		if (listener != null)
 			listener.succeeded(this, "VC %s: is genuine", getId());
+
+		return true;
+	}
+
+	// internal method for DIDDocument.Builder.addCredential,
+	// check the self-proclaimed credential that it's owner still not published
+	boolean isGenuineInternal(DIDDocument owner) {
+		checkState(isSelfProclaimed(), "The credential should be self-proclaimed");
+		checkArgument(getSubject().getId().equals(owner.getSubject()), "Invalid owner document");
+
+		if (!getId().getDid().equals(getSubject().getId()))
+			return false;
+
+		// Credential should signed by any authentication key.
+		if (!owner.isAuthenticationKey(proof.getVerificationMethod()))
+			return false;
+
+		// Unsupported public key type;
+		if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+			return false;
+
+		VerifiableCredential vc = new VerifiableCredential(this, false);
+		String json = vc.serialize(true);
+		if (!owner.verify(proof.getVerificationMethod(),
+				proof.getSignature(), json.getBytes()))
+			return false;
 
 		return true;
 	}

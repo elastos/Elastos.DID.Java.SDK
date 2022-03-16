@@ -5149,8 +5149,9 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		 *
 		 * @param vc the VerifiableCredential object to be add
 		 * @return the Builder instance for method chaining
+		 * @throws DIDResolveException if an error occurred when resolving DID
 		 */
-		public Builder addCredential(VerifiableCredential vc) {
+		public Builder addCredential(VerifiableCredential vc) throws DIDResolveException {
 			checkNotSealed();
 			checkArgument(vc != null, "Invalid credential");
 
@@ -5158,6 +5159,16 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 			if (!vc.getSubject().getId().equals(getSubject()))
 				throw new IllegalUsageException(vc.getSubject().getId().toString());
 
+			// The credential should be genuine
+			boolean genuine = vc.isSelfProclaimed() ?
+					vc.isGenuineInternal(document) : vc.isGenuine();
+			if (!genuine)
+				throw new IllegalArgumentException(new MalformedCredentialException(vc.getId().toString()));
+
+			return addCredentialUncheck(vc);
+		}
+
+		private Builder addCredentialUncheck(VerifiableCredential vc) {
 			if (document.credentials == null) {
 				document.credentials = new TreeMap<DIDURL, VerifiableCredential>();
 			} else {
@@ -5203,12 +5214,10 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 						.expirationDate(expirationDate)
 						.seal(storepass);
 
-				addCredential(vc);
+				return addCredentialUncheck(vc);
 			} catch (MalformedCredentialException ignore) {
 				throw new UnknownInternalException(ignore);
 			}
-
-			return this;
 		}
 
 		/**
@@ -5350,12 +5359,10 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 						.expirationDate(expirationDate)
 						.seal(storepass);
 
-				addCredential(vc);
+				return addCredentialUncheck(vc);
 			} catch (MalformedCredentialException ignore) {
 				throw new UnknownInternalException(ignore);
 			}
-
-			return this;
 		}
 
 		/**
