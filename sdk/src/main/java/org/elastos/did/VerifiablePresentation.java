@@ -49,6 +49,8 @@ import org.elastos.did.exception.IllegalUsageException;
 import org.elastos.did.exception.InvalidKeyException;
 import org.elastos.did.exception.MalformedCredentialException;
 import org.elastos.did.exception.MalformedPresentationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -117,6 +119,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	private Proof proof;
 
 	private Map<DIDURL, VerifiableCredential> credentials;
+
+	private static final Logger log = LoggerFactory.getLogger(VerifiablePresentation.class);
 
 	/**
 	 * The proof information for verifiable presentation.
@@ -1006,6 +1010,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
 				if (!presentation.context.contains(context))
 					presentation.context.add(context);
+			} else {
+				log.warn("JSON-LD context support not enabled, the context {} will be ignored", context);
 			}
 
 			if (presentation.type == null)
