@@ -457,7 +457,11 @@ class FileSystemStorage implements DIDStorage {
 			return Collections.emptyList();
 
 		File[] children = dir.listFiles((file) -> {
-			return file.isDirectory();
+			if (!file.isDirectory())
+				return false;
+
+			File sk = new File(file, ROOT_IDENTITY_PRIVATEKEY_FILE);
+			return (sk.exists() && sk.isFile());
 		});
 
 		if (children == null || children.length == 0)
@@ -577,7 +581,11 @@ class FileSystemStorage implements DIDStorage {
 			return Collections.emptyList();
 
 		File[] children = dir.listFiles((file) -> {
-			return file.isDirectory();
+			if (!file.isDirectory())
+				return false;
+
+			File doc = new File(file, DOCUMENT_FILE);
+			return (doc.exists() && doc.isFile());
 		});
 
 		if (children == null || children.length == 0)
@@ -717,7 +725,11 @@ class FileSystemStorage implements DIDStorage {
 			return Collections.emptyList();
 
 		File[] children = dir.listFiles((file) -> {
-			return file.isDirectory();
+			if (!file.isDirectory())
+				return false;
+
+			File vc = new File(file, CREDENTIAL_FILE);
+			return (vc.exists() && vc.isFile());
 		});
 
 		if (children == null || children.length == 0)
