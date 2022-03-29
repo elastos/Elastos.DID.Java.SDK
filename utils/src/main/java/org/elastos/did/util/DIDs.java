@@ -57,6 +57,7 @@ description = "DID management commands.", subcommands = {
 		DIDs.Resolve.class,
 		DIDs.Show.class,
 		DIDs.Create.class,
+		DIDs.CreateAppDid.class,
 		DIDs.Edit.class,
 		DIDs.CreateCustomizedDid.class,
 		DIDs.AcquireCustomizedDid.class,
@@ -65,6 +66,7 @@ description = "DID management commands.", subcommands = {
 		DIDs.Delete.class,
 		DIDs.Publish.class,
 		DIDs.Renew.class,
+		DIDs.Export.class,
 		DIDs.Synchronize.class,
 		DIDs.Deactivate.class,
 		DIDs.Verify.class
@@ -268,6 +270,54 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 					doc = id.newDid(index, force, password);
 				else
 					doc = id.newDid(force, password);
+
+				System.out.println("DID " + doc.getSubject() + " created.\n");
+				System.out.println("DID document:");
+				printJson(System.out, false, doc.serialize(true));
+
+				return 0;
+			} catch (Exception e) {
+				System.err.println(Colorize.red("Error: " + e.getMessage()));
+				if (verboseErrors)
+					e.printStackTrace(System.err);
+
+				return -1;
+			}
+		}
+	}
+
+	@Command(name = "createappdid", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Create a new application DID.", sortOptions = false)
+	public static class CreateAppDid extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-f", "--force"}, description = "Overwrite the existing.")
+		private boolean force = false;
+
+		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+		private boolean verboseErrors = false;
+
+		@Parameters(paramLabel = "APPID", index = "0", description = "The app' identity.")
+		private String appId;
+
+		@Parameters(paramLabel = "CODE", index = "1", description = "The security code for the DID.")
+		private int appCode;
+
+		@Override
+		public Integer call() {
+			try {
+				if (getActiveIdentity() == null) {
+					System.out.println(Colorize.red("No active identity"));
+					return -1;
+				}
+
+				RootIdentity id = getActiveStore().loadRootIdentity();
+				if (id == null) {
+					System.out.println(Colorize.red("Store not contains the default root identity"));
+					return -1;
+				}
+
+				DIDDocument doc;
+				String password = CommandContext.getPassword();
+				doc = id.newDid(appId, appCode, force, password);
 
 				System.out.println("DID " + doc.getSubject() + " created.\n");
 				System.out.println("DID document:");
@@ -1108,6 +1158,76 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 			}
 
 			return 0;
+		}
+	}
+
+	@Command(name = "export", mixinStandardHelpOptions = true, version = "2.0",
+			description = "Export the DID.", sortOptions = false)
+	public static class Export extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-o", "--out"}, description = "Output file, default is STDOUT.")
+		private String outputFile;
+
+		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
+		private boolean verboseErrors = false;
+
+		@Parameters(paramLabel = "DID", index = "0", defaultValue = "", description = "The DID to be show.")
+		private String didString;
+
+		@Override
+		public Integer call() {
+			try {
+				if (getActiveIdentity() == null) {
+					System.out.println(Colorize.red("No active identity"));
+					return -1;
+				}
+
+				DID did = didString.isEmpty() ? getActiveDid() : toDid(didString);
+
+				DIDStore store = getActiveStore();
+				if (!store.containsDid(did)) {
+					System.out.format(Colorize.red("DID %s not exists\n"), did);
+					return -1;
+				}
+
+				String exportPassword;
+				while (true) {
+					exportPassword = new String(System.console().readPassword("Export password: "));
+					if (exportPassword.isEmpty())
+						System.out.println(Colorize.yellow("Password can not be empty."));
+					else
+						break;
+				}
+				String exportPassword2 = new String(System.console().readPassword("Confirm export password: "));
+				if (!exportPassword2.equalsIgnoreCase(exportPassword)) {
+					System.out.println(Colorize.red("Password mismatch."));
+					return -1;
+				}
+
+				String password = CommandContext.getPassword();
+
+				PrintStream out = System.out;
+				if (outputFile != null) {
+					File output = toFile(outputFile);
+					out = new PrintStream(output);
+				} else {
+					System.out.println("\nExported JSON:");
+				}
+
+				store.exportDid(did, out, exportPassword, password);
+
+				if (outputFile != null)
+					out.close();
+				else
+					System.out.println();
+
+				return 0;
+			} catch (Exception e) {
+				System.err.println(Colorize.red("Error: " + e.getMessage()));
+				if (verboseErrors)
+					e.printStackTrace(System.err);
+
+				return -1;
+			}
 		}
 	}
 
