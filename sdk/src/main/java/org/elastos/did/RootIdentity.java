@@ -2,6 +2,7 @@ package org.elastos.did;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +21,7 @@ import org.elastos.did.exception.UnknownInternalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.MD5Digest;
+import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.util.encoders.Hex;
 
 /**
@@ -639,6 +641,135 @@ public final class RootIdentity {
 		return newDid(false, storepass);
 	}
 
+	private String mapToDerivePath(String identifier, int securityCode) {
+		byte digest[] = new byte[32];
+		SHA256Digest sha256 = new SHA256Digest();
+		byte[] in = identifier.getBytes();
+		sha256.update(in, 0, in.length);
+		sha256.doFinal(digest, 0);
+
+		StringBuffer path = new StringBuffer(128);
+
+		ByteBuffer bb = ByteBuffer.wrap(digest);
+		while (bb.hasRemaining()) {
+			int idx = bb.getInt();
+			path.append(idx & 0x7FFFFFFF).append('/');
+		}
+
+		path.append(securityCode & 0x7FFFFFFF);
+
+		return path.toString();
+	}
+
+	/**
+	 * Get DID that derived from the specific specified application identifier
+	 * and the security code.
+	 *
+	 * @param identifier the application identifier, could be app' package or bundle name
+	 * @param securityCode the user defined security code
+	 * @return a DID object
+	 */
+	public DID getDid(String identifier, int securityCode) {
+		checkArgument(identifier != null && !identifier.isEmpty(), "Invalid identifier");
+
+		HDKey key = preDerivedPublicKey.derive(mapToDerivePath(identifier, securityCode));
+		DID did = new DID(DID.METHOD, key.getAddress());
+
+		/*
+		DIDMetadata metadata = new DIDMetadata(did, getStore());
+		metadata.setRootIdentityId(getId());
+		metadata.setIndex(index);
+		did.setMetadata(metadata);
+		*/
+
+		return did;
+	}
+
+	/**
+	 * Create a new DID that derive from the specified application identifier
+	 * and the security code.
+	 *
+	 * @param identifier the application identifier, could be app' package or bundle name
+	 * @param securityCode the user defined security code
+	 * @param overwrite true for overwriting the existing one, fail otherwise
+	 * @param storepass the password for DIDStore
+	 * @return the new created DIDDocument object
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public DIDDocument newDid(String identifier, int securityCode, boolean overwrite, String storepass)
+			throws DIDResolveException, DIDStoreException {
+		checkArgument(identifier != null && !identifier.isEmpty(), "Invalid identifier");
+		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+
+		String path = HDKey.PRE_DERIVED_PUBLICKEY_PATH + "/" + mapToDerivePath(identifier, securityCode);
+		HDKey key = getStore().derive(getId(), path, storepass);
+		DID did = new DID(DID.METHOD, key.getAddress());
+
+		DIDDocument doc = getStore().loadDid(did);
+		if (doc != null) {
+			if (doc.isDeactivated())
+				throw new DIDDeactivatedException(did.toString());
+
+			if (!overwrite)
+				throw new DIDAlreadyExistException("DID already exists in the store.");
+		}
+
+		try {
+			doc = did.resolve();
+			if (doc != null) {
+				if (doc.isDeactivated())
+					throw new DIDDeactivatedException(did.toString());
+
+				if (!overwrite)
+					throw new DIDAlreadyExistException("DID already published.");
+			}
+		} catch (DIDResolveException e) {
+			if (!overwrite)
+				throw e;
+		}
+
+
+		log.debug("Creating new DID {} for {}/{}...", did.toString(), identifier, securityCode);
+
+		try {
+			DIDURL id = new DIDURL(did, "#primary");
+			getStore().storePrivateKey(id, key.serialize(), storepass);
+
+			DIDDocument.Builder db = new DIDDocument.Builder(did, getStore());
+			db.addAuthenticationKey(id, key.getPublicKeyBase58());
+			doc = db.seal(storepass);
+
+			doc.getMetadata().setRootIdentityId(getId());
+			doc.getMetadata().setExtra("application", identifier);
+			doc.getMetadata().setExtra("securityCode", securityCode);
+			doc.getMetadata().attachStore(getStore());
+
+			getStore().storeDid(doc);
+
+			return doc;
+		} catch (MalformedDocumentException ignore) {
+			throw new UnknownInternalException(ignore);
+		} finally {
+			key.wipe();
+		}
+	}
+
+	/**
+	 * Create a new DID that derive from the specified application identifier
+	 * and the security code.
+	 *
+	 * @param identifier the application identifier, could be app' package or bundle name
+	 * @param securityCode the user defined security code
+	 * @param storepass the password for DIDStore
+	 * @return the new created DIDDocument object
+	 * @throws DIDResolveException if an error occurred when resolving the DIDs
+	 * @throws DIDStoreException if an error occurred when accessing the store
+	 */
+	public DIDDocument newDid(String identifier, int securityCode, String storepass)
+			throws DIDResolveException, DIDStoreException {
+		return newDid(identifier, securityCode, false, storepass);
+	}
 	/**
 	 * Check whether this RootIdentity created from mnemonic.
 	 *
