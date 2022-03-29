@@ -192,4 +192,28 @@ public class RootIdentityTest {
 	    }
 	}
 
+	@Test
+	public void testCreateAppDid() throws DIDException {
+	    RootIdentity identity = testData.getRootIdentity();
+
+	    String appId = "io.trinity-tech.did.testcase";
+	    int appCode = 619;
+
+	    DID did = identity.getDid(appId, appCode);
+
+	    DIDDocument doc = identity.newDid(appId, appCode, TestConfig.storePass);
+	    assertTrue(doc.isValid());
+	    assertEquals(did, doc.getSubject());
+
+	    Exception e = assertThrows(DIDAlreadyExistException.class, () -> {
+	    	identity.newDid(appId, appCode, TestConfig.storePass);
+	    });
+	    assertEquals("DID already exists in the store.", e.getMessage());
+
+	    boolean success = store.deleteDid(did);
+	    assertTrue(success);
+	    doc = identity.newDid(appId, appCode, TestConfig.storePass);
+	    assertTrue(doc.isValid());
+	    assertEquals(did, doc.getSubject());
+	}
 }
