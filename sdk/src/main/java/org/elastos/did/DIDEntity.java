@@ -33,6 +33,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.text.DateFormat;
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.text.ParseException;
@@ -79,26 +80,9 @@ public abstract class DIDEntity<T> {
 	private final static boolean NORMALIZED_DEFAULT = true;
 
 	/**
-	 * The default data format.
-	 */
-	protected final static SimpleDateFormat dateFormat =
-			new SimpleDateFormat(Constants.DATE_FORMAT);
-
-	/**
-	 * The ISO8601 compatible data format.
-	 */
-	protected final static SimpleDateFormat isoDateFormat =
-			new SimpleDateFormat(Constants.DATE_FORMAT_ISO_8601);
-
-	/**
 	 * DID serialization context key name.
 	 */
 	protected final static String CONTEXT_KEY = "org.elastos.did.context";
-
-	static {
-		dateFormat.setTimeZone(Constants.UTC);
-		isoDateFormat.setTimeZone(Constants.UTC);
-	}
 
 	/**
 	 * The DID serialization context class.
@@ -246,13 +230,13 @@ public abstract class DIDEntity<T> {
 
 			String dateStr = p.getValueAsString();
 			try {
-				return dateFormat.parse(dateStr);
+				return getDateFormat().parse(dateStr);
 			} catch (ParseException ignore) {
 			}
 
 			// Fail-back to ISO 8601 format.
 			try {
-				return isoDateFormat.parse(dateStr);
+				return getFailbackDateFormat().parse(dateStr);
 			} catch (ParseException e) {
 				throw ctxt.weirdStringException(p.getText(),
 						Date.class, "Invalid datetime string");
@@ -377,6 +361,18 @@ public abstract class DIDEntity<T> {
 		}
 	}
 
+	protected static DateFormat getDateFormat() {
+		SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.DATE_FORMAT);
+		dateFormat.setTimeZone(Constants.UTC);
+		return dateFormat;
+	}
+
+	protected static DateFormat getFailbackDateFormat() {
+		SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.DATE_FORMAT_ISO_8601);
+		dateFormat.setTimeZone(Constants.UTC);
+		return dateFormat;
+	}
+
 	/**
 	 * Get current object's DID context.
 	 *
@@ -413,7 +409,7 @@ public abstract class DIDEntity<T> {
 				MapperFeature.AUTO_DETECT_IS_GETTERS);
 
 		// Make the ObjectMapper handle the datetime string correctly
-		mapper.setDateFormat(dateFormat);
+		mapper.setDateFormat(getDateFormat());
 		SimpleModule didModule = new SimpleModule();
 		didModule.addDeserializer(Date.class, new DateDeserializer());
 		mapper.registerModule(didModule);

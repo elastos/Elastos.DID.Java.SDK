@@ -207,7 +207,7 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 	 * @param value value to be associated with the property name
 	 */
 	protected void put(String name, Date value) {
-		put(name, dateFormat.format(value));
+		put(name, getDateFormat().format(value));
 	}
 
 	/**
@@ -226,7 +226,7 @@ public abstract class AbstractMetadata extends DIDEntity<AbstractMetadata>
 
 		if (strValue != null) {
 			try {
-				value = dateFormat.parse(strValue);
+				value = getDateFormat().parse(strValue);
 			} catch (ParseException ignore) {
 			}
 		}

@@ -1947,7 +1947,7 @@ public final class DIDStore {
 				}
 			}
 
-			bytes = dateFormat.format(created).getBytes();
+			bytes = getDateFormat().format(created).getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
 			byte digest[] = new byte[32];
@@ -2430,7 +2430,7 @@ public final class DIDStore {
 			bytes = Boolean.toString(isDefault()).getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
-			bytes = dateFormat.format(created).getBytes();
+			bytes = getDateFormat().format(created).getBytes();
 			sha256.update(bytes, 0, bytes.length);
 
 			byte digest[] = new byte[32];
