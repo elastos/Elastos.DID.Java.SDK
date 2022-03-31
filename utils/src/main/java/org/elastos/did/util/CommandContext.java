@@ -32,6 +32,7 @@ import org.elastos.did.DID;
 import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDEntity;
 import org.elastos.did.DIDStore;
+import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.Features;
 import org.elastos.did.RootIdentity;
 import org.elastos.did.exception.DIDException;
@@ -119,14 +120,16 @@ public class CommandContext extends DIDEntity<CommandContext> {
 	}
 
 	private void reinitialize() throws DIDException {
-		if (getIdentity() == null)
-			return;
+		if (getIdentity() == null) {
+			// Initialize DIDBackend in resolve-only mode.
+			DIDBackend.initialize(new DefaultDIDAdapter(getActiveNetwork().getRpcEndpint()));
+		} else {
+			// Initialize the Web3 adapter using wallet at: $APPHOME/identity/wallet.json
+			File walletFile = new File(DIDUtils.getHome(), getIdentity() + File.separator + "wallet.json");
+			didAdapter = new Web3Adapter(getNetwork(getNetwork()), walletFile);
 
-		// Initialize the Web3 adapter using wallet at: $APPHOME/identity/wallet.json
-		File walletFile = new File(DIDUtils.getHome(), getIdentity() + File.separator + "wallet.json");
-		didAdapter = new Web3Adapter(getNetwork(getNetwork()), walletFile);
-
-		DIDBackend.initialize(didAdapter);
+			DIDBackend.initialize(didAdapter);
+		}
 	}
 
 	private String getNetwork() {
