@@ -41,6 +41,7 @@ import picocli.CommandLine.Command;
 			Credentials.class,
 			Presentations.class,
 			JWTs.class,
+			Jsonld.class,
 			Shell.class,
 			SimChain.class
 		})

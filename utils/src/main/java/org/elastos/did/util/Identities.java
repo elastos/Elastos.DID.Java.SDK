@@ -42,7 +42,6 @@ import org.elastos.did.DIDDocument.Builder;
 import org.elastos.did.DIDDocument.PublicKey;
 import org.elastos.did.DIDDocument.Service;
 import org.elastos.did.DIDStore;
-import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.Mnemonic;
 import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
@@ -204,10 +203,6 @@ public class Identities extends CommandBase implements Callable<Integer> {
 
 				String address = Wallets.create(identityDir, mnemonic, passphrase, password);
 				System.out.println(Colorize.green("Wallet " + address + " created."));
-
-				// Initialize DIDBackend for DID creation.
-				if (!DIDBackend.isInitialized())
-					DIDBackend.initialize(new DefaultDIDAdapter(getActiveNetwork().getRpcEndpint()));
 
 				DIDStore store = DIDStore.open(new File(identityDir, ".origin"));
 				RootIdentity id = RootIdentity.create(mnemonic, passphrase, true, store, password);
