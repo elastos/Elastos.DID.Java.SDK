@@ -1304,6 +1304,20 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		sha256.doFinal(digest, 0);
 
 		StringBuffer path = new StringBuffer(128);
+
+		// Alternative implementation without ByteBuffer
+		/*
+		for (int i = 0; i < digest.length; i += Integer.BYTES) {
+			int idx = (digest[i] & 0x7f) <<  24 | (digest[i+1] & 0xff) << 16 |
+					(digest[i+2] & 0xff) << 8 | (digest[i+3] & 0xff);
+			path.append(idx);
+
+			if (digest[i] < 0)
+				path.append('H');
+
+			path.append('/');
+		}
+		*/
 		ByteBuffer bb = ByteBuffer.wrap(digest);
 		while (bb.hasRemaining()) {
 			int idx = bb.getInt();
