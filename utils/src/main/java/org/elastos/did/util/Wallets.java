@@ -48,7 +48,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "wallet", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "wallet", mixinStandardHelpOptions = true, version = Version.VERSION,
 description = "Wallet management commands.", subcommands = {
 		Wallets.Address.class,
 		Wallets.Balance.class,
@@ -98,7 +98,7 @@ public class Wallets {
 		return address;
 	}
 
-	@Command(name = "address", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "address", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Show the wallet address.", sortOptions = false)
 	public static class Address extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -126,7 +126,7 @@ public class Wallets {
 		}
 	}
 
-	@Command(name = "balance", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "balance", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Show the wallet balance.", sortOptions = false)
 	public static class Balance extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -161,7 +161,7 @@ public class Wallets {
 		}
 	}
 
-	@Command(name = "transfer", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "transfer", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Transfer token to address.", sortOptions = false)
 	public static class Transfer extends CommandBase implements Callable<Integer> {
 

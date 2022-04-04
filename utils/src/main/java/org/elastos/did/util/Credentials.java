@@ -47,7 +47,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "vc", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "vc", mixinStandardHelpOptions = true, version = Version.VERSION,
 description = "Credential management commands.", subcommands = {
 		Credentials.Resolve.class,
 		Credentials.Show.class,
@@ -60,7 +60,7 @@ description = "Credential management commands.", subcommands = {
 		Credentials.Verify.class
 })
 public class Credentials {
-	@Command(name = "resolve", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "resolve", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Resolve credential from the ID side chain.", sortOptions = false)
 	public static class Resolve extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-f", "--force"}, description = "Resolve froced from ID sidechain, default false.")
@@ -165,7 +165,7 @@ public class Credentials {
 		}
 	}
 
-	@Command(name = "show", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "show", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Show the credential and metadata.", sortOptions = false)
 	public static class Show extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -207,7 +207,7 @@ public class Credentials {
 		}
 	}
 
-	@Command(name = "issue", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "issue", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Issue a credential.", sortOptions = false)
 	public static class Issue extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-c", "--compact"}, description = "Output JSON in compact format, default false.")
@@ -299,7 +299,7 @@ public class Credentials {
 		}
 	}
 
-	@Command(name = "rlist", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "rlist", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "List the credentials from the ID side chain.", sortOptions = false)
 	public static class ListDeclared extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-v", "--verify"}, description = "Verify the credentials, default false.")
@@ -399,7 +399,7 @@ public class Credentials {
 		}
 	}
 
-	@Command(name = "list", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "list", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "List the local credentials.", sortOptions = false)
 	public static class ListLocal extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-v", "--verify"}, description = "Verify the credentials, default false.")
@@ -468,7 +468,7 @@ public class Credentials {
 		}
 	}
 
-	@Command(name = "delete", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "delete", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Delete the credential.", sortOptions = false)
 	public static class Delete extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -505,7 +505,7 @@ public class Credentials {
 		}
 	}
 
-	@Command(name = "declare", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "declare", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Declare the credential.", sortOptions = false)
 	public static class Declare extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -551,7 +551,7 @@ public class Credentials {
 		}
 	}
 
-	@Command(name = "revoke", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "revoke", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Revoke the credential.", sortOptions = false)
 	public static class Revoke extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -611,7 +611,7 @@ public class Credentials {
 		}
 	}
 
-	@Command(name = "verify", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "verify", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Verify the credential.", sortOptions = false)
 	public static class Verify extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")

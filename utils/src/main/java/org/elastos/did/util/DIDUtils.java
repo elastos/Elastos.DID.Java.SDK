@@ -23,6 +23,7 @@
 package org.elastos.did.util;
 
 import java.io.File;
+import java.util.concurrent.Callable;
 
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ import ch.qos.logback.classic.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-@Command(name = "didutils", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "didutils", mixinStandardHelpOptions = true, version = Version.VERSION,
 		description = "Elastos DID command line tool.",
 		subcommands = {
 			Networks.class,
@@ -43,7 +44,8 @@ import picocli.CommandLine.Command;
 			JWTs.class,
 			Jsonld.class,
 			Shell.class,
-			SimChain.class
+			SimChain.class,
+			DIDUtils.Ver.class
 		})
 public class DIDUtils {
 	private static final String APP_HOME = ".elastos/didutils";
@@ -59,6 +61,16 @@ public class DIDUtils {
 		}
 
 		return home;
+	}
+
+	@Command(name = "ver", mixinStandardHelpOptions = false, version = Version.VERSION,
+			description = "Version info.")
+	public static class Ver implements Callable<Integer> {
+		@Override
+		public Integer call() throws Exception {
+			System.out.println(Version.VERSION);
+			return 0;
+		}
 	}
 
 	public static void main(String[] args) {

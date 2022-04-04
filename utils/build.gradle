@@ -57,6 +57,26 @@ jar {
 	}
 }
 
+def getGitCommitId = { ->
+	def stdout = new ByteArrayOutputStream()
+	exec {
+		commandLine 'git', 'rev-parse', '--short', 'HEAD'
+		standardOutput = stdout
+	}
+	return stdout.toString().trim()
+}
+
+task generateVersionClass() {
+	def output = new FileWriter('utils/src/main/java/org/elastos/did/util/Version.java')
+	output.write('package org.elastos.did.util;\n\n')
+	output.write('public class Version {\n')
+	output.write('\tpublic static final String VERSION = "' + project.version + '-' + getGitCommitId() + '";\n');
+	output.write('}\n')
+	output.close()
+}
+
+project.tasks.classes.dependsOn('generateVersionClass')
+
 task fatjar(type: Jar) {
 	manifest {
 		attributes "Main-Class": "org.elastos.did.util.DIDUtils"
@@ -81,7 +101,7 @@ task tarball(type: Tar) {
 
 	destinationDirectory = file('build')
 	archiveBaseName = 'didutils'
-	archiveVersion = project.version + "-" + new Date().format("yyyyMMdd")
+	archiveVersion = project.version + "-" + getGitCommitId()
 	archiveExtension = 'tar.gz'
 	compression = Compression.GZIP
 }

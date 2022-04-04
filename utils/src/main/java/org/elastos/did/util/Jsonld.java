@@ -57,7 +57,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "jsonld", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "jsonld", mixinStandardHelpOptions = true, version = Version.VERSION,
 		description = "JSON-LD tools.", subcommands = {
 				Jsonld.Expand.class,
 				Jsonld.Compact.class,
@@ -188,7 +188,7 @@ public class Jsonld {
 		return file.getAbsoluteFile().toPath().toUri();
 	}
 
-	@Command(name = "expand", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "expand", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Expand JSON-LD document.", sortOptions = false)
 	public static class Expand extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-x", "--context"}, description = "Local contexts directory")
@@ -224,7 +224,7 @@ public class Jsonld {
 		}
 	}
 
-	@Command(name = "compact", mixinStandardHelpOptions = true, version = "jsonld expand 1.1",
+	@Command(name = "compact", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Compact JSON-LD document.")
 	public static class Compact extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-x", "--context"}, description = "Local contexts directory")
@@ -265,7 +265,7 @@ public class Jsonld {
 		}
 	}
 
-	@Command(name = "verify", mixinStandardHelpOptions = true, version = "jsonld verify 1.1",
+	@Command(name = "verify", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Verify JSON-LD document.")
 	public static class Verify extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-x", "--context"}, description = "Local contexts directory")

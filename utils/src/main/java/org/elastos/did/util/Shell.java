@@ -27,7 +27,7 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-@Command(name = "sh", mixinStandardHelpOptions = true, version = "shell 2.0",
+@Command(name = "sh", mixinStandardHelpOptions = true, version = Version.VERSION,
 		description = "Interactive shell.")
 public class Shell extends CommandBase implements Callable<Integer> {
 	@Override

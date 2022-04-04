@@ -42,13 +42,13 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "jwt", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "jwt", mixinStandardHelpOptions = true, version = Version.VERSION,
 description = "JWT management commands.", subcommands = {
 		JWTs.Create.class,
 		JWTs.Verify.class
 })
 public class JWTs extends CommandBase {
-	@Command(name = "create", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "create", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Create a JTW/JWS token.")
 	public static class Create extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-o", "--out"}, description = "Output file, default is STDOUT.")
@@ -112,7 +112,7 @@ public class JWTs extends CommandBase {
 		}
 	}
 
-	@Command(name = "verify", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "verify", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Verify the JTW/JWS token.")
 	public static class Verify extends CommandBase implements Callable<Integer> {
 		private static final int BASE64_OPT = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
