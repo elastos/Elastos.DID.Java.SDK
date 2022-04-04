@@ -52,7 +52,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "id", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "id", mixinStandardHelpOptions = true, version = Version.VERSION,
 		description = "Identity management commands.", subcommands = {
 				Identities.Switch.class,
 				Identities.List.class,
@@ -113,7 +113,7 @@ public class Identities extends CommandBase implements Callable<Integer> {
 		return 0;
     }
 
-	@Command(name = "switch", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "switch", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Switch the active identity.", sortOptions = false)
 	public static class Switch extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -149,7 +149,7 @@ public class Identities extends CommandBase implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "create", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "create", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Create user identity.", sortOptions = false)
 	public static class Create extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-i", "--import"}, description = "Import from existing mnemonic and optional passphrase.")
@@ -243,7 +243,7 @@ public class Identities extends CommandBase implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "list", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "list", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "List user identities.", sortOptions = false)
 	public static class List extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -288,7 +288,7 @@ public class Identities extends CommandBase implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "delete", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "delete", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Delete user identity.", sortOptions = false)
 	public static class Delete extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -324,13 +324,13 @@ public class Identities extends CommandBase implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "export", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "export", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Export the identity.", subcommands = {
 					Export.Mnemonic.class,
 					Export.Store.class
 			})
 	public static class Export extends CommandBase {
-		@Command(name = "mnemonic", mixinStandardHelpOptions = true, version = "2.0",
+		@Command(name = "mnemonic", mixinStandardHelpOptions = true, version = Version.VERSION,
 				description = "Export the identity's mnemonic.", sortOptions = false)
 		public static class Mnemonic extends CommandBase implements Callable<Integer> {
 			@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -359,7 +359,7 @@ public class Identities extends CommandBase implements Callable<Integer> {
 			}
 		}
 
-		@Command(name = "store", mixinStandardHelpOptions = true, version = "2.0",
+		@Command(name = "store", mixinStandardHelpOptions = true, version = Version.VERSION,
 				description = "Export the DID store.", sortOptions = false)
 		public static class Store extends CommandBase implements Callable<Integer> {
 			@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -394,7 +394,7 @@ public class Identities extends CommandBase implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "sync", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "sync", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Synchronize all DIDs that belong to the identity.", sortOptions = false)
 	public static class Synchronize extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-m", "--merge"}, defaultValue = "interactive", description = "How to merge the conflict: chain, local, interactive. default: interactive.")
@@ -486,7 +486,7 @@ public class Identities extends CommandBase implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "recover", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "recover", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Recover the wrong DIDs.", sortOptions = false)
 	public static class Recover extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-m", "--merge"}, description = "How to merge the old DID information: none, interactive, all. default: interactive.")

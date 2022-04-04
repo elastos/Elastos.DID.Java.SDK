@@ -38,13 +38,13 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "vp", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "vp", mixinStandardHelpOptions = true, version = Version.VERSION,
 description = "Presentation management commands.", subcommands = {
 		Presentations.Create.class,
 		Presentations.Verify.class
 })
 public class Presentations extends CommandBase {
-	@Command(name = "create", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "create", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Create a presentation.", sortOptions = false)
 	public static class Create extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-r", "--realm"}, description = "Realm for the presentation.")
@@ -135,7 +135,7 @@ public class Presentations extends CommandBase {
 		}
 	}
 
-	@Command(name = "verify", mixinStandardHelpOptions = true, version = "verifyvp 2.0",
+	@Command(name = "verify", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Verify the verifiable presentation.")
 	public static class Verify extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-l", "--local"}, description = "Local DID resolve directory, default current directory.")

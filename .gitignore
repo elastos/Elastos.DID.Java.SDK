@@ -31,3 +31,7 @@ local.properties
 
 # utils local lib
 utils/lib
+
+# Dynamic generated version file
+utils/src/main/java/org/elastos/did/util/Version.java
+

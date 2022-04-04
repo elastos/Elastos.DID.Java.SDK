@@ -33,7 +33,7 @@ import ch.qos.logback.classic.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command(name = "simchain", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "simchain", mixinStandardHelpOptions = true, version = Version.VERSION,
 		description = "Simulated ID Chain for testing.")
 public class SimChain implements Callable<Integer> {
 	@Option(names = {"-i", "--interface"}, description = "Server interface, default: localhost")

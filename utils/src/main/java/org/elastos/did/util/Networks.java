@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-@Command(name = "network", mixinStandardHelpOptions = true, version = "2.0",
+@Command(name = "network", mixinStandardHelpOptions = true, version = Version.VERSION,
 description = "Networks management commands.", subcommands = {
 		Networks.Switch.class,
 		Networks.List.class,
@@ -44,7 +44,7 @@ public class Networks extends CommandBase implements Callable<Integer> {
 		return 0;
 	}
 
-	@Command(name = "switch", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "switch", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Switch the active network.", sortOptions = false)
 	public static class Switch extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -80,7 +80,7 @@ public class Networks extends CommandBase implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "add", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "add", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Add a new private network.", sortOptions = false)
 	public static class Add extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-c", "--chain-id"}, description = "Verbose error output, default false.")
@@ -123,7 +123,7 @@ public class Networks extends CommandBase implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "list", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "list", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "List the available private networks.", sortOptions = false)
 	public static class List extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
@@ -154,7 +154,7 @@ public class Networks extends CommandBase implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "delete", mixinStandardHelpOptions = true, version = "2.0",
+	@Command(name = "delete", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Delete the private network.", sortOptions = false)
 	public static class Delete extends CommandBase implements Callable<Integer> {
 		@Option(names = {"-e", "--verbose-errors"}, description = "Verbose error output, default false.")
