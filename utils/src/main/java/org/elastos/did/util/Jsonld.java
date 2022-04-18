@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -113,20 +114,31 @@ public class Jsonld {
 			}
 		}
 
-		public boolean contains(String uri) {
+		private File getContextFile(String uri) throws IOException  {
 			loadLocalContexts();
 
-			return contexts.containsKey(uri);
+			String path = null;
+			if (contexts.containsKey(uri)) {
+				path = contexts.get(uri);
+			} else {
+				URL url = new URL(uri);
+				path = url.getPath();
+			}
+
+			return new File(contextsDir, path);
+		}
+
+		public boolean contains(String uri) {
+			try {
+				return getContextFile(uri).exists();
+			} catch (IOException e) {
+				System.out.println(Colorize.yellow(uri + ": " + e.getMessage()));
+				return false;
+			}
 		}
 
 		public InputStream loadContext(String uri) throws IOException {
-			loadLocalContexts();
-
-			if (!contexts.containsKey(uri))
-				return null;
-
-			File contextFile = new File(contextsDir, contexts.get(uri));
-			return new FileInputStream(contextFile);
+			return new FileInputStream(getContextFile(uri));
 		}
 	}
 
@@ -184,7 +196,7 @@ public class Jsonld {
 		if (name.indexOf("://") > 0)
 			return UriUtils.create(name);
 
-		File file = new File(name);
+		File file = CommandBase.toFile(name);
 		return file.getAbsoluteFile().toPath().toUri();
 	}
 

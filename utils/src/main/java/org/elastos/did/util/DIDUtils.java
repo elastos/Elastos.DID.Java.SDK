@@ -41,6 +41,7 @@ import picocli.CommandLine.Command;
 			DIDs.class,
 			Credentials.class,
 			Presentations.class,
+			IDRequests.class,
 			JWTs.class,
 			Jsonld.class,
 			Shell.class,
