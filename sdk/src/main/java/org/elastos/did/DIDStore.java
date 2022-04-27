@@ -1039,6 +1039,7 @@ public final class DIDStore {
 	public VerifiableCredential loadCredential(DIDURL id)
 			throws DIDStoreException {
 		checkArgument(id != null, "Invalid credential id");
+		checkArgument(id.isQualified(), "Unqualified credential id");
 
 		try {
 			Object value = cache.get(Key.forCredential(id), new Callable<Object>() {
@@ -1082,6 +1083,7 @@ public final class DIDStore {
 	public boolean containsCredential(DIDURL id)
 			throws DIDStoreException {
 		checkArgument(id != null, "Invalid credential id");
+		checkArgument(id.isQualified(), "Unqualified credential id");
 		return loadCredential(id) != null;
 	}
 
@@ -1132,6 +1134,7 @@ public final class DIDStore {
 	protected void storeCredentialMetadata(DIDURL id,
 			CredentialMetadata metadata) throws DIDStoreException {
 		checkArgument(id != null, "Invalid credential id");
+		checkArgument(id.isQualified(), "Unqualified credential id");
 		checkArgument(metadata != null, "Invalid credential metadata");
 
 		storage.storeCredentialMetadata(id, metadata);
@@ -1150,6 +1153,7 @@ public final class DIDStore {
 	protected CredentialMetadata loadCredentialMetadata(DIDURL id)
 			throws DIDStoreException {
 		checkArgument(id != null, "Invalid credential id");
+		checkArgument(id.isQualified(), "Unqualified credential id");
 
 		try {
 			Object value = cache.get(Key.forCredentialMetadata(id), new Callable<Object>() {
@@ -1182,6 +1186,7 @@ public final class DIDStore {
 	 */
 	public boolean deleteCredential(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid credential id");
+		checkArgument(id.isQualified(), "Unqualified credential id");
 
 		boolean success = storage.deleteCredential(id);
 		if (success) {
@@ -1305,6 +1310,7 @@ public final class DIDStore {
 	public void storePrivateKey(DIDURL id, byte[] privateKey,
 			String storepass) throws DIDStoreException {
 		checkArgument(id != null, "Invalid private key id");
+		checkArgument(id.isQualified(), "Unqualified private key id");
 		checkArgument(privateKey != null && privateKey.length != 0, "Invalid private key");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -1369,6 +1375,7 @@ public final class DIDStore {
 	 */
 	public boolean containsPrivateKey(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid private key id");
+		checkArgument(id.isQualified(), "Unqualified private key id");
 
 		String privatekey = loadPrivateKey(id);
 		return privatekey != null && !privatekey.isEmpty();
@@ -1421,6 +1428,7 @@ public final class DIDStore {
 	 */
 	public boolean deletePrivateKey(DIDURL id) throws DIDStoreException {
 		checkArgument(id != null, "Invalid private key id");
+		checkArgument(id.isQualified(), "Unqualified private key id");
 
 		boolean success = storage.deletePrivateKey(id);
 		if (success)
@@ -1452,6 +1460,7 @@ public final class DIDStore {
 	protected String sign(DIDURL id, String storepass, byte[] digest)
 			throws DIDStoreException {
 		checkArgument(id != null, "Invalid private key id");
+		checkArgument(id.isQualified(), "Unqualified private key id");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 		checkArgument(digest != null && digest.length > 0, "Invalid digest");
 

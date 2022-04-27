@@ -284,6 +284,15 @@ public class DIDURL implements Comparable<DIDURL> {
 	}
 
 	/**
+	 * Check if the DIDURL object is full qualified.
+	 *
+	 * @return true if the DIDURL is qualified, false otherwise
+	 */
+	public boolean isQualified() {
+		return (did != null && fragment != null);
+	}
+
+	/**
 	 * Set the metadata that related with this DIDURL object.
 	 *
 	 * @param metadata a metadata object

@@ -396,4 +396,19 @@ public class DIDURLTest {
 
 		assertEquals("empty DIDURL string", e.getMessage());
 	}
+
+	@Test
+	public void testIsQualified() {
+		DIDURL id = new DIDURL("did:elastos:foobar#test");
+		assertTrue(id.isQualified());
+
+		id = new DIDURL("did:elastos:foobar");
+		assertFalse(id.isQualified());
+
+		id = new DIDURL("did:elastos:foobar/path/to/res");
+		assertFalse(id.isQualified());
+
+		id = new DIDURL("#test");
+		assertFalse(id.isQualified());
+	}
 }
