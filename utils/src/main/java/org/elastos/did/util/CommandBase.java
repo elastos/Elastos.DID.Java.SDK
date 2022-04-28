@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -158,15 +160,23 @@ public abstract class CommandBase {
 
 	}
 
-	protected static Date readExpirationDate() {
-		final String message = "Invalid validation period, e.g. 1h for 1 hour, 2d for 2 days, 3m for 3 months, 1y for 1 year.";
+	protected static Date readDate(String prompt) {
+		final String message = "Invalid input. e.g. 1h for 1 hour, 2d for 2 days, 3m for 3 months, 1y for 1 year, or a full datetime string.";
 
 		while (true) {
-			String duration = System.console().readLine("Validation period(h/d/m/y): ").trim();
-			if (!duration.isEmpty()) {
+			String exp = System.console().readLine(prompt + "(*h/d/m/y or full yyyy-MM-dd HH:mm:ss datetime): ").trim();
+			if (!exp.isEmpty()) {
+				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dateFormat.setTimeZone(Constants.UTC);
+
+				try {
+					return dateFormat.parse(exp);
+				} catch (ParseException ignore) {
+				}
+
 				Calendar cal = Calendar.getInstance(Constants.UTC);
 
-				char unitChar = duration.charAt(duration.length() - 1);
+				char unitChar = exp.charAt(exp.length() - 1);
 				if ("hdmy".indexOf(unitChar) < 0) {
 					System.out.println(Colorize.red(message));
 					continue;
@@ -174,7 +184,7 @@ public abstract class CommandBase {
 
 				int v;
 				try {
-					v = Integer.valueOf(duration.substring(0, duration.length() - 1));
+					v = Integer.valueOf(exp.substring(0, exp.length() - 1));
 				} catch (Exception e) {
 					System.out.println(Colorize.red(message));
 					continue;
@@ -196,9 +206,17 @@ public abstract class CommandBase {
 				case 'm':
 					unit = Calendar.MONTH;
 					break;
-				default:
+				case 'y':
 					unit = Calendar.YEAR;
 					break;
+				default:
+					unit = -1;
+					break;
+				}
+
+				if (unit == -1) {
+					System.out.println(Colorize.red(message));
+					continue;
 				}
 
 				cal.add(unit, v);
