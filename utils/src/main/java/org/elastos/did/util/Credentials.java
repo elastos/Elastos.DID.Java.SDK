@@ -261,7 +261,7 @@ public class Credentials {
 				if (subject != null && !subject.isEmpty())
 					vb.properties(subject);
 
-				Date expiration = readExpirationDate();
+				Date expiration = readDate("Validation period");
 				if (expiration != null)
 					vb.expirationDate(expiration);
 

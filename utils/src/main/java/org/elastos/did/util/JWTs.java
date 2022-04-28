@@ -49,8 +49,11 @@ description = "JWT management commands.", subcommands = {
 })
 public class JWTs extends CommandBase {
 	@Command(name = "create", mixinStandardHelpOptions = true, version = Version.VERSION,
-			description = "Create a JTW/JWS token.")
+			description = "Create a JWT/JWS token.")
 	public static class Create extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-n", "--no-sig"}, description = "Not sign the token.")
+		private boolean noSig = false;
+
 		@Option(names = {"-o", "--out"}, description = "Output file, default is STDOUT.")
 		private String outputFile;
 
@@ -76,16 +79,22 @@ public class JWTs extends CommandBase {
 				if (claims != null && !claims.isEmpty())
 					jb.addClaims(claims);
 
+				Calendar cal = Calendar.getInstance(Constants.UTC);
+				jb.setIssuedAt(cal.getTime());
 
-				Date expires = readExpirationDate();
+				Date notBefore = readDate("Not before");
+				if (notBefore != null)
+					jb.setNotBefore(notBefore);
+				else
+					jb.setNotBefore(cal.getTime());
+
+				Date expires = readDate("Validation period");
 				if (expires != null)
 					jb.setExpiration(expires);
 
-				Calendar cal = Calendar.getInstance(Constants.UTC);
-				jb.setNotBefore(cal.getTime());
-				jb.setIssuedAt(cal.getTime());
+				if (!noSig)
+					jb.sign(CommandContext.getPassword());
 
-				jb.sign(CommandContext.getPassword());
 				String token = jb.compact();
 
 				PrintStream out = System.out;
@@ -113,7 +122,7 @@ public class JWTs extends CommandBase {
 	}
 
 	@Command(name = "verify", mixinStandardHelpOptions = true, version = Version.VERSION,
-			description = "Verify the JTW/JWS token.")
+			description = "Verify the JWT/JWS token.")
 	public static class Verify extends CommandBase implements Callable<Integer> {
 		private static final int BASE64_OPT = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 
