@@ -22,17 +22,78 @@
 
 package org.elastos.did.util;
 
+import java.nio.file.Path;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
+
+import org.jline.console.SystemRegistry;
+import org.jline.console.impl.Builtins;
+import org.jline.console.impl.SystemRegistryImpl;
+import org.jline.keymap.KeyMap;
+import org.jline.reader.Binding;
+import org.jline.reader.EndOfFileException;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.MaskingCallback;
+import org.jline.reader.Parser;
+import org.jline.reader.Reference;
+import org.jline.reader.UserInterruptException;
+import org.jline.reader.impl.DefaultParser;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.widget.TailTipWidgets;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.shell.jline3.PicocliCommands;
+import picocli.shell.jline3.PicocliCommands.PicocliCommandsFactory;
 
 @Command(name = "sh", mixinStandardHelpOptions = true, version = Version.VERSION,
 		description = "Interactive shell.")
 public class Shell extends CommandBase implements Callable<Integer> {
+	private SystemRegistry systemRegistry;
+	private LineReader reader;
+
+	public void initCommandLine() {
+		Supplier<Path> workDir = () -> DIDUtils.getHome().toPath();
+		// set up JLine built-in commands
+		Builtins builtins = new Builtins(workDir, null, null);
+		DIDUtils commands = new DIDUtils();
+		PicocliCommandsFactory factory = new PicocliCommandsFactory();
+		CommandLine cmd = new CommandLine(commands, factory);
+		PicocliCommands picocliCommands = new PicocliCommands(cmd);
+
+		Parser parser = new DefaultParser();
+		try (Terminal terminal = TerminalBuilder.builder().build()) {
+			systemRegistry = new SystemRegistryImpl(parser, terminal, workDir, null);
+			systemRegistry.setCommandRegistries(builtins, picocliCommands);
+			// systemRegistry.register("help", picocliCommands);
+
+			reader = LineReaderBuilder.builder()
+					.terminal(terminal)
+					.completer(systemRegistry.completer())
+					.parser(parser)
+					.variable(LineReader.LIST_MAX, 50)   // max tab completion candidates
+					.build();
+			builtins.setLineReader(reader);
+
+			CommandContext.getInstance().setLineReader(reader);
+
+			factory.setTerminal(terminal);
+			TailTipWidgets widgets = new TailTipWidgets(reader, systemRegistry::commandDescription, 5, TailTipWidgets.TipType.COMPLETER);
+			widgets.enable();
+			KeyMap<Binding> keyMap = reader.getKeyMaps().get("main");
+			keyMap.bind(new Reference("tailtip-toggle"), KeyMap.alt("s"));
+		} catch (Exception e) {
+			e.printStackTrace(System.err);
+			System.exit(-1);
+		}
+	}
+
+
 	@Override
 	public Integer call() throws Exception {
-		int exitCode = 0;
+		initCommandLine();
 
 		System.out.println("Network: " + Colorize.green(getActiveNetwork().toString()));
 		if (getActiveIdentity() != null) {
@@ -42,23 +103,22 @@ public class Shell extends CommandBase implements Callable<Integer> {
 			System.out.println("Identity: " + Colorize.yellow("N/A"));
 		}
 
+		String prompt = "didshell $ ";
+		String rightPrompt = null;
+
+		String line;
 		while (true) {
-			String cmd = System.console().readLine("didshell $ ");
-			if (cmd.isEmpty())
-				continue;
-
-			if (cmd.equals("exit") || cmd.equals("quit")) {
-				exitCode = 0;
-				break;
+			try {
+				systemRegistry.cleanUp();
+				line = reader.readLine(prompt, rightPrompt, (MaskingCallback)null, null);
+				systemRegistry.execute(line);
+			} catch (UserInterruptException e) {
+				// Ignore
+			} catch (EndOfFileException e) {
+				return 0;
+			} catch (Exception e) {
+				systemRegistry.trace(e);
 			}
-
-			String[] args = cmd.split("\\s+");
-			if (cmd.equals("help") || cmd.equals("?"))
-				args = new String[] {"--help"};
-
-			exitCode = new CommandLine(new DIDUtils()).execute(args);
 		}
-
-		return exitCode;
 	}
 }

@@ -36,6 +36,7 @@ import org.elastos.did.DefaultDIDAdapter;
 import org.elastos.did.Features;
 import org.elastos.did.RootIdentity;
 import org.elastos.did.exception.DIDException;
+import org.jline.reader.LineReader;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -62,10 +63,15 @@ public class CommandContext extends DIDEntity<CommandContext> {
 	private Web3Adapter didAdapter;
 
 	@JsonIgnore
+	private LineReader reader;
+
+	@JsonIgnore
 	private static String password;
 
 	@JsonIgnore
 	private static CommandContext context;
+
+	@JsonIgnore
 	private static File contextFile;
 
 	@JsonCreator
@@ -113,6 +119,14 @@ public class CommandContext extends DIDEntity<CommandContext> {
 			initialize();
 
 		return context;
+	}
+
+	public void setLineReader(LineReader reader) {
+		this.reader = reader;
+	}
+
+	public LineReader getLineReader() {
+		return reader;
 	}
 
 	private void save() throws IOException {

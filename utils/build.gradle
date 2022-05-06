@@ -29,7 +29,8 @@ dependencies {
 	implementation 'org.web3j:abi:4.8.7'
 	
 	implementation 'ch.qos.logback:logback-classic:1.2.3'
-	implementation 'info.picocli:picocli:4.5.2'
+	implementation 'info.picocli:picocli:4.6.3'
+	implementation 'info.picocli:picocli-shell-jline3:4.6.3'
 }
 
 jar {
@@ -67,7 +68,7 @@ def getGitCommitId = { ->
 }
 
 task generateVersionClass() {
-	def output = new FileWriter('utils/src/main/java/org/elastos/did/util/Version.java')
+	def output = new FileWriter(project.file('src/main/java/org/elastos/did/util/Version.java'))
 	output.write('package org.elastos.did.util;\n\n')
 	output.write('public class Version {\n')
 	output.write('\tpublic static final String VERSION = "' + project.version + '-' + getGitCommitId() + '";\n');

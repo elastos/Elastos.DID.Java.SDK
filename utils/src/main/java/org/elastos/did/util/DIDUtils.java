@@ -48,7 +48,7 @@ import picocli.CommandLine.Command;
 			SimChain.class,
 			DIDUtils.Ver.class
 		})
-public class DIDUtils {
+public class DIDUtils implements Runnable {
 	private static final String APP_HOME = ".elastos/didutils";
 
 	public static File getHome() {
@@ -62,6 +62,11 @@ public class DIDUtils {
 		}
 
 		return home;
+	}
+
+	@Override
+	public void run() {
+		System.out.println(new CommandLine(this).getUsageMessage());
 	}
 
 	@Command(name = "ver", mixinStandardHelpOptions = false, version = Version.VERSION,
