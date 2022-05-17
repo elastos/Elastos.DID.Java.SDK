@@ -249,6 +249,7 @@ public class DefaultDIDAdapter implements DIDAdapter {
 	protected InputStream httpPost(URL url, Map<String, String> headers, String body)
 			throws IOException {
 		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+		connection.setInstanceFollowRedirects(true);
 		connection.setRequestMethod("POST");
 
 		if (headers == null || !headers.containsKey("User-Agent"))
@@ -305,6 +306,7 @@ public class DefaultDIDAdapter implements DIDAdapter {
 	protected InputStream httpGet(URL url, Map<String, String> headers)
 			throws IOException {
 		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+		connection.setInstanceFollowRedirects(true);
 		connection.setRequestMethod("GET");
 
 		if (headers == null || !headers.containsKey("User-Agent"))
