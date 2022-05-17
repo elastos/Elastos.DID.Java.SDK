@@ -291,4 +291,8 @@ public class CommandContext extends DIDEntity<CommandContext> {
 
 		return password;
 	}
+
+	static void clearPassword() {
+		password = null;
+	}
 }

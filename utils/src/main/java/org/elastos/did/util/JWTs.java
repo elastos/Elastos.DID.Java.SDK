@@ -34,6 +34,7 @@ import java.util.concurrent.Callable;
 import org.elastos.did.Constants;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.crypto.Base64;
+import org.elastos.did.exception.WrongPasswordException;
 import org.elastos.did.jwt.JwtBuilder;
 import org.elastos.did.jwt.JwtParser;
 import org.elastos.did.jwt.JwtParserBuilder;
@@ -112,6 +113,9 @@ public class JWTs extends CommandBase {
 
 				return 0;
 			} catch(Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println("Error: " + e.getMessage());
 				if (verboseErrors)
 					e.printStackTrace(System.err);

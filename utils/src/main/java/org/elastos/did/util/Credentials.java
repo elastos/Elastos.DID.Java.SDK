@@ -42,6 +42,7 @@ import org.elastos.did.backend.CredentialTransaction;
 import org.elastos.did.crypto.Base58;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
+import org.elastos.did.exception.WrongPasswordException;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -290,6 +291,9 @@ public class Credentials {
 
 				return 0;
 			} catch(Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -540,6 +544,9 @@ public class Credentials {
 					System.out.format(Colorize.red("Credential %s not exists\n"), id);
 				}
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -602,6 +609,9 @@ public class Credentials {
 
 				return 0;
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
