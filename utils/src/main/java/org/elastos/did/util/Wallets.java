@@ -199,6 +199,9 @@ public class Wallets {
 					return -1;
 				}
 			} catch (Exception e) {
+				if (e instanceof CipherException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);

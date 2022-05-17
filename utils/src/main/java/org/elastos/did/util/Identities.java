@@ -47,6 +47,7 @@ import org.elastos.did.RootIdentity;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
+import org.elastos.did.exception.WrongPasswordException;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -350,6 +351,9 @@ public class Identities extends CommandBase implements Callable<Integer> {
 
 					return 0;
 				} catch (Exception e) {
+					if (e instanceof WrongPasswordException)
+						CommandContext.clearPassword();
+
 					System.err.println(Colorize.red("Error: " + e.getMessage()));
 					if (verboseErrors)
 						e.printStackTrace(System.err);
@@ -384,6 +388,9 @@ public class Identities extends CommandBase implements Callable<Integer> {
 
 					return 0;
 				} catch (Exception e) {
+					if (e instanceof WrongPasswordException)
+						CommandContext.clearPassword();
+
 					System.err.println(Colorize.red("Error: " + e.getMessage()));
 					if (verboseErrors)
 						e.printStackTrace(System.err);
@@ -567,6 +574,9 @@ public class Identities extends CommandBase implements Callable<Integer> {
 								System.out.print(Colorize.yellow("WRONG, recovering..."));
 								System.out.println(Colorize.green("RECOVERED"));
 							} catch (Exception ex) {
+								if (ex instanceof WrongPasswordException)
+									CommandContext.clearPassword();
+
 								System.out.println(Colorize.red("FAILED"));
 								if (verboseErrors)
 									ex.printStackTrace(System.err);

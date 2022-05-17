@@ -28,8 +28,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.SecureRandom;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.Callable;
 
 import org.elastos.did.Constants;
@@ -46,6 +48,7 @@ import org.elastos.did.crypto.Base58;
 import org.elastos.did.crypto.HDKey;
 import org.elastos.did.exception.DIDException;
 import org.elastos.did.exception.DIDResolveException;
+import org.elastos.did.exception.WrongPasswordException;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -277,6 +280,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 				return 0;
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -325,6 +331,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 				return 0;
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -411,6 +420,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 						return 0;
 					} catch (Exception e) {
+						if (e instanceof WrongPasswordException)
+							CommandContext.clearPassword();
+
 						System.err.println(Colorize.red("Error: " + e.getMessage()));
 						if (verboseErrors)
 							e.printStackTrace(System.err);
@@ -453,6 +465,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 						return 0;
 					} catch (Exception e) {
+						if (e instanceof WrongPasswordException)
+							CommandContext.clearPassword();
+
 						System.err.println(Colorize.red("Error: " + e.getMessage()));
 						if (verboseErrors)
 							e.printStackTrace(System.err);
@@ -515,6 +530,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 						return 0;
 					} catch (Exception e) {
+						if (e instanceof WrongPasswordException)
+							CommandContext.clearPassword();
+
 						System.err.println(Colorize.red("Error: " + e.getMessage()));
 						if (verboseErrors)
 							e.printStackTrace(System.err);
@@ -557,6 +575,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 						return 0;
 					} catch (Exception e) {
+						if (e instanceof WrongPasswordException)
+							CommandContext.clearPassword();
+
 						System.err.println(Colorize.red("Error: " + e.getMessage()));
 						if (verboseErrors)
 							e.printStackTrace(System.err);
@@ -614,6 +635,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 						return 0;
 					} catch (Exception e) {
+						if (e instanceof WrongPasswordException)
+							CommandContext.clearPassword();
+
 						System.err.println(Colorize.red("Error: " + e.getMessage()));
 						if (verboseErrors)
 							e.printStackTrace(System.err);
@@ -656,6 +680,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 						return 0;
 					} catch (Exception e) {
+						if (e instanceof WrongPasswordException)
+							CommandContext.clearPassword();
+
 						System.err.println(Colorize.red("Error: " + e.getMessage()));
 						if (verboseErrors)
 							e.printStackTrace(System.err);
@@ -712,6 +739,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 				return 0;
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -772,6 +802,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 				return 0;
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -865,6 +898,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 				return 0;
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -1057,6 +1093,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 					System.out.format(Colorize.red("DID %s not exists\n"), did);
 				}
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -1071,6 +1110,11 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 	@Command(name = "renew", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Renew the DID.", sortOptions = false)
 	public static class Renew extends CommandBase implements Callable<Integer> {
+		private static final String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+		@Option(names = {"-p", "--expiration"}, description = "expiration date time(yyyy-MM-dd HH:mm:ss).")
+		private String expiration = null;
+
 		@Option(names = {"-f", "--force"}, description = "Publish in force mode.")
 		private boolean force = false;
 
@@ -1088,6 +1132,18 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 					return -1;
 				}
 
+				Date exp = null;
+				if (expiration != null) {
+					SimpleDateFormat dateFormat = new SimpleDateFormat(DATETIME_FORMAT);
+					dateFormat.setTimeZone(Constants.UTC);
+					try {
+						exp = dateFormat.parse(expiration);
+					} catch (ParseException e) {
+						System.out.println(Colorize.red("Invalid expiration datetime, the format should be: " + DATETIME_FORMAT));
+						return -1;
+					}
+				}
+
 				DID did = didString.isEmpty() ? getActiveDid() : toDid(didString);
 
 				DIDStore store = getActiveStore();
@@ -1096,7 +1152,14 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 					String password = CommandContext.getPassword();
 
 					DIDDocument.Builder db = doc.edit();
-					db.setDefaultExpires();
+					if (exp == null)
+						exp = readDate("Expiration date");
+
+					if (exp == null)
+						db.setDefaultExpires();
+					else
+						db.setExpires(exp);
+
 					doc = db.seal(password);
 
 					store.storeDid(doc);
@@ -1108,6 +1171,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 					System.out.format(Colorize.red("DID %s not exists\n"), did);
 				}
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -1150,6 +1216,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 					System.out.format(Colorize.red("DID %s not exists\n"), did);
 				}
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);
@@ -1222,6 +1291,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 
 				return 0;
 			} catch (Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);

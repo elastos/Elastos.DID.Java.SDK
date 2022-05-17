@@ -33,6 +33,7 @@ import org.elastos.did.DIDURL;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
 import org.elastos.did.crypto.Base58;
+import org.elastos.did.exception.WrongPasswordException;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -126,6 +127,9 @@ public class Presentations extends CommandBase {
 
 				return 0;
 			} catch(Exception e) {
+				if (e instanceof WrongPasswordException)
+					CommandContext.clearPassword();
+
 				System.err.println(Colorize.red("Error: " + e.getMessage()));
 				if (verboseErrors)
 					e.printStackTrace(System.err);

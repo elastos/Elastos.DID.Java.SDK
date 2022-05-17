@@ -23,6 +23,7 @@
 package org.elastos.did.util;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
@@ -55,7 +56,7 @@ public class Shell extends CommandBase implements Callable<Integer> {
 	private LineReader reader;
 
 	public void initCommandLine() {
-		Supplier<Path> workDir = () -> DIDUtils.getHome().toPath();
+		Supplier<Path> workDir = () -> Paths.get(System.getProperty("user.home"));
 		// set up JLine built-in commands
 		Builtins builtins = new Builtins(workDir, null, null);
 		DIDUtils commands = new DIDUtils();
