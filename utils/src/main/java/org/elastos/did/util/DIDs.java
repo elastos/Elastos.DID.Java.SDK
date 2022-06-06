@@ -1110,9 +1110,9 @@ public class DIDs extends CommandBase implements Callable<Integer> {
 	@Command(name = "renew", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Renew the DID.", sortOptions = false)
 	public static class Renew extends CommandBase implements Callable<Integer> {
-		private static final String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+		private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
-		@Option(names = {"-p", "--expiration"}, description = "expiration date time(yyyy-MM-dd HH:mm:ss).")
+		@Option(names = {"-p", "--expiration"}, description = "expiration date time(yyyy-MM-ddTHH:mm:ss).")
 		private String expiration = null;
 
 		@Option(names = {"-f", "--force"}, description = "Publish in force mode.")
