@@ -280,12 +280,15 @@ public class CommandContext extends DIDEntity<CommandContext> {
 
 	static String getPassword() {
 		if (password == null) {
-			while (true) {
-				password = new String(System.console().readPassword("Password: "));
-				if (password.isEmpty())
-					System.out.println(Colorize.yellow("Password can not be empty."));
-				else
-					break;
+			password = System.getenv("DID_PASSWORD");
+			if (password == null) {
+				while (true) {
+					password = new String(System.console().readPassword("Password: "));
+					if (password.isEmpty())
+						System.out.println(Colorize.yellow("Password can not be empty."));
+					else
+						break;
+				}
 			}
 		}
 
