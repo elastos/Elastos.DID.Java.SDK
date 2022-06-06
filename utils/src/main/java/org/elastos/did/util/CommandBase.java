@@ -164,9 +164,9 @@ public abstract class CommandBase {
 		final String message = "Invalid input. e.g. 1h for 1 hour, 2d for 2 days, 3m for 3 months, 1y for 1 year, or a full datetime string.";
 
 		while (true) {
-			String exp = System.console().readLine(prompt + "(*h/d/m/y or full yyyy-MM-dd HH:mm:ss datetime): ").trim();
+			String exp = System.console().readLine(prompt + "(*h/d/m/y or full yyyy-MM-ddTHH:mm:ss datetime): ").trim();
 			if (!exp.isEmpty()) {
-				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 				dateFormat.setTimeZone(Constants.UTC);
 
 				try {
