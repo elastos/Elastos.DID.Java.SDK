@@ -251,6 +251,16 @@ public class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		/**
+		 * Check whether the subject has the specified property.
+		 *
+		 * @param name the property name
+		 * @return true if this subject object has the specific property, false otherwise.
+		 */
+		public boolean hasProperty(String name) {
+			return properties.containsKey(name);
+		}
+
+		/**
 		 * Get properties as a JSON string.
 		 *
 		 * @return the JSON string
