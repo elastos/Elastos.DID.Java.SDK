@@ -696,6 +696,26 @@ public class DIDDocument extends DIDEntity<DIDDocument> implements Cloneable {
 		}
 
 		/**
+		 * Get the specified property.
+		 *
+		 * @param name the property name
+		 * @return the property value
+		 */
+		public Object getProperty(String name) {
+			return properties.get(name);
+		}
+
+		/**
+		 * Check whether the service has the specified property.
+		 *
+		 * @param name the property name
+		 * @return true if this service object has the specific property, false otherwise.
+		 */
+		public boolean hasProperty(String name) {
+			return properties.containsKey(name);
+		}
+
+		/**
 		 * Get the extra properties of the service.
 		 *
 		 * @return a map object contains the extra properties

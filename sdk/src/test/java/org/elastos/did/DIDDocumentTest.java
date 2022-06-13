@@ -2057,6 +2057,8 @@ public class DIDDocumentTest {
 		map.put("BAR", "Foobar");
 		map.put("FOOBAR", "Lalala...");
 		map.put("DATE", Calendar.getInstance().getTime());
+		map.put("empty", "");
+		map.put("NULL", null);
 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("abc", "helloworld");
@@ -2071,6 +2073,8 @@ public class DIDDocumentTest {
 		props.put("FOOBAR", "Lalala...");
 		props.put("DATE", Calendar.getInstance().getTime());
 		props.put("MAP", map);
+		props.put("empty", "");
+		props.put("NULL", null);
 
 		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
 		assertNotNull(doc);
@@ -2109,6 +2113,12 @@ public class DIDDocumentTest {
 		assertTrue(!svcs.get(1).getProperties().isEmpty());
 		assertEquals("Service.Testing", svcs.get(2).getType());
 		assertTrue(svcs.get(2).getProperties().isEmpty());
+
+		Service svc = doc.getService("#test-svc-1");
+		assertTrue(svc.hasProperty("NULL"));
+		assertNull(svc.getProperty("NULL"));
+		assertTrue(svc.hasProperty("empty"));
+		assertEquals("", svc.getProperty("empty"));
 	}
 
 	@ParameterizedTest
@@ -2185,6 +2195,8 @@ public class DIDDocumentTest {
 		map.put("BAR", "Foobar");
 		map.put("FOOBAR", "Lalala...");
 		map.put("DATE", Calendar.getInstance().getTime());
+		map.put("empty", "");
+		map.put("NULL", null);
 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("abc", "helloworld");
@@ -2199,6 +2211,8 @@ public class DIDDocumentTest {
 		props.put("FOOBAR", "Lalala...");
 		props.put("DATE", Calendar.getInstance().getTime());
 		props.put("MAP", map);
+		props.put("empty", "");
+		props.put("NULL", null);
 
 		// Add services
 		db.addService("#test-svc-1", "Service.Testing",
@@ -2232,6 +2246,12 @@ public class DIDDocumentTest {
 		assertTrue(!svcs.get(1).getProperties().isEmpty());
 		assertEquals("Service.Testing", svcs.get(2).getType());
 		assertTrue(svcs.get(2).getProperties().isEmpty());
+
+		Service svc = doc.getService("#test-svc-1");
+		assertTrue(svc.hasProperty("NULL"));
+		assertNull(svc.getProperty("NULL"));
+		assertTrue(svc.hasProperty("empty"));
+		assertEquals("", svc.getProperty("empty"));
 	}
 
 	@ParameterizedTest
