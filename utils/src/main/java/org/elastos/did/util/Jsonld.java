@@ -24,22 +24,19 @@ package org.elastos.did.util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.apicatalog.jsonld.JsonLd;
 import com.apicatalog.jsonld.JsonLdError;
-import com.apicatalog.jsonld.JsonLdErrorCode;
 import com.apicatalog.jsonld.JsonLdOptions;
 import com.apicatalog.jsonld.document.Document;
 import com.apicatalog.jsonld.document.JsonDocument;
@@ -49,8 +46,6 @@ import com.apicatalog.jsonld.loader.SchemeRouter;
 import com.apicatalog.jsonld.uri.UriUtils;
 
 import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import jakarta.json.JsonWriterFactory;
 import jakarta.json.stream.JsonGenerator;
@@ -66,109 +61,53 @@ import picocli.CommandLine.Parameters;
 })
 public class Jsonld {
 	private static URI baseURI;
-	private static LocalContexts localContexts;
-
-	static class LocalContexts {
-		private File contextsDir;
-		private Map<String, String> contexts;
-
-		public LocalContexts(File dir) {
-			this.contextsDir = dir;
-		}
-
-		private Map<String, String> loadContextsMap(File mapFile) throws IOException {
-			try (InputStream in = new FileInputStream(mapFile)) {
-				JsonObject map = Json.createReader(in).readObject();
-				Map<String, String> ctx = new HashMap<String, String>();
-				map.forEach((String k, JsonValue v) -> {
-					String uri = k;
-					String file = ((JsonString)v).getString();
-
-					ctx.put(uri, file);
-				});
-
-				return ctx;
-			}
-		}
-
-		private void loadLocalContexts() {
-			if (contexts != null)
-				return;
-
-			if (contextsDir == null) {
-				contexts = Collections.emptyMap();
-				return;
-			}
-
-			File mapFile = new File(contextsDir, "contexts.json");
-			if (!mapFile.exists() || !mapFile.isFile()) {
-				System.out.println(Colorize.yellow("Empty local context directory"));
-				contexts = Collections.emptyMap();
-			} else {
-				try {
-					contexts = loadContextsMap(mapFile);
-				} catch (IOException e) {
-					System.out.println(Colorize.red("Load local contexts failed" + e.getMessage()));
-					e.printStackTrace();
-				}
-			}
-		}
-
-		private File getContextFile(String uri) throws IOException  {
-			loadLocalContexts();
-
-			String path = null;
-			if (contexts.containsKey(uri)) {
-				path = contexts.get(uri);
-			} else {
-				URL url = new URL(uri);
-				path = url.getPath();
-			}
-
-			return new File(contextsDir, path);
-		}
-
-		public boolean contains(String uri) {
-			try {
-				return getContextFile(uri).exists();
-			} catch (IOException e) {
-				System.out.println(Colorize.yellow(uri + ": " + e.getMessage()));
-				return false;
-			}
-		}
-
-		public InputStream loadContext(String uri) throws IOException {
-			return new FileInputStream(getContextFile(uri));
-		}
-	}
 
 	static class MyDocumentLoader implements DocumentLoader {
+		private String localURIPrefix;
+		private File localContextsDir;
 
-		public MyDocumentLoader(File localContextsDir) {
+		public MyDocumentLoader(String localURIPrefix, File localContextsDir) {
 			super();
-			localContexts = new LocalContexts(localContextsDir);
+			this.localURIPrefix = localURIPrefix;
+			this.localContextsDir = localContextsDir;
+		}
+
+		private InputStream getLocalContext(URI uri) {
+			String uristr = uri.toString();
+			if (!uristr.startsWith(localURIPrefix))
+				return null;
+
+			String path = uristr.substring(localURIPrefix.length()).replace('/', File.separatorChar);
+			if (path.startsWith(File.separator))
+				path = path.substring(1);
+
+			File contextFile = new File(localContextsDir, path);
+			try {
+				return (contextFile.exists() && contextFile.isFile()) ?
+						new FileInputStream(contextFile) : null;
+			} catch (FileNotFoundException e) {
+				return null;
+			}
 		}
 
 		@Override
 		public Document loadDocument(URI uri, DocumentLoaderOptions options) throws JsonLdError {
-			// local contexts
-			if (localContexts.contains(uri.toString())) {
-				try {
-					JsonDocument document = JsonDocument.of(localContexts.loadContext(uri.toString()));
-					document.setContextUrl(null);
-					document.setDocumentUrl(uri);
-					return document;
-				} catch (IOException e) {
-					throw new JsonLdError(JsonLdErrorCode.LOADING_REMOTE_CONTEXT_FAILED, e);
-				}
-			}
+			InputStream context = getLocalContext(uri);
 
-			// external contexts
-			return SchemeRouter.defaultInstance().loadDocument(uri, options);
+			// local contexts
+			if (context != null) {
+				JsonDocument document = JsonDocument.of(context);
+				document.setContextUrl(null);
+				document.setDocumentUrl(uri);
+				return document;
+			} else {
+				// external contexts
+				return SchemeRouter.defaultInstance().loadDocument(uri, options);
+			}
 		}
 	}
 
-	private static JsonLdOptions getJsonLdOptions(File localContextsDir) {
+	private static JsonLdOptions getJsonLdOptions(String localURIPrefix, File localContextsDir) {
 		if (baseURI == null) {
 			try {
 				baseURI = new URI("https://trinity-tech.io/ns/v1#");
@@ -177,16 +116,13 @@ public class Jsonld {
 			}
 		}
 
-		File contextsDir = null;
 		if (localContextsDir != null) {
-			File dir = localContextsDir.getAbsoluteFile();
-			if (!dir.exists() || !dir.isDirectory())
+			localContextsDir = localContextsDir.getAbsoluteFile();
+			if (!localContextsDir.exists() || !localContextsDir.isDirectory())
 				System.out.println(Colorize.yellow("Invalid local context directory: " + localContextsDir));
-			else
-				contextsDir = dir;
 		}
 
-		JsonLdOptions opts = new JsonLdOptions(new MyDocumentLoader(contextsDir));
+		JsonLdOptions opts = new JsonLdOptions(new MyDocumentLoader(localURIPrefix, localContextsDir));
 		opts.setBase(baseURI);
 
 		return opts;
@@ -203,8 +139,11 @@ public class Jsonld {
 	@Command(name = "expand", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Expand JSON-LD document.", sortOptions = false)
 	public static class Expand extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-p", "--prefix"}, description = "Local contexts URI prefix")
+		private String localURIPrefix = null;
+
 		@Option(names = {"-x", "--context"}, description = "Local contexts directory")
-		private String contextDir = null;
+		private String localContextsDir = null;
 
 		@Option(names = {"-o", "--output"}, description = "Output filename, default output to console.")
 		private String outputFile = null;
@@ -215,7 +154,7 @@ public class Jsonld {
 		@Override
 		public Integer call() throws Exception {
 			JsonValue result = JsonLd.expand(toUri(document))
-					.options(getJsonLdOptions(toFile(contextDir)))
+					.options(getJsonLdOptions(localURIPrefix, toFile(localContextsDir)))
 					.get();
 
 			Map<String,Boolean> config = new HashMap<>();
@@ -239,8 +178,11 @@ public class Jsonld {
 	@Command(name = "compact", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Compact JSON-LD document.")
 	public static class Compact extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-p", "--prefix"}, description = "Local contexts URI prefix")
+		private String localURIPrefix = null;
+
 		@Option(names = {"-x", "--context"}, description = "Local contexts directory")
-		private String contextDir = null;
+		private String localContextsDir = null;
 
 		@Option(names = {"-o", "--output"}, description = "Output filename, default output to console.")
 		private String outputFile = null;
@@ -254,7 +196,7 @@ public class Jsonld {
 		@Override
 		public Integer call() throws Exception {
 			JsonValue result = JsonLd.compact(toUri(document), toUri(context))
-					.options(getJsonLdOptions(toFile(contextDir)))
+					.options(getJsonLdOptions(localURIPrefix, toFile(localContextsDir)))
 					.base(baseURI)
 					.compactToRelative(false)
 					.get();
@@ -280,8 +222,11 @@ public class Jsonld {
 	@Command(name = "verify", mixinStandardHelpOptions = true, version = Version.VERSION,
 			description = "Verify JSON-LD document.")
 	public static class Verify extends CommandBase implements Callable<Integer> {
+		@Option(names = {"-p", "--prefix"}, description = "Local contexts URI prefix")
+		private String localURIPrefix = null;
+
 		@Option(names = {"-x", "--context"}, description = "Local contexts directory")
-		private String contextDir = null;
+		private String localContextsDir = null;
 
 		@Option(names = {"-e", "--expandedOutput"}, description = "Expanded output filename, default output to console.")
 		private String expandedOutput = null;
@@ -297,7 +242,7 @@ public class Jsonld {
 
 		@Override
 		public Integer call() throws Exception {
-			JsonLdOptions options = getJsonLdOptions(toFile(contextDir));
+			JsonLdOptions options = getJsonLdOptions(localURIPrefix, toFile(localContextsDir));
 
 			JsonValue result = JsonLd.expand(toUri(document))
 					.options(options)
